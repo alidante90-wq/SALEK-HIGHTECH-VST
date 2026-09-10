@@ -1,12 +1,18 @@
 #include "PluginEditor.h"
 
 SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+    : AudioProcessorEditor (&p), processor (p),
+      keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
+    keyboard.setAvailableRange (24, 96);
+    keyboard.setOctaveForMiddleC (4);
+    addAndMakeVisible (keyboard);
+    startTimerHz (8);
+
     setLookAndFeel (&lnf);
-    setSize (1180, 720);
+    setSize (1180, 800);
     setResizable (true, true);
-    setResizeLimits (980, 600, 1600, 1000);
+    setResizeLimits (980, 700, 1600, 1100);
 
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
     title.setFont (juce::FontOptions (36.0f, juce::Font::bold));
@@ -127,6 +133,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
 SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
 {
+    stopTimer();
     setLookAndFeel (nullptr);
 }
 
@@ -189,9 +196,16 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillRect (0, 68, getWidth(), 2);
 }
 
+void SalekHightechAudioProcessorEditor::timerCallback()
+{
+    resized();
+}
+
 void SalekHightechAudioProcessorEditor::resized()
 {
     auto a = getLocalBounds().reduced (10);
+    keyboard.setBounds (a.removeFromBottom (70).reduced (2));
+    a.removeFromBottom (6);
     auto header = a.removeFromTop (56);
     title.setBounds (header.removeFromLeft (380).removeFromTop (32));
     tagline.setBounds (header.removeFromLeft (420).withTrimmedTop (6).removeFromTop (20));
@@ -202,6 +216,7 @@ void SalekHightechAudioProcessorEditor::resized()
     auto layoutTab = [] (juce::Component& tab)
     {
         auto bounds = tab.getLocalBounds().reduced (16);
+        if (bounds.getWidth() < 50 || bounds.getHeight() < 50) return;
         juce::Array<juce::Component*> knobsArr, labelsArr, others;
         for (auto* c : tab.getChildren())
         {
