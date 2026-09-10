@@ -3,6 +3,7 @@
 #include <map>
 #include "Synth/SynthEngine.h"
 #include "FX/SimpleDelay.h"
+#include "Sequencer/Arpeggiator.h"
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
@@ -38,6 +39,7 @@ private:
     juce::AudioProcessorValueTreeState apvts;
     salek::SynthEngine synthEngine;
     salek::SimpleDelay delay;
+    salek::Arpeggiator arpeggiator;
     struct Preset { juce::String name; std::map<juce::String, float> values; };
     std::vector<Preset> factoryPresets;
     int currentProgram = 0;
