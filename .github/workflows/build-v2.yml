@@ -1,0 +1,63 @@
+name: SALEK HIGHTECH V2 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  SOURCE_REPO: alidante90-wq/SALEK_HIGHTECH
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout V2 repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Obtain clean source
+        shell: pwsh
+        run: |
+          if (Test-Path ".\SALEK_HIGHTECH\CMakeLists.txt") {
+            Write-Host "Using source already present in V2 repository."
+          } else {
+            git clone --depth 1 "https://github.com/${env:SOURCE_REPO}.git" upstream
+            Copy-Item "upstream\SALEK_HIGHTECH" ".\SALEK_HIGHTECH" -Recurse -Force
+            Copy-Item "upstream\CMakeLists.txt" ".\CMakeLists.txt" -Force
+          }
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build-v2 -G "Visual Studio 17 2022" -A x64
+
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build-v2 --config Release --parallel
+
+      - name: Verify VST3
+        shell: pwsh
+        run: |
+          $vst = Get-ChildItem -Path . -Filter *.vst3 -File -Recurse | Select-Object -First 1
+          if (-not $vst) { Write-Error "No VST3 artifact was produced."; exit 1 }
+          Write-Host "VST3: $($vst.FullName)"
+          "VST3_PATH=$($vst.FullName)" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Package VST3
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force package | Out-Null
+          Copy-Item $env:VST3_PATH "package\SALEK_HIGHTECH.vst3" -Recurse -Force
+          Copy-Item "README_V2.md" "package\README_V2.md" -Force
+          Compress-Archive -Path "package\*" -DestinationPath "SALEK_HIGHTECH_V2_VST3.zip" -Force
+
+      - name: Upload VST3 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SALEK_HIGHTECH_V2_VST3
+          path: SALEK_HIGHTECH_V2_VST3.zip
+          if-no-files-found: error
