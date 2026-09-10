@@ -62,6 +62,9 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"master_drive",0.4f}});
     add("Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"delay_mix",0.4f},{"arp_on",1.f},{"arp_rate",4.f}});
     add("Wide Pad+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_release",3.f},{"delay_mix",0.45f},{"lfo_rate",0.2f},{"lfo_amount",0.25f}});
+    add("Screech Stack", {{"osc1_table",0.72f},{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"unison_voices",4.f},{"unison_detune",14.f},{"filter_cutoff",1800.f},{"filter_reso",0.8f},{"filter_env",0.85f},{"lfo_rate",8.f},{"lfo_amount",0.3f}});
+    add("Table Morph Bass", {{"osc1_table",0.35f},{"osc1_warp",0.2f},{"osc3_octave",-1.f},{"osc3_level",0.7f},{"fm_3to1",0.55f},{"unison_voices",3.f},{"filter_cutoff",900.f},{"filter_drive",0.35f},{"master_drive",0.3f}});
+    add("Stereo Lead+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"delay_mix",0.22f},{"amp_sustain",0.85f}});
     add("Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.f},{"delay_mix",0.25f}});
 }
 
