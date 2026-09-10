@@ -78,6 +78,54 @@ private:
     float phase = 0.f;
 };
 
+class StepGridComponent : public juce::Component, private juce::Timer {
+public:
+    explicit StepGridComponent (salek::StepSequencer& seq) : sequencer (seq) { startTimerHz (20); }
+    void paint (juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced (2.0f);
+        g.setColour (juce::Colour (0xff05050c));
+        g.fillRoundedRectangle (r, 6.0f);
+        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.3f));
+        g.drawRoundedRectangle (r, 6.0f, 1.0f);
+        const int n = salek::StepSequencer::NumSteps;
+        const float gap = 4.0f;
+        const float w = (r.getWidth() - gap * (n + 1)) / (float) n;
+        const float h = r.getHeight() - gap * 2;
+        const int play = sequencer.getCurrentStep();
+        for (int i = 0; i < n; ++i) {
+            auto cell = juce::Rectangle<float> (r.getX() + gap + i * (w + gap), r.getY() + gap, w, h);
+            const auto& st = sequencer.getStep (i);
+            if (st.active)
+                g.setColour (i == play ? juce::Colour (0xffff00aa) : juce::Colour (0xff00f0ff).withAlpha (0.75f));
+            else
+                g.setColour (juce::Colour (0xff1a1a28));
+            g.fillRoundedRectangle (cell, 3.0f);
+            if (i == play) {
+                g.setColour (juce::Colours::white.withAlpha (0.9f));
+                g.drawRoundedRectangle (cell, 3.0f, 1.5f);
+            }
+            g.setColour (juce::Colours::black.withAlpha (0.5f));
+            g.setFont (juce::FontOptions (9.0f));
+            g.drawText (juce::String (i + 1), cell, juce::Justification::centred);
+        }
+    }
+    void mouseDown (const juce::MouseEvent& e) override {
+        auto r = getLocalBounds().toFloat().reduced (2.0f);
+        const int n = salek::StepSequencer::NumSteps;
+        const float gap = 4.0f;
+        const float w = (r.getWidth() - gap * (n + 1)) / (float) n;
+        int idx = (int) ((e.position.x - r.getX() - gap) / (w + gap));
+        if (idx >= 0 && idx < n) {
+            auto& st = sequencer.getStep (idx);
+            st.active = ! st.active;
+            repaint();
+        }
+    }
+    void timerCallback() override { repaint(); }
+private:
+    salek::StepSequencer& sequencer;
+};
+
 class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::ListBoxModel {
 public:
     explicit SalekHightechAudioProcessorEditor(SalekHightechAudioProcessor&);
@@ -104,6 +152,7 @@ private:
     juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" };
     juce::Label presetLabel, title, tagline;
     juce::ListBox presetList { "presets", this };
+    std::unique_ptr<StepGridComponent> stepGrid;
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
