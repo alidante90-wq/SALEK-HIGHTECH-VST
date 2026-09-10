@@ -48,6 +48,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (oscTab, "osc3_warp", "WARP 3", O); addKnob (oscTab, "osc3_fold", "FOLD 3", M);
         addKnob (oscTab, "osc3_drive", "DRIVE 3", O); addKnob (oscTab, "osc3_octave", "OCT 3", V);
         addKnob (oscTab, "osc3_semi", "SEMI 3", V); addKnob (oscTab, "osc3_detune", "DET 3", G);
+        addKnob (oscTab, "unison_voices", "UNISON", C);
+        addKnob (oscTab, "unison_detune", "U DET", M);
+        addKnob (oscTab, "unison_spread", "SPREAD", O);
     }
 
     tabs.addTab ("FILTER", juce::Colour (0xff0a0a16), &filterTab, false);
