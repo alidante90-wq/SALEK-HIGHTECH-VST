@@ -29,6 +29,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     I("osc1_semi","OSC1 Semi",-12,12,0); I("osc2_semi","OSC2 Semi",-12,12,0); I("osc3_semi","OSC3 Semi",-12,12,0);
     F("osc1_fine","OSC1 Fine",-100,100,0); F("osc2_fine","OSC2 Fine",-100,100,0); F("osc3_fine","OSC3 Fine",-100,100,0);
     F("osc1_detune","OSC1 Detune",-50,50,0); F("osc2_detune","OSC2 Detune",-50,50,0); F("osc3_detune","OSC3 Detune",-50,50,0);
+    I("unison_voices","Unison",1,7,1); F("unison_detune","Uni Detune",0,50,12); F("unison_spread","Uni Spread",0,1,0.7f);
     F("fm_2to1","FM 2to1",0,1,0); F("fm_3to1","FM 3to1",0,1,0); F("fm_3to2","FM 3to2",0,1,0);
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
     F("filter_cutoff","Cutoff",20,20000,8000); F("filter_reso","Reso",0,1,0.25f);
@@ -56,6 +57,11 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("Hi-Tech Lead", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_sustain",0.7f},{"master_drive",0.15f},{"delay_mix",0.2f}});
     add("Dark Psy", {{"osc1_table",0.15f},{"osc2_table",0.55f},{"osc3_octave",-1.f},{"fm_3to1",0.5f},{"rm_2to1",0.2f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"master_drive",0.3f}});
     add("Metallic Hit", {{"osc1_fold",0.7f},{"osc1_drive",0.6f},{"fm_2to1",0.8f},{"filter_cutoff",4000.f},{"filter_mode",2.f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.1f}});
+    add("Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"master_drive",0.2f},{"delay_mix",0.15f}});
+    add("WT Morph Lead", {{"osc1_table",0.55f},{"osc1_warp",0.35f},{"osc1_fold",0.2f},{"unison_voices",3.f},{"unison_detune",10.f},{"fm_2to1",0.25f},{"filter_cutoff",7000.f},{"amp_sustain",0.8f}});
+    add("Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"master_drive",0.4f}});
+    add("Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"delay_mix",0.4f},{"arp_on",1.f},{"arp_rate",4.f}});
+    add("Wide Pad+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_release",3.f},{"delay_mix",0.45f},{"lfo_rate",0.2f},{"lfo_amount",0.25f}});
     add("Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.f},{"delay_mix",0.25f}});
 }
 
@@ -115,6 +121,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
     delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb")); delay.setMix(g("delay_mix"));
+    synthEngine.setUnison((int)g("unison_voices"));
+    synthEngine.setUnisonDetune(g("unison_detune"));
+    synthEngine.setUnisonSpread(g("unison_spread"));
 }
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
@@ -140,10 +149,8 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         for (const auto meta : midi)
         {
             auto m = meta.getMessage();
-            if (m.isNoteOn())
-                stepSequencer.setRootNote(m.getNoteNumber());
-            else if (! m.isNoteOff())
-                routed.addEvent(m, meta.samplePosition);
+            if (m.isNoteOn()) stepSequencer.setRootNote(m.getNoteNumber());
+            else if (! m.isNoteOff()) routed.addEvent(m, meta.samplePosition);
         }
         stepSequencer.process(buffer.getNumSamples(), routed);
         midi.swapWith(routed);
