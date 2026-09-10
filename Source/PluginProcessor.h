@@ -30,6 +30,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
+    juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
     salek::SynthEngine& getSynthEngine() { return synthEngine; }
     salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     void loadFactoryPreset (int index);
@@ -43,6 +44,7 @@ private:
     salek::SimpleDelay delay;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
+    juce::MidiKeyboardState keyboardState;
     struct Preset { juce::String name; std::map<juce::String, float> values; };
     std::vector<Preset> factoryPresets;
     int currentProgram = 0;

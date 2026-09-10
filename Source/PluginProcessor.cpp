@@ -119,7 +119,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
-    juce::ScopedNoDenormals nd; buffer.clear(); applyParamsToEngine();
+    juce::ScopedNoDenormals nd; buffer.clear();
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
+    applyParamsToEngine();
 
     auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
     arpeggiator.setEnabled(g("arp_on") > 0.5f);
