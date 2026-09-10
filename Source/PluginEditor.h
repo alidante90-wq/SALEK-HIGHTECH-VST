@@ -126,12 +126,15 @@ private:
     salek::StepSequencer& sequencer;
 };
 
-class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::ListBoxModel {
+class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                          private juce::ListBoxModel,
+                                          private juce::Timer {
 public:
     explicit SalekHightechAudioProcessorEditor(SalekHightechAudioProcessor&);
     ~SalekHightechAudioProcessorEditor() override;
     void paint(juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
     int getNumRows() override;
     void paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool selected) override;
     void listBoxItemClicked(int row, const juce::MouseEvent&) override;
@@ -153,6 +156,7 @@ private:
     juce::Label presetLabel, title, tagline;
     juce::ListBox presetList { "presets", this };
     std::unique_ptr<StepGridComponent> stepGrid;
+    juce::MidiKeyboardComponent keyboard;
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
