@@ -4,6 +4,7 @@
 #include "Synth/SynthEngine.h"
 #include "FX/SimpleDelay.h"
 #include "Sequencer/Arpeggiator.h"
+#include "Sequencer/StepSequencer.h"
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
@@ -30,6 +31,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
     salek::SynthEngine& getSynthEngine() { return synthEngine; }
+    salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     void loadFactoryPreset (int index);
     juce::StringArray getPresetNames() const;
 private:
@@ -40,6 +42,7 @@ private:
     salek::SynthEngine synthEngine;
     salek::SimpleDelay delay;
     salek::Arpeggiator arpeggiator;
+    salek::StepSequencer stepSequencer;
     struct Preset { juce::String name; std::map<juce::String, float> values; };
     std::vector<Preset> factoryPresets;
     int currentProgram = 0;
