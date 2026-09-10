@@ -52,6 +52,88 @@ public:
     }
 };
 
+class WavetableDisplay : public juce::Component, private juce::Timer {
+public:
+    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
+    void paint (juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced (1.0f);
+        g.setColour (juce::Colour (0xff04040c));
+        g.fillRoundedRectangle (r, 6.0f);
+        juce::ColourGradient edge (juce::Colour (0xff2a1050), r.getX(), r.getY(),
+                                   juce::Colour (0xff050510), r.getX(), r.getBottom(), false);
+        g.setGradientFill (edge);
+        g.drawRoundedRectangle (r, 6.0f, 1.5f);
+        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.25f));
+        g.drawRoundedRectangle (r.reduced (2.0f), 5.0f, 1.0f);
+        auto gval = [&](const char* id, float d) {
+            if (auto* p = apvts.getRawParameterValue (id)) return p->load();
+            return d;
+        };
+        const float table = gval ("osc1_table", 0.0f);
+        const float warp  = gval ("osc1_warp", 0.0f);
+        const float fold  = gval ("osc1_fold", 0.0f);
+        const float drive = gval ("osc1_drive", 0.0f);
+        juce::Path wave;
+        const int N = 128;
+        const float midY = r.getCentreY();
+        const float amp = r.getHeight() * 0.38f;
+        for (int i = 0; i < N; ++i) {
+            float phase = (float) i / (float) N;
+            if (warp > 1e-4f) {
+                float amount = 1.0f + warp * 3.5f;
+                phase = std::pow (phase, amount);
+                if (warp > 0.55f && phase > 0.5f) {
+                    float foldAmt = (warp - 0.55f) * 2.2f;
+                    phase = phase - foldAmt * (phase - 0.5f);
+                }
+                phase = juce::jlimit (0.0f, 0.9999f, phase);
+            }
+            float s = 0.0f;
+            const float morph = table;
+            for (int h = 1; h <= 12; ++h) {
+                float harm = std::sin (phase * juce::MathConstants<float>::twoPi * (float) h);
+                float wSine = (h == 1) ? 1.0f : 0.0f;
+                float wSaw  = 1.0f / (float) h * ((h % 2 == 1) ? 1.0f : 0.7f);
+                float wSqr  = (h % 2 == 1) ? 1.0f / (float) h : 0.0f;
+                float a = wSine * (1.0f - morph) * (1.0f - morph)
+                        + wSaw * 2.0f * morph * (1.0f - morph)
+                        + wSqr * morph * morph;
+                s += harm * a;
+            }
+            s *= 0.45f;
+            if (fold > 1e-4f) {
+                float thresh = 1.0f - fold * 0.85f;
+                float gain = 1.0f + fold * 4.0f;
+                float x = s * gain;
+                for (int k = 0; k < 3; ++k) {
+                    if (x > thresh) x = thresh - (x - thresh);
+                    else if (x < -thresh) x = -thresh - (x + thresh);
+                    else break;
+                }
+                s = x / (1.0f + fold * 1.5f);
+            }
+            if (drive > 1e-4f) {
+                float dg = 1.0f + drive * 6.0f;
+                s = std::tanh (s * dg);
+            }
+            float px = r.getX() + 4.0f + ((float) i / (float) (N - 1)) * (r.getWidth() - 8.0f);
+            float py = midY - s * amp;
+            if (i == 0) wave.startNewSubPath (px, py);
+            else wave.lineTo (px, py);
+        }
+        g.setColour (juce::Colour (0xffff00aa).withAlpha (0.2f));
+        g.strokePath (wave, juce::PathStrokeType (4.0f));
+        g.setColour (juce::Colour (0xff00f0ff));
+        g.strokePath (wave, juce::PathStrokeType (1.6f));
+        g.setColour (juce::Colour (0xff8899aa));
+        g.setFont (juce::FontOptions (10.0f));
+        g.drawText ("WAVETABLE / SHAPE", r.reduced (6).removeFromTop (14), juce::Justification::centredLeft);
+    }
+    void timerCallback() override { repaint(); }
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+};
+
 class ScopeDisplay : public juce::Component, private juce::Timer {
 public:
     ScopeDisplay() { startTimerHz(30); }
@@ -142,6 +224,7 @@ private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;
     ScopeDisplay scope;
+    std::unique_ptr<WavetableDisplay> wtDisplay;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
     std::vector<std::unique_ptr<Knob>> knobs;
