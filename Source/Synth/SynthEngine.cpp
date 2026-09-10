@@ -1,68 +1,82 @@
 #include "SynthEngine.h"
-namespace salek {
-SynthEngine::SynthEngine() {
-    for (int i = 0; i < maxVoices; ++i) synth.addVoice(new SynthVoice());
-    synth.addSound(new SynthSound());
+
+namespace salek
+{
+
+SynthEngine::SynthEngine()
+{
+    for (int i = 0; i < maxVoices; ++i)
+        synth.addVoice (new SynthVoice());
+    synth.addSound (new SynthSound());
 }
-void SynthEngine::prepareToPlay(double sr, int spb) {
-    synth.setCurrentPlaybackSampleRate(sr);
-    forEachVoice([&](SynthVoice& v){ v.prepareToPlay(sr, spb); });
+
+void SynthEngine::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    synth.setCurrentPlaybackSampleRate (sampleRate);
+    forEachVoice ([&] (SynthVoice& v) { v.prepareToPlay (sampleRate, samplesPerBlock); });
 }
-void SynthEngine::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) {
-    synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
+
+void SynthEngine::releaseResources() {}
+
+void SynthEngine::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+{
+    synth.renderNextBlock (buffer, midi, 0, buffer.getNumSamples());
 }
-#define FV(name, call) void SynthEngine::name { forEachVoice([&](SynthVoice& voice){ voice.call; }); }
-FV(setOsc1TablePos(float v), setOsc1TablePos(v))
-FV(setOsc2TablePos(float v), setOsc2TablePos(v))
-FV(setOsc3TablePos(float v), setOsc3TablePos(v))
-FV(setOsc1Level(float v), setOsc1Level(v))
-FV(setOsc2Level(float v), setOsc2Level(v))
-FV(setOsc3Level(float v), setOsc3Level(v))
-FV(setOsc1Octave(int v), setOsc1Octave(v))
-FV(setOsc2Octave(int v), setOsc2Octave(v))
-FV(setOsc3Octave(int v), setOsc3Octave(v))
-FV(setOsc1Semi(int v), setOsc1Semi(v))
-FV(setOsc2Semi(int v), setOsc2Semi(v))
-FV(setOsc3Semi(int v), setOsc3Semi(v))
-FV(setOsc1Fine(float v), setOsc1Fine(v))
-FV(setOsc2Fine(float v), setOsc2Fine(v))
-FV(setOsc3Fine(float v), setOsc3Fine(v))
-FV(setOsc1Detune(float v), setOsc1Detune(v))
-FV(setOsc2Detune(float v), setOsc2Detune(v))
-FV(setOsc3Detune(float v), setOsc3Detune(v))
-FV(setOsc1Warp(float v), setOsc1Warp(v))
-FV(setOsc2Warp(float v), setOsc2Warp(v))
-FV(setOsc3Warp(float v), setOsc3Warp(v))
-FV(setOsc1Fold(float v), setOsc1Fold(v))
-FV(setOsc2Fold(float v), setOsc2Fold(v))
-FV(setOsc3Fold(float v), setOsc3Fold(v))
-FV(setOsc1Drive(float v), setOsc1Drive(v))
-FV(setOsc2Drive(float v), setOsc2Drive(v))
-FV(setOsc3Drive(float v), setOsc3Drive(v))
-FV(setOsc1Phase(float v), setOsc1Phase(v))
-FV(setOsc2Phase(float v), setOsc2Phase(v))
-FV(setOsc3Phase(float v), setOsc3Phase(v))
-FV(setFm2to1(float v), setFm2to1(v))
-FV(setFm3to1(float v), setFm3to1(v))
-FV(setFm3to2(float v), setFm3to2(v))
-FV(setPm2to1(float v), setPm2to1(v))
-FV(setPm3to1(float v), setPm3to1(v))
-FV(setAm2to1(float v), setAm2to1(v))
-FV(setRm2to1(float v), setRm2to1(v))
-FV(setFilterCutoff(float v), setFilterBaseCutoff(v))
-FV(setFilterResonance(float v), setFilterResonance(v))
-FV(setFilterDrive(float v), setFilterDrive(v))
-FV(setFilterMode(int v), setFilterMode(v))
-FV(setFilterEnvAmt(float v), setFilterEnvAmt(v))
-FV(setAmpAttack(float v), setAmpAttack(v))
-FV(setAmpDecay(float v), setAmpDecay(v))
-FV(setAmpSustain(float v), setAmpSustain(v))
-FV(setAmpRelease(float v), setAmpRelease(v))
-FV(setLfoRate(float v), setLfoRate(v))
-FV(setLfoAmount(float v), setLfoAmount(v))
-FV(setLfoWave(int v), setLfoWave(v))
-FV(labRegenerate(), labRegenerate())
-FV(labProcessFrames(float fold, float drive), labProcessFrames(fold, drive))
-FV(labMorph(float t), labMorph(t))
-#undef FV
-}
+
+void SynthEngine::setOsc1TablePos (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1TablePos (v); }); }
+void SynthEngine::setOsc2TablePos (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2TablePos (v); }); }
+void SynthEngine::setOsc3TablePos (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3TablePos (v); }); }
+void SynthEngine::setOsc1Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Level (v); }); }
+void SynthEngine::setOsc2Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Level (v); }); }
+void SynthEngine::setOsc3Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Level (v); }); }
+void SynthEngine::setOsc1Octave (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Octave (v); }); }
+void SynthEngine::setOsc2Octave (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Octave (v); }); }
+void SynthEngine::setOsc3Octave (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Octave (v); }); }
+void SynthEngine::setOsc1Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Semi (v); }); }
+void SynthEngine::setOsc2Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Semi (v); }); }
+void SynthEngine::setOsc3Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Semi (v); }); }
+void SynthEngine::setOsc1Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Fine (v); }); }
+void SynthEngine::setOsc2Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Fine (v); }); }
+void SynthEngine::setOsc3Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Fine (v); }); }
+void SynthEngine::setOsc1Detune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Detune (v); }); }
+void SynthEngine::setOsc2Detune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Detune (v); }); }
+void SynthEngine::setOsc3Detune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Detune (v); }); }
+void SynthEngine::setOsc1Warp (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Warp (v); }); }
+void SynthEngine::setOsc2Warp (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Warp (v); }); }
+void SynthEngine::setOsc3Warp (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Warp (v); }); }
+void SynthEngine::setOsc1Fold (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Fold (v); }); }
+void SynthEngine::setOsc2Fold (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Fold (v); }); }
+void SynthEngine::setOsc3Fold (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Fold (v); }); }
+void SynthEngine::setOsc1Drive (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Drive (v); }); }
+void SynthEngine::setOsc2Drive (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Drive (v); }); }
+void SynthEngine::setOsc3Drive (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Drive (v); }); }
+void SynthEngine::setOsc1Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Phase (v); }); }
+void SynthEngine::setOsc2Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Phase (v); }); }
+void SynthEngine::setOsc3Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Phase (v); }); }
+void SynthEngine::setFm2to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm2to1 (v); }); }
+void SynthEngine::setFm3to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm3to1 (v); }); }
+void SynthEngine::setFm3to2 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm3to2 (v); }); }
+void SynthEngine::setPm2to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setPm2to1 (v); }); }
+void SynthEngine::setPm3to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setPm3to1 (v); }); }
+void SynthEngine::setAm2to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setAm2to1 (v); }); }
+void SynthEngine::setRm2to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setRm2to1 (v); }); }
+void SynthEngine::setFilterCutoff (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterBaseCutoff (v); }); }
+void SynthEngine::setFilterResonance (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterResonance (v); }); }
+void SynthEngine::setFilterDrive (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterDrive (v); }); }
+void SynthEngine::setFilterMode (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterMode (v); }); }
+void SynthEngine::setFilterEnvAmt (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterEnvAmt (v); }); }
+void SynthEngine::setAmpAttack (float v)  { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpAttack (v); }); }
+void SynthEngine::setAmpDecay (float v)   { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpDecay (v); }); }
+void SynthEngine::setAmpSustain (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpSustain (v); }); }
+void SynthEngine::setAmpRelease (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpRelease (v); }); }
+void SynthEngine::setLfoRate (float v)   { forEachVoice ([&] (SynthVoice& voice) { voice.setLfoRate (v); }); }
+void SynthEngine::setLfoAmount (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setLfoAmount (v); }); }
+void SynthEngine::setLfoWave (int v)     { forEachVoice ([&] (SynthVoice& voice) { voice.setLfoWave (v); }); }
+void SynthEngine::labRegenerate() { forEachVoice ([&] (SynthVoice& v) { v.labRegenerate(); }); }
+void SynthEngine::labProcessFrames (float fold, float drive) { forEachVoice ([&] (SynthVoice& v) { v.labProcessFrames (fold, drive); }); }
+void SynthEngine::labMorph (float t) { forEachVoice ([&] (SynthVoice& v) { v.labMorph (t); }); }
+void SynthEngine::setUnison (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnison (v); }); }
+void SynthEngine::setUnisonDetune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonDetune (v); }); }
+void SynthEngine::setUnisonSpread (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonSpread (v); }); }
+
+} // namespace salek
