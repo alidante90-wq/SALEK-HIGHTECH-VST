@@ -1,39 +1,95 @@
 #include "SynthVoice.h"
+
 namespace salek {
-void SynthVoice::updateFrequencies() {
-    if (currentSampleRate <= 0) return;
-    auto noteToHz = [](int note, int oct, int semi, float fine) {
-        float midi = float(note + oct*12 + semi) + fine/100.f;
-        return 440.f * std::pow(2.f, (midi - 69.f)/12.f);
-    };
-    osc1.setFrequency(noteToHz(currentMidiNote, osc1Octave, osc1Semi, osc1Fine));
-    osc2.setFrequency(noteToHz(currentMidiNote, osc2Octave, osc2Semi, osc2Fine));
-    osc3.setFrequency(noteToHz(currentMidiNote, osc3Octave, osc3Semi, osc3Fine));
+
+void SynthVoice::updateFrequencies()
+{
+    osc1.setFrequency (noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine));
+    osc2.setFrequency (noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine));
+    osc3.setFrequency (noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine));
 }
-void SynthVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) {
-    if (!isVoiceActive()) return;
-    auto* left = outputBuffer.getWritePointer(0, startSample);
-    auto* right = outputBuffer.getNumChannels() > 1 ? outputBuffer.getWritePointer(1, startSample) : nullptr;
-    for (int i = 0; i < numSamples; ++i) {
-        if (!adsr.isActive() && !isNoteOn) { clearCurrentNote(); break; }
-        float s3 = osc3.processSample(0.f, 1.f);
-        float s2 = osc2.processSample(s3 * fm3to2 * 0.5f, 1.f);
-        float pm = s2 * (fm2to1 * 2.5f + pm2to1) + s3 * (fm3to1 * 2.5f + pm3to1);
-        float am = am2to1 > 1e-4f ? 1.f + s2 * am2to1 : 1.f;
-        float s1 = osc1.processSample(pm, am);
-        float sample = s1;
-        if (rm2to1 > 1e-4f) sample = s1 * (1.f - rm2to1) + (s1 * s2) * rm2to1;
-        sample += s2 * 0.15f + s3 * 0.12f;
-        float env = adsr.getNextSample();
-        float lfoVal = lfo.process();
-        float modCutoff = baseCutoff * std::pow(2.f, (env * filterEnvAmt + lfoVal) * 3.f - 1.5f);
-        cutoffSmoother.setTarget(modCutoff);
-        filter.setCutoff(cutoffSmoother.getNext());
-        sample = filter.process(sample);
-        sample *= env * currentVelocity * 0.28f;
-        left[i] += sample;
-        if (right) right[i] += sample;
+
+void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
+{
+    if (! isVoiceActive())
+        return;
+
+    auto* left  = outputBuffer.getWritePointer (0, startSample);
+    auto* right = outputBuffer.getNumChannels() > 1
+                    ? outputBuffer.getWritePointer (1, startSample) : nullptr;
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        if (! adsr.isActive() && ! isNoteOn)
+        {
+            clearCurrentNote();
+            break;
+        }
+
+        const float s3 = osc3.processSample (0.0f, 1.0f);
+        const float pmFor2 = s3 * fm3to2 * 0.5f;
+        const float s2 = osc2.processSample (pmFor2, 1.0f);
+
+        const float fmIndex2 = fm2to1 * 2.5f;
+        const float fmIndex3 = fm3to1 * 2.5f;
+        const float pmFrom2  = s2 * (fmIndex2 + pm2to1);
+        const float pmFrom3  = s3 * (fmIndex3 + pm3to1);
+        float am = 1.0f;
+        if (am2to1 > 1.0e-4f)
+            am = 1.0f + (s2 * am2to1);
+
+        const float pmCarrier = pmFrom2 + pmFrom3;
+
+        float sL = 0.0f, sR = 0.0f;
+        const int nUni = juce::jmax (1, unisonVoices);
+        const float invN = 1.0f / std::sqrt ((float) nUni);
+        for (int u = 0; u < nUni; ++u)
+        {
+            float det = 0.0f, pan = 0.5f;
+            if (nUni > 1)
+            {
+                const float t = ((float) u / (float) (nUni - 1)) * 2.0f - 1.0f;
+                det = t * unisonDetune;
+                pan = 0.5f + 0.5f * t * unisonSpread;
+            }
+            uniOsc[u].setFrequency (noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine + det));
+            const float s = uniOsc[u].processSample (pmCarrier, am);
+            sL += s * std::cos (pan * juce::MathConstants<float>::halfPi);
+            sR += s * std::sin (pan * juce::MathConstants<float>::halfPi);
+        }
+        sL *= invN; sR *= invN;
+        (void) osc1.processSample (pmCarrier, am);
+
+        float sampleL = sL, sampleR = sR;
+        if (rm2to1 > 1.0e-4f)
+        {
+            sampleL = sL * (1.0f - rm2to1) + (sL * s2) * rm2to1;
+            sampleR = sR * (1.0f - rm2to1) + (sR * s2) * rm2to1;
+        }
+        sampleL += s2 * 0.15f + s3 * 0.12f;
+        sampleR += s2 * 0.15f + s3 * 0.12f;
+
+        const float env = adsr.getNextSample();
+        const float lfoVal = lfo.process();
+        const float modCutoff = baseCutoff * std::pow (2.0f, (env * filterEnvAmt + lfoVal) * 3.0f - 1.5f);
+        cutoffSmoother.setTarget (modCutoff);
+        filter.setCutoff (cutoffSmoother.getNext());
+        float mid = filter.process (0.5f * (sampleL + sampleR));
+        float side = 0.5f * (sampleL - sampleR);
+        const float g = env * currentVelocity * 0.32f;
+        sampleL = (mid + side) * g;
+        sampleR = (mid - side) * g;
+
+        left[i] += sampleL;
+        if (right != nullptr)
+            right[i] += sampleR;
     }
-    if (!adsr.isActive()) { clearCurrentNote(); isNoteOn = false; }
+
+    if (! adsr.isActive())
+    {
+        clearCurrentNote();
+        isNoteOn = false;
+    }
 }
-}
+
+} // namespace salek
