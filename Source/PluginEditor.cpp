@@ -25,6 +25,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (tagline);
 
     addAndMakeVisible (scope);
+    wtDisplay = std::make_unique<WavetableDisplay> (processor.getAPVTS());
+    addAndMakeVisible (*wtDisplay);
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
 
@@ -210,9 +212,12 @@ void SalekHightechAudioProcessorEditor::resized()
     keyboard.setBounds (a.removeFromBottom (70).reduced (2));
     a.removeFromBottom (6);
     auto header = a.removeFromTop (56);
-    title.setBounds (header.removeFromLeft (380).removeFromTop (32));
-    tagline.setBounds (header.removeFromLeft (420).withTrimmedTop (6).removeFromTop (20));
-    scope.setBounds (header.reduced (4));
+    title.setBounds (header.removeFromLeft (300).removeFromTop (32));
+    tagline.setBounds (header.removeFromLeft (300).withTrimmedTop (6).removeFromTop (20));
+    scope.setBounds (header.removeFromRight (140).reduced (3));
+    if (wtDisplay != nullptr)
+        wtDisplay->setBounds (header.reduced (3));
+
     a.removeFromTop (8);
     tabs.setBounds (a);
 
