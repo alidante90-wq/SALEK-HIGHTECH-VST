@@ -81,11 +81,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         seqTab.addAndMakeVisible (arpOn);
         seqTab.addAndMakeVisible (seqOn);
-        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "arp_on", arpOn));
-        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "seq_on", seqOn));
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+            processor.getAPVTS(), "arp_on", arpOn));
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+            processor.getAPVTS(), "seq_on", seqOn));
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
+        stepGrid = std::make_unique<StepGridComponent> (processor.getStepSequencer());
+        seqTab.addAndMakeVisible (*stepGrid);
     }
 
     tabs.addTab ("PRESETS", juce::Colour (0xff0a0a16), &presetTab, false);
@@ -222,14 +226,45 @@ void SalekHightechAudioProcessorEditor::resized()
         for (auto* o : others) o->setBounds (bottom.removeFromTop (32).reduced (6));
     };
 
-    for (auto* tab : { &oscTab, &filterTab, &modTab, &fxTab, &seqTab })
+    for (auto* tab : { &oscTab, &filterTab, &modTab, &fxTab })
         layoutTab (*tab);
 
-    auto b = presetTab.getLocalBounds().reduced (16);
-    auto top = b.removeFromTop (40);
-    prevPreset.setBounds (top.removeFromLeft (50).reduced (2));
-    nextPreset.setBounds (top.removeFromLeft (50).reduced (2));
-    initBtn.setBounds (top.removeFromLeft (80).reduced (2));
-    presetLabel.setBounds (top.reduced (4));
-    presetList.setBounds (b);
+    {
+        auto bounds = seqTab.getLocalBounds().reduced (16);
+        juce::Array<juce::Component*> knobsArr, labelsArr, others;
+        for (auto* c : seqTab.getChildren())
+        {
+            if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
+            else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
+            else if (c != stepGrid.get()) others.add (c);
+        }
+        const int n = knobsArr.size();
+        const int cols = juce::jmax (1, n);
+        auto top = bounds.removeFromTop (130);
+        if (n > 0)
+        {
+            const int cellW = top.getWidth() / cols;
+            for (int i = 0; i < n; ++i)
+            {
+                auto cell = top.withX (top.getX() + i * cellW).withWidth (cellW).reduced (4);
+                if (i < labelsArr.size()) labelsArr[i]->setBounds (cell.removeFromBottom (16));
+                knobsArr[i]->setBounds (cell);
+            }
+        }
+        auto row = bounds.removeFromTop (36);
+        for (auto* o : others)
+            o->setBounds (row.removeFromLeft (120).reduced (4));
+        if (stepGrid != nullptr)
+            stepGrid->setBounds (bounds.reduced (4));
+    }
+
+    {
+        auto b = presetTab.getLocalBounds().reduced (16);
+        auto top = b.removeFromTop (40);
+        prevPreset.setBounds (top.removeFromLeft (50).reduced (2));
+        nextPreset.setBounds (top.removeFromLeft (50).reduced (2));
+        initBtn.setBounds (top.removeFromLeft (80).reduced (2));
+        presetLabel.setBounds (top.reduced (4));
+        presetList.setBounds (b);
+    }
 }
