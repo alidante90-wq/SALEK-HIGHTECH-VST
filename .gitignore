@@ -1,0 +1,14 @@
+build/
+.cache/
+.vscode/
+.idea/
+*.user
+CMakeUserPresets.json
+JUCE/
+*.o
+*.a
+*.so
+*.exe
+*.vst3
+*.zip
+.DS_Store

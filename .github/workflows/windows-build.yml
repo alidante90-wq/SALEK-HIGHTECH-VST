@@ -1,0 +1,60 @@
+name: Windows VST3 + Standalone
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.4-v3
+
+      - name: Clone JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "SALEK HIGHTECH.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $vst3) { $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1 }
+          $exe = Get-ChildItem -Path build -Recurse -Filter "SALEK HIGHTECH.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1 }
+          if ($vst3) { Copy-Item -Recurse $vst3.FullName "artifact/SALEK HIGHTECH.vst3" }
+          if ($exe) { Copy-Item $exe.FullName "artifact/SALEK HIGHTECH.exe" }
+          Get-ChildItem -Recurse artifact
+          if (-not (Get-ChildItem artifact -ErrorAction SilentlyContinue)) {
+            Get-ChildItem -Path build -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
+            exit 1
+          }
+          Compress-Archive -Path artifact/* -DestinationPath SALEK-HIGHTECH-Windows.zip -Force
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SALEK-HIGHTECH-Windows
+          path: SALEK-HIGHTECH-Windows.zip
+          if-no-files-found: error
