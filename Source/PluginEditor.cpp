@@ -4,75 +4,121 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     : AudioProcessorEditor (&p), processor (p)
 {
     setLookAndFeel (&lnf);
-    setSize (1200, 760);
+    setSize (1180, 720);
     setResizable (true, true);
-    setResizeLimits (1000, 640, 1800, 1100);
+    setResizeLimits (980, 600, 1600, 1000);
 
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
-    title.setFont (juce::FontOptions (44.0f, juce::Font::bold));
+    title.setFont (juce::FontOptions (36.0f, juce::Font::bold));
     title.setColour (juce::Label::textColourId, juce::Colour (0xff00f0ff));
-    title.setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (title);
 
-    tagline.setText ("SYNTHESIS ENGINE  //  HI-TECH  DARKPSY  FM  ACID  ALIEN", juce::dontSendNotification);
+    tagline.setText ("VST3 SYNTH  //  HI-TECH · DARKPSY · FM · ACID · ALIEN", juce::dontSendNotification);
     tagline.setFont (juce::FontOptions (12.0f));
     tagline.setColour (juce::Label::textColourId, juce::Colour (0xffff00aa));
-    tagline.setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (tagline);
 
-    brand.setText ("VST3  |  STANDALONE  |  SALEK SYSTEMS", juce::dontSendNotification);
-    brand.setFont (juce::FontOptions (11.0f));
-    brand.setColour (juce::Label::textColourId, juce::Colour (0xff6666aa));
-    brand.setJustificationType (juce::Justification::centredRight);
-    addAndMakeVisible (brand);
-
     addAndMakeVisible (scope);
+    addAndMakeVisible (tabs);
+    tabs.setOutline (0);
 
     auto C = juce::Colour (0xff00f0ff);
     auto M = juce::Colour (0xffff00aa);
     auto O = juce::Colour (0xffff8800);
     auto G = juce::Colour (0xff66ff99);
+    auto V = juce::Colour (0xffaa66ff);
 
-    setup (osc1L, "osc1_level", "LEVEL 1", C);
-    setup (osc2L, "osc2_level", "LEVEL 2", C);
-    setup (osc3L, "osc3_level", "LEVEL 3", C);
-    setup (osc1T, "osc1_table", "TABLE 1", M);
-    setup (osc2T, "osc2_table", "TABLE 2", M);
-    setup (osc3T, "osc3_table", "TABLE 3", M);
-    setup (osc1W, "osc1_warp",  "WARP 1",  O);
-    setup (osc2W, "osc2_warp",  "WARP 2",  O);
-    setup (osc3W, "osc3_warp",  "WARP 3",  O);
-    setup (osc1F, "osc1_fold",  "FOLD 1",  M);
-    setup (osc2F, "osc2_fold",  "FOLD 2",  M);
-    setup (osc3F, "osc3_fold",  "FOLD 3",  M);
-    setup (osc1D, "osc1_drive", "DRIVE 1", O);
-    setup (osc2D, "osc2_drive", "DRIVE 2", O);
-    setup (osc3D, "osc3_drive", "DRIVE 3", O);
+    tabs.addTab ("OSC", juce::Colour (0xff0a0a16), &oscTab, false);
+    {
+        addKnob (oscTab, "osc1_level", "LVL 1", C); addKnob (oscTab, "osc1_table", "TABLE 1", M);
+        addKnob (oscTab, "osc1_warp", "WARP 1", O); addKnob (oscTab, "osc1_fold", "FOLD 1", M);
+        addKnob (oscTab, "osc1_drive", "DRIVE 1", O); addKnob (oscTab, "osc1_octave", "OCT 1", V);
+        addKnob (oscTab, "osc1_semi", "SEMI 1", V); addKnob (oscTab, "osc1_detune", "DET 1", G);
+        addKnob (oscTab, "osc2_level", "LVL 2", C); addKnob (oscTab, "osc2_table", "TABLE 2", M);
+        addKnob (oscTab, "osc2_warp", "WARP 2", O); addKnob (oscTab, "osc2_fold", "FOLD 2", M);
+        addKnob (oscTab, "osc2_drive", "DRIVE 2", O); addKnob (oscTab, "osc2_octave", "OCT 2", V);
+        addKnob (oscTab, "osc2_semi", "SEMI 2", V); addKnob (oscTab, "osc2_detune", "DET 2", G);
+        addKnob (oscTab, "osc3_level", "LVL 3", C); addKnob (oscTab, "osc3_table", "TABLE 3", M);
+        addKnob (oscTab, "osc3_warp", "WARP 3", O); addKnob (oscTab, "osc3_fold", "FOLD 3", M);
+        addKnob (oscTab, "osc3_drive", "DRIVE 3", O); addKnob (oscTab, "osc3_octave", "OCT 3", V);
+        addKnob (oscTab, "osc3_semi", "SEMI 3", V); addKnob (oscTab, "osc3_detune", "DET 3", G);
+    }
 
-    setup (cut,  "filter_cutoff", "CUTOFF",   C);
-    setup (reso, "filter_reso",   "RESO",     M);
-    setup (fDrv, "filter_drive",  "F DRIVE",  O);
-    setup (fEnv, "filter_env",    "F ENV",    G);
-    setup (lfoR, "lfo_rate",      "LFO RATE", C);
-    setup (lfoA, "lfo_amount",    "LFO AMT",  M);
+    tabs.addTab ("FILTER", juce::Colour (0xff0a0a16), &filterTab, false);
+    {
+        addKnob (filterTab, "filter_cutoff", "CUTOFF", C);
+        addKnob (filterTab, "filter_reso", "RESO", M);
+        addKnob (filterTab, "filter_drive", "F DRIVE", O);
+        addKnob (filterTab, "filter_env", "F ENV", G);
+        addKnob (filterTab, "amp_attack", "ATTACK", C);
+        addKnob (filterTab, "amp_decay", "DECAY", M);
+        addKnob (filterTab, "amp_sustain", "SUSTAIN", O);
+        addKnob (filterTab, "amp_release", "RELEASE", G);
+        addCombo (filterTab, filterMode, "filter_mode", {"LOW PASS","HIGH PASS","BAND PASS","NOTCH"});
+    }
 
-    setup (fm21,   "fm_2to1",      "FM 2>1", O);
-    setup (fm31,   "fm_3to1",      "FM 3>1", O);
-    setup (rm21,   "rm_2to1",      "RM 2>1", M);
-    setup (macro,  "macro1",       "MACRO",  C);
-    setup (delay,  "delay_mix",    "DELAY",  O);
-    setup (master, "master_drive", "MASTER", M);
+    tabs.addTab ("MOD", juce::Colour (0xff0a0a16), &modTab, false);
+    {
+        addKnob (modTab, "fm_2to1", "FM 2>1", O); addKnob (modTab, "fm_3to1", "FM 3>1", O);
+        addKnob (modTab, "fm_3to2", "FM 3>2", O); addKnob (modTab, "pm_2to1", "PM 2>1", M);
+        addKnob (modTab, "rm_2to1", "RM 2>1", M); addKnob (modTab, "am_2to1", "AM 2>1", V);
+        addKnob (modTab, "lfo_rate", "LFO RATE", C); addKnob (modTab, "lfo_amount", "LFO AMT", M);
+        addCombo (modTab, lfoWave, "lfo_wave", {"SINE","TRIANGLE","SAW","SQUARE","S&H"});
+        addKnob (modTab, "macro1", "MACRO 1", C); addKnob (modTab, "macro2", "MACRO 2", M);
+        addKnob (modTab, "macro3", "MACRO 3", O); addKnob (modTab, "macro4", "MACRO 4", G);
+    }
 
-    filterMode.addItemList (juce::StringArray { "LOW PASS", "HIGH PASS", "BAND PASS", "NOTCH" }, 1);
-    addAndMakeVisible (filterMode);
-    filterAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
-        processor.getAPVTS(), "filter_mode", filterMode);
+    tabs.addTab ("FX", juce::Colour (0xff0a0a16), &fxTab, false);
+    {
+        addKnob (fxTab, "delay_mix", "DELAY MIX", O);
+        addKnob (fxTab, "delay_time", "DELAY TIME", C);
+        addKnob (fxTab, "delay_fb", "DELAY FB", M);
+        addKnob (fxTab, "master_drive", "DRIVE", M);
+        addKnob (fxTab, "master_gain", "GAIN", G);
+    }
 
-    lfoWave.addItemList (juce::StringArray { "SINE", "TRIANGLE", "SAW", "SQUARE", "S&H" }, 1);
-    addAndMakeVisible (lfoWave);
-    if (processor.getAPVTS().getParameter ("lfo_wave") != nullptr)
-        lfoAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
-            processor.getAPVTS(), "lfo_wave", lfoWave);
+    tabs.addTab ("SEQ", juce::Colour (0xff0a0a16), &seqTab, false);
+    {
+        seqTab.addAndMakeVisible (arpOn);
+        seqTab.addAndMakeVisible (seqOn);
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "arp_on", arpOn));
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "seq_on", seqOn));
+        addKnob (seqTab, "arp_rate", "ARP RATE", C);
+        addKnob (seqTab, "arp_octaves", "ARP OCT", M);
+        addKnob (seqTab, "seq_rate", "SEQ RATE", O);
+    }
+
+    tabs.addTab ("PRESETS", juce::Colour (0xff0a0a16), &presetTab, false);
+    {
+        presetList.setRowHeight (28);
+        presetTab.addAndMakeVisible (presetList);
+        presetTab.addAndMakeVisible (prevPreset);
+        presetTab.addAndMakeVisible (nextPreset);
+        presetTab.addAndMakeVisible (initBtn);
+        presetTab.addAndMakeVisible (presetLabel);
+        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00f0ff));
+        presetLabel.setFont (juce::FontOptions (16.0f, juce::Font::bold));
+        presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
+        prevPreset.onClick = [this] {
+            int i = processor.getCurrentProgram() - 1;
+            if (i < 0) i = processor.getNumPrograms() - 1;
+            processor.setCurrentProgram (i);
+            presetLabel.setText (processor.getProgramName (i), juce::dontSendNotification);
+            presetList.selectRow (i); presetList.repaint();
+        };
+        nextPreset.onClick = [this] {
+            int i = (processor.getCurrentProgram() + 1) % processor.getNumPrograms();
+            processor.setCurrentProgram (i);
+            presetLabel.setText (processor.getProgramName (i), juce::dontSendNotification);
+            presetList.selectRow (i); presetList.repaint();
+        };
+        initBtn.onClick = [this] {
+            processor.setCurrentProgram (0);
+            presetLabel.setText ("Init", juce::dontSendNotification);
+            presetList.selectRow (0); presetList.repaint();
+        };
+        presetList.selectRow (processor.getCurrentProgram());
+    }
 }
 
 SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
@@ -80,134 +126,110 @@ SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
     setLookAndFeel (nullptr);
 }
 
-void SalekHightechAudioProcessorEditor::setup (Knob& k, const char* id, const char* label, juce::Colour c)
+SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addKnob (
+    juce::Component& parent, const char* id, const char* label, juce::Colour c)
 {
-    k.s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-    k.s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 58, 15);
-    k.s.setColour (juce::Slider::rotarySliderFillColourId, c);
-    addAndMakeVisible (k.s);
-    atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k.s));
-    k.name.setText (label, juce::dontSendNotification);
-    k.name.setJustificationType (juce::Justification::centred);
-    k.name.setFont (juce::FontOptions (10.5f, juce::Font::bold));
-    k.name.setColour (juce::Label::textColourId, c.brighter (0.15f));
-    addAndMakeVisible (k.name);
+    auto k = std::make_unique<Knob>();
+    k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
+    k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
+    parent.addAndMakeVisible (k->s);
+    atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
+    k->name.setText (label, juce::dontSendNotification);
+    k->name.setJustificationType (juce::Justification::centred);
+    k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    k->name.setColour (juce::Label::textColourId, c.brighter (0.15f));
+    parent.addAndMakeVisible (k->name);
+    knobs.push_back (std::move (k));
+    return *knobs.back();
 }
 
-void SalekHightechAudioProcessorEditor::paintPanel (juce::Graphics& g, juce::Rectangle<float> r,
-                                                    const juce::String& header, juce::Colour accent)
+void SalekHightechAudioProcessorEditor::addCombo (juce::Component& parent, juce::ComboBox& box,
+                                                   const char* id, juce::StringArray items)
 {
-    g.setColour (juce::Colour (0xff080812));
-    g.fillRoundedRectangle (r, 8.0f);
-    g.setColour (accent.withAlpha (0.7f));
-    g.fillRoundedRectangle (r.getX() + 8, r.getY() + 2, r.getWidth() - 16, 2.5f, 1.0f);
-    g.setColour (accent.withAlpha (0.25f));
-    g.drawRoundedRectangle (r, 8.0f, 1.2f);
-    g.setColour (accent.withAlpha (0.85f));
-    g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-    g.drawText (header, r.getX() + 12, r.getY() + 8, r.getWidth() - 24, 16, juce::Justification::centredLeft);
+    box.addItemList (items, 1);
+    parent.addAndMakeVisible (box);
+    if (processor.getAPVTS().getParameter (id) != nullptr)
+        comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+            processor.getAPVTS(), id, box));
+}
+
+int SalekHightechAudioProcessorEditor::getNumRows() { return processor.getNumPrograms(); }
+
+void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool selected)
+{
+    if (selected) g.fillAll (juce::Colour (0xff3a0066));
+    g.setColour (selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffc8c8e0));
+    g.setFont (juce::FontOptions (14.0f));
+    g.drawText (processor.getProgramName (row), 12, 0, width - 20, height, juce::Justification::centredLeft);
+}
+
+void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce::MouseEvent&)
+{
+    processor.setCurrentProgram (row);
+    presetLabel.setText (processor.getProgramName (row), juce::dontSendNotification);
 }
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    juce::ColourGradient bg (juce::Colour (0xff030308), 0, 0,
-                             juce::Colour (0xff0a0518), 0, (float) getHeight(), false);
+    juce::ColourGradient bg (juce::Colour (0xff030308), 0, 0, juce::Colour (0xff0a0518), 0, (float) getHeight(), false);
     g.setGradientFill (bg);
     g.fillAll();
-
-    g.setColour (juce::Colours::white.withAlpha (0.015f));
-    for (int y = 0; y < getHeight(); y += 3)
-        g.drawHorizontalLine (y, 0.0f, (float) getWidth());
-
-    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.5f));
+    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.45f));
     g.drawRect (getLocalBounds(), 2);
     g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.2f));
     g.drawRect (getLocalBounds().reduced (3), 1);
-
-    g.setColour (juce::Colour (0xff0a0a16).withAlpha (0.9f));
-    g.fillRect (0, 0, getWidth(), 78);
+    g.setColour (juce::Colour (0xff0a0a16));
+    g.fillRect (0, 0, getWidth(), 70);
     g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.35f));
-    g.fillRect (0, 76, getWidth(), 2);
-
-    auto body = getLocalBounds().toFloat().reduced (12.0f);
-    body.removeFromTop (82.0f);
-
-    auto topH = body.getHeight() * 0.58f;
-    auto top = body.removeFromTop (topH);
-    auto bot = body;
-
-    auto oscR = top.removeFromLeft (top.getWidth() * 0.58f).reduced (4.0f);
-    auto right = top.reduced (4.0f);
-    auto scopeR = right.removeFromTop (right.getHeight() * 0.38f);
-    auto filtR = right;
-
-    paintPanel (g, oscR, "OSCILLATORS  //  WAVETABLE ENGINE", juce::Colour (0xff00f0ff));
-    paintPanel (g, scopeR, "SIGNAL SCOPE", juce::Colour (0xffff00aa));
-    paintPanel (g, filtR, "FILTER  //  LFO", juce::Colour (0xffaa66ff));
-    paintPanel (g, bot.removeFromLeft (bot.getWidth() * 0.5f).reduced (4.0f),
-                "CROSS-MOD  //  FM  RM", juce::Colour (0xffff8800));
-    paintPanel (g, bot.reduced (4.0f), "OUTPUT  //  MACRO  DELAY  DRIVE", juce::Colour (0xff66ff99));
+    g.fillRect (0, 68, getWidth(), 2);
 }
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    auto a = getLocalBounds().reduced (14);
-    auto header = a.removeFromTop (64);
-    title.setBounds (header.removeFromLeft (420).removeFromTop (36));
-    tagline.setBounds (header.removeFromLeft (480).withTrimmedTop (8).removeFromTop (22));
-    brand.setBounds (header.withTrimmedTop (12));
+    auto a = getLocalBounds().reduced (10);
+    auto header = a.removeFromTop (56);
+    title.setBounds (header.removeFromLeft (380).removeFromTop (32));
+    tagline.setBounds (header.removeFromLeft (420).withTrimmedTop (6).removeFromTop (20));
+    scope.setBounds (header.reduced (4));
+    a.removeFromTop (8);
+    tabs.setBounds (a);
 
-    a.removeFromTop (18);
-    auto top = a.removeFromTop ((int) (a.getHeight() * 0.58f));
-    auto bot = a;
-
-    auto osc = top.removeFromLeft ((int) (top.getWidth() * 0.58f)).reduced (10);
-    auto right = top.reduced (10);
-    auto scopeArea = right.removeFromTop ((int) (right.getHeight() * 0.38f));
-    auto filt = right;
-
-    osc.removeFromTop (28);
-    scopeArea.removeFromTop (28);
-    scope.setBounds (scopeArea.reduced (6));
-    filt.removeFromTop (28);
-
-    auto place = [] (juce::Rectangle<int>& row, Knob& k, int w)
+    auto layoutTab = [] (juce::Component& tab)
     {
-        auto cell = row.removeFromLeft (w);
-        k.name.setBounds (cell.removeFromBottom (15));
-        k.s.setBounds (cell.reduced (1));
+        auto bounds = tab.getLocalBounds().reduced (16);
+        juce::Array<juce::Component*> knobsArr, labelsArr, others;
+        for (auto* c : tab.getChildren())
+        {
+            if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
+            else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
+            else others.add (c);
+        }
+        const int n = knobsArr.size();
+        if (n == 0) { for (auto* o : others) o->setBounds (bounds.removeFromTop (36).reduced (4)); return; }
+        const int cols = juce::jmin (8, juce::jmax (4, n));
+        const int rows = (n + cols - 1) / cols;
+        const int cellW = bounds.getWidth() / cols;
+        const int cellH = juce::jmin (120, bounds.getHeight() / juce::jmax (1, rows));
+        for (int i = 0; i < n; ++i)
+        {
+            int col = i % cols, row = i / cols;
+            auto cell = juce::Rectangle<int> (bounds.getX() + col * cellW, bounds.getY() + row * cellH, cellW, cellH).reduced (4);
+            if (i < labelsArr.size()) labelsArr[i]->setBounds (cell.removeFromBottom (16));
+            knobsArr[i]->setBounds (cell);
+        }
+        auto bottom = bounds.withTrimmedTop (rows * cellH);
+        for (auto* o : others) o->setBounds (bottom.removeFromTop (32).reduced (6));
     };
 
-    auto r1 = osc.removeFromTop (osc.getHeight() / 3);
-    int w = r1.getWidth() / 6;
-    for (auto* k : { &osc1L, &osc2L, &osc3L, &osc1T, &osc2T, &osc3T }) place (r1, *k, w);
+    for (auto* tab : { &oscTab, &filterTab, &modTab, &fxTab, &seqTab })
+        layoutTab (*tab);
 
-    auto r2 = osc.removeFromTop (osc.getHeight() / 2);
-    w = r2.getWidth() / 6;
-    for (auto* k : { &osc1W, &osc2W, &osc3W, &osc1F, &osc2F, &osc3F }) place (r2, *k, w);
-
-    auto r3 = osc;
-    w = r3.getWidth() / 3;
-    for (auto* k : { &osc1D, &osc2D, &osc3D }) place (r3, *k, w);
-
-    auto fr1 = filt.removeFromTop ((int) (filt.getHeight() * 0.5f));
-    w = fr1.getWidth() / 4;
-    for (auto* k : { &cut, &reso, &fDrv, &fEnv }) place (fr1, *k, w);
-
-    auto fr2 = filt.removeFromTop ((int) (filt.getHeight() * 0.55f));
-    w = fr2.getWidth() / 2;
-    for (auto* k : { &lfoR, &lfoA }) place (fr2, *k, w);
-
-    auto combos = filt;
-    filterMode.setBounds (combos.removeFromLeft (combos.getWidth() / 2).reduced (4));
-    lfoWave.setBounds (combos.reduced (4));
-
-    auto mod = bot.removeFromLeft (bot.getWidth() / 2).reduced (10);
-    auto fx  = bot.reduced (10);
-    mod.removeFromTop (28);
-    fx.removeFromTop (28);
-    w = mod.getWidth() / 3;
-    for (auto* k : { &fm21, &fm31, &rm21 }) place (mod, *k, w);
-    w = fx.getWidth() / 3;
-    for (auto* k : { &macro, &delay, &master }) place (fx, *k, w);
+    auto b = presetTab.getLocalBounds().reduced (16);
+    auto top = b.removeFromTop (40);
+    prevPreset.setBounds (top.removeFromLeft (50).reduced (2));
+    nextPreset.setBounds (top.removeFromLeft (50).reduced (2));
+    initBtn.setBounds (top.removeFromLeft (80).reduced (2));
+    presetLabel.setBounds (top.reduced (4));
+    presetList.setBounds (b);
 }
