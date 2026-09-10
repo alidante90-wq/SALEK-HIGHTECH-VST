@@ -85,6 +85,7 @@ const juce::String SalekHightechAudioProcessor::getProgramName(int index)
 void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
 {
     synthEngine.prepareToPlay(sr, spb); delay.prepare(sr, spb); arpeggiator.prepare(sr);
+    stepSequencer.prepare(sr); stepSequencer.initDefaultPattern();
 }
 bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
@@ -126,7 +127,26 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     arpeggiator.setOctaves((int) g("arp_octaves"));
 
     juce::MidiBuffer routed;
-    if (g("arp_on") > 0.5f)
+    const bool seqOn = g("seq_on") > 0.5f;
+    const bool arpOn = g("arp_on") > 0.5f;
+
+    stepSequencer.setEnabled(seqOn);
+    stepSequencer.setRateDivisor((int) g("seq_rate"));
+
+    if (seqOn)
+    {
+        for (const auto meta : midi)
+        {
+            auto m = meta.getMessage();
+            if (m.isNoteOn())
+                stepSequencer.setRootNote(m.getNoteNumber());
+            else if (! m.isNoteOff())
+                routed.addEvent(m, meta.samplePosition);
+        }
+        stepSequencer.process(buffer.getNumSamples(), routed);
+        midi.swapWith(routed);
+    }
+    else if (arpOn)
     {
         for (const auto meta : midi)
         {
