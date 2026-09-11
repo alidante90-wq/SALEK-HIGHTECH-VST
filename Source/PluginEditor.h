@@ -22,29 +22,35 @@ public:
     }
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
         float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override {
-        auto bounds = juce::Rectangle<float>((float)x,(float)y,(float)width,(float)height).reduced(4.f);
-        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.48f;
+        auto bounds = juce::Rectangle<float>((float)x,(float)y,(float)width,(float)height).reduced(3.f);
+        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.46f;
         auto cx = bounds.getCentreX(), cy = bounds.getCentreY();
         auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
-        g.setColour(juce::Colour(0xff1a1a22));
+        g.setColour(juce::Colours::black.withAlpha(0.4f));
+        g.fillEllipse(cx-radius+2, cy-radius+3, radius*2, radius*2);
+        juce::ColourGradient body(juce::Colour(0xff2a2a36), cx, cy-radius, juce::Colour(0xff0e0e14), cx, cy+radius, false);
+        g.setGradientFill(body);
         g.fillEllipse(cx-radius, cy-radius, radius*2, radius*2);
-        g.setColour(juce::Colour(0xff2a2a35));
+        g.setColour(juce::Colour(0xff3a3a48));
         g.drawEllipse(cx-radius, cy-radius, radius*2, radius*2, 1.5f);
         juce::Path track;
         track.addCentredArc(cx, cy, radius*0.78f, radius*0.78f, 0, rotaryStartAngle, rotaryEndAngle, true);
-        g.setColour(juce::Colour(0xff2a2a38));
-        g.strokePath(track, juce::PathStrokeType(3.0f));
+        g.setColour(juce::Colour(0xff252530));
+        g.strokePath(track, juce::PathStrokeType(3.2f));
         juce::Path arc;
         arc.addCentredArc(cx, cy, radius*0.78f, radius*0.78f, 0, rotaryStartAngle, angle, true);
+        g.setColour(fill.withAlpha(0.35f));
+        g.strokePath(arc, juce::PathStrokeType(5.f));
         g.setColour(fill);
-        g.strokePath(arc, juce::PathStrokeType(2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.strokePath(arc, juce::PathStrokeType(2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         juce::Path needle;
-        needle.addRoundedRectangle(-1.2f, -radius*0.65f, 2.4f, radius*0.4f, 1.f);
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
+        needle.addRoundedRectangle(-1.5f, -radius*0.68f, 3.f, radius*0.42f, 1.2f);
+        g.setColour(juce::Colours::white.withAlpha(0.95f));
         g.fillPath(needle, juce::AffineTransform::rotation(angle).translated(cx, cy));
-        g.setColour(fill.brighter(0.2f));
-        g.fillEllipse(cx-3.5f, cy-3.5f, 7.f, 7.f);
+        juce::ColourGradient cap(fill.brighter(0.4f), cx, cy-4, fill.darker(0.3f), cx, cy+4, false);
+        g.setGradientFill(cap);
+        g.fillEllipse(cx-4.5f, cy-4.5f, 9.f, 9.f);
     }
 };
 
@@ -57,6 +63,9 @@ public:
         g.fillRoundedRectangle (r, 6.0f);
         g.setColour (juce::Colour (0xff2a2a38));
         g.drawRoundedRectangle (r, 6.0f, 1.0f);
+        g.setColour (juce::Colour (0xff666680));
+        g.setFont (juce::FontOptions (9.0f));
+        g.drawText ("WAVETABLE", r.getX()+6, r.getY()+2, 80, 12, juce::Justification::centredLeft);
         auto gval = [&](const char* id, float d) {
             if (auto* p = apvts.getRawParameterValue (id)) return p->load();
             return d;
@@ -67,8 +76,8 @@ public:
         const float drive = gval ("osc1_drive", 0.0f);
         juce::Path wave;
         const int N = 96;
-        const float midY = r.getCentreY();
-        const float amp = r.getHeight() * 0.36f;
+        const float midY = r.getCentreY() + 4.0f;
+        const float amp = r.getHeight() * 0.32f;
         for (int i = 0; i < N; ++i) {
             float phase = (float) i / (float) N;
             if (warp > 1e-4f) {
@@ -101,7 +110,7 @@ public:
             if (i == 0) wave.startNewSubPath (px, py); else wave.lineTo (px, py);
         }
         g.setColour (juce::Colour (0xff4fc3f7));
-        g.strokePath (wave, juce::PathStrokeType (1.5f));
+        g.strokePath (wave, juce::PathStrokeType (1.6f));
     }
     void timerCallback() override { repaint(); }
 private:
@@ -169,6 +178,102 @@ private:
     salek::StepSequencer& sequencer;
 };
 
+class AdsrDisplay : public juce::Component, private juce::Timer {
+public:
+    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (20); }
+    void paint (juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced (2.0f);
+        g.setColour (juce::Colour (0xff0c0c14));
+        g.fillRoundedRectangle (r, 8.0f);
+        g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.4f));
+        g.drawRoundedRectangle (r, 8.0f, 1.0f);
+        g.setColour (juce::Colour (0xff8888a0));
+        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.drawText ("ENVELOPE", r.removeFromTop (16.0f).reduced (6, 0), juce::Justification::centredLeft);
+        auto gval = [&](const char* id, float d) {
+            if (auto* p = apvts.getRawParameterValue (id)) return p->load();
+            return d;
+        };
+        float a = juce::jmax (0.001f, gval ("amp_attack", 0.01f));
+        float d = juce::jmax (0.001f, gval ("amp_decay", 0.15f));
+        float s = juce::jlimit (0.0f, 1.0f, gval ("amp_sustain", 0.75f));
+        float rel = juce::jmax (0.001f, gval ("amp_release", 0.25f));
+        float total = a + d + 0.4f + rel;
+        float xa = a / total, xd = d / total, xs = 0.4f / total;
+        auto plot = r.reduced (8.0f, 6.0f);
+        juce::Path curve;
+        float x0 = plot.getX(), y0 = plot.getBottom(), w = plot.getWidth(), h = plot.getHeight();
+        curve.startNewSubPath (x0, y0);
+        curve.lineTo (x0 + xa * w, plot.getY());
+        curve.lineTo (x0 + (xa + xd) * w, plot.getY() + (1.0f - s) * h);
+        curve.lineTo (x0 + (xa + xd + xs) * w, plot.getY() + (1.0f - s) * h);
+        curve.lineTo (x0 + w, y0);
+        juce::Path fill = curve;
+        fill.lineTo (x0 + w, y0);
+        fill.closeSubPath();
+        g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.15f));
+        g.fillPath (fill);
+        g.setColour (juce::Colour (0xff4fc3f7));
+        g.strokePath (curve, juce::PathStrokeType (2.0f));
+        g.setColour (juce::Colour (0xffffab40).withAlpha (0.6f));
+        g.fillEllipse (x0 + xa * w - 3, plot.getY() - 3, 6, 6);
+    }
+    void timerCallback() override { repaint(); }
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+};
+
+class FilterCurveDisplay : public juce::Component, private juce::Timer {
+public:
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (20); }
+    void paint (juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced (2.0f);
+        g.setColour (juce::Colour (0xff0c0c14));
+        g.fillRoundedRectangle (r, 8.0f);
+        g.setColour (juce::Colour (0xffce93d8).withAlpha (0.4f));
+        g.drawRoundedRectangle (r, 8.0f, 1.0f);
+        g.setColour (juce::Colour (0xff8888a0));
+        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.drawText ("FILTER RESPONSE", r.removeFromTop (16.0f).reduced (6, 0), juce::Justification::centredLeft);
+        auto gval = [&](const char* id, float d) {
+            if (auto* p = apvts.getRawParameterValue (id)) return p->load();
+            return d;
+        };
+        float cut = gval ("filter_cutoff", 8000.f);
+        float res = gval ("filter_reso", 0.25f);
+        int mode = (int) gval ("filter_mode", 0.f);
+        auto plot = r.reduced (8.0f, 6.0f);
+        juce::Path curve;
+        const int N = 80;
+        for (int i = 0; i < N; ++i) {
+            float t = (float) i / (float) (N - 1);
+            float freq = 20.0f * std::pow (1000.0f, t);
+            float ratio = freq / juce::jmax (20.0f, cut);
+            float mag = 1.0f;
+            if (mode == 0) mag = 1.0f / std::sqrt (1.0f + std::pow (ratio, 4.0f));
+            else if (mode == 1) mag = 1.0f / std::sqrt (1.0f + std::pow (1.0f / juce::jmax (0.01f, ratio), 4.0f));
+            else if (mode == 2) mag = 1.0f / std::sqrt (1.0f + std::pow ((ratio - 1.0f / ratio) * 2.0f, 2.0f));
+            else mag = std::abs ((ratio * ratio - 1.0f) / (ratio * ratio + 1.0f + 0.001f));
+            float peak = 1.0f + res * 2.5f * std::exp (-std::pow ((std::log (juce::jmax (0.01f, ratio))) * 3.0f, 2.0f));
+            mag = juce::jlimit (0.0f, 1.2f, mag * peak) / 1.2f;
+            float px = plot.getX() + t * plot.getWidth();
+            float py = plot.getBottom() - mag * plot.getHeight();
+            if (i == 0) curve.startNewSubPath (px, py); else curve.lineTo (px, py);
+        }
+        juce::Path fill = curve;
+        fill.lineTo (plot.getRight(), plot.getBottom());
+        fill.lineTo (plot.getX(), plot.getBottom());
+        fill.closeSubPath();
+        g.setColour (juce::Colour (0xffce93d8).withAlpha (0.2f));
+        g.fillPath (fill);
+        g.setColour (juce::Colour (0xffce93d8));
+        g.strokePath (curve, juce::PathStrokeType (2.0f));
+    }
+    void timerCallback() override { repaint(); }
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+};
+
 class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor,
                                           private juce::ListBoxModel,
                                           private juce::Timer {
@@ -186,6 +291,8 @@ private:
     SalekLookAndFeel lnf;
     ScopeDisplay scope;
     std::unique_ptr<WavetableDisplay> wtDisplay;
+    std::unique_ptr<AdsrDisplay> adsrDisplay;
+    std::unique_ptr<FilterCurveDisplay> filterDisplay;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
     std::vector<std::unique_ptr<Knob>> knobs;
