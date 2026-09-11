@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "UI/ModMatrixPanel.h"
 
 class SalekLookAndFeel : public juce::LookAndFeel_V4 {
 public:
@@ -210,6 +211,7 @@ private:
     std::unique_ptr<AdsrDisplay> adsrDisplay;
     std::unique_ptr<FilterCurveDisplay> filterDisplay;
     std::unique_ptr<LfoDisplay> lfoDisplay;
+    std::unique_ptr<ModMatrixPanel> matrixPanel;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
     std::vector<std::unique_ptr<Knob>> knobs;
@@ -228,6 +230,7 @@ private:
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
+    juce::Image logoImg, heroImg;
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
