@@ -3,6 +3,8 @@
 #include <map>
 #include "Synth/SynthEngine.h"
 #include "FX/SimpleDelay.h"
+#include "FX/SimpleChorus.h"
+#include "FX/SimpleReverb.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 
@@ -21,7 +23,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 2.0; }
+    double getTailLengthSeconds() const override { return 4.0; }
     int getNumPrograms() override { return (int) factoryPresets.size(); }
     int getCurrentProgram() override { return currentProgram; }
     void setCurrentProgram (int index) override;
@@ -42,6 +44,8 @@ private:
     juce::AudioProcessorValueTreeState apvts;
     salek::SynthEngine synthEngine;
     salek::SimpleDelay delay;
+    salek::SimpleChorus chorus;
+    salek::SimpleReverb reverb;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     juce::MidiKeyboardState keyboardState;
