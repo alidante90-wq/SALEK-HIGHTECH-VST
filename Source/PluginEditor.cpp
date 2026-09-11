@@ -9,12 +9,12 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     startTimerHz (8);
     setLookAndFeel (&lnf);
-    setSize (1180, 800);
+    setSize (1100, 720);
     setResizable (true, true);
-    setResizeLimits (980, 700, 1600, 1100);
+    setResizeLimits (960, 640, 1600, 1100);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
     addAndMakeVisible (title);
-    tagline.setText ("NEBULA", juce::dontSendNotification);
+    tagline.setText ("WT", juce::dontSendNotification);
     addAndMakeVisible (tagline);
     addAndMakeVisible (scope);
     wtDisplay = std::make_unique<WavetableDisplay> (processor.getAPVTS());
@@ -22,18 +22,18 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
 
-    auto C = juce::Colour (0xff00d4ff);
-    auto M = juce::Colour (0xffc77dff);
-    auto O = juce::Colour (0xffff8800);
-    auto G = juce::Colour (0xff66ff99);
-    auto V = juce::Colour (0xffaa66ff);
+    auto C = juce::Colour (0xff4fc3f7);
+    auto M = juce::Colour (0xff81d4fa);
+    auto O = juce::Colour (0xffffab40);
+    auto G = juce::Colour (0xffa5d6a7);
+    auto V = juce::Colour (0xffce93d8);
 
-    tabs.addTab ("OSC", juce::Colour (0xff0a0a16), &oscTab, false);
+    tabs.addTab ("OSC", juce::Colour (0xff121218), &oscTab, false);
     {
-        addKnob (oscTab, "osc1_level", "LVL 1", C); addKnob (oscTab, "osc1_table", "TABLE 1", M);
-        addKnob (oscTab, "osc1_warp", "WARP 1", O); addKnob (oscTab, "osc1_fold", "FOLD 1", M);
-        addKnob (oscTab, "osc1_drive", "DRIVE 1", O); addKnob (oscTab, "osc1_octave", "OCT 1", V);
-        addKnob (oscTab, "osc1_semi", "SEMI 1", V); addKnob (oscTab, "osc1_detune", "DET 1", G);
+        addKnob (oscTab, "osc1_level", "LVL 1", C); addKnob (oscTab, "osc1_table", "TABLE", M);
+        addKnob (oscTab, "osc1_warp", "WARP", O); addKnob (oscTab, "osc1_fold", "FOLD", M);
+        addKnob (oscTab, "osc1_drive", "DRIVE", O); addKnob (oscTab, "osc1_octave", "OCT", V);
+        addKnob (oscTab, "osc1_semi", "SEMI", V); addKnob (oscTab, "osc1_detune", "DET", G);
         addKnob (oscTab, "osc2_level", "LVL 2", C); addKnob (oscTab, "osc2_table", "TABLE 2", M);
         addKnob (oscTab, "osc2_warp", "WARP 2", O); addKnob (oscTab, "osc2_fold", "FOLD 2", M);
         addKnob (oscTab, "osc2_drive", "DRIVE 2", O); addKnob (oscTab, "osc2_octave", "OCT 2", V);
@@ -46,19 +46,22 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (oscTab, "unison_detune", "U DET", M);
         addKnob (oscTab, "unison_spread", "SPREAD", O);
     }
-    tabs.addTab ("FILTER", juce::Colour (0xff0a0a16), &filterTab, false);
+    tabs.addTab ("FILTER", juce::Colour (0xff121218), &filterTab, false);
     {
         addKnob (filterTab, "filter_cutoff", "CUTOFF", C);
         addKnob (filterTab, "filter_reso", "RESO", M);
-        addKnob (filterTab, "filter_drive", "F DRIVE", O);
-        addKnob (filterTab, "filter_env", "F ENV", G);
-        addKnob (filterTab, "amp_attack", "ATTACK", C);
-        addKnob (filterTab, "amp_decay", "DECAY", M);
-        addKnob (filterTab, "amp_sustain", "SUSTAIN", O);
-        addKnob (filterTab, "amp_release", "RELEASE", G);
+        addKnob (filterTab, "filter_drive", "DRIVE", O);
+        addKnob (filterTab, "filter_env", "ENV AMT", G);
         addCombo (filterTab, filterMode, "filter_mode", {"LOW PASS","HIGH PASS","BAND PASS","NOTCH"});
     }
-    tabs.addTab ("MOD", juce::Colour (0xff0a0a16), &modTab, false);
+    tabs.addTab ("ENV", juce::Colour (0xff121218), &envTab, false);
+    {
+        addKnob (envTab, "amp_attack", "ATTACK", C);
+        addKnob (envTab, "amp_decay", "DECAY", M);
+        addKnob (envTab, "amp_sustain", "SUSTAIN", O);
+        addKnob (envTab, "amp_release", "RELEASE", G);
+    }
+    tabs.addTab ("MOD", juce::Colour (0xff121218), &modTab, false);
     {
         addKnob (modTab, "fm_2to1", "FM 2>1", O); addKnob (modTab, "fm_3to1", "FM 3>1", O);
         addKnob (modTab, "fm_3to2", "FM 3>2", O); addKnob (modTab, "pm_2to1", "PM 2>1", M);
@@ -68,7 +71,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (modTab, "macro1", "MACRO 1", C); addKnob (modTab, "macro2", "MACRO 2", M);
         addKnob (modTab, "macro3", "MACRO 3", O); addKnob (modTab, "macro4", "MACRO 4", G);
     }
-    tabs.addTab ("FX", juce::Colour (0xff0a0a16), &fxTab, false);
+    tabs.addTab ("FX", juce::Colour (0xff121218), &fxTab, false);
     {
         addKnob (fxTab, "chorus_mix", "CHORUS", O);
         addKnob (fxTab, "chorus_rate", "C RATE", C);
@@ -82,7 +85,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (fxTab, "master_drive", "DRIVE", M);
         addKnob (fxTab, "master_gain", "GAIN", G);
     }
-    tabs.addTab ("SEQ", juce::Colour (0xff0a0a16), &seqTab, false);
+    tabs.addTab ("ARP", juce::Colour (0xff121218), &seqTab, false);
     {
         seqTab.addAndMakeVisible (arpOn);
         seqTab.addAndMakeVisible (seqOn);
@@ -94,7 +97,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         stepGrid = std::make_unique<StepGridComponent> (processor.getStepSequencer());
         seqTab.addAndMakeVisible (*stepGrid);
     }
-    tabs.addTab ("PRESETS", juce::Colour (0xff0a0a16), &presetTab, false);
+    tabs.addTab ("PRESET", juce::Colour (0xff121218), &presetTab, false);
     {
         presetList.setRowHeight (28);
         presetTab.addAndMakeVisible (presetList);
@@ -102,7 +105,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         presetTab.addAndMakeVisible (nextPreset);
         presetTab.addAndMakeVisible (initBtn);
         presetTab.addAndMakeVisible (presetLabel);
-        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00d4ff));
+        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff4fc3f7));
         presetLabel.setFont (juce::FontOptions (16.0f, juce::Font::bold));
         presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
         prevPreset.onClick = [this] {
@@ -145,7 +148,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->name.setText (label, juce::dontSendNotification);
     k->name.setJustificationType (juce::Justification::centred);
     k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-    k->name.setColour (juce::Label::textColourId, c.brighter (0.15f));
+    k->name.setColour (juce::Label::textColourId, juce::Colour (0xffa0a0b0));
     parent.addAndMakeVisible (k->name);
     knobs.push_back (std::move (k));
     return *knobs.back();
@@ -165,8 +168,8 @@ int SalekHightechAudioProcessorEditor::getNumRows() { return processor.getNumPro
 
 void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool selected)
 {
-    if (selected) g.fillAll (juce::Colour (0xff3a0066));
-    g.setColour (selected ? juce::Colour (0xff00d4ff) : juce::Colour (0xffc8c8e0));
+    if (selected) g.fillAll (juce::Colour (0xff1e3a50));
+    g.setColour (selected ? juce::Colour (0xff4fc3f7) : juce::Colour (0xffc0c0d0));
     g.setFont (juce::FontOptions (14.0f));
     g.drawText (processor.getProgramName (row), 12, 0, width - 20, height, juce::Justification::centredLeft);
 }
@@ -179,33 +182,18 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour (0xff02020a));
-    auto outer = getLocalBounds().toFloat().reduced (4.0f);
-    juce::ColourGradient frame (juce::Colour (0xff0a1830), outer.getX(), outer.getY(),
-                                juce::Colour (0xff120828), outer.getRight(), outer.getBottom(), false);
-    g.setGradientFill (frame);
-    g.fillRoundedRectangle (outer, 22.0f);
-    g.setColour (juce::Colour (0xff00d4ff).withAlpha (0.45f));
-    g.drawRoundedRectangle (outer, 22.0f, 2.0f);
-    g.setColour (juce::Colour (0xff7b2cbf).withAlpha (0.25f));
-    g.drawRoundedRectangle (outer.reduced (3.0f), 20.0f, 1.2f);
-    auto inner = outer.reduced (10.0f);
-    g.setColour (juce::Colour (0xff060614).withAlpha (0.92f));
-    g.fillRoundedRectangle (inner, 16.0f);
-    auto head = juce::Rectangle<float> (inner.getX() + 8, inner.getY() + 6, inner.getWidth() - 16, 50);
-    juce::ColourGradient hg (juce::Colour (0xff0c1a32), head.getX(), head.getY(),
-                             juce::Colour (0xff080818), head.getX(), head.getBottom(), false);
-    g.setGradientFill (hg);
-    g.fillRoundedRectangle (head, 12.0f);
-    g.setColour (juce::Colour (0xff00d4ff).withAlpha (0.3f));
-    g.drawRoundedRectangle (head, 12.0f, 1.0f);
-    g.setColour (juce::Colour (0xff00e8ff));
-    g.setFont (juce::FontOptions (26.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", head.reduced (14, 6).removeFromLeft (320), juce::Justification::centredLeft);
-    g.setColour (juce::Colour (0xffc77dff));
+    g.fillAll (juce::Colour (0xff0d0d10));
+    juce::ColourGradient top (juce::Colour (0xff1a1a22), 0, 0, juce::Colour (0xff0d0d10), 0, 64.0f, false);
+    g.setGradientFill (top);
+    g.fillRect (0.0f, 0.0f, (float) getWidth(), 64.0f);
+    g.setColour (juce::Colour (0xff2a2a35));
+    g.fillRect (0, 62, getWidth(), 1);
+    g.setColour (juce::Colour (0xff4fc3f7));
+    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
+    g.drawText ("SALEK HIGHTECH", 16, 12, 280, 28, juce::Justification::centredLeft);
+    g.setColour (juce::Colour (0xff8888a0));
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("NEBULA-CLASS  //  WT · FM · UNISON · VIRUS FILTER · CHORUS · REVERB",
-                head.withTrimmedLeft (320).reduced (8, 12), juce::Justification::centredLeft);
+    g.drawText ("WAVETABLE SYNTH", 16, 38, 200, 16, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
@@ -216,17 +204,17 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    auto a = getLocalBounds().reduced (14);
-    keyboard.setBounds (a.removeFromBottom (70).reduced (2));
-    a.removeFromBottom (6);
-    auto header = a.removeFromTop (52);
+    auto a = getLocalBounds().reduced (10);
+    keyboard.setBounds (a.removeFromBottom (68).reduced (2));
+    a.removeFromBottom (4);
     title.setVisible (false);
     tagline.setVisible (false);
-    scope.setBounds (header.removeFromRight (140).reduced (4));
+    auto header = a.removeFromTop (48);
+    scope.setBounds (header.removeFromRight (150).reduced (4));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (220).reduced (4));
-    a.removeFromTop (6);
-    tabs.setBounds (a.reduced (4, 2));
+        wtDisplay->setBounds (header.removeFromRight (240).reduced (4));
+    a.removeFromTop (4);
+    tabs.setBounds (a);
 
     auto layoutTab = [] (juce::Component& tab)
     {
@@ -255,7 +243,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto bottom = bounds.withTrimmedTop (rows * cellH);
         for (auto* o : others) o->setBounds (bottom.removeFromTop (32).reduced (6));
     };
-    for (auto* tab : { &oscTab, &filterTab, &modTab, &fxTab })
+    for (auto* tab : { &oscTab, &filterTab, &envTab, &modTab, &fxTab })
         layoutTab (*tab);
     {
         auto bounds = seqTab.getLocalBounds().reduced (16);
@@ -267,7 +255,7 @@ void SalekHightechAudioProcessorEditor::resized()
             else if (c != stepGrid.get()) others.add (c);
         }
         const int n = knobsArr.size();
-        auto top = bounds.removeFromTop (130);
+        auto top = bounds.removeFromTop (120);
         if (n > 0) {
             const int cellW = top.getWidth() / juce::jmax (1, n);
             for (int i = 0; i < n; ++i) {
