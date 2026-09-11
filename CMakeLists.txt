@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SALEK_HIGHTECH VERSION 0.3.0)
+project(SALEK_HIGHTECH VERSION 0.5.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,8 +18,8 @@ endif()
 
 juce_add_plugin(SALEK_HIGHTECH
     COMPANY_NAME "Salek"
-    PLUGIN_MANUFACTURER_CODE SlkH
-    PLUGIN_CODE Sht1
+    PLUGIN_MANUFACTURER_CODE Salk
+    PLUGIN_CODE Sht5
     FORMATS VST3 Standalone
     PRODUCT_NAME "SALEK HIGHTECH"
     IS_SYNTH TRUE
@@ -67,13 +67,8 @@ target_compile_definitions(SALEK_HIGHTECH PUBLIC
 )
 
 target_link_libraries(SALEK_HIGHTECH
-    PRIVATE
-        juce::juce_audio_utils
-        juce::juce_dsp
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags
 )
 
 if (MSVC)
