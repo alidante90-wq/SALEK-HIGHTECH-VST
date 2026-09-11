@@ -66,8 +66,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             sampleL = sL * (1.0f - rm2to1) + (sL * s2) * rm2to1;
             sampleR = sR * (1.0f - rm2to1) + (sR * s2) * rm2to1;
         }
-        sampleL += s2 * 0.15f + s3 * 0.12f;
-        sampleR += s2 * 0.15f + s3 * 0.12f;
+        sampleL += s2 * 0.22f + s3 * 0.18f;
+        sampleR += s2 * 0.22f + s3 * 0.18f;
 
         const float env = adsr.getNextSample();
         const float lfoVal = lfo.process();
@@ -75,8 +75,9 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         cutoffSmoother.setTarget (modCutoff);
         filter.setCutoff (cutoffSmoother.getNext());
         float mid = filter.process (0.5f * (sampleL + sampleR));
-        float side = 0.5f * (sampleL - sampleR);
-        const float g = env * currentVelocity * 0.32f;
+        float side = 0.5f * (sampleL - sampleR) * 1.15f;
+        mid = std::tanh (mid * 1.25f);
+        const float g = env * currentVelocity * 0.42f;
         sampleL = (mid + side) * g;
         sampleR = (mid - side) * g;
 
