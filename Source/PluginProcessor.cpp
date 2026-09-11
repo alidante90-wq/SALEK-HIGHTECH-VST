@@ -143,7 +143,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc1Drive(g("osc1_drive")); synthEngine.setOsc2Drive(g("osc2_drive")); synthEngine.setOsc3Drive(g("osc3_drive"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
     synthEngine.setOsc1Semi((int)g("osc1_semi")); synthEngine.setOsc2Semi((int)g("osc2_semi")); synthEngine.setOsc3Semi((int)g("osc3_semi"));
-    synthEngine.setUnisonVoices((int)g("unison_voices")); synthEngine.setUnisonDetune(g("unison_detune")); synthEngine.setUnisonSpread(g("unison_spread"));
+    synthEngine.setUnison((int)g("unison_voices"));
+    synthEngine.setUnisonDetune(g("unison_detune"));
+    synthEngine.setUnisonSpread(g("unison_spread"));
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
     float cut = g("filter_cutoff") * (0.35f + 0.65f*(1.f-g("macro1")) + g("macro1")*2.2f);
@@ -167,8 +169,6 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
-    arpeggiator.setEnabled(g("arp_on") > 0.5f); arpeggiator.setRate((int)g("arp_rate")); arpeggiator.setOctaves((int)g("arp_octaves"));
-    stepSequencer.setEnabled(g("seq_on") > 0.5f); stepSequencer.setRate((int)g("seq_rate"));
 }
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
@@ -180,13 +180,47 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
     applyParamsToEngine();
 
-    juce::MidiBuffer processedMidi;
-    arpeggiator.process(midi, processedMidi, buffer.getNumSamples());
-    juce::MidiBuffer seqMidi;
-    stepSequencer.process(processedMidi, seqMidi, buffer.getNumSamples());
+    auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
+
+    arpeggiator.setEnabled(g("arp_on") > 0.5f);
+    arpeggiator.setRateDivisor((int) g("arp_rate"));
+    arpeggiator.setOctaves((int) g("arp_octaves"));
+
+    juce::MidiBuffer routed;
+    const bool seqOn = g("seq_on") > 0.5f;
+    const bool arpOn = g("arp_on") > 0.5f;
+
+    stepSequencer.setEnabled(seqOn);
+    stepSequencer.setRateDivisor((int) g("seq_rate"));
+
+    if (seqOn)
+    {
+        for (const auto meta : midi)
+        {
+            auto m = meta.getMessage();
+            if (m.isNoteOn())
+                stepSequencer.setRootNote(m.getNoteNumber());
+            else if (! m.isNoteOff())
+                routed.addEvent(m, meta.samplePosition);
+        }
+        stepSequencer.process(buffer.getNumSamples(), routed);
+        midi.swapWith(routed);
+    }
+    else if (arpOn)
+    {
+        for (const auto meta : midi)
+        {
+            auto m = meta.getMessage();
+            if (m.isNoteOn()) arpeggiator.noteOn(m.getNoteNumber(), m.getFloatVelocity());
+            else if (m.isNoteOff()) arpeggiator.noteOff(m.getNoteNumber());
+            else routed.addEvent(m, meta.samplePosition);
+        }
+        arpeggiator.process(buffer.getNumSamples(), routed);
+        midi.swapWith(routed);
+    }
 
     buffer.clear();
-    synthEngine.processBlock(buffer, seqMidi);
+    synthEngine.processBlock(buffer, midi);
 
     if (auto* inBus = getBus (true, 0))
     {
@@ -205,12 +239,12 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     float drive = apvts.getRawParameterValue("master_drive")->load();
     if (drive > 1e-4f)
     {
-        float g = 1.f + drive * 4.f;
+        float dg = 1.f + drive * 4.f;
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         {
             auto* d = buffer.getWritePointer(ch);
             for (int i = 0; i < buffer.getNumSamples(); ++i)
-                d[i] = std::tanh(d[i] * g);
+                d[i] = std::tanh(d[i] * dg);
         }
     }
 
