@@ -13,6 +13,7 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock);
     void releaseResources();
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi);
+    void allNotesOff() { synth.allNotesOff (0, true); }
 
     void setOsc1TablePos (float v); void setOsc2TablePos (float v); void setOsc3TablePos (float v);
     void setOsc1Level (float v); void setOsc2Level (float v); void setOsc3Level (float v);

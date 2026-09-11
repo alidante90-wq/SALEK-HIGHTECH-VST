@@ -2,11 +2,13 @@
 
 #include <JuceHeader.h>
 #include <array>
+#include <cmath>
 
 namespace salek
 {
 
-/** Real 16-step sequencer. Outputs note events + per-step modulation. */
+/** Real 16-step sequencer. Outputs note events + per-step modulation.
+    Never auto-plays: requires hasRoot from a user note-on while enabled. */
 class StepSequencer
 {
 public:
@@ -19,7 +21,7 @@ public:
         float gate       = 0.7f;
         float probability = 1.0f;
         float modValue   = 0.0f;
-        bool  active     = true;
+        bool  active     = false; // silent until user arms pattern
     };
 
     void prepare (double sampleRate)
@@ -48,10 +50,16 @@ public:
             if (currentNote >= 0)
                 pendingNoteOff = currentNote;
             currentNote = -1;
+            hasRoot = false; // stop auto-play when disabled
         }
     }
 
-    void setRootNote (int note) noexcept { rootNote = juce::jlimit (0, 127, note); }
+    void setRootNote (int note) noexcept
+    {
+        rootNote = juce::jlimit (0, 127, note);
+        hasRoot = true; // only user MIDI arms the sequencer
+    }
+
     void setNumSteps (int n) noexcept { numSteps = juce::jlimit (1, NumSteps, n); }
 
     Step& getStep (int i) noexcept
@@ -69,7 +77,8 @@ public:
 
     void process (int numSamples, juce::MidiBuffer& outMidi)
     {
-        if (! enabled)
+        // CRITICAL: no sound until user provides a root note while seq is on
+        if (! enabled || ! hasRoot)
             return;
 
         for (int i = 0; i < numSamples; ++i)
@@ -80,7 +89,8 @@ public:
                 pendingNoteOff = -1;
             }
 
-            if (sampleCounter <= 0)
+            samplesUntilNext -= 1.0;
+            if (samplesUntilNext <= 0.0)
             {
                 if (currentNote >= 0)
                 {
@@ -88,22 +98,23 @@ public:
                     currentNote = -1;
                 }
 
-                currentStep = (currentStep + 1) % numSteps;
                 const auto& st = steps[static_cast<size_t> (currentStep)];
-                currentMod = st.modValue;
-
                 if (st.active)
                 {
-                    if (juce::Random::getSystemRandom().nextFloat() <= st.probability)
+                    const float r = (float) std::rand() / (float) RAND_MAX;
+                    if (r <= st.probability)
                     {
                         int note = juce::jlimit (0, 127, rootNote + st.noteOffset);
-                        outMidi.addEvent (juce::MidiMessage::noteOn (1, note, st.velocity), i);
+                        float vel = juce::jlimit (0.01f, 1.0f, st.velocity);
+                        outMidi.addEvent (juce::MidiMessage::noteOn (1, note, vel), i);
                         currentNote = note;
-                        gateSamplesLeft = static_cast<int> (samplesPerStep * st.gate);
+                        gateSamplesLeft = (int) (st.gate * samplesPerStep);
+                        currentMod = st.modValue;
                     }
                 }
 
-                sampleCounter = samplesPerStep;
+                currentStep = (currentStep + 1) % numSteps;
+                samplesUntilNext += samplesPerStep;
             }
 
             if (currentNote >= 0 && gateSamplesLeft > 0)
@@ -115,45 +126,47 @@ public:
                     currentNote = -1;
                 }
             }
-
-            --sampleCounter;
         }
     }
 
     void initDefaultPattern()
     {
-        const int offsets[16] = { 0, 0, 7, 0, 12, 0, 7, 5, 0, 0, 7, 0, 12, 7, 5, 3 };
         for (int i = 0; i < NumSteps; ++i)
         {
-            steps[static_cast<size_t>(i)].noteOffset = offsets[i];
-            steps[static_cast<size_t>(i)].velocity = 0.7f + 0.3f * ((i % 4) == 0 ? 1.0f : 0.6f);
-            steps[static_cast<size_t>(i)].gate = 0.5f + 0.3f * (i % 3 == 0 ? 1.0f : 0.0f);
+            steps[static_cast<size_t>(i)].noteOffset = 0;
+            steps[static_cast<size_t>(i)].velocity = 0.8f;
+            steps[static_cast<size_t>(i)].gate = 0.6f;
             steps[static_cast<size_t>(i)].probability = 1.0f;
-            steps[static_cast<size_t>(i)].modValue = (i % 4 == 0) ? 0.4f : 0.0f;
-            steps[static_cast<size_t>(i)].active = true;
+            steps[static_cast<size_t>(i)].modValue = 0.0f;
+            steps[static_cast<size_t>(i)].active = (i % 4 == 0); // pattern ready, silent until armed
         }
+        currentStep = 0;
+        hasRoot = false;
     }
 
 private:
-    void updateTiming() noexcept
+    void updateTiming()
     {
-        samplesPerStep = static_cast<int> (sr * 60.0 / (bpm * static_cast<double> (rateDivisor)));
-        if (samplesPerStep < 32) samplesPerStep = 32;
+        const double beatsPerStep = 1.0 / (double) juce::jmax (1, rateDivisor);
+        samplesPerStep = (sr * 60.0 / bpm) * beatsPerStep;
+        if (samplesUntilNext <= 0.0 || samplesUntilNext > samplesPerStep * 2.0)
+            samplesUntilNext = samplesPerStep;
     }
 
     double sr = 44100.0;
-    double bpm = 175.0;
+    double bpm = 140.0;
     int rateDivisor = 4;
-    int samplesPerStep = 1000;
-    int sampleCounter = 0;
-    int currentStep = -1;
-    int numSteps = 16;
-    int rootNote = 36;
+    double samplesPerStep = 1000.0;
+    double samplesUntilNext = 0.0;
+    int currentStep = 0;
+    int numSteps = NumSteps;
     int currentNote = -1;
     int pendingNoteOff = -1;
     int gateSamplesLeft = 0;
     float currentMod = 0.0f;
     bool enabled = false;
+    int rootNote = 36;
+    bool hasRoot = false; // no auto-play until user note
     std::array<Step, NumSteps> steps {};
 };
 
