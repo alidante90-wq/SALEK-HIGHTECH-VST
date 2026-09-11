@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "UI/ModMatrixPanel.h"
+#include "UI/OpenGLGridBackdrop.h"
 
 class SalekLookAndFeel : public juce::LookAndFeel_V4 {
 public:
@@ -212,6 +213,7 @@ private:
     std::unique_ptr<FilterCurveDisplay> filterDisplay;
     std::unique_ptr<LfoDisplay> lfoDisplay;
     std::unique_ptr<ModMatrixPanel> matrixPanel;
+    std::unique_ptr<OpenGLGridBackdrop> glBackdrop;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
     std::vector<std::unique_ptr<Knob>> knobs;
@@ -219,7 +221,7 @@ private:
     std::vector<std::unique_ptr<SAtt>> atts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
-    juce::Component mainTab, oscTab, filterTab, envTab, modTab, fxTab, seqTab, presetTab;
+    juce::Component mainTab, oscTab, filterTab, envTab, modTab, fxTab, seqTab, presetTab, modularTab;
     juce::ComboBox themeBox;
     juce::ComboBox filterMode, lfoWave;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
@@ -231,6 +233,9 @@ private:
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
     juce::Image logoImg, heroImg;
+    struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
+    juce::Array<PresetRow> presetRows;
+    void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
