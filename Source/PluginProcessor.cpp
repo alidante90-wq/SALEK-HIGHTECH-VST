@@ -69,7 +69,7 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("Lead/Hi-Tech", {{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"amp_attack",0.005f},{"amp_decay",0.2f},{"amp_sustain",0.7f},{"amp_release",0.25f},{"delay_mix",0.2f}});
     add("Lead/Supersaw", {{"osc1_table",0.4f},{"unison_voices",7.f},{"unison_detune",30.f},{"unison_spread",1.f},{"filter_cutoff",6500.f},{"amp_attack",0.02f},{"amp_decay",0.3f},{"amp_sustain",0.8f},{"amp_release",0.5f},{"chorus_mix",0.3f}});
     add("Lead/Acid Screech", {{"osc1_fold",0.45f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.3f},{"amp_release",0.15f}});
-    add("Acid/Reso Slide", {{"osc1_table",0.55f},{"osc1_level",0.95f},{"osc2_level",0.f},{"osc3_level",0.f},{"filter_cutoff",400.f},{"filter_reso",0.92f},{"filter_drive",0.55f},{"filter_env",0.85f},{"amp_attack",0.001f},{"amp_decay",0.22f},{"amp_sustain",0.15f},{"amp_release",0.12f},{"master_drive",0.35f}});
+    add("Acid/Reso Slide", {{"osc1_table",0.55f},{"osc1_level",0.95f},{"filter_cutoff",400.f},{"filter_reso",0.92f},{"filter_drive",0.55f},{"filter_env",0.85f},{"amp_attack",0.001f},{"amp_decay",0.22f},{"amp_sustain",0.15f},{"amp_release",0.12f},{"master_drive",0.35f}});
     add("Acid/Squelch", {{"osc1_table",0.7f},{"filter_cutoff",280.f},{"filter_reso",0.95f},{"filter_drive",0.65f},{"filter_env",1.f},{"amp_attack",0.001f},{"amp_decay",0.18f},{"amp_sustain",0.05f},{"amp_release",0.1f},{"master_drive",0.4f}});
     add("Acid/303 Square", {{"osc1_table",0.9f},{"filter_cutoff",500.f},{"filter_reso",0.88f},{"filter_drive",0.45f},{"filter_env",0.75f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.2f},{"amp_release",0.15f},{"master_drive",0.3f}});
     add("Acid/Darkpsy Acid", {{"osc1_table",0.6f},{"osc1_fold",0.2f},{"filter_cutoff",350.f},{"filter_reso",0.9f},{"filter_drive",0.7f},{"filter_env",0.95f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.1f},{"amp_release",0.12f},{"master_drive",0.5f}});
@@ -80,6 +80,7 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("FM/Deep Operator", {{"osc2_octave",2.f},{"fm_2to1",0.85f},{"filter_cutoff",3000.f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.3f}});
     add("Pad/Alien", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"amp_attack",0.8f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.35f}});
     add("FX/Riser", {{"osc1_table",0.6f},{"unison_voices",4.f},{"filter_cutoff",300.f},{"filter_env",0.9f},{"amp_attack",2.f},{"amp_sustain",0.8f},{"amp_release",1.f},{"reverb_mix",0.45f}});
+    // Arp presets: arp_on does NOT auto-play without held MIDI notes
     add("Arp/Glass Arp", {{"osc1_table",0.85f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.25f},{"delay_mix",0.4f},{"arp_on",1.f},{"arp_rate",4.f}});
 }
 
@@ -94,6 +95,9 @@ void SalekHightechAudioProcessor::loadFactoryPreset(int index)
         if (auto* p = apvts.getParameter(kv.first))
             if (auto* rp = dynamic_cast<juce::RangedAudioParameter*>(p))
                 rp->setValueNotifyingHost(rp->convertTo0to1(kv.second));
+    // Never leave notes hanging after preset change
+    keyboardState.allNotesOff (0);
+    synthEngine.allNotesOff();
 }
 
 juce::StringArray SalekHightechAudioProcessor::getPresetNames() const
@@ -118,6 +122,11 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     arpeggiator.prepare(sr);
     stepSequencer.prepare(sr);
     stepSequencer.initDefaultPattern();
+    // Silence on load — no phantom notes / auto-play
+    keyboardState.allNotesOff (0);
+    synthEngine.allNotesOff();
+    arpeggiator.setEnabled (false);
+    stepSequencer.setEnabled (false);
 }
 
 bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -280,5 +289,18 @@ juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor()
 {
     return new SalekHightechAudioProcessorEditor (*this);
 }
+bool SalekHightechAudioProcessor::hasEditor() const { return true; }
+const juce::String SalekHightechAudioProcessor::getName() const { return JucePlugin_Name; }
+bool SalekHightechAudioProcessor::acceptsMidi() const { return true; }
+bool SalekHightechAudioProcessor::producesMidi() const { return false; }
+bool SalekHightechAudioProcessor::isMidiEffect() const { return false; }
+double SalekHightechAudioProcessor::getTailLengthSeconds() const { return 2.0; }
+int SalekHightechAudioProcessor::getNumPrograms() { return (int) factoryPresets.size(); }
+int SalekHightechAudioProcessor::getCurrentProgram() { return currentProgram; }
+void SalekHightechAudioProcessor::changeProgramName (int, const juce::String&) {}
+void SalekHightechAudioProcessor::releaseResources() {}
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new SalekHightechAudioProcessor(); }
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new SalekHightechAudioProcessor();
+}
