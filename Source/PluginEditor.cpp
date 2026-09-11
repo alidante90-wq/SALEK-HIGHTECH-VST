@@ -16,7 +16,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
     addAndMakeVisible (title);
-    tagline.setText ("UFO SERIES", juce::dontSendNotification);
+    tagline.setText ("PRO SERIES", juce::dontSendNotification);
     addAndMakeVisible (tagline);
 
     addAndMakeVisible (scope);
@@ -25,8 +25,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
 
-    auto C = juce::Colour (0xff00f0ff);
-    auto M = juce::Colour (0xffff00aa);
+    auto C = juce::Colour (0xff00e5ff);
+    auto M = juce::Colour (0xffff0088);
     auto O = juce::Colour (0xffff8800);
     auto G = juce::Colour (0xff66ff99);
     auto V = juce::Colour (0xffaa66ff);
@@ -104,7 +104,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         presetTab.addAndMakeVisible (nextPreset);
         presetTab.addAndMakeVisible (initBtn);
         presetTab.addAndMakeVisible (presetLabel);
-        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00f0ff));
+        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00e5ff));
         presetLabel.setFont (juce::FontOptions (16.0f, juce::Font::bold));
         presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
         prevPreset.onClick = [this] {
@@ -168,7 +168,7 @@ int SalekHightechAudioProcessorEditor::getNumRows() { return processor.getNumPro
 void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool selected)
 {
     if (selected) g.fillAll (juce::Colour (0xff3a0066));
-    g.setColour (selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffc8c8e0));
+    g.setColour (selected ? juce::Colour (0xff00e5ff) : juce::Colour (0xffc8c8e0));
     g.setFont (juce::FontOptions (14.0f));
     g.drawText (processor.getProgramName (row), 12, 0, width - 20, height, juce::Justification::centredLeft);
 }
@@ -181,90 +181,64 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour (0xff010105));
+    juce::ColourGradient bg (juce::Colour (0xff05050a), 0, 0,
+                             juce::Colour (0xff0c0618), 0, (float) getHeight(), false);
+    g.setGradientFill (bg);
+    g.fillAll();
 
-    auto bounds = getLocalBounds().toFloat();
-    const float cx = bounds.getCentreX();
-    const float cy = bounds.getCentreY() + 10.0f;
+    auto b = getLocalBounds().toFloat().reduced (6.0f);
+    g.setColour (juce::Colour (0xff1a1028));
+    g.fillRoundedRectangle (b, 18.0f);
+    g.setColour (juce::Colour (0xff00e5ff).withAlpha (0.22f));
+    g.drawRoundedRectangle (b, 18.0f, 1.5f);
+    g.setColour (juce::Colour (0xffff0088).withAlpha (0.12f));
+    g.drawRoundedRectangle (b.reduced (3.0f), 16.0f, 1.0f);
 
-    const float bodyW = bounds.getWidth() * 0.96f;
-    const float bodyH = bounds.getHeight() * 0.72f;
-    juce::Rectangle<float> body (cx - bodyW * 0.5f, cy - bodyH * 0.42f, bodyW, bodyH);
+    auto inner = b.reduced (8.0f);
+    juce::ColourGradient panel (juce::Colour (0xff0e0c16), inner.getX(), inner.getY(),
+                                juce::Colour (0xff08060e), inner.getX(), inner.getBottom(), false);
+    g.setGradientFill (panel);
+    g.fillRoundedRectangle (inner, 14.0f);
 
-    for (int i = 6; i >= 1; --i)
-    {
-        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.02f * (float) i));
-        g.fillEllipse (body.expanded ((float) i * 6.0f));
-    }
+    auto head = inner.removeFromTop (58.0f);
+    juce::ColourGradient hg (juce::Colour (0xff16122a), head.getX(), head.getY(),
+                             juce::Colour (0xff0a0814), head.getX(), head.getBottom(), false);
+    g.setGradientFill (hg);
+    g.fillRoundedRectangle (head, 12.0f);
+    g.setColour (juce::Colour (0xff00e5ff).withAlpha (0.35f));
+    g.fillRect (head.getX() + 12.0f, head.getBottom() - 2.0f, head.getWidth() - 24.0f, 2.0f);
 
-    juce::ColourGradient hull (juce::Colour (0xff2a1a40), cx, body.getY(),
-                               juce::Colour (0xff0a0814), cx, body.getBottom(), false);
-    g.setGradientFill (hull);
-    g.fillEllipse (body);
-
-    g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.35f));
-    g.drawEllipse (body.reduced (4.0f), 2.0f);
-    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.25f));
-    g.drawEllipse (body.reduced (10.0f), 1.2f);
-    g.setColour (juce::Colour (0xff88aaff).withAlpha (0.15f));
-    g.drawEllipse (body.reduced (18.0f), 1.0f);
-
-    juce::Rectangle<float> dome (cx - bodyW * 0.22f, body.getY() - bodyH * 0.08f, bodyW * 0.44f, bodyH * 0.28f);
-    juce::ColourGradient domeGrad (juce::Colour (0xff4a80ff).withAlpha (0.55f), cx, dome.getY(),
-                                   juce::Colour (0xff120830).withAlpha (0.9f), cx, dome.getBottom(), false);
-    g.setGradientFill (domeGrad);
-    g.fillEllipse (dome);
-    g.setColour (juce::Colour (0xffaaddff).withAlpha (0.4f));
-    g.drawEllipse (dome, 1.5f);
-
-    const float lightY = body.getCentreY() + bodyH * 0.18f;
-    const int numLights = 16;
-    for (int i = 0; i < numLights; ++i)
-    {
-        float t = (float) i / (float) numLights;
-        float ang = t * juce::MathConstants<float>::twoPi;
-        float lx = cx + std::cos (ang) * bodyW * 0.38f;
-        float ly = lightY + std::sin (ang) * bodyH * 0.12f;
-        float pulse = 0.45f + 0.55f * (0.5f + 0.5f * std::sin (phaseLights + t * 6.0f));
-        g.setColour (juce::Colour (0xffff00aa).withAlpha (0.25f * pulse));
-        g.fillEllipse (lx - 7.0f, ly - 4.0f, 14.0f, 8.0f);
-        g.setColour (juce::Colour (0xffffffff).withAlpha (0.7f * pulse));
-        g.fillEllipse (lx - 3.0f, ly - 2.0f, 6.0f, 4.0f);
-    }
-
-    g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.9f));
-    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", juce::Rectangle<float> (cx - 160, dome.getY() + 8, 320, 24),
-                juce::Justification::centred);
-    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.8f));
-    g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("UFO SERIES  //  ALIEN SYNTH ENGINE", juce::Rectangle<float> (cx - 160, dome.getY() + 30, 320, 16),
-                juce::Justification::centred);
+    g.setColour (juce::Colour (0xff00e5ff));
+    g.setFont (juce::FontOptions (28.0f, juce::Font::bold));
+    g.drawText ("SALEK HIGHTECH", head.reduced (16, 8).removeFromLeft (360), juce::Justification::centredLeft);
+    g.setColour (juce::Colour (0xffff0088).withAlpha (0.85f));
+    g.setFont (juce::FontOptions (12.0f));
+    g.drawText ("PRO SERIES  //  WAVETABLE · FM · UNISON · VIRUS-INSPIRED FILTER",
+                head.withTrimmedLeft (360).reduced (8, 14), juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
-    phaseLights += 0.12f;
-    repaint();
-    resized();
+    static int ticks = 0;
+    if (++ticks < 20)
+        resized();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    auto a = getLocalBounds().reduced (10);
+    auto a = getLocalBounds().reduced (14);
     keyboard.setBounds (a.removeFromBottom (70).reduced (2));
     a.removeFromBottom (6);
 
-    a = a.reduced (36, 28);
-    auto header = a.removeFromTop (48);
+    auto header = a.removeFromTop (52);
     title.setVisible (false);
     tagline.setVisible (false);
-    scope.setBounds (header.removeFromRight (130).reduced (2));
+    scope.setBounds (header.removeFromRight (140).reduced (4));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.reduced (2));
+        wtDisplay->setBounds (header.removeFromRight (220).reduced (4));
 
-    a.removeFromTop (4);
-    tabs.setBounds (a.reduced (8, 0));
+    a.removeFromTop (6);
+    tabs.setBounds (a.reduced (4, 2));
 
     auto layoutTab = [] (juce::Component& tab)
     {
