@@ -61,8 +61,6 @@ public:
 private:
     juce::AudioProcessorValueTreeState& apvts;
 };
-
-// Inline implementations kept in .h for CI simplicity — full paint bodies in previous full header
 inline void WavetableDisplay::paint (juce::Graphics& g) {
     auto r = getLocalBounds().toFloat().reduced (1.0f);
     g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (r, 6.0f);
@@ -128,8 +126,6 @@ public:
         auto r=getLocalBounds().toFloat().reduced(2.f);
         g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
         g.setColour(juce::Colour(0xff00f0ff).withAlpha(0.45f)); g.drawRoundedRectangle(r,8.f,1.f);
-        g.setColour(juce::Colour(0xffa080c0)); g.setFont(juce::FontOptions(11.f, juce::Font::bold));
-        g.drawText("ENVELOPE", r.removeFromTop(16.f).reduced(6,0), juce::Justification::centredLeft);
         auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
         float a=juce::jmax(0.001f,gval("amp_attack",0.01f)), d=juce::jmax(0.001f,gval("amp_decay",0.15f));
         float s=juce::jlimit(0.f,1.f,gval("amp_sustain",0.75f)), rel=juce::jmax(0.001f,gval("amp_release",0.25f));
@@ -137,8 +133,6 @@ public:
         auto plot=r.reduced(8.f,6.f); juce::Path curve; float x0=plot.getX(), y0=plot.getBottom(), w=plot.getWidth(), h=plot.getHeight();
         curve.startNewSubPath(x0,y0); curve.lineTo(x0+xa*w,plot.getY()); curve.lineTo(x0+(xa+xd)*w,plot.getY()+(1.f-s)*h);
         curve.lineTo(x0+(xa+xd+xs)*w,plot.getY()+(1.f-s)*h); curve.lineTo(x0+w,y0);
-        juce::Path fill=curve; fill.lineTo(x0+w,y0); fill.closeSubPath();
-        g.setColour(juce::Colour(0xff00f0ff).withAlpha(0.15f)); g.fillPath(fill);
         g.setColour(juce::Colour(0xff00f0ff)); g.strokePath(curve, juce::PathStrokeType(2.f));
     }
     void timerCallback() override { repaint(); }
@@ -153,8 +147,6 @@ public:
         auto r=getLocalBounds().toFloat().reduced(2.f);
         g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
         g.setColour(juce::Colour(0xffff00aa).withAlpha(0.4f)); g.drawRoundedRectangle(r,8.f,1.f);
-        g.setColour(juce::Colour(0xffa080c0)); g.setFont(juce::FontOptions(11.f, juce::Font::bold));
-        g.drawText("FILTER RESPONSE", r.removeFromTop(16.f).reduced(6,0), juce::Justification::centredLeft);
         auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
         float cut=gval("filter_cutoff",8000.f), res=gval("filter_reso",0.25f); int mode=(int)gval("filter_mode",0.f);
         auto plot=r.reduced(8.f,6.f); juce::Path curve; const int N=80;
@@ -164,8 +156,6 @@ public:
             float peak=1.f+res*2.5f*std::exp(-std::pow((std::log(juce::jmax(0.01f,ratio)))*3.f,2.f)); mag=juce::jlimit(0.f,1.2f,mag*peak)/1.2f;
             float px=plot.getX()+t*plot.getWidth(); float py=plot.getBottom()-mag*plot.getHeight();
             if(i==0)curve.startNewSubPath(px,py); else curve.lineTo(px,py);}
-        juce::Path fill=curve; fill.lineTo(plot.getRight(),plot.getBottom()); fill.lineTo(plot.getX(),plot.getBottom()); fill.closeSubPath();
-        g.setColour(juce::Colour(0xffff00aa).withAlpha(0.2f)); g.fillPath(fill);
         g.setColour(juce::Colour(0xffff00aa)); g.strokePath(curve, juce::PathStrokeType(2.f));
     }
     void timerCallback() override { repaint(); }
@@ -180,8 +170,6 @@ public:
         auto r=getLocalBounds().toFloat().reduced(2.f);
         g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
         g.setColour(juce::Colour(0xff66ff99).withAlpha(0.45f)); g.drawRoundedRectangle(r,8.f,1.f);
-        g.setColour(juce::Colour(0xffa080c0)); g.setFont(juce::FontOptions(11.f, juce::Font::bold));
-        g.drawText("LFO", r.removeFromTop(16.f).reduced(6,0), juce::Justification::centredLeft);
         auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
         float rate=gval("lfo_rate",2.f); int wave=(int)gval("lfo_wave",0.f); float amt=gval("lfo_amount",0.f);
         auto plot=r.reduced(8.f,4.f); juce::Path curve; const int N=100;
@@ -239,6 +227,7 @@ private:
     std::unique_ptr<StepGridComponent> stepGrid;
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
+    float animPhase = 0.0f;
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
