@@ -8,6 +8,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 {
     keyboard.setAvailableRange (24, 96);
     keyboard.setOctaveForMiddleC (4);
+    glBackdrop = std::make_unique<OpenGLGridBackdrop>();
+    addAndMakeVisible (*glBackdrop);
+    glBackdrop->toBack();
     addAndMakeVisible (keyboard);
     startTimerHz (30);
     setLookAndFeel (&lnf);
@@ -81,20 +84,21 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             if (i < 0) i = processor.getNumPrograms() - 1;
             processor.setCurrentProgram (i);
             presetLabel.setText (processor.getProgramName (i), juce::dontSendNotification);
-            presetList.selectRow (i); presetList.repaint();
+            rebuildPresetRows(); presetList.updateContent(); presetList.repaint();
         };
         nextPreset.onClick = [this] {
             int i = (processor.getCurrentProgram() + 1) % processor.getNumPrograms();
             processor.setCurrentProgram (i);
             presetLabel.setText (processor.getProgramName (i), juce::dontSendNotification);
-            presetList.selectRow (i); presetList.repaint();
+            rebuildPresetRows(); presetList.updateContent(); presetList.repaint();
         };
         initBtn.onClick = [this] {
             processor.setCurrentProgram (0);
             presetLabel.setText ("Init", juce::dontSendNotification);
-            presetList.selectRow (0); presetList.repaint();
+            rebuildPresetRows(); presetList.updateContent(); presetList.repaint();
         };
-        presetList.selectRow (processor.getCurrentProgram());
+        rebuildPresetRows();
+        presetList.updateContent();
     }
 
     tabs.addTab ("MOD", juce::Colour (0xff0c0818), &modTab, false);
@@ -123,6 +127,17 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (fxTab, "reverb_decay", "R DECAY", M);
         addKnob (fxTab, "master_drive", "DRIVE", M);
         addKnob (fxTab, "master_gain", "GAIN", G);
+        addKnob (fxTab, "comp_threshold", "C THR", O);
+        addKnob (fxTab, "comp_ratio", "C RATIO", M);
+        addKnob (fxTab, "comp_mix", "C MIX", C);
+        addKnob (fxTab, "eq_low", "EQ LOW", G);
+        addKnob (fxTab, "eq_mid", "EQ MID", O);
+        addKnob (fxTab, "eq_high", "EQ HI", M);
+        addKnob (fxTab, "spatial_azim", "AZIM", C);
+        addKnob (fxTab, "spatial_dist", "DIST", O);
+        addKnob (fxTab, "spatial_size", "SIZE", M);
+        addKnob (fxTab, "spatial_elev", "ELEV", G);
+        addKnob (fxTab, "input_mix", "IN MIX", V);
     }
 
     tabs.addTab ("ARP", juce::Colour (0xff0c0818), &seqTab, false);
@@ -180,64 +195,88 @@ void SalekHightechAudioProcessorEditor::addCombo (juce::Component& parent, juce:
             processor.getAPVTS(), id, box));
 }
 
-int SalekHightechAudioProcessorEditor::getNumRows() { return processor.getNumPrograms(); }
+void SalekHightechAudioProcessorEditor::rebuildPresetRows()
+{
+    presetRows.clear();
+    juce::String lastCat;
+    const int n = processor.getNumPrograms();
+    for (int i = 0; i < n; ++i)
+    {
+        auto name = processor.getProgramName (i);
+        juce::String cat = name.containsChar ('/') ? name.upToFirstOccurrenceOf ("/", false, false) : "Other";
+        if (cat != lastCat)
+        {
+            PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1;
+            presetRows.add (h);
+            lastCat = cat;
+        }
+        PresetRow r; r.isHeader = false;
+        r.label = name.fromFirstOccurrenceOf ("/", false, false);
+        if (r.label.isEmpty()) r.label = name;
+        r.programIndex = i;
+        presetRows.add (r);
+    }
+}
+
+int SalekHightechAudioProcessorEditor::getNumRows() { return presetRows.size(); }
 
 void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool selected)
 {
+    if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
+    const auto& pr = presetRows.getReference (row);
+    if (pr.isHeader)
+    {
+        g.fillAll (juce::Colour (0xff12081c));
+        g.setColour (juce::Colour (0xff00f0ff));
+        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.drawText ("  " + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
+        g.setColour (juce::Colour (0xffff2d6a).withAlpha (0.5f));
+        g.drawLine (4.0f, (float) height - 1.0f, (float) width - 4.0f, (float) height - 1.0f, 1.0f);
+        return;
+    }
     if (selected) g.fillAll (juce::Colour (0xff3a0066));
-    g.setColour (selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffd0c0e0));
-    g.setFont (juce::FontOptions (13.0f));
-    g.drawText (processor.getProgramName (row), 8, 0, width - 12, height, juce::Justification::centredLeft);
+    else g.fillAll (juce::Colour (0xff0a0614));
+    juce::Colour tc = selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffd0c0e0);
+    auto full = processor.getProgramName (pr.programIndex);
+    if (full.startsWith ("Acid")) tc = selected ? tc : juce::Colour (0xffffcc44);
+    if (full.startsWith ("Bass")) tc = selected ? tc : juce::Colour (0xff66ff99);
+    if (full.startsWith ("Lead")) tc = selected ? tc : juce::Colour (0xff00f0ff);
+    if (full.startsWith ("Kick")) tc = selected ? tc : juce::Colour (0xffffab40);
+    g.setColour (tc);
+    g.setFont (juce::FontOptions (12.5f));
+    g.drawText ("   " + pr.label, 8, 0, width - 12, height, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce::MouseEvent&)
 {
-    processor.setCurrentProgram (row);
-    presetLabel.setText (processor.getProgramName (row), juce::dontSendNotification);
+    if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
+    const auto& pr = presetRows.getReference (row);
+    if (pr.isHeader || pr.programIndex < 0) return;
+    processor.setCurrentProgram (pr.programIndex);
+    presetLabel.setText (processor.getProgramName (pr.programIndex), juce::dontSendNotification);
 }
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
+    // Transparent so GL mesh shows through; draw chrome only
     const int theme = themeBox.getSelectedId();
-    juce::Colour bg1 (0xff04020a), bg2 (0xff10081a), accent (0xff00f0ff), accent2 (0xffff2d6a);
-    if (theme == 2) { bg1 = juce::Colour (0xff020806); bg2 = juce::Colour (0xff081810); accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
-    if (theme == 3) { bg1 = juce::Colour (0xff020810); bg2 = juce::Colour (0xff0a1420); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
-
+    juce::Colour accent (0xff00f0ff), accent2 (0xffff2d6a);
+    if (theme == 2) { accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
+    if (theme == 3) { accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
     const float peak = processor.getOutputPeak();
     const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.8f);
     float cut = 0.5f;
     if (auto* p = processor.getAPVTS().getRawParameterValue ("filter_cutoff"))
         cut = juce::jmap (std::log (juce::jmax (20.0f, p->load())), std::log (20.0f), std::log (20000.0f), 0.0f, 1.0f);
 
-    juce::ColourGradient bg (bg1, 0, 0, bg2, 0, (float) getHeight(), false);
-    g.setGradientFill (bg);
-    g.fillAll();
-
-    g.setColour (accent.withAlpha (0.06f + pulse * 0.14f));
-    const float y0 = (float) getHeight() * 0.58f;
-    for (int i = 0; i < 14; ++i)
-    {
-        float t = (float) i / 13.0f;
-        g.drawLine (0.0f, y0 + t * t * ((float) getHeight() - y0), (float) getWidth(), y0 + t * t * ((float) getHeight() - y0), 1.0f);
-    }
-    for (int i = 0; i < 30; ++i)
-    {
-        float seed = (float) i * 19.7f;
-        float x = std::fmod (seed * 41.0f + animPhase * (10.0f + peak * 50.0f), (float) getWidth());
-        float y = std::fmod (seed * 27.0f + animPhase * 6.0f + cut * 40.0f, (float) getHeight());
-        g.setColour (accent2.withAlpha (0.2f + pulse * 0.5f));
-        g.fillEllipse (x, y, 1.5f + pulse * 2.5f, 1.5f + pulse * 2.5f);
-    }
-
     auto charPanel = juce::Rectangle<float> (8.0f, 52.0f, 168.0f, (float) getHeight() - 130.0f);
     {
-        juce::ColourGradient cg (juce::Colour (0xff1a0a28), charPanel.getX(), charPanel.getY(),
-                                 juce::Colour (0xff080410), charPanel.getX(), charPanel.getBottom(), false);
+        juce::ColourGradient cg (juce::Colour (0xcc1a0a28), charPanel.getX(), charPanel.getY(),
+                                 juce::Colour (0xcc080410), charPanel.getX(), charPanel.getBottom(), false);
         g.setGradientFill (cg);
         g.fillRoundedRectangle (charPanel, 12.0f);
         g.setColour (accent2.withAlpha (0.45f + pulse * 0.4f));
         g.drawRoundedRectangle (charPanel, 12.0f, 1.5f + pulse);
-
         float cx = charPanel.getCentreX();
         float cy = charPanel.getCentreY() - 20.0f + (0.5f - cut) * 30.0f;
         for (int r = 3; r >= 0; --r)
@@ -250,34 +289,10 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillEllipse (cx - 36, cy - 42, 72, 84);
         g.setColour (accent.withAlpha (0.7f + pulse * 0.3f));
         g.drawEllipse (cx - 36, cy - 42, 72, 84, 1.5f);
-        float eyeY = cy - 8.0f;
         float eyeOff = (cut - 0.5f) * 6.0f;
         g.setColour (accent);
-        g.fillEllipse (cx - 16 + eyeOff, eyeY, 10, 7);
-        g.fillEllipse (cx + 6 + eyeOff, eyeY, 10, 7);
-
-        auto gval = [&](const char* id) -> float {
-            if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
-            return 0.f;
-        };
-        float ly = charPanel.getBottom() - 70.0f;
-        auto drawLed = [&](float x, const char* label, bool on, juce::Colour c) {
-            g.setColour (on ? c : juce::Colour (0xff222230));
-            g.fillEllipse (x, ly, 10.0f, 10.0f);
-            if (on) { g.setColour (c.withAlpha (0.35f)); g.fillEllipse (x - 3, ly - 3, 16, 16); }
-            g.setColour (juce::Colour (0xffa0a0b8));
-            g.setFont (juce::FontOptions (9.0f));
-            g.drawText (label, x + 14, ly - 2, 50, 14, juce::Justification::centredLeft);
-        };
-        drawLed (charPanel.getX() + 12, "ARP", gval ("arp_on") > 0.5f, accent);
-        ly += 16;
-        drawLed (charPanel.getX() + 12, "SEQ", gval ("seq_on") > 0.5f, accent2);
-
-        g.setColour (juce::Colour (0xff1a1020));
-        g.fillRoundedRectangle (charPanel.getX() + 12, charPanel.getBottom() - 28, charPanel.getWidth() - 24, 10, 3.0f);
-        g.setColour (accent.interpolatedWith (accent2, pulse));
-        g.fillRoundedRectangle (charPanel.getX() + 12, charPanel.getBottom() - 28, (charPanel.getWidth() - 24) * pulse, 10, 3.0f);
-
+        g.fillEllipse (cx - 16 + eyeOff, cy - 8.0f, 10, 7);
+        g.fillEllipse (cx + 6 + eyeOff, cy - 8.0f, 10, 7);
         if (logoImg.isValid())
         {
             auto lr = juce::Rectangle<float> (charPanel.getX() + 40, charPanel.getY() + 8, 88, 88);
@@ -292,14 +307,14 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle (outer, 14.0f, 2.0f + pulse);
 
     auto head = juce::Rectangle<float> (8.0f, 6.0f, (float) getWidth() - 16.0f, 42.0f);
-    g.setColour (bg2.brighter (0.08f));
+    g.setColour (juce::Colour (0xcc10081a));
     g.fillRoundedRectangle (head, 10.0f);
     g.setColour (accent);
     g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
     g.drawText ("SALEK HIGHTECH", head.getX() + 180.0f, head.getY() + 4.0f, 300.0f, 22.0f, juce::Justification::centredLeft);
     g.setColour (accent2);
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("MOD MATRIX  ·  OPENGL READY  ·  v0.8", head.getX() + 180.0f, head.getY() + 24.0f, 360.0f, 14.0f, juce::Justification::centredLeft);
+    g.drawText ("GL MESH 3D  ·  PRESET FOLDERS  ·  v0.95", head.getX() + 180.0f, head.getY() + 24.0f, 400.0f, 14.0f, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
@@ -307,11 +322,15 @@ void SalekHightechAudioProcessorEditor::timerCallback()
     static int ticks = 0;
     if (++ticks < 40) resized();
     animPhase += 0.04f;
+    if (glBackdrop != nullptr)
+        glBackdrop->setPulse (processor.getOutputPeak());
     repaint();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
 {
+    if (glBackdrop != nullptr)
+        glBackdrop->setBounds (getLocalBounds());
     auto a = getLocalBounds().reduced (8);
     a.removeFromLeft (176);
     keyboard.setBounds (a.removeFromBottom (64).reduced (2));
@@ -425,7 +444,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             const int cols = juce::jmin (6, n);
             const int cellW = bounds.getWidth() / cols;
-            const int cellH = juce::jmin (120, bounds.getHeight());
+            const int cellH = juce::jmin (100, bounds.getHeight() / juce::jmax (1, (n + cols - 1) / cols));
             for (int i = 0; i < n; ++i)
             {
                 auto cell = juce::Rectangle<int> (bounds.getX() + (i % cols) * cellW, bounds.getY() + (i / cols) * cellH, cellW, cellH).reduced (4);
