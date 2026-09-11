@@ -58,13 +58,9 @@ public:
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (1.0f);
         g.setColour (juce::Colour (0xff04040c));
-        g.fillRoundedRectangle (r, 6.0f);
-        juce::ColourGradient edge (juce::Colour (0xff2a1050), r.getX(), r.getY(),
-                                   juce::Colour (0xff050510), r.getX(), r.getBottom(), false);
-        g.setGradientFill (edge);
-        g.drawRoundedRectangle (r, 6.0f, 1.5f);
-        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.25f));
-        g.drawRoundedRectangle (r.reduced (2.0f), 5.0f, 1.0f);
+        g.fillRoundedRectangle (r, 10.0f);
+        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.3f));
+        g.drawRoundedRectangle (r, 10.0f, 1.0f);
         auto gval = [&](const char* id, float d) {
             if (auto* p = apvts.getRawParameterValue (id)) return p->load();
             return d;
@@ -82,29 +78,23 @@ public:
             if (warp > 1e-4f) {
                 float amount = 1.0f + warp * 3.5f;
                 phase = std::pow (phase, amount);
-                if (warp > 0.55f && phase > 0.5f) {
-                    float foldAmt = (warp - 0.55f) * 2.2f;
-                    phase = phase - foldAmt * (phase - 0.5f);
-                }
+                if (warp > 0.55f && phase > 0.5f)
+                    phase = phase - (warp - 0.55f) * 2.2f * (phase - 0.5f);
                 phase = juce::jlimit (0.0f, 0.9999f, phase);
             }
             float s = 0.0f;
-            const float morph = table;
             for (int h = 1; h <= 12; ++h) {
                 float harm = std::sin (phase * juce::MathConstants<float>::twoPi * (float) h);
                 float wSine = (h == 1) ? 1.0f : 0.0f;
                 float wSaw  = 1.0f / (float) h * ((h % 2 == 1) ? 1.0f : 0.7f);
                 float wSqr  = (h % 2 == 1) ? 1.0f / (float) h : 0.0f;
-                float a = wSine * (1.0f - morph) * (1.0f - morph)
-                        + wSaw * 2.0f * morph * (1.0f - morph)
-                        + wSqr * morph * morph;
+                float a = wSine * (1.0f - table) * (1.0f - table) + wSaw * 2.0f * table * (1.0f - table) + wSqr * table * table;
                 s += harm * a;
             }
             s *= 0.45f;
             if (fold > 1e-4f) {
                 float thresh = 1.0f - fold * 0.85f;
-                float gain = 1.0f + fold * 4.0f;
-                float x = s * gain;
+                float x = s * (1.0f + fold * 4.0f);
                 for (int k = 0; k < 3; ++k) {
                     if (x > thresh) x = thresh - (x - thresh);
                     else if (x < -thresh) x = -thresh - (x + thresh);
@@ -112,22 +102,15 @@ public:
                 }
                 s = x / (1.0f + fold * 1.5f);
             }
-            if (drive > 1e-4f) {
-                float dg = 1.0f + drive * 6.0f;
-                s = std::tanh (s * dg);
-            }
+            if (drive > 1e-4f) s = std::tanh (s * (1.0f + drive * 6.0f));
             float px = r.getX() + 4.0f + ((float) i / (float) (N - 1)) * (r.getWidth() - 8.0f);
             float py = midY - s * amp;
-            if (i == 0) wave.startNewSubPath (px, py);
-            else wave.lineTo (px, py);
+            if (i == 0) wave.startNewSubPath (px, py); else wave.lineTo (px, py);
         }
         g.setColour (juce::Colour (0xffff00aa).withAlpha (0.2f));
         g.strokePath (wave, juce::PathStrokeType (4.0f));
         g.setColour (juce::Colour (0xff00f0ff));
         g.strokePath (wave, juce::PathStrokeType (1.6f));
-        g.setColour (juce::Colour (0xff8899aa));
-        g.setFont (juce::FontOptions (10.0f));
-        g.drawText ("WAVETABLE / SHAPE", r.reduced (6).removeFromTop (14), juce::Justification::centredLeft);
     }
     void timerCallback() override { repaint(); }
 private:
@@ -140,9 +123,9 @@ public:
     void paint(juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced(1.f);
         g.setColour(juce::Colour(0xff05050c));
-        g.fillRoundedRectangle(r, 4.f);
+        g.fillEllipse(r);
         g.setColour(juce::Colour(0xff00f0ff).withAlpha(0.35f));
-        g.drawRoundedRectangle(r, 4.f, 1.f);
+        g.drawEllipse(r, 1.f);
         juce::Path wave;
         for (int i = 0; i < 80; ++i) {
             float t = (float)i/79.f;
@@ -166,9 +149,9 @@ public:
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (2.0f);
         g.setColour (juce::Colour (0xff05050c));
-        g.fillRoundedRectangle (r, 6.0f);
+        g.fillRoundedRectangle (r, 12.0f);
         g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.3f));
-        g.drawRoundedRectangle (r, 6.0f, 1.0f);
+        g.drawRoundedRectangle (r, 12.0f, 1.0f);
         const int n = salek::StepSequencer::NumSteps;
         const float gap = 4.0f;
         const float w = (r.getWidth() - gap * (n + 1)) / (float) n;
@@ -177,15 +160,9 @@ public:
         for (int i = 0; i < n; ++i) {
             auto cell = juce::Rectangle<float> (r.getX() + gap + i * (w + gap), r.getY() + gap, w, h);
             const auto& st = sequencer.getStep (i);
-            if (st.active)
-                g.setColour (i == play ? juce::Colour (0xffff00aa) : juce::Colour (0xff00f0ff).withAlpha (0.75f));
-            else
-                g.setColour (juce::Colour (0xff1a1a28));
-            g.fillRoundedRectangle (cell, 3.0f);
-            if (i == play) {
-                g.setColour (juce::Colours::white.withAlpha (0.9f));
-                g.drawRoundedRectangle (cell, 3.0f, 1.5f);
-            }
+            g.setColour (st.active ? (i == play ? juce::Colour (0xffff00aa) : juce::Colour (0xff00f0ff).withAlpha (0.75f)) : juce::Colour (0xff1a1a28));
+            g.fillRoundedRectangle (cell, 6.0f);
+            if (i == play) { g.setColour (juce::Colours::white.withAlpha (0.9f)); g.drawRoundedRectangle (cell, 6.0f, 1.5f); }
             g.setColour (juce::Colours::black.withAlpha (0.5f));
             g.setFont (juce::FontOptions (9.0f));
             g.drawText (juce::String (i + 1), cell, juce::Justification::centred);
@@ -197,11 +174,7 @@ public:
         const float gap = 4.0f;
         const float w = (r.getWidth() - gap * (n + 1)) / (float) n;
         int idx = (int) ((e.position.x - r.getX() - gap) / (w + gap));
-        if (idx >= 0 && idx < n) {
-            auto& st = sequencer.getStep (idx);
-            st.active = ! st.active;
-            repaint();
-        }
+        if (idx >= 0 && idx < n) { sequencer.getStep (idx).active = ! sequencer.getStep (idx).active; repaint(); }
     }
     void timerCallback() override { repaint(); }
 private:
@@ -240,6 +213,7 @@ private:
     juce::ListBox presetList { "presets", this };
     std::unique_ptr<StepGridComponent> stepGrid;
     juce::MidiKeyboardComponent keyboard;
+    float phaseLights = 0.0f;
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
