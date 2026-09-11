@@ -7,7 +7,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     keyboard.setAvailableRange (24, 96);
     keyboard.setOctaveForMiddleC (4);
     addAndMakeVisible (keyboard);
-    startTimerHz (10);
+    startTimerHz (30);
     setLookAndFeel (&lnf);
     setSize (1220, 800);
     setResizable (true, true);
@@ -194,35 +194,75 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
     const int theme = themeBox.getSelectedId();
-    juce::Colour bg1 (0xff06040e), bg2 (0xff12081c), accent (0xff00f0ff), accent2 (0xffff00aa);
-    if (theme == 2) { bg1 = juce::Colour (0xff041208); bg2 = juce::Colour (0xff0a1a10); accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffaaff00); }
-    if (theme == 3) { bg1 = juce::Colour (0xff040810); bg2 = juce::Colour (0xff0a1420); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff81d4fa); }
+    juce::Colour bg1 (0xff05030c), bg2 (0xff12081c), accent (0xff00f0ff), accent2 (0xffff00aa);
+    if (theme == 2) { bg1 = juce::Colour (0xff030a06); bg2 = juce::Colour (0xff0a1810); accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
+    if (theme == 3) { bg1 = juce::Colour (0xff030810); bg2 = juce::Colour (0xff0a1420); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
+
+    const float peak = processor.getOutputPeak();
+    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.5f);
 
     juce::ColourGradient bg (bg1, 0, 0, bg2, 0, (float) getHeight(), false);
     g.setGradientFill (bg);
     g.fillAll();
 
-    auto outer = getLocalBounds().toFloat().reduced (4.0f);
-    g.setColour (accent.withAlpha (0.35f));
-    g.drawRoundedRectangle (outer, 14.0f, 2.0f);
-    g.setColour (accent2.withAlpha (0.2f));
-    g.drawRoundedRectangle (outer.reduced (3.0f), 12.0f, 1.0f);
+    g.setColour (accent.withAlpha (0.08f + pulse * 0.18f));
+    const float y0 = (float) getHeight() * 0.55f;
+    for (int i = 0; i < 12; ++i)
+    {
+        float t = (float) i / 11.0f;
+        float y = y0 + t * t * ((float) getHeight() - y0);
+        g.drawLine (0.0f, y, (float) getWidth(), y, 1.0f);
+    }
+    for (int i = -8; i <= 8; ++i)
+    {
+        float xMid = (float) getWidth() * 0.5f;
+        float x = xMid + (float) i * 40.0f + std::sin (animPhase + i * 0.3f) * 8.0f * pulse;
+        g.drawLine (xMid, y0, x, (float) getHeight(), 1.0f);
+    }
 
-    auto head = juce::Rectangle<float> (12.0f, 8.0f, (float) getWidth() - 24.0f, 40.0f);
-    g.setColour (bg2.brighter (0.05f));
+    g.setColour (accent2.withAlpha (0.25f + pulse * 0.45f));
+    for (int i = 0; i < 24; ++i)
+    {
+        float seed = (float) i * 17.13f;
+        float x = std::fmod (seed * 37.0f + animPhase * (12.0f + peak * 40.0f) + i * 50.0f, (float) getWidth());
+        float y = std::fmod (seed * 53.0f + animPhase * 8.0f, (float) getHeight());
+        float sz = 1.5f + pulse * 3.0f + (float) (i % 3);
+        g.fillEllipse (x, y, sz, sz);
+    }
+
+    auto outer = getLocalBounds().toFloat().reduced (3.0f);
+    g.setColour (juce::Colours::black.withAlpha (0.5f));
+    g.drawRoundedRectangle (outer.translated (2.0f, 3.0f), 14.0f, 3.0f);
+    g.setColour (accent.withAlpha (0.25f + pulse * 0.35f));
+    g.drawRoundedRectangle (outer, 14.0f, 2.0f + pulse * 1.5f);
+    g.setColour (accent2.withAlpha (0.15f + pulse * 0.25f));
+    g.drawRoundedRectangle (outer.reduced (4.0f), 12.0f, 1.0f);
+
+    auto head = juce::Rectangle<float> (10.0f, 6.0f, (float) getWidth() - 20.0f, 42.0f);
+    juce::ColourGradient hg (bg2.brighter (0.12f), head.getX(), head.getY(), bg1, head.getX(), head.getBottom(), false);
+    g.setGradientFill (hg);
     g.fillRoundedRectangle (head, 10.0f);
+    g.setColour (accent.withAlpha (0.4f + pulse * 0.4f));
+    g.drawRoundedRectangle (head, 10.0f, 1.2f);
+
+    auto vu = juce::Rectangle<float> (head.getX() + 300.0f, head.getCentreY() - 4.0f, 180.0f * pulse, 8.0f);
+    g.setColour (accent.withAlpha (0.7f));
+    g.fillRoundedRectangle (vu, 3.0f);
+
     g.setColour (accent);
     g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", head.getX() + 160.0f, head.getY() + 4.0f, 300.0f, 22.0f, juce::Justification::centredLeft);
-    g.setColour (accent2);
+    g.drawText ("SALEK HIGHTECH", head.getX() + 150.0f, head.getY() + 4.0f, 280.0f, 22.0f, juce::Justification::centredLeft);
+    g.setColour (accent2.withAlpha (0.9f));
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("ALIEN SYNTH  ·  MAIN · MOD · FX · ARP  ·  v0.5", head.getX() + 160.0f, head.getY() + 24.0f, 420.0f, 14.0f, juce::Justification::centredLeft);
+    g.drawText ("ALIEN SYNTH  ·  AUDIO-REACTIVE  ·  v0.6", head.getX() + 150.0f, head.getY() + 24.0f, 400.0f, 14.0f, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
-    if (++ticks < 30) resized();
+    if (++ticks < 40) resized();
+    animPhase += 0.04f;
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
