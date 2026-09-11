@@ -6,11 +6,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     : AudioProcessorEditor (&p), processor (p),
       keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
-    keyboard.setAvailableRange (24, 96);
+    keyboard.setAvailableRange (21, 108);
     keyboard.setOctaveForMiddleC (4);
     glBackdrop = std::make_unique<OpenGLGridBackdrop>();
-    addAndMakeVisible (*glBackdrop);
-    glBackdrop->toBack();
+    glBackdrop->setVisible (false);
     addAndMakeVisible (keyboard);
     startTimerHz (30);
     setLookAndFeel (&lnf);
@@ -273,20 +272,22 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 void SalekHightechAudioProcessorEditor::resized()
 {
     if (glBackdrop != nullptr)
-        glBackdrop->setBounds (18, 130, 148, 90);
+        glBackdrop->setBounds (0, 0, 0, 0);
 
-    auto a = getLocalBounds().reduced (8);
+    auto full = getLocalBounds().reduced (6);
+    keyboard.setBounds (full.removeFromBottom (72).reduced (2, 2));
+    full.removeFromBottom (2);
+
+    auto a = full;
     a.removeFromLeft (176);
-    keyboard.setBounds (a.removeFromBottom (64).reduced (2));
-    a.removeFromBottom (4);
     title.setVisible (false);
     tagline.setVisible (false);
 
     auto header = a.removeFromTop (44);
-    themeBox.setBounds (header.removeFromLeft (140).reduced (2));
-    scope.setBounds (header.removeFromRight (120).reduced (3));
+    themeBox.setBounds (header.removeFromRight (150).reduced (2));
+    scope.setBounds (header.removeFromRight (130).reduced (3));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (240).reduced (2));
+        wtDisplay->setBounds (header.removeFromRight (260).reduced (2));
 
     a.removeFromTop (4);
     tabs.setBounds (a);
@@ -348,13 +349,12 @@ void SalekHightechAudioProcessorEditor::resized()
             lfoDisplay->setBounds (bounds.removeFromTop (100).reduced (4));
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (bounds.removeFromTop (200).reduced (4));
-        juce::Array<juce::Component*> knobsArr, labelsArr, others;
+        juce::Array<juce::Component*> knobsArr, labelsArr;
         for (auto* c : modTab.getChildren())
         {
             if (c == lfoDisplay.get() || c == matrixPanel.get()) continue;
             if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
             else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
-            else others.add (c);
         }
         const int n = knobsArr.size();
         if (n > 0)
