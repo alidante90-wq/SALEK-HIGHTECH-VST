@@ -10,14 +10,12 @@ inline juce::Image loadLogo()
     juce::Graphics g (img);
     const float cx = 64.0f, cy = 64.0f;
 
-    // outer glow rings
     for (int i = 5; i >= 1; --i)
     {
         g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.04f * (float) i));
         g.fillEllipse (cx - 50 - i * 2, cy - 50 - i * 2, 100 + i * 4, 100 + i * 4);
     }
 
-    // hexagon body
     juce::Path hex;
     for (int i = 0; i < 6; ++i)
     {
@@ -36,7 +34,6 @@ inline juce::Image loadLogo()
     g.setColour (juce::Colour (0xffff2d6a).withAlpha (0.7f));
     g.strokePath (hex, juce::PathStrokeType (1.0f));
 
-    // inner diamond
     juce::Path dia;
     dia.startNewSubPath (cx, cy - 22);
     dia.lineTo (cx + 22, cy);
@@ -48,7 +45,6 @@ inline juce::Image loadLogo()
     g.setColour (juce::Colour (0xffff00aa));
     g.strokePath (dia, juce::PathStrokeType (1.5f));
 
-    // SALEK text
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (14.0f, juce::Font::bold));
     g.drawText ("SALEK", 0, 52, 128, 18, juce::Justification::centred);
@@ -58,4 +54,5 @@ inline juce::Image loadLogo()
 
     return img;
 }
+inline juce::Image loadHero() { return loadLogo(); }
 }
