@@ -15,6 +15,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     startTimerHz (30);
     setLookAndFeel (&lnf);
     logoImg = SalekAssets::loadLogo();
+    heroImg = SalekAssets::loadHero();
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);
@@ -31,6 +32,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     matrixPanel = std::make_unique<ModMatrixPanel> (processor.getModMatrix());
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
+    tabs.setOpaque (true);
 
     auto C = juce::Colour (0xff00f0ff);
     auto M = juce::Colour (0xffff00aa);
@@ -258,21 +260,34 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // Transparent so GL mesh shows through; draw chrome only
+    // SOLID background — knobs/tabs must always be readable
     const int theme = themeBox.getSelectedId();
+    juce::Colour bg1 (0xff0a0614), bg2 (0xff140a22);
+    if (theme == 2) { bg1 = juce::Colour (0xff061208); bg2 = juce::Colour (0xff0a1810); }
+    if (theme == 3) { bg1 = juce::Colour (0xff060a14); bg2 = juce::Colour (0xff0a1420); }
+    juce::ColourGradient bg (bg1, 0, 0, bg2, 0, (float) getHeight(), false);
+    g.setGradientFill (bg);
+    g.fillAll();
+
+    g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.05f));
+    for (int y = 0; y < getHeight(); y += 28)
+        g.drawHorizontalLine (y, 0.0f, (float) getWidth());
+    for (int x = 0; x < getWidth(); x += 28)
+        g.drawVerticalLine (x, 0.0f, (float) getHeight());
+
+    const float peak = processor.getOutputPeak();
+    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.8f);
     juce::Colour accent (0xff00f0ff), accent2 (0xffff2d6a);
     if (theme == 2) { accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
     if (theme == 3) { accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
-    const float peak = processor.getOutputPeak();
-    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.8f);
     float cut = 0.5f;
     if (auto* p = processor.getAPVTS().getRawParameterValue ("filter_cutoff"))
         cut = juce::jmap (std::log (juce::jmax (20.0f, p->load())), std::log (20.0f), std::log (20000.0f), 0.0f, 1.0f);
 
     auto charPanel = juce::Rectangle<float> (8.0f, 52.0f, 168.0f, (float) getHeight() - 130.0f);
     {
-        juce::ColourGradient cg (juce::Colour (0xcc1a0a28), charPanel.getX(), charPanel.getY(),
-                                 juce::Colour (0xcc080410), charPanel.getX(), charPanel.getBottom(), false);
+        juce::ColourGradient cg (juce::Colour (0xff1a0a28), charPanel.getX(), charPanel.getY(),
+                                 juce::Colour (0xff080410), charPanel.getX(), charPanel.getBottom(), false);
         g.setGradientFill (cg);
         g.fillRoundedRectangle (charPanel, 12.0f);
         g.setColour (accent2.withAlpha (0.45f + pulse * 0.4f));
@@ -296,25 +311,32 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         if (logoImg.isValid())
         {
             auto lr = juce::Rectangle<float> (charPanel.getX() + 40, charPanel.getY() + 8, 88, 88);
-            g.setOpacity (0.85f + pulse * 0.15f);
+            g.setOpacity (0.9f);
             g.drawImage (logoImg, lr, juce::RectanglePlacement::centred);
+            g.setOpacity (1.0f);
+        }
+        if (heroImg.isValid())
+        {
+            auto hr = juce::Rectangle<float> (charPanel.getX() + 12, charPanel.getBottom() - 100, charPanel.getWidth() - 24, 88);
+            g.setOpacity (0.35f + pulse * 0.15f);
+            g.drawImage (heroImg, hr, juce::RectanglePlacement::centred | juce::RectanglePlacement::fillDestination);
             g.setOpacity (1.0f);
         }
     }
 
     auto outer = getLocalBounds().toFloat().reduced (3.0f);
-    g.setColour (accent.withAlpha (0.2f + pulse * 0.35f));
+    g.setColour (accent.withAlpha (0.25f + pulse * 0.3f));
     g.drawRoundedRectangle (outer, 14.0f, 2.0f + pulse);
 
     auto head = juce::Rectangle<float> (8.0f, 6.0f, (float) getWidth() - 16.0f, 42.0f);
-    g.setColour (juce::Colour (0xcc10081a));
+    g.setColour (juce::Colour (0xff10081a));
     g.fillRoundedRectangle (head, 10.0f);
     g.setColour (accent);
     g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
     g.drawText ("SALEK HIGHTECH", head.getX() + 180.0f, head.getY() + 4.0f, 300.0f, 22.0f, juce::Justification::centredLeft);
     g.setColour (accent2);
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("GL MESH 3D  ·  PRESET FOLDERS  ·  v0.95", head.getX() + 180.0f, head.getY() + 24.0f, 400.0f, 14.0f, juce::Justification::centredLeft);
+    g.drawText ("MAIN  ·  MOD  ·  FX  ·  ARP  ·  v1.0", head.getX() + 180.0f, head.getY() + 24.0f, 400.0f, 14.0f, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
@@ -329,8 +351,10 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 
 void SalekHightechAudioProcessorEditor::resized()
 {
+    // GL mesh ONLY in small visualizer — never covers knobs/tabs
     if (glBackdrop != nullptr)
-        glBackdrop->setBounds (getLocalBounds());
+        glBackdrop->setBounds (12, 56, 160, 120);
+
     auto a = getLocalBounds().reduced (8);
     a.removeFromLeft (176);
     keyboard.setBounds (a.removeFromBottom (64).reduced (2));
