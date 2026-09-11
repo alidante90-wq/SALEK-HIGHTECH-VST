@@ -1,8 +1,11 @@
+#include <cmath>
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 SalekHightechAudioProcessor::SalekHightechAudioProcessor()
-    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+    : AudioProcessor (BusesProperties()
+          .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+          .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     initFactoryPresets();
@@ -46,6 +49,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,8,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
+    F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,0);
+    F("eq_low","EQ Low",-12,12,0); F("eq_mid","EQ Mid",-12,12,0); F("eq_high","EQ High",-12,12,0);
+    F("spatial_azim","Spatial Azim",-180,180,0); F("spatial_dist","Spatial Dist",0,1,0);
+    F("spatial_size","Spatial Size",0,1,0.5f); F("spatial_elev","Spatial Elev",-90,90,0);
+    F("input_mix","Input Mix",0,1,0);
     return { p.begin(), p.end() };
 }
 
@@ -55,50 +63,24 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("Init", {});
     add("Kick/Psy Kick Stab", {{"osc1_fold",0.3f},{"filter_cutoff",500.f},{"filter_env",1.f},{"filter_reso",0.5f},{"amp_attack",0.001f},{"amp_decay",0.18f},{"amp_sustain",0.f},{"amp_release",0.1f},{"master_drive",0.45f}});
     add("Kick/808 Boom", {{"osc1_table",0.f},{"osc3_octave",-2.f},{"osc3_level",1.f},{"filter_cutoff",400.f},{"amp_attack",0.001f},{"amp_decay",0.8f},{"amp_sustain",0.f},{"amp_release",0.5f},{"master_drive",0.35f}});
-    add("Kick/Hard Body", {{"osc1_fold",0.5f},{"osc1_drive",0.4f},{"filter_cutoff",350.f},{"filter_env",0.9f},{"filter_reso",0.45f},{"amp_attack",0.001f},{"amp_decay",0.22f},{"amp_sustain",0.f},{"amp_release",0.12f},{"master_drive",0.5f}});
-    add("Kick/Alien Thump", {{"osc1_table",0.2f},{"fm_3to1",0.4f},{"osc3_octave",-2.f},{"filter_cutoff",280.f},{"filter_env",0.85f},{"amp_attack",0.002f},{"amp_decay",0.35f},{"amp_sustain",0.f},{"amp_release",0.2f},{"master_drive",0.4f}});
-    add("Kick/Click Kick", {{"osc1_warp",0.3f},{"filter_cutoff",800.f},{"filter_env",0.7f},{"amp_attack",0.001f},{"amp_decay",0.12f},{"amp_sustain",0.f},{"amp_release",0.08f},{"master_drive",0.3f}});
-    add("Kick/Sub Punch", {{"osc3_octave",-2.f},{"osc3_level",0.95f},{"filter_cutoff",180.f},{"filter_reso",0.25f},{"amp_attack",0.001f},{"amp_decay",0.5f},{"amp_sustain",0.1f},{"amp_release",0.3f},{"master_drive",0.35f}});
-    add("Kick/Dist Kick", {{"osc1_drive",0.7f},{"osc1_fold",0.4f},{"filter_cutoff",450.f},{"filter_drive",0.5f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.15f},{"master_drive",0.55f}});
-    add("Kick/Techno Kick", {{"osc1_table",0.1f},{"filter_cutoff",320.f},{"filter_env",0.95f},{"filter_reso",0.4f},{"amp_attack",0.001f},{"amp_decay",0.28f},{"amp_sustain",0.f},{"amp_release",0.15f},{"master_drive",0.4f}});
     add("Bass/FM Bass", {{"osc1_level",0.9f},{"osc2_level",0.7f},{"osc2_octave",1.f},{"fm_2to1",0.65f},{"filter_cutoff",1200.f},{"filter_reso",0.55f},{"filter_env",0.7f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.25f}});
-    add("Bass/Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.25f},{"master_drive",0.4f}});
-    add("Bass/Table Morph", {{"osc1_table",0.35f},{"osc1_warp",0.2f},{"osc3_octave",-1.f},{"osc3_level",0.7f},{"fm_3to1",0.55f},{"unison_voices",3.f},{"filter_cutoff",900.f},{"filter_drive",0.35f},{"amp_attack",0.008f},{"amp_decay",0.3f},{"amp_sustain",0.55f},{"amp_release",0.2f},{"master_drive",0.3f}});
-    add("Bass/Reese Wide", {{"osc1_table",0.4f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",28.f},{"unison_spread",1.f},{"filter_cutoff",700.f},{"filter_reso",0.4f},{"amp_attack",0.05f},{"amp_decay",0.5f},{"amp_sustain",0.7f},{"amp_release",0.4f},{"chorus_mix",0.25f}});
-    add("Bass/Dark Psy", {{"osc1_table",0.15f},{"osc2_table",0.55f},{"osc3_octave",-1.f},{"fm_3to1",0.5f},{"rm_2to1",0.2f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"amp_attack",0.005f},{"amp_decay",0.3f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.3f}});
-    add("Bass/Hooverish", {{"osc1_table",0.35f},{"unison_voices",7.f},{"unison_detune",35.f},{"unison_spread",0.9f},{"filter_cutoff",2500.f},{"filter_reso",0.55f},{"filter_env",0.6f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.6f},{"amp_release",0.3f}});
-    add("Bass/Acid Line", {{"osc1_fold",0.35f},{"filter_cutoff",700.f},{"filter_reso",0.9f},{"filter_env",0.85f},{"filter_drive",0.35f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.35f},{"amp_release",0.15f},{"lfo_rate",5.f},{"lfo_amount",0.25f}});
-    add("Bass/Wobble", {{"osc1_table",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.6f},{"lfo_rate",4.f},{"lfo_amount",0.55f},{"lfo_wave",1.f},{"amp_attack",0.02f},{"amp_decay",0.3f},{"amp_sustain",0.7f},{"amp_release",0.3f},{"unison_voices",3.f}});
-    add("Bass/Neuro", {{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"fm_2to1",0.5f},{"filter_cutoff",1100.f},{"filter_reso",0.5f},{"filter_drive",0.4f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.2f},{"master_drive",0.35f}});
-    add("Bass/Clean Sub", {{"osc1_table",0.f},{"osc3_octave",-1.f},{"osc3_level",0.9f},{"filter_cutoff",500.f},{"filter_reso",0.2f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.8f},{"amp_release",0.35f}});
-    add("Lead/Hi-Tech", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_attack",0.005f},{"amp_decay",0.2f},{"amp_sustain",0.7f},{"amp_release",0.25f},{"delay_mix",0.2f},{"chorus_mix",0.15f}});
-    add("Lead/WT Morph", {{"osc1_table",0.55f},{"osc1_warp",0.35f},{"osc1_fold",0.2f},{"unison_voices",3.f},{"unison_detune",10.f},{"fm_2to1",0.25f},{"filter_cutoff",7000.f},{"amp_attack",0.01f},{"amp_decay",0.25f},{"amp_sustain",0.8f},{"amp_release",0.3f}});
-    add("Lead/Stereo+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"amp_attack",0.008f},{"amp_decay",0.2f},{"amp_sustain",0.85f},{"amp_release",0.35f},{"chorus_mix",0.35f},{"delay_mix",0.22f}});
-    add("Lead/Screech Stack", {{"osc1_table",0.72f},{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"unison_voices",4.f},{"unison_detune",14.f},{"filter_cutoff",1800.f},{"filter_reso",0.8f},{"filter_env",0.85f},{"amp_attack",0.002f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.2f},{"lfo_rate",8.f},{"lfo_amount",0.3f}});
-    add("Lead/Acid Screech", {{"osc1_fold",0.45f},{"osc1_drive",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.3f},{"amp_release",0.15f},{"lfo_rate",6.f},{"lfo_amount",0.35f}});
-    add("Lead/Glass", {{"osc1_table",0.85f},{"osc1_warp",0.4f},{"unison_voices",2.f},{"filter_cutoff",9000.f},{"filter_reso",0.25f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.6f},{"amp_release",0.4f},{"delay_mix",0.3f},{"reverb_mix",0.2f}});
-    add("Lead/Alien Cry", {{"osc1_table",0.8f},{"osc1_warp",0.55f},{"fm_2to1",0.45f},{"filter_cutoff",4500.f},{"filter_reso",0.55f},{"amp_attack",0.05f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.6f},{"delay_mix",0.35f},{"reverb_mix",0.3f}});
-    add("Lead/Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"amp_attack",0.01f},{"amp_decay",0.3f},{"amp_sustain",0.75f},{"amp_release",0.4f},{"chorus_mix",0.25f},{"delay_mix",0.15f}});
-    add("Lead/Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.f},{"amp_release",0.15f},{"delay_mix",0.25f}});
+    add("Bass/Reese Wide", {{"osc1_table",0.4f},{"unison_voices",5.f},{"unison_detune",28.f},{"unison_spread",1.f},{"filter_cutoff",700.f},{"amp_attack",0.05f},{"amp_decay",0.5f},{"amp_sustain",0.7f},{"amp_release",0.4f},{"chorus_mix",0.25f}});
+    add("Bass/Dark Psy", {{"osc1_table",0.15f},{"fm_3to1",0.5f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"amp_attack",0.005f},{"amp_decay",0.3f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.3f}});
+    add("Lead/Hi-Tech", {{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"amp_attack",0.005f},{"amp_decay",0.2f},{"amp_sustain",0.7f},{"amp_release",0.25f},{"delay_mix",0.2f}});
     add("Lead/Supersaw", {{"osc1_table",0.4f},{"unison_voices",7.f},{"unison_detune",30.f},{"unison_spread",1.f},{"filter_cutoff",6500.f},{"amp_attack",0.02f},{"amp_decay",0.3f},{"amp_sustain",0.8f},{"amp_release",0.5f},{"chorus_mix",0.3f}});
+    add("Lead/Acid Screech", {{"osc1_fold",0.45f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.3f},{"amp_release",0.15f}});
+    add("Acid/Reso Slide", {{"osc1_table",0.55f},{"osc1_level",0.95f},{"osc2_level",0.f},{"osc3_level",0.f},{"filter_cutoff",400.f},{"filter_reso",0.92f},{"filter_drive",0.55f},{"filter_env",0.85f},{"amp_attack",0.001f},{"amp_decay",0.22f},{"amp_sustain",0.15f},{"amp_release",0.12f},{"master_drive",0.35f}});
+    add("Acid/Squelch", {{"osc1_table",0.7f},{"filter_cutoff",280.f},{"filter_reso",0.95f},{"filter_drive",0.65f},{"filter_env",1.f},{"amp_attack",0.001f},{"amp_decay",0.18f},{"amp_sustain",0.05f},{"amp_release",0.1f},{"master_drive",0.4f}});
+    add("Acid/303 Square", {{"osc1_table",0.9f},{"filter_cutoff",500.f},{"filter_reso",0.88f},{"filter_drive",0.45f},{"filter_env",0.75f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.2f},{"amp_release",0.15f},{"master_drive",0.3f}});
+    add("Acid/Darkpsy Acid", {{"osc1_table",0.6f},{"osc1_fold",0.2f},{"filter_cutoff",350.f},{"filter_reso",0.9f},{"filter_drive",0.7f},{"filter_env",0.95f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.1f},{"amp_release",0.12f},{"master_drive",0.5f}});
+    add("Acid/Acid Lead", {{"osc1_table",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.8f},{"filter_drive",0.4f},{"filter_env",0.6f},{"amp_attack",0.005f},{"amp_decay",0.3f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"delay_mix",0.2f}});
+    add("Acid/Liquid", {{"osc1_table",0.45f},{"filter_cutoff",600.f},{"filter_reso",0.85f},{"filter_drive",0.35f},{"filter_env",0.7f},{"amp_attack",0.001f},{"amp_decay",0.35f},{"amp_sustain",0.25f},{"amp_release",0.2f},{"chorus_mix",0.15f}});
+    add("Acid/Hard Accent", {{"osc1_table",0.75f},{"filter_cutoff",200.f},{"filter_reso",0.97f},{"filter_drive",0.8f},{"filter_env",1.f},{"amp_attack",0.001f},{"amp_decay",0.12f},{"amp_sustain",0.f},{"amp_release",0.08f},{"master_drive",0.55f}});
+    add("Acid/Wobble Acid", {{"osc1_table",0.65f},{"filter_cutoff",450.f},{"filter_reso",0.9f},{"filter_drive",0.5f},{"filter_env",0.5f},{"lfo_rate",5.5f},{"lfo_amount",0.45f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.5f},{"amp_release",0.15f}});
     add("FM/Deep Operator", {{"osc2_octave",2.f},{"fm_2to1",0.85f},{"filter_cutoff",3000.f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.3f}});
-    add("FM/Bell Metal", {{"osc2_octave",3.f},{"fm_2to1",0.7f},{"filter_cutoff",8000.f},{"amp_attack",0.001f},{"amp_decay",1.2f},{"amp_sustain",0.1f},{"amp_release",1.5f},{"reverb_mix",0.4f}});
-    add("FM/Clang", {{"osc2_semi",7.f},{"fm_2to1",0.9f},{"pm_2to1",0.3f},{"filter_cutoff",5000.f},{"amp_attack",0.001f},{"amp_decay",0.5f},{"amp_sustain",0.2f},{"amp_release",0.4f}});
-    add("FM/Triple Stack", {{"fm_2to1",0.5f},{"fm_3to1",0.45f},{"fm_3to2",0.35f},{"filter_cutoff",4000.f},{"amp_attack",0.01f},{"amp_decay",0.35f},{"amp_sustain",0.55f},{"amp_release",0.3f}});
-    add("FM/Soft EP", {{"osc2_octave",1.f},{"fm_2to1",0.35f},{"filter_cutoff",4500.f},{"amp_attack",0.01f},{"amp_decay",0.8f},{"amp_sustain",0.4f},{"amp_release",0.9f},{"chorus_mix",0.25f}});
-    add("FM/Growl FM", {{"osc2_octave",1.f},{"fm_2to1",0.75f},{"filter_cutoff",900.f},{"filter_reso",0.5f},{"filter_drive",0.4f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.25f},{"master_drive",0.3f}});
-    add("FM/Ring Spike", {{"rm_2to1",0.7f},{"fm_2to1",0.4f},{"filter_cutoff",3500.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.3f},{"amp_release",0.2f}});
-    add("FM/PM Shimmer", {{"pm_2to1",0.6f},{"osc2_fine",7.f},{"filter_cutoff",7000.f},{"amp_attack",0.05f},{"amp_decay",0.4f},{"amp_sustain",0.6f},{"amp_release",0.8f},{"reverb_mix",0.35f}});
-    add("FX/Noise Sweep", {{"osc1_table",0.95f},{"osc1_fold",0.4f},{"filter_cutoff",200.f},{"filter_env",1.f},{"filter_reso",0.7f},{"amp_attack",0.05f},{"amp_decay",1.5f},{"amp_sustain",0.2f},{"amp_release",1.f},{"lfo_rate",0.5f},{"lfo_amount",0.4f}});
-    add("FX/Riser", {{"osc1_table",0.6f},{"unison_voices",4.f},{"filter_cutoff",300.f},{"filter_env",0.9f},{"amp_attack",2.f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",1.f},{"lfo_rate",4.f},{"lfo_amount",0.5f},{"reverb_mix",0.45f}});
-    add("FX/Alien Drop", {{"osc1_table",0.8f},{"osc1_warp",0.6f},{"fm_2to1",0.6f},{"filter_cutoff",1500.f},{"filter_reso",0.75f},{"amp_attack",0.1f},{"amp_decay",0.5f},{"amp_sustain",0.3f},{"amp_release",0.8f},{"rm_2to1",0.3f}});
-    add("FX/Metallic Hit", {{"osc1_fold",0.7f},{"osc1_drive",0.6f},{"fm_2to1",0.8f},{"filter_cutoff",4000.f},{"filter_mode",2.f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.1f},{"amp_release",0.2f}});
-    add("Pad/Alien", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"osc1_warp",0.3f},{"filter_cutoff",3500.f},{"amp_attack",0.8f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.35f},{"lfo_amount",0.2f},{"lfo_rate",0.3f}});
-    add("Pad/Wide+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_decay",0.6f},{"amp_sustain",0.85f},{"amp_release",3.f},{"delay_mix",0.45f},{"reverb_mix",0.4f},{"chorus_mix",0.3f}});
-    add("Pad/Dark Ambient", {{"osc1_table",0.2f},{"osc2_table",0.8f},{"osc3_octave",-1.f},{"filter_cutoff",2000.f},{"amp_attack",1.5f},{"amp_decay",1.f},{"amp_sustain",0.9f},{"amp_release",4.f},{"reverb_mix",0.5f},{"reverb_size",0.8f}});
-    add("Pad/Choir Soft", {{"osc1_table",0.45f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",12.f},{"filter_cutoff",4500.f},{"amp_attack",0.6f},{"amp_decay",0.4f},{"amp_sustain",0.75f},{"amp_release",1.8f},{"chorus_mix",0.4f},{"reverb_mix",0.35f}});
-    add("Arp/Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.25f},{"delay_mix",0.4f},{"reverb_mix",0.25f},{"arp_on",1.f},{"arp_rate",4.f}});
-    add("Arp/Pluck Echo", {{"osc1_warp",0.25f},{"filter_cutoff",4500.f},{"filter_env",0.5f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.2f},{"delay_mix",0.45f},{"delay_fb",0.5f},{"arp_on",1.f},{"arp_rate",3.f}});
+    add("Pad/Alien", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"amp_attack",0.8f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.35f}});
+    add("FX/Riser", {{"osc1_table",0.6f},{"unison_voices",4.f},{"filter_cutoff",300.f},{"filter_env",0.9f},{"amp_attack",2.f},{"amp_sustain",0.8f},{"amp_release",1.f},{"reverb_mix",0.45f}});
+    add("Arp/Glass Arp", {{"osc1_table",0.85f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.25f},{"delay_mix",0.4f},{"arp_on",1.f},{"arp_rate",4.f}});
 }
 
 void SalekHightechAudioProcessor::loadFactoryPreset(int index)
@@ -130,14 +112,25 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     delay.prepare(sr, spb);
     chorus.prepare(sr, spb);
     reverb.prepare(sr, spb);
+    compressor.prepare(sr, spb);
+    eq.prepare(sr, spb);
+    spatial.prepare(sr, spb);
     arpeggiator.prepare(sr);
     stepSequencer.prepare(sr);
     stepSequencer.initDefaultPattern();
 }
+
 bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-    auto s = layouts.getMainOutputChannelSet();
-    return s == juce::AudioChannelSet::mono() || s == juce::AudioChannelSet::stereo();
+    auto out = layouts.getMainOutputChannelSet();
+    auto in  = layouts.getMainInputChannelSet();
+    if (out != juce::AudioChannelSet::mono() && out != juce::AudioChannelSet::stereo())
+        return false;
+    if (in != juce::AudioChannelSet::disabled()
+        && in != juce::AudioChannelSet::mono()
+        && in != juce::AudioChannelSet::stereo())
+        return false;
+    return true;
 }
 
 void SalekHightechAudioProcessor::applyParamsToEngine()
@@ -150,110 +143,108 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc1Drive(g("osc1_drive")); synthEngine.setOsc2Drive(g("osc2_drive")); synthEngine.setOsc3Drive(g("osc3_drive"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
     synthEngine.setOsc1Semi((int)g("osc1_semi")); synthEngine.setOsc2Semi((int)g("osc2_semi")); synthEngine.setOsc3Semi((int)g("osc3_semi"));
-    synthEngine.setOsc1Fine(g("osc1_fine")); synthEngine.setOsc2Fine(g("osc2_fine")); synthEngine.setOsc3Fine(g("osc3_fine"));
-    synthEngine.setOsc1Detune(g("osc1_detune")); synthEngine.setOsc2Detune(g("osc2_detune")); synthEngine.setOsc3Detune(g("osc3_detune"));
+    synthEngine.setUnisonVoices((int)g("unison_voices")); synthEngine.setUnisonDetune(g("unison_detune")); synthEngine.setUnisonSpread(g("unison_spread"));
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
     float cut = g("filter_cutoff") * (0.35f + 0.65f*(1.f-g("macro1")) + g("macro1")*2.2f);
-    synthEngine.setFilterCutoff(cut); synthEngine.setFilterResonance(g("filter_reso"));
-    synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterMode((int)g("filter_mode"));
-    synthEngine.setFilterEnvAmt(g("filter_env"));
+    cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 2.0f);
+    synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
+    synthEngine.setFilterResonance(g("filter_reso"));
+    synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(g("filter_env"));
+    synthEngine.setFilterMode((int)g("filter_mode"));
     synthEngine.setAmpAttack(g("amp_attack")); synthEngine.setAmpDecay(g("amp_decay"));
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
-    delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb")); delay.setMix(g("delay_mix"));
-    chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth")); chorus.setMix(g("chorus_mix"));
-    reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay")); reverb.setMix(g("reverb_mix"));
-    synthEngine.setUnison((int)g("unison_voices"));
-    synthEngine.setUnisonDetune(g("unison_detune"));
-    synthEngine.setUnisonSpread(g("unison_spread"));
+    modMatrix.setSourceValue(salek::ModMatrix::Source::LFO1, std::sin((float)juce::Time::getMillisecondCounter() * 0.001f * g("lfo_rate") * juce::MathConstants<float>::twoPi));
+    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
+    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
+    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
+    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
+    delay.setMix(g("delay_mix")); delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb"));
+    chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
+    reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
+    compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
+    eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
+    spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
+    spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
+    arpeggiator.setEnabled(g("arp_on") > 0.5f); arpeggiator.setRate((int)g("arp_rate")); arpeggiator.setOctaves((int)g("arp_octaves"));
+    stepSequencer.setEnabled(g("seq_on") > 0.5f); stepSequencer.setRate((int)g("seq_rate"));
 }
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
-    juce::ScopedNoDenormals nd; buffer.clear();
+    juce::ScopedNoDenormals noDenormals;
+    for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
+
     keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
     applyParamsToEngine();
 
-    auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
-    arpeggiator.setEnabled(g("arp_on") > 0.5f);
-    arpeggiator.setRateDivisor((int) g("arp_rate"));
-    arpeggiator.setOctaves((int) g("arp_octaves"));
+    juce::MidiBuffer processedMidi;
+    arpeggiator.process(midi, processedMidi, buffer.getNumSamples());
+    juce::MidiBuffer seqMidi;
+    stepSequencer.process(processedMidi, seqMidi, buffer.getNumSamples());
 
-    juce::MidiBuffer routed;
-    const bool seqOn = g("seq_on") > 0.5f;
-    const bool arpOn = g("arp_on") > 0.5f;
+    buffer.clear();
+    synthEngine.processBlock(buffer, seqMidi);
 
-    stepSequencer.setEnabled(seqOn);
-    stepSequencer.setRateDivisor((int) g("seq_rate"));
-
-    if (seqOn)
+    if (auto* inBus = getBus (true, 0))
     {
-        for (const auto meta : midi)
+        if (inBus->isEnabled())
         {
-            auto m = meta.getMessage();
-            if (m.isNoteOn()) stepSequencer.setRootNote(m.getNoteNumber());
-            else if (! m.isNoteOff()) routed.addEvent(m, meta.samplePosition);
+            auto inBuf = getBusBuffer (buffer, true, 0);
+            float im = apvts.getRawParameterValue("input_mix")->load();
+            if (im > 1e-4f && inBuf.getNumSamples() > 0)
+            {
+                for (int ch = 0; ch < juce::jmin (buffer.getNumChannels(), inBuf.getNumChannels()); ++ch)
+                    buffer.addFrom (ch, 0, inBuf, ch, 0, buffer.getNumSamples(), im);
+            }
         }
-        stepSequencer.process(buffer.getNumSamples(), routed);
-        midi.swapWith(routed);
-    }
-    else if (arpOn)
-    {
-        for (const auto meta : midi)
-        {
-            auto m = meta.getMessage();
-            if (m.isNoteOn()) arpeggiator.noteOn(m.getNoteNumber(), m.getFloatVelocity());
-            else if (m.isNoteOff()) arpeggiator.noteOff(m.getNoteNumber());
-            else routed.addEvent(m, meta.samplePosition);
-        }
-        arpeggiator.process(buffer.getNumSamples(), routed);
-        midi.swapWith(routed);
     }
 
-    synthEngine.processBlock(buffer, midi);
-    float md = apvts.getRawParameterValue("master_drive")->load();
-    float mg = apvts.getRawParameterValue("master_gain")->load();
-    if (md > 1e-4f) {
-        float gain = 1.f + md * 4.f;
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+    float drive = apvts.getRawParameterValue("master_drive")->load();
+    if (drive > 1e-4f)
+    {
+        float g = 1.f + drive * 4.f;
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
             auto* d = buffer.getWritePointer(ch);
-            for (int i = 0; i < buffer.getNumSamples(); ++i) d[i] = std::tanh(d[i]*gain)*0.9f;
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+                d[i] = std::tanh(d[i] * g);
         }
     }
-    buffer.applyGain(mg);
-    {
-        static float hpStateL = 0.f, hpStateR = 0.f;
-        const float hp = 0.12f;
-        for (int i = 0; i < buffer.getNumSamples(); ++i)
-        {
-            float l = buffer.getSample(0, i);
-            float r = buffer.getNumChannels() > 1 ? buffer.getSample(1, i) : l;
-            hpStateL += 0.08f * (l - hpStateL);
-            hpStateR += 0.08f * (r - hpStateR);
-            buffer.setSample(0, i, l + (l - hpStateL) * hp);
-            if (buffer.getNumChannels() > 1) buffer.setSample(1, i, r + (r - hpStateR) * hp);
-        }
-    }
+
     chorus.process(buffer);
     delay.process(buffer);
     reverb.process(buffer);
+    compressor.process(buffer);
+    eq.process(buffer);
+    spatial.process(buffer);
+
+    float gain = apvts.getRawParameterValue("master_gain")->load();
+    buffer.applyGain(gain);
+
+    float peak = 0.f;
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
+    outputPeak.store (peak);
 }
 
-juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor() { return new SalekHightechAudioProcessorEditor(*this); }
+void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    if (auto xml = apvts.copyState().createXml())
+        copyXmlToBinary (*xml, destData);
+}
+void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    if (auto xml = getXmlFromBinary (data, sizeInBytes))
+        if (xml->hasTagName (apvts.state.getType()))
+            apvts.replaceState (juce::ValueTree::fromXml (*xml));
+}
 
-void SalekHightechAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor()
 {
-    auto state = apvts.copyState(); state.setProperty("program", currentProgram, nullptr);
-    std::unique_ptr<juce::XmlElement> xml(state.createXml()); copyXmlToBinary(*xml, destData);
+    return new SalekHightechAudioProcessorEditor (*this);
 }
-void SalekHightechAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
-{
-    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
-    if (xml && xml->hasTagName(apvts.state.getType())) {
-        auto tree = juce::ValueTree::fromXml(*xml);
-        currentProgram = (int)tree.getProperty("program", 0);
-        apvts.replaceState(tree);
-    }
-}
+
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new SalekHightechAudioProcessor(); }
