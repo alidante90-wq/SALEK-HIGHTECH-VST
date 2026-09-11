@@ -15,13 +15,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     setResizeLimits (980, 700, 1600, 1100);
 
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
-    title.setFont (juce::FontOptions (36.0f, juce::Font::bold));
-    title.setColour (juce::Label::textColourId, juce::Colour (0xff00f0ff));
     addAndMakeVisible (title);
-
-    tagline.setText ("VST3 SYNTH  //  HI-TECH · DARKPSY · FM · ACID · ALIEN", juce::dontSendNotification);
-    tagline.setFont (juce::FontOptions (12.0f));
-    tagline.setColour (juce::Label::textColourId, juce::Colour (0xffff00aa));
+    tagline.setText ("UFO SERIES", juce::dontSendNotification);
     addAndMakeVisible (tagline);
 
     addAndMakeVisible (scope);
@@ -92,10 +87,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         seqTab.addAndMakeVisible (arpOn);
         seqTab.addAndMakeVisible (seqOn);
-        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
-            processor.getAPVTS(), "arp_on", arpOn));
-        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
-            processor.getAPVTS(), "seq_on", seqOn));
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "arp_on", arpOn));
+        btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "seq_on", seqOn));
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
@@ -188,21 +181,71 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    juce::ColourGradient bg (juce::Colour (0xff030308), 0, 0, juce::Colour (0xff0a0518), 0, (float) getHeight(), false);
-    g.setGradientFill (bg);
-    g.fillAll();
-    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.45f));
-    g.drawRect (getLocalBounds(), 2);
-    g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.2f));
-    g.drawRect (getLocalBounds().reduced (3), 1);
-    g.setColour (juce::Colour (0xff0a0a16));
-    g.fillRect (0, 0, getWidth(), 70);
+    g.fillAll (juce::Colour (0xff010105));
+
+    auto bounds = getLocalBounds().toFloat();
+    const float cx = bounds.getCentreX();
+    const float cy = bounds.getCentreY() + 10.0f;
+
+    const float bodyW = bounds.getWidth() * 0.96f;
+    const float bodyH = bounds.getHeight() * 0.72f;
+    juce::Rectangle<float> body (cx - bodyW * 0.5f, cy - bodyH * 0.42f, bodyW, bodyH);
+
+    for (int i = 6; i >= 1; --i)
+    {
+        g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.02f * (float) i));
+        g.fillEllipse (body.expanded ((float) i * 6.0f));
+    }
+
+    juce::ColourGradient hull (juce::Colour (0xff2a1a40), cx, body.getY(),
+                               juce::Colour (0xff0a0814), cx, body.getBottom(), false);
+    g.setGradientFill (hull);
+    g.fillEllipse (body);
+
     g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.35f));
-    g.fillRect (0, 68, getWidth(), 2);
+    g.drawEllipse (body.reduced (4.0f), 2.0f);
+    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.25f));
+    g.drawEllipse (body.reduced (10.0f), 1.2f);
+    g.setColour (juce::Colour (0xff88aaff).withAlpha (0.15f));
+    g.drawEllipse (body.reduced (18.0f), 1.0f);
+
+    juce::Rectangle<float> dome (cx - bodyW * 0.22f, body.getY() - bodyH * 0.08f, bodyW * 0.44f, bodyH * 0.28f);
+    juce::ColourGradient domeGrad (juce::Colour (0xff4a80ff).withAlpha (0.55f), cx, dome.getY(),
+                                   juce::Colour (0xff120830).withAlpha (0.9f), cx, dome.getBottom(), false);
+    g.setGradientFill (domeGrad);
+    g.fillEllipse (dome);
+    g.setColour (juce::Colour (0xffaaddff).withAlpha (0.4f));
+    g.drawEllipse (dome, 1.5f);
+
+    const float lightY = body.getCentreY() + bodyH * 0.18f;
+    const int numLights = 16;
+    for (int i = 0; i < numLights; ++i)
+    {
+        float t = (float) i / (float) numLights;
+        float ang = t * juce::MathConstants<float>::twoPi;
+        float lx = cx + std::cos (ang) * bodyW * 0.38f;
+        float ly = lightY + std::sin (ang) * bodyH * 0.12f;
+        float pulse = 0.45f + 0.55f * (0.5f + 0.5f * std::sin (phaseLights + t * 6.0f));
+        g.setColour (juce::Colour (0xffff00aa).withAlpha (0.25f * pulse));
+        g.fillEllipse (lx - 7.0f, ly - 4.0f, 14.0f, 8.0f);
+        g.setColour (juce::Colour (0xffffffff).withAlpha (0.7f * pulse));
+        g.fillEllipse (lx - 3.0f, ly - 2.0f, 6.0f, 4.0f);
+    }
+
+    g.setColour (juce::Colour (0xff00f0ff).withAlpha (0.9f));
+    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
+    g.drawText ("SALEK HIGHTECH", juce::Rectangle<float> (cx - 160, dome.getY() + 8, 320, 24),
+                juce::Justification::centred);
+    g.setColour (juce::Colour (0xffff00aa).withAlpha (0.8f));
+    g.setFont (juce::FontOptions (11.0f));
+    g.drawText ("UFO SERIES  //  ALIEN SYNTH ENGINE", juce::Rectangle<float> (cx - 160, dome.getY() + 30, 320, 16),
+                juce::Justification::centred);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
+    phaseLights += 0.12f;
+    repaint();
     resized();
 }
 
@@ -211,15 +254,17 @@ void SalekHightechAudioProcessorEditor::resized()
     auto a = getLocalBounds().reduced (10);
     keyboard.setBounds (a.removeFromBottom (70).reduced (2));
     a.removeFromBottom (6);
-    auto header = a.removeFromTop (56);
-    title.setBounds (header.removeFromLeft (300).removeFromTop (32));
-    tagline.setBounds (header.removeFromLeft (300).withTrimmedTop (6).removeFromTop (20));
-    scope.setBounds (header.removeFromRight (140).reduced (3));
-    if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.reduced (3));
 
-    a.removeFromTop (8);
-    tabs.setBounds (a);
+    a = a.reduced (36, 28);
+    auto header = a.removeFromTop (48);
+    title.setVisible (false);
+    tagline.setVisible (false);
+    scope.setBounds (header.removeFromRight (130).reduced (2));
+    if (wtDisplay != nullptr)
+        wtDisplay->setBounds (header.reduced (2));
+
+    a.removeFromTop (4);
+    tabs.setBounds (a.reduced (8, 0));
 
     auto layoutTab = [] (juce::Component& tab)
     {
