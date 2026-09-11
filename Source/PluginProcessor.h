@@ -8,6 +8,7 @@
 #include "FX/SimpleReverb.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
+#include "Modulation/ModMatrix.h"
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
@@ -42,6 +43,7 @@ public:
     juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
     float getOutputPeak() const { return outputPeak.load(); }
     salek::StepSequencer& getStepSequencer() { return stepSequencer; }
+    salek::ModMatrix& getModMatrix() { return modMatrix; }
 
     juce::StringArray getPresetNames() const;
 
@@ -58,6 +60,7 @@ private:
     salek::SimpleReverb reverb;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
+    salek::ModMatrix modMatrix;
     juce::MidiKeyboardState keyboardState;
     std::atomic<float> outputPeak { 0.0f };
 
