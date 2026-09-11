@@ -53,34 +53,52 @@ void SalekHightechAudioProcessor::initFactoryPresets()
 {
     auto add = [&](const juce::String& n, std::map<juce::String,float> v){ factoryPresets.push_back({n, std::move(v)}); };
     add("Init", {});
-    add("FM Bass", {{"osc1_level",0.9f},{"osc2_level",0.7f},{"osc2_octave",1.f},{"fm_2to1",0.65f},{"filter_cutoff",1200.f},{"filter_reso",0.55f},{"filter_env",0.7f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.25f}});
-    add("Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.25f},{"master_drive",0.4f}});
-    add("Table Morph Bass", {{"osc1_table",0.35f},{"osc1_warp",0.2f},{"osc3_octave",-1.f},{"osc3_level",0.7f},{"fm_3to1",0.55f},{"unison_voices",3.f},{"filter_cutoff",900.f},{"filter_drive",0.35f},{"amp_attack",0.008f},{"amp_decay",0.3f},{"amp_sustain",0.55f},{"amp_release",0.2f},{"master_drive",0.3f}});
-    add("Reese Wide", {{"osc1_table",0.4f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",28.f},{"unison_spread",1.f},{"filter_cutoff",700.f},{"filter_reso",0.4f},{"amp_attack",0.05f},{"amp_decay",0.5f},{"amp_sustain",0.7f},{"amp_release",0.4f},{"chorus_mix",0.25f}});
-    add("808 Boom", {{"osc1_table",0.0f},{"osc3_octave",-2.f},{"osc3_level",1.f},{"filter_cutoff",400.f},{"filter_reso",0.3f},{"amp_attack",0.001f},{"amp_decay",0.8f},{"amp_sustain",0.0f},{"amp_release",0.5f},{"master_drive",0.35f}});
-    add("Hi-Tech Lead", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_attack",0.005f},{"amp_decay",0.2f},{"amp_sustain",0.7f},{"amp_release",0.25f},{"master_drive",0.15f},{"delay_mix",0.2f},{"chorus_mix",0.15f}});
-    add("WT Morph Lead", {{"osc1_table",0.55f},{"osc1_warp",0.35f},{"osc1_fold",0.2f},{"unison_voices",3.f},{"unison_detune",10.f},{"fm_2to1",0.25f},{"filter_cutoff",7000.f},{"amp_attack",0.01f},{"amp_decay",0.25f},{"amp_sustain",0.8f},{"amp_release",0.3f}});
-    add("Stereo Lead+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"amp_attack",0.008f},{"amp_decay",0.2f},{"amp_sustain",0.85f},{"amp_release",0.35f},{"delay_mix",0.22f},{"chorus_mix",0.35f}});
-    add("Screech Stack", {{"osc1_table",0.72f},{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"unison_voices",4.f},{"unison_detune",14.f},{"filter_cutoff",1800.f},{"filter_reso",0.8f},{"filter_env",0.85f},{"amp_attack",0.002f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.2f},{"lfo_rate",8.f},{"lfo_amount",0.3f}});
-    add("Acid Screech", {{"osc1_fold",0.45f},{"osc1_drive",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.3f},{"amp_release",0.15f},{"lfo_rate",6.f},{"lfo_amount",0.35f}});
-    add("Glass Lead", {{"osc1_table",0.85f},{"osc1_warp",0.4f},{"unison_voices",2.f},{"filter_cutoff",9000.f},{"filter_reso",0.25f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.6f},{"amp_release",0.4f},{"delay_mix",0.3f},{"reverb_mix",0.2f}});
-    add("Alien Pad", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"osc1_warp",0.3f},{"filter_cutoff",3500.f},{"amp_attack",0.8f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.35f},{"lfo_amount",0.2f},{"lfo_rate",0.3f}});
-    add("Wide Pad+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_decay",0.6f},{"amp_sustain",0.85f},{"amp_release",3.f},{"delay_mix",0.45f},{"reverb_mix",0.4f},{"chorus_mix",0.3f},{"lfo_rate",0.2f},{"lfo_amount",0.25f}});
-    add("Dark Ambient", {{"osc1_table",0.2f},{"osc2_table",0.8f},{"osc3_octave",-1.f},{"filter_cutoff",2000.f},{"filter_reso",0.35f},{"amp_attack",1.5f},{"amp_decay",1.f},{"amp_sustain",0.9f},{"amp_release",4.f},{"reverb_mix",0.5f},{"reverb_size",0.8f},{"lfo_rate",0.15f},{"lfo_amount",0.3f}});
-    add("Choir Soft", {{"osc1_table",0.45f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",12.f},{"filter_cutoff",4500.f},{"amp_attack",0.6f},{"amp_decay",0.4f},{"amp_sustain",0.75f},{"amp_release",1.8f},{"chorus_mix",0.4f},{"reverb_mix",0.35f}});
-    add("Dark Psy", {{"osc1_table",0.15f},{"osc2_table",0.55f},{"osc3_octave",-1.f},{"fm_3to1",0.5f},{"rm_2to1",0.2f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"amp_attack",0.005f},{"amp_decay",0.3f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.3f}});
-    add("Psy Kick Stab", {{"osc1_fold",0.3f},{"filter_cutoff",500.f},{"filter_env",1.f},{"filter_reso",0.5f},{"amp_attack",0.001f},{"amp_decay",0.18f},{"amp_sustain",0.0f},{"amp_release",0.1f},{"master_drive",0.45f}});
-    add("Hooverish", {{"osc1_table",0.35f},{"unison_voices",7.f},{"unison_detune",35.f},{"unison_spread",0.9f},{"filter_cutoff",2500.f},{"filter_reso",0.55f},{"filter_env",0.6f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.6f},{"amp_release",0.3f}});
-    add("Metallic Hit", {{"osc1_fold",0.7f},{"osc1_drive",0.6f},{"fm_2to1",0.8f},{"filter_cutoff",4000.f},{"filter_mode",2.f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.1f},{"amp_release",0.2f}});
-    add("Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.0f},{"amp_release",0.15f},{"delay_mix",0.25f}});
-    add("Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.25f},{"delay_mix",0.4f},{"reverb_mix",0.25f},{"arp_on",1.f},{"arp_rate",4.f}});
-    add("Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"amp_attack",0.01f},{"amp_decay",0.3f},{"amp_sustain",0.75f},{"amp_release",0.4f},{"master_drive",0.2f},{"chorus_mix",0.25f},{"delay_mix",0.15f}});
-    add("Soft Key", {{"osc1_table",0.25f},{"filter_cutoff",5000.f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.8f},{"chorus_mix",0.2f},{"reverb_mix",0.25f}});
-    add("Bell Tone", {{"osc1_table",0.9f},{"fm_2to1",0.35f},{"filter_cutoff",8000.f},{"amp_attack",0.001f},{"amp_decay",1.2f},{"amp_sustain",0.1f},{"amp_release",1.5f},{"reverb_mix",0.4f}});
-    add("Pluck Echo", {{"osc1_warp",0.25f},{"filter_cutoff",4500.f},{"filter_env",0.5f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.0f},{"amp_release",0.2f},{"delay_mix",0.45f},{"delay_fb",0.5f}});
-    add("Noise Sweep", {{"osc1_table",0.95f},{"osc1_fold",0.4f},{"filter_cutoff",200.f},{"filter_env",1.f},{"filter_reso",0.7f},{"amp_attack",0.05f},{"amp_decay",1.5f},{"amp_sustain",0.2f},{"amp_release",1.f},{"lfo_rate",0.5f},{"lfo_amount",0.4f}});
-    add("Riser FX", {{"osc1_table",0.6f},{"unison_voices",4.f},{"filter_cutoff",300.f},{"filter_env",0.9f},{"amp_attack",2.f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",1.f},{"lfo_rate",4.f},{"lfo_amount",0.5f},{"reverb_mix",0.45f}});
-    add("Alien Drop", {{"osc1_table",0.8f},{"osc1_warp",0.6f},{"fm_2to1",0.6f},{"filter_cutoff",1500.f},{"filter_reso",0.75f},{"amp_attack",0.1f},{"amp_decay",0.5f},{"amp_sustain",0.3f},{"amp_release",0.8f},{"rm_2to1",0.3f}});
+    add("Kick/Psy Kick Stab", {{"osc1_fold",0.3f},{"filter_cutoff",500.f},{"filter_env",1.f},{"filter_reso",0.5f},{"amp_attack",0.001f},{"amp_decay",0.18f},{"amp_sustain",0.f},{"amp_release",0.1f},{"master_drive",0.45f}});
+    add("Kick/808 Boom", {{"osc1_table",0.f},{"osc3_octave",-2.f},{"osc3_level",1.f},{"filter_cutoff",400.f},{"amp_attack",0.001f},{"amp_decay",0.8f},{"amp_sustain",0.f},{"amp_release",0.5f},{"master_drive",0.35f}});
+    add("Kick/Hard Body", {{"osc1_fold",0.5f},{"osc1_drive",0.4f},{"filter_cutoff",350.f},{"filter_env",0.9f},{"filter_reso",0.45f},{"amp_attack",0.001f},{"amp_decay",0.22f},{"amp_sustain",0.f},{"amp_release",0.12f},{"master_drive",0.5f}});
+    add("Kick/Alien Thump", {{"osc1_table",0.2f},{"fm_3to1",0.4f},{"osc3_octave",-2.f},{"filter_cutoff",280.f},{"filter_env",0.85f},{"amp_attack",0.002f},{"amp_decay",0.35f},{"amp_sustain",0.f},{"amp_release",0.2f},{"master_drive",0.4f}});
+    add("Kick/Click Kick", {{"osc1_warp",0.3f},{"filter_cutoff",800.f},{"filter_env",0.7f},{"amp_attack",0.001f},{"amp_decay",0.12f},{"amp_sustain",0.f},{"amp_release",0.08f},{"master_drive",0.3f}});
+    add("Kick/Sub Punch", {{"osc3_octave",-2.f},{"osc3_level",0.95f},{"filter_cutoff",180.f},{"filter_reso",0.25f},{"amp_attack",0.001f},{"amp_decay",0.5f},{"amp_sustain",0.1f},{"amp_release",0.3f},{"master_drive",0.35f}});
+    add("Kick/Dist Kick", {{"osc1_drive",0.7f},{"osc1_fold",0.4f},{"filter_cutoff",450.f},{"filter_drive",0.5f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.15f},{"master_drive",0.55f}});
+    add("Kick/Techno Kick", {{"osc1_table",0.1f},{"filter_cutoff",320.f},{"filter_env",0.95f},{"filter_reso",0.4f},{"amp_attack",0.001f},{"amp_decay",0.28f},{"amp_sustain",0.f},{"amp_release",0.15f},{"master_drive",0.4f}});
+    add("Bass/FM Bass", {{"osc1_level",0.9f},{"osc2_level",0.7f},{"osc2_octave",1.f},{"fm_2to1",0.65f},{"filter_cutoff",1200.f},{"filter_reso",0.55f},{"filter_env",0.7f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.25f}});
+    add("Bass/Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.25f},{"master_drive",0.4f}});
+    add("Bass/Table Morph", {{"osc1_table",0.35f},{"osc1_warp",0.2f},{"osc3_octave",-1.f},{"osc3_level",0.7f},{"fm_3to1",0.55f},{"unison_voices",3.f},{"filter_cutoff",900.f},{"filter_drive",0.35f},{"amp_attack",0.008f},{"amp_decay",0.3f},{"amp_sustain",0.55f},{"amp_release",0.2f},{"master_drive",0.3f}});
+    add("Bass/Reese Wide", {{"osc1_table",0.4f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",28.f},{"unison_spread",1.f},{"filter_cutoff",700.f},{"filter_reso",0.4f},{"amp_attack",0.05f},{"amp_decay",0.5f},{"amp_sustain",0.7f},{"amp_release",0.4f},{"chorus_mix",0.25f}});
+    add("Bass/Dark Psy", {{"osc1_table",0.15f},{"osc2_table",0.55f},{"osc3_octave",-1.f},{"fm_3to1",0.5f},{"rm_2to1",0.2f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"amp_attack",0.005f},{"amp_decay",0.3f},{"amp_sustain",0.4f},{"amp_release",0.2f},{"master_drive",0.3f}});
+    add("Bass/Hooverish", {{"osc1_table",0.35f},{"unison_voices",7.f},{"unison_detune",35.f},{"unison_spread",0.9f},{"filter_cutoff",2500.f},{"filter_reso",0.55f},{"filter_env",0.6f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.6f},{"amp_release",0.3f}});
+    add("Bass/Acid Line", {{"osc1_fold",0.35f},{"filter_cutoff",700.f},{"filter_reso",0.9f},{"filter_env",0.85f},{"filter_drive",0.35f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.35f},{"amp_release",0.15f},{"lfo_rate",5.f},{"lfo_amount",0.25f}});
+    add("Bass/Wobble", {{"osc1_table",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.6f},{"lfo_rate",4.f},{"lfo_amount",0.55f},{"lfo_wave",1.f},{"amp_attack",0.02f},{"amp_decay",0.3f},{"amp_sustain",0.7f},{"amp_release",0.3f},{"unison_voices",3.f}});
+    add("Bass/Neuro", {{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"fm_2to1",0.5f},{"filter_cutoff",1100.f},{"filter_reso",0.5f},{"filter_drive",0.4f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.2f},{"master_drive",0.35f}});
+    add("Bass/Clean Sub", {{"osc1_table",0.f},{"osc3_octave",-1.f},{"osc3_level",0.9f},{"filter_cutoff",500.f},{"filter_reso",0.2f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.8f},{"amp_release",0.35f}});
+    add("Lead/Hi-Tech", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_attack",0.005f},{"amp_decay",0.2f},{"amp_sustain",0.7f},{"amp_release",0.25f},{"delay_mix",0.2f},{"chorus_mix",0.15f}});
+    add("Lead/WT Morph", {{"osc1_table",0.55f},{"osc1_warp",0.35f},{"osc1_fold",0.2f},{"unison_voices",3.f},{"unison_detune",10.f},{"fm_2to1",0.25f},{"filter_cutoff",7000.f},{"amp_attack",0.01f},{"amp_decay",0.25f},{"amp_sustain",0.8f},{"amp_release",0.3f}});
+    add("Lead/Stereo+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"amp_attack",0.008f},{"amp_decay",0.2f},{"amp_sustain",0.85f},{"amp_release",0.35f},{"chorus_mix",0.35f},{"delay_mix",0.22f}});
+    add("Lead/Screech Stack", {{"osc1_table",0.72f},{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"unison_voices",4.f},{"unison_detune",14.f},{"filter_cutoff",1800.f},{"filter_reso",0.8f},{"filter_env",0.85f},{"amp_attack",0.002f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.2f},{"lfo_rate",8.f},{"lfo_amount",0.3f}});
+    add("Lead/Acid Screech", {{"osc1_fold",0.45f},{"osc1_drive",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"amp_attack",0.001f},{"amp_decay",0.25f},{"amp_sustain",0.3f},{"amp_release",0.15f},{"lfo_rate",6.f},{"lfo_amount",0.35f}});
+    add("Lead/Glass", {{"osc1_table",0.85f},{"osc1_warp",0.4f},{"unison_voices",2.f},{"filter_cutoff",9000.f},{"filter_reso",0.25f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.6f},{"amp_release",0.4f},{"delay_mix",0.3f},{"reverb_mix",0.2f}});
+    add("Lead/Alien Cry", {{"osc1_table",0.8f},{"osc1_warp",0.55f},{"fm_2to1",0.45f},{"filter_cutoff",4500.f},{"filter_reso",0.55f},{"amp_attack",0.05f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.6f},{"delay_mix",0.35f},{"reverb_mix",0.3f}});
+    add("Lead/Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"amp_attack",0.01f},{"amp_decay",0.3f},{"amp_sustain",0.75f},{"amp_release",0.4f},{"chorus_mix",0.25f},{"delay_mix",0.15f}});
+    add("Lead/Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.f},{"amp_release",0.15f},{"delay_mix",0.25f}});
+    add("Lead/Supersaw", {{"osc1_table",0.4f},{"unison_voices",7.f},{"unison_detune",30.f},{"unison_spread",1.f},{"filter_cutoff",6500.f},{"amp_attack",0.02f},{"amp_decay",0.3f},{"amp_sustain",0.8f},{"amp_release",0.5f},{"chorus_mix",0.3f}});
+    add("FM/Deep Operator", {{"osc2_octave",2.f},{"fm_2to1",0.85f},{"filter_cutoff",3000.f},{"amp_attack",0.01f},{"amp_decay",0.4f},{"amp_sustain",0.5f},{"amp_release",0.3f}});
+    add("FM/Bell Metal", {{"osc2_octave",3.f},{"fm_2to1",0.7f},{"filter_cutoff",8000.f},{"amp_attack",0.001f},{"amp_decay",1.2f},{"amp_sustain",0.1f},{"amp_release",1.5f},{"reverb_mix",0.4f}});
+    add("FM/Clang", {{"osc2_semi",7.f},{"fm_2to1",0.9f},{"pm_2to1",0.3f},{"filter_cutoff",5000.f},{"amp_attack",0.001f},{"amp_decay",0.5f},{"amp_sustain",0.2f},{"amp_release",0.4f}});
+    add("FM/Triple Stack", {{"fm_2to1",0.5f},{"fm_3to1",0.45f},{"fm_3to2",0.35f},{"filter_cutoff",4000.f},{"amp_attack",0.01f},{"amp_decay",0.35f},{"amp_sustain",0.55f},{"amp_release",0.3f}});
+    add("FM/Soft EP", {{"osc2_octave",1.f},{"fm_2to1",0.35f},{"filter_cutoff",4500.f},{"amp_attack",0.01f},{"amp_decay",0.8f},{"amp_sustain",0.4f},{"amp_release",0.9f},{"chorus_mix",0.25f}});
+    add("FM/Growl FM", {{"osc2_octave",1.f},{"fm_2to1",0.75f},{"filter_cutoff",900.f},{"filter_reso",0.5f},{"filter_drive",0.4f},{"amp_attack",0.005f},{"amp_decay",0.35f},{"amp_sustain",0.45f},{"amp_release",0.25f},{"master_drive",0.3f}});
+    add("FM/Ring Spike", {{"rm_2to1",0.7f},{"fm_2to1",0.4f},{"filter_cutoff",3500.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.3f},{"amp_release",0.2f}});
+    add("FM/PM Shimmer", {{"pm_2to1",0.6f},{"osc2_fine",7.f},{"filter_cutoff",7000.f},{"amp_attack",0.05f},{"amp_decay",0.4f},{"amp_sustain",0.6f},{"amp_release",0.8f},{"reverb_mix",0.35f}});
+    add("FX/Noise Sweep", {{"osc1_table",0.95f},{"osc1_fold",0.4f},{"filter_cutoff",200.f},{"filter_env",1.f},{"filter_reso",0.7f},{"amp_attack",0.05f},{"amp_decay",1.5f},{"amp_sustain",0.2f},{"amp_release",1.f},{"lfo_rate",0.5f},{"lfo_amount",0.4f}});
+    add("FX/Riser", {{"osc1_table",0.6f},{"unison_voices",4.f},{"filter_cutoff",300.f},{"filter_env",0.9f},{"amp_attack",2.f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",1.f},{"lfo_rate",4.f},{"lfo_amount",0.5f},{"reverb_mix",0.45f}});
+    add("FX/Alien Drop", {{"osc1_table",0.8f},{"osc1_warp",0.6f},{"fm_2to1",0.6f},{"filter_cutoff",1500.f},{"filter_reso",0.75f},{"amp_attack",0.1f},{"amp_decay",0.5f},{"amp_sustain",0.3f},{"amp_release",0.8f},{"rm_2to1",0.3f}});
+    add("FX/Metallic Hit", {{"osc1_fold",0.7f},{"osc1_drive",0.6f},{"fm_2to1",0.8f},{"filter_cutoff",4000.f},{"filter_mode",2.f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.1f},{"amp_release",0.2f}});
+    add("Pad/Alien", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"osc1_warp",0.3f},{"filter_cutoff",3500.f},{"amp_attack",0.8f},{"amp_decay",0.5f},{"amp_sustain",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.35f},{"lfo_amount",0.2f},{"lfo_rate",0.3f}});
+    add("Pad/Wide+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_decay",0.6f},{"amp_sustain",0.85f},{"amp_release",3.f},{"delay_mix",0.45f},{"reverb_mix",0.4f},{"chorus_mix",0.3f}});
+    add("Pad/Dark Ambient", {{"osc1_table",0.2f},{"osc2_table",0.8f},{"osc3_octave",-1.f},{"filter_cutoff",2000.f},{"amp_attack",1.5f},{"amp_decay",1.f},{"amp_sustain",0.9f},{"amp_release",4.f},{"reverb_mix",0.5f},{"reverb_size",0.8f}});
+    add("Pad/Choir Soft", {{"osc1_table",0.45f},{"osc2_table",0.55f},{"unison_voices",5.f},{"unison_detune",12.f},{"filter_cutoff",4500.f},{"amp_attack",0.6f},{"amp_decay",0.4f},{"amp_sustain",0.75f},{"amp_release",1.8f},{"chorus_mix",0.4f},{"reverb_mix",0.35f}});
+    add("Arp/Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.25f},{"delay_mix",0.4f},{"reverb_mix",0.25f},{"arp_on",1.f},{"arp_rate",4.f}});
+    add("Arp/Pluck Echo", {{"osc1_warp",0.25f},{"filter_cutoff",4500.f},{"filter_env",0.5f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"amp_release",0.2f},{"delay_mix",0.45f},{"delay_fb",0.5f},{"arp_on",1.f},{"arp_rate",3.f}});
 }
 
 void SalekHightechAudioProcessor::loadFactoryPreset(int index)
@@ -204,6 +222,19 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
     buffer.applyGain(mg);
+    {
+        static float hpStateL = 0.f, hpStateR = 0.f;
+        const float hp = 0.12f;
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float l = buffer.getSample(0, i);
+            float r = buffer.getNumChannels() > 1 ? buffer.getSample(1, i) : l;
+            hpStateL += 0.08f * (l - hpStateL);
+            hpStateR += 0.08f * (r - hpStateR);
+            buffer.setSample(0, i, l + (l - hpStateL) * hp);
+            if (buffer.getNumChannels() > 1) buffer.setSample(1, i, r + (r - hpStateR) * hp);
+        }
+    }
     chorus.process(buffer);
     delay.process(buffer);
     reverb.process(buffer);
