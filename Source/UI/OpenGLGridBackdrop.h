@@ -119,16 +119,18 @@ public:
         glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         shader->use();
-        if (auto* u = shader->getUniformIDFromName ("projectionMatrix"))
-            glUniformMatrix4fv (u, 1, GL_FALSE, pm);
-        if (auto* u = shader->getUniformIDFromName ("viewMatrix"))
-            glUniformMatrix4fv (u, 1, GL_FALSE, vm);
-        if (auto* u = shader->getUniformIDFromName ("time"))
-            glUniform1f (u, timeSec);
-        if (auto* u = shader->getUniformIDFromName ("pulse"))
-            glUniform1f (u, pulse);
-        if (auto* u = shader->getUniformIDFromName ("accentColor"))
-            glUniform3f (u, accent.getFloatRed(), accent.getFloatGreen(), accent.getFloatBlue());
+        {
+            const GLint uProj  = shader->getUniformIDFromName ("projectionMatrix");
+            const GLint uView  = shader->getUniformIDFromName ("viewMatrix");
+            const GLint uTime  = shader->getUniformIDFromName ("time");
+            const GLint uPulse = shader->getUniformIDFromName ("pulse");
+            const GLint uAcc   = shader->getUniformIDFromName ("accentColor");
+            if (uProj  >= 0) glUniformMatrix4fv (uProj, 1, GL_FALSE, pm);
+            if (uView  >= 0) glUniformMatrix4fv (uView, 1, GL_FALSE, vm);
+            if (uTime  >= 0) glUniform1f (uTime, timeSec);
+            if (uPulse >= 0) glUniform1f (uPulse, pulse);
+            if (uAcc   >= 0) glUniform3f (uAcc, accent.getFloatRed(), accent.getFloatGreen(), accent.getFloatBlue());
+        }
 
         mesh.draw (openGLContext, GL_LINES);
     }
