@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SALEK_HIGHTECH VERSION 0.5.0)
+project(SALEK_HIGHTECH VERSION 0.7.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,7 +19,7 @@ endif()
 juce_add_plugin(SALEK_HIGHTECH
     COMPANY_NAME "Salek"
     PLUGIN_MANUFACTURER_CODE Salk
-    PLUGIN_CODE Sht5
+    PLUGIN_CODE Sht7
     FORMATS VST3 Standalone
     PRODUCT_NAME "SALEK HIGHTECH"
     IS_SYNTH TRUE
@@ -38,6 +38,7 @@ target_sources(SALEK_HIGHTECH PRIVATE
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
     Source/PluginEditor.h
+    Source/AssetsData.h
     Source/Synth/SynthEngine.cpp
     Source/Synth/SynthEngine.h
     Source/Synth/SynthVoice.cpp
