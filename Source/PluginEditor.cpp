@@ -1,4 +1,6 @@
 #include "PluginEditor.h"
+#include "AssetsData.h"
+#include <cmath>
 
 SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p),
@@ -9,9 +11,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     startTimerHz (30);
     setLookAndFeel (&lnf);
-    setSize (1220, 800);
+    logoImg = SalekAssets::loadLogo();
+    setSize (1280, 820);
     setResizable (true, true);
-    setResizeLimits (1000, 700, 1600, 1100);
+    setResizeLimits (1020, 700, 1700, 1100);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
     addAndMakeVisible (title);
     tagline.setText ("ALIEN", juce::dontSendNotification);
@@ -22,6 +25,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     adsrDisplay = std::make_unique<AdsrDisplay> (processor.getAPVTS());
     filterDisplay = std::make_unique<FilterCurveDisplay> (processor.getAPVTS());
     lfoDisplay = std::make_unique<LfoDisplay> (processor.getAPVTS());
+    matrixPanel = std::make_unique<ModMatrixPanel> (processor.getModMatrix());
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
 
@@ -96,6 +100,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.addTab ("MOD", juce::Colour (0xff0c0818), &modTab, false);
     {
         if (lfoDisplay != nullptr) modTab.addAndMakeVisible (*lfoDisplay);
+        if (matrixPanel != nullptr) modTab.addAndMakeVisible (*matrixPanel);
         addKnob (modTab, "fm_2to1", "FM 2>1", O); addKnob (modTab, "fm_3to1", "FM 3>1", O);
         addKnob (modTab, "fm_3to2", "FM 3>2", O); addKnob (modTab, "pm_2to1", "PM 2>1", M);
         addKnob (modTab, "rm_2to1", "RM 2>1", M); addKnob (modTab, "am_2to1", "AM 2>1", V);
@@ -194,67 +199,107 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
     const int theme = themeBox.getSelectedId();
-    juce::Colour bg1 (0xff05030c), bg2 (0xff12081c), accent (0xff00f0ff), accent2 (0xffff00aa);
-    if (theme == 2) { bg1 = juce::Colour (0xff030a06); bg2 = juce::Colour (0xff0a1810); accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
-    if (theme == 3) { bg1 = juce::Colour (0xff030810); bg2 = juce::Colour (0xff0a1420); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
+    juce::Colour bg1 (0xff04020a), bg2 (0xff10081a), accent (0xff00f0ff), accent2 (0xffff2d6a);
+    if (theme == 2) { bg1 = juce::Colour (0xff020806); bg2 = juce::Colour (0xff081810); accent = juce::Colour (0xff66ff99); accent2 = juce::Colour (0xffc0ff00); }
+    if (theme == 3) { bg1 = juce::Colour (0xff020810); bg2 = juce::Colour (0xff0a1420); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff90caf9); }
 
     const float peak = processor.getOutputPeak();
-    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.5f);
+    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.8f);
+    float cut = 0.5f;
+    if (auto* p = processor.getAPVTS().getRawParameterValue ("filter_cutoff"))
+        cut = juce::jmap (std::log (juce::jmax (20.0f, p->load())), std::log (20.0f), std::log (20000.0f), 0.0f, 1.0f);
 
     juce::ColourGradient bg (bg1, 0, 0, bg2, 0, (float) getHeight(), false);
     g.setGradientFill (bg);
     g.fillAll();
 
-    g.setColour (accent.withAlpha (0.08f + pulse * 0.18f));
-    const float y0 = (float) getHeight() * 0.55f;
-    for (int i = 0; i < 12; ++i)
+    g.setColour (accent.withAlpha (0.06f + pulse * 0.14f));
+    const float y0 = (float) getHeight() * 0.58f;
+    for (int i = 0; i < 14; ++i)
     {
-        float t = (float) i / 11.0f;
-        float y = y0 + t * t * ((float) getHeight() - y0);
-        g.drawLine (0.0f, y, (float) getWidth(), y, 1.0f);
+        float t = (float) i / 13.0f;
+        g.drawLine (0.0f, y0 + t * t * ((float) getHeight() - y0), (float) getWidth(), y0 + t * t * ((float) getHeight() - y0), 1.0f);
     }
-    for (int i = -8; i <= 8; ++i)
+    for (int i = 0; i < 30; ++i)
     {
-        float xMid = (float) getWidth() * 0.5f;
-        float x = xMid + (float) i * 40.0f + std::sin (animPhase + i * 0.3f) * 8.0f * pulse;
-        g.drawLine (xMid, y0, x, (float) getHeight(), 1.0f);
+        float seed = (float) i * 19.7f;
+        float x = std::fmod (seed * 41.0f + animPhase * (10.0f + peak * 50.0f), (float) getWidth());
+        float y = std::fmod (seed * 27.0f + animPhase * 6.0f + cut * 40.0f, (float) getHeight());
+        g.setColour (accent2.withAlpha (0.2f + pulse * 0.5f));
+        g.fillEllipse (x, y, 1.5f + pulse * 2.5f, 1.5f + pulse * 2.5f);
     }
 
-    g.setColour (accent2.withAlpha (0.25f + pulse * 0.45f));
-    for (int i = 0; i < 24; ++i)
+    auto charPanel = juce::Rectangle<float> (8.0f, 52.0f, 168.0f, (float) getHeight() - 130.0f);
     {
-        float seed = (float) i * 17.13f;
-        float x = std::fmod (seed * 37.0f + animPhase * (12.0f + peak * 40.0f) + i * 50.0f, (float) getWidth());
-        float y = std::fmod (seed * 53.0f + animPhase * 8.0f, (float) getHeight());
-        float sz = 1.5f + pulse * 3.0f + (float) (i % 3);
-        g.fillEllipse (x, y, sz, sz);
+        juce::ColourGradient cg (juce::Colour (0xff1a0a28), charPanel.getX(), charPanel.getY(),
+                                 juce::Colour (0xff080410), charPanel.getX(), charPanel.getBottom(), false);
+        g.setGradientFill (cg);
+        g.fillRoundedRectangle (charPanel, 12.0f);
+        g.setColour (accent2.withAlpha (0.45f + pulse * 0.4f));
+        g.drawRoundedRectangle (charPanel, 12.0f, 1.5f + pulse);
+
+        float cx = charPanel.getCentreX();
+        float cy = charPanel.getCentreY() - 20.0f + (0.5f - cut) * 30.0f;
+        for (int r = 3; r >= 0; --r)
+        {
+            float rad = 28.0f + r * 14.0f + pulse * 8.0f;
+            g.setColour (accent.withAlpha (0.08f + pulse * 0.1f - r * 0.015f));
+            g.drawEllipse (cx - rad, cy - rad, rad * 2, rad * 2, 1.5f);
+        }
+        g.setColour (juce::Colour (0xff2a1538));
+        g.fillEllipse (cx - 36, cy - 42, 72, 84);
+        g.setColour (accent.withAlpha (0.7f + pulse * 0.3f));
+        g.drawEllipse (cx - 36, cy - 42, 72, 84, 1.5f);
+        float eyeY = cy - 8.0f;
+        float eyeOff = (cut - 0.5f) * 6.0f;
+        g.setColour (accent);
+        g.fillEllipse (cx - 16 + eyeOff, eyeY, 10, 7);
+        g.fillEllipse (cx + 6 + eyeOff, eyeY, 10, 7);
+
+        auto gval = [&](const char* id) -> float {
+            if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
+            return 0.f;
+        };
+        float ly = charPanel.getBottom() - 70.0f;
+        auto drawLed = [&](float x, const char* label, bool on, juce::Colour c) {
+            g.setColour (on ? c : juce::Colour (0xff222230));
+            g.fillEllipse (x, ly, 10.0f, 10.0f);
+            if (on) { g.setColour (c.withAlpha (0.35f)); g.fillEllipse (x - 3, ly - 3, 16, 16); }
+            g.setColour (juce::Colour (0xffa0a0b8));
+            g.setFont (juce::FontOptions (9.0f));
+            g.drawText (label, x + 14, ly - 2, 50, 14, juce::Justification::centredLeft);
+        };
+        drawLed (charPanel.getX() + 12, "ARP", gval ("arp_on") > 0.5f, accent);
+        ly += 16;
+        drawLed (charPanel.getX() + 12, "SEQ", gval ("seq_on") > 0.5f, accent2);
+
+        g.setColour (juce::Colour (0xff1a1020));
+        g.fillRoundedRectangle (charPanel.getX() + 12, charPanel.getBottom() - 28, charPanel.getWidth() - 24, 10, 3.0f);
+        g.setColour (accent.interpolatedWith (accent2, pulse));
+        g.fillRoundedRectangle (charPanel.getX() + 12, charPanel.getBottom() - 28, (charPanel.getWidth() - 24) * pulse, 10, 3.0f);
+
+        if (logoImg.isValid())
+        {
+            auto lr = juce::Rectangle<float> (charPanel.getX() + 40, charPanel.getY() + 8, 88, 88);
+            g.setOpacity (0.85f + pulse * 0.15f);
+            g.drawImage (logoImg, lr, juce::RectanglePlacement::centred);
+            g.setOpacity (1.0f);
+        }
     }
 
     auto outer = getLocalBounds().toFloat().reduced (3.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.5f));
-    g.drawRoundedRectangle (outer.translated (2.0f, 3.0f), 14.0f, 3.0f);
-    g.setColour (accent.withAlpha (0.25f + pulse * 0.35f));
-    g.drawRoundedRectangle (outer, 14.0f, 2.0f + pulse * 1.5f);
-    g.setColour (accent2.withAlpha (0.15f + pulse * 0.25f));
-    g.drawRoundedRectangle (outer.reduced (4.0f), 12.0f, 1.0f);
+    g.setColour (accent.withAlpha (0.2f + pulse * 0.35f));
+    g.drawRoundedRectangle (outer, 14.0f, 2.0f + pulse);
 
-    auto head = juce::Rectangle<float> (10.0f, 6.0f, (float) getWidth() - 20.0f, 42.0f);
-    juce::ColourGradient hg (bg2.brighter (0.12f), head.getX(), head.getY(), bg1, head.getX(), head.getBottom(), false);
-    g.setGradientFill (hg);
+    auto head = juce::Rectangle<float> (8.0f, 6.0f, (float) getWidth() - 16.0f, 42.0f);
+    g.setColour (bg2.brighter (0.08f));
     g.fillRoundedRectangle (head, 10.0f);
-    g.setColour (accent.withAlpha (0.4f + pulse * 0.4f));
-    g.drawRoundedRectangle (head, 10.0f, 1.2f);
-
-    auto vu = juce::Rectangle<float> (head.getX() + 300.0f, head.getCentreY() - 4.0f, 180.0f * pulse, 8.0f);
-    g.setColour (accent.withAlpha (0.7f));
-    g.fillRoundedRectangle (vu, 3.0f);
-
     g.setColour (accent);
     g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", head.getX() + 150.0f, head.getY() + 4.0f, 280.0f, 22.0f, juce::Justification::centredLeft);
-    g.setColour (accent2.withAlpha (0.9f));
+    g.drawText ("SALEK HIGHTECH", head.getX() + 180.0f, head.getY() + 4.0f, 300.0f, 22.0f, juce::Justification::centredLeft);
+    g.setColour (accent2);
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("ALIEN SYNTH  ·  AUDIO-REACTIVE  ·  v0.6", head.getX() + 150.0f, head.getY() + 24.0f, 400.0f, 14.0f, juce::Justification::centredLeft);
+    g.drawText ("MOD MATRIX  ·  OPENGL READY  ·  v0.8", head.getX() + 180.0f, head.getY() + 24.0f, 360.0f, 14.0f, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
@@ -267,7 +312,8 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    auto a = getLocalBounds().reduced (10);
+    auto a = getLocalBounds().reduced (8);
+    a.removeFromLeft (176);
     keyboard.setBounds (a.removeFromBottom (64).reduced (2));
     a.removeFromBottom (4);
     title.setVisible (false);
@@ -336,11 +382,13 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto bounds = modTab.getLocalBounds().reduced (12);
         if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (bounds.removeFromTop (110).reduced (4));
+            lfoDisplay->setBounds (bounds.removeFromTop (90).reduced (4));
+        if (matrixPanel != nullptr)
+            matrixPanel->setBounds (bounds.removeFromTop (160).reduced (4));
         juce::Array<juce::Component*> knobsArr, labelsArr, others;
         for (auto* c : modTab.getChildren())
         {
-            if (c == lfoDisplay.get()) continue;
+            if (c == lfoDisplay.get() || c == matrixPanel.get()) continue;
             if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
             else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
             else others.add (c);
@@ -351,7 +399,7 @@ void SalekHightechAudioProcessorEditor::resized()
             const int cols = juce::jmin (6, juce::jmax (4, n));
             const int rows = (n + cols - 1) / cols;
             const int cellW = bounds.getWidth() / cols;
-            const int cellH = juce::jmin (95, bounds.getHeight() / juce::jmax (1, rows));
+            const int cellH = juce::jmin (90, bounds.getHeight() / juce::jmax (1, rows));
             for (int i = 0; i < n; ++i)
             {
                 int col = i % cols, row = i / cols;
