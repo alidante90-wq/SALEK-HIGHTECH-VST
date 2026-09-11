@@ -9,7 +9,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     startTimerHz (8);
     setLookAndFeel (&lnf);
-    setSize (1100, 720);
+    setSize (1120, 760);
     setResizable (true, true);
     setResizeLimits (960, 640, 1600, 1100);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
@@ -19,6 +19,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (scope);
     wtDisplay = std::make_unique<WavetableDisplay> (processor.getAPVTS());
     addAndMakeVisible (*wtDisplay);
+    adsrDisplay = std::make_unique<AdsrDisplay> (processor.getAPVTS());
+    filterDisplay = std::make_unique<FilterCurveDisplay> (processor.getAPVTS());
     addAndMakeVisible (tabs);
     tabs.setOutline (0);
 
@@ -48,6 +50,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     }
     tabs.addTab ("FILTER", juce::Colour (0xff121218), &filterTab, false);
     {
+        if (filterDisplay != nullptr) filterTab.addAndMakeVisible (*filterDisplay);
         addKnob (filterTab, "filter_cutoff", "CUTOFF", C);
         addKnob (filterTab, "filter_reso", "RESO", M);
         addKnob (filterTab, "filter_drive", "DRIVE", O);
@@ -56,6 +59,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     }
     tabs.addTab ("ENV", juce::Colour (0xff121218), &envTab, false);
     {
+        if (adsrDisplay != nullptr) envTab.addAndMakeVisible (*adsrDisplay);
         addKnob (envTab, "amp_attack", "ATTACK", C);
         addKnob (envTab, "amp_decay", "DECAY", M);
         addKnob (envTab, "amp_sustain", "SUSTAIN", O);
@@ -184,7 +188,6 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff08080c));
     auto bounds = getLocalBounds().toFloat();
-
     juce::ColourGradient outerG (juce::Colour (0xff2a2a38), 0, 0,
                                  juce::Colour (0xff0a0a10), 0, bounds.getHeight(), false);
     g.setGradientFill (outerG);
@@ -193,7 +196,6 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle (bounds.reduced (3.0f), 14.0f, 1.5f);
     g.setColour (juce::Colour (0xff1a1a24));
     g.fillRoundedRectangle (bounds.reduced (8.0f), 12.0f);
-
     auto head = juce::Rectangle<float> (12.0f, 10.0f, bounds.getWidth() - 24.0f, 52.0f);
     juce::ColourGradient hg (juce::Colour (0xff222230), head.getX(), head.getY(),
                              juce::Colour (0xff101018), head.getX(), head.getBottom(), false);
@@ -201,7 +203,6 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillRoundedRectangle (head, 10.0f);
     g.setColour (juce::Colour (0xff3a3a48));
     g.drawRoundedRectangle (head, 10.0f, 1.0f);
-
     g.setColour (juce::Colour (0xff4fc3f7));
     g.setFont (juce::FontOptions (24.0f, juce::Font::bold));
     g.drawText ("SALEK HIGHTECH", head.getX() + 14.0f, head.getY() + 8.0f, 300.0f, 28.0f,
@@ -210,34 +211,12 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("WAVETABLE  ·  FM  ·  UNISON  ·  FX", head.getX() + 14.0f, head.getY() + 32.0f, 320.0f, 16.0f,
                 juce::Justification::centredLeft);
-
-    // Original anime-style cyber silhouette (NOT any existing character / IP)
-    const float ax = head.getRight() - 200.0f;
-    const float ay = head.getY() + 6.0f;
-    juce::Path hair;
-    hair.startNewSubPath (ax + 40, ay + 8);
-    hair.cubicTo (ax + 20, ay + 5, ax + 10, ay + 20, ax + 18, ay + 38);
-    hair.cubicTo (ax + 25, ay + 42, ax + 55, ay + 40, ax + 62, ay + 28);
-    hair.cubicTo (ax + 70, ay + 12, ax + 55, ay + 4, ax + 40, ay + 8);
-    g.setColour (juce::Colour (0xff7b2cbf).withAlpha (0.55f));
-    g.fillPath (hair);
-    g.setColour (juce::Colour (0xffc77dff).withAlpha (0.4f));
-    g.strokePath (hair, juce::PathStrokeType (1.2f));
-    g.setColour (juce::Colour (0xffe8d0f0).withAlpha (0.35f));
-    g.fillEllipse (ax + 28, ay + 14, 22, 26);
-    g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.7f));
-    g.fillEllipse (ax + 32, ay + 22, 6, 4);
-    g.fillEllipse (ax + 42, ay + 22, 6, 4);
-    g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.25f));
-    g.drawLine (ax + 70, ay + 18, ax + 110, ay + 18, 1.0f);
-    g.drawLine (ax + 110, ay + 18, ax + 118, ay + 28, 1.0f);
-    g.fillEllipse (ax + 116, ay + 26, 5, 5);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
-    if (++ticks < 20) resized();
+    if (++ticks < 24) resized();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
@@ -248,9 +227,9 @@ void SalekHightechAudioProcessorEditor::resized()
     title.setVisible (false);
     tagline.setVisible (false);
     auto header = a.removeFromTop (52);
-    scope.setBounds (header.removeFromRight (150).reduced (4));
+    scope.setBounds (header.removeFromRight (140).reduced (4));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (240).reduced (4));
+        wtDisplay->setBounds (header.removeFromRight (280).reduced (2));
     a.removeFromTop (4);
     tabs.setBounds (a);
 
@@ -281,8 +260,63 @@ void SalekHightechAudioProcessorEditor::resized()
         auto bottom = bounds.withTrimmedTop (rows * cellH);
         for (auto* o : others) o->setBounds (bottom.removeFromTop (32).reduced (6));
     };
-    for (auto* tab : { &oscTab, &filterTab, &envTab, &modTab, &fxTab })
-        layoutTab (*tab);
+    layoutTab (oscTab);
+    layoutTab (modTab);
+    layoutTab (fxTab);
+
+    {
+        auto bounds = filterTab.getLocalBounds().reduced (12);
+        if (filterDisplay != nullptr)
+            filterDisplay->setBounds (bounds.removeFromTop (140).reduced (4));
+        juce::Array<juce::Component*> knobsArr, labelsArr, others;
+        for (auto* c : filterTab.getChildren())
+        {
+            if (c == filterDisplay.get()) continue;
+            if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
+            else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
+            else others.add (c);
+        }
+        const int n = knobsArr.size();
+        if (n > 0)
+        {
+            const int cols = juce::jmin (5, n);
+            const int cellW = bounds.getWidth() / cols;
+            const int cellH = juce::jmin (110, bounds.getHeight());
+            for (int i = 0; i < n; ++i)
+            {
+                auto cell = juce::Rectangle<int> (bounds.getX() + (i % cols) * cellW, bounds.getY(), cellW, cellH).reduced (4);
+                if (i < labelsArr.size()) labelsArr[i]->setBounds (cell.removeFromBottom (16));
+                knobsArr[i]->setBounds (cell);
+            }
+            auto bottom = bounds.withTrimmedTop (cellH);
+            for (auto* o : others) o->setBounds (bottom.removeFromTop (28).reduced (4));
+        }
+    }
+
+    {
+        auto bounds = envTab.getLocalBounds().reduced (12);
+        if (adsrDisplay != nullptr)
+            adsrDisplay->setBounds (bounds.removeFromTop (160).reduced (4));
+        juce::Array<juce::Component*> knobsArr, labelsArr;
+        for (auto* c : envTab.getChildren())
+        {
+            if (c == adsrDisplay.get()) continue;
+            if (dynamic_cast<juce::Slider*> (c)) knobsArr.add (c);
+            else if (dynamic_cast<juce::Label*> (c)) labelsArr.add (c);
+        }
+        const int n = knobsArr.size();
+        if (n > 0)
+        {
+            const int cellW = bounds.getWidth() / n;
+            for (int i = 0; i < n; ++i)
+            {
+                auto cell = bounds.withX (bounds.getX() + i * cellW).withWidth (cellW).reduced (6);
+                if (i < labelsArr.size()) labelsArr[i]->setBounds (cell.removeFromBottom (16));
+                knobsArr[i]->setBounds (cell);
+            }
+        }
+    }
+
     {
         auto bounds = seqTab.getLocalBounds().reduced (16);
         juce::Array<juce::Component*> knobsArr, labelsArr, others;
