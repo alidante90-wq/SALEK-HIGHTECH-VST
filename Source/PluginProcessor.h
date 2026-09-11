@@ -6,6 +6,9 @@
 #include "FX/SimpleDelay.h"
 #include "FX/SimpleChorus.h"
 #include "FX/SimpleReverb.h"
+#include "FX/SimpleCompressor.h"
+#include "FX/SimpleEQ.h"
+#include "FX/SimpleSpatial.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
@@ -58,6 +61,9 @@ private:
     salek::SimpleDelay delay;
     salek::SimpleChorus chorus;
     salek::SimpleReverb reverb;
+    salek::SimpleCompressor compressor;
+    salek::SimpleEQ eq;
+    salek::SimpleSpatial spatial;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
