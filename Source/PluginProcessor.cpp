@@ -41,6 +41,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     C("lfo_wave","LFO Wave",{"Sine","Triangle","Saw","Square","S&H"},0);
     F("macro1","Macro1",0,1,0); F("macro2","Macro2",0,1,0); F("macro3","Macro3",0,1,0); F("macro4","Macro4",0,1,0);
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
+    F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
+    F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,8,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
@@ -53,18 +55,18 @@ void SalekHightechAudioProcessor::initFactoryPresets()
     add("Init", {});
     add("FM Bass", {{"osc1_level",0.9f},{"osc2_level",0.7f},{"osc2_octave",1.f},{"fm_2to1",0.65f},{"filter_cutoff",1200.f},{"filter_reso",0.55f},{"filter_env",0.7f},{"amp_decay",0.35f},{"amp_sustain",0.4f},{"master_drive",0.25f}});
     add("Acid Screech", {{"osc1_fold",0.45f},{"osc1_drive",0.5f},{"filter_cutoff",900.f},{"filter_reso",0.85f},{"filter_env",0.9f},{"filter_drive",0.4f},{"lfo_rate",6.f},{"lfo_amount",0.35f}});
-    add("Alien Pad", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"osc1_warp",0.3f},{"filter_cutoff",3500.f},{"amp_attack",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"lfo_amount",0.2f},{"lfo_rate",0.3f}});
-    add("Hi-Tech Lead", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_sustain",0.7f},{"master_drive",0.15f},{"delay_mix",0.2f}});
+    add("Alien Pad", {{"osc1_table",0.7f},{"osc2_table",0.9f},{"osc1_warp",0.3f},{"filter_cutoff",3500.f},{"amp_attack",0.8f},{"amp_release",2.5f},{"delay_mix",0.35f},{"reverb_mix",0.3f},{"lfo_amount",0.2f},{"lfo_rate",0.3f}});
+    add("Hi-Tech Lead", {{"osc1_level",0.85f},{"osc1_fold",0.25f},{"fm_2to1",0.4f},{"filter_cutoff",6000.f},{"filter_reso",0.4f},{"amp_sustain",0.7f},{"master_drive",0.15f},{"delay_mix",0.2f},{"chorus_mix",0.2f}});
     add("Dark Psy", {{"osc1_table",0.15f},{"osc2_table",0.55f},{"osc3_octave",-1.f},{"fm_3to1",0.5f},{"rm_2to1",0.2f},{"filter_cutoff",800.f},{"filter_reso",0.7f},{"filter_env",0.8f},{"master_drive",0.3f}});
     add("Metallic Hit", {{"osc1_fold",0.7f},{"osc1_drive",0.6f},{"fm_2to1",0.8f},{"filter_cutoff",4000.f},{"filter_mode",2.f},{"amp_attack",0.001f},{"amp_decay",0.15f},{"amp_sustain",0.1f}});
-    add("Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"master_drive",0.2f},{"delay_mix",0.15f}});
+    add("Massive Super", {{"osc1_level",0.95f},{"osc2_level",0.4f},{"unison_voices",5.f},{"unison_detune",18.f},{"unison_spread",0.85f},{"filter_cutoff",4500.f},{"filter_reso",0.35f},{"master_drive",0.2f},{"chorus_mix",0.25f},{"delay_mix",0.15f}});
     add("WT Morph Lead", {{"osc1_table",0.55f},{"osc1_warp",0.35f},{"osc1_fold",0.2f},{"unison_voices",3.f},{"unison_detune",10.f},{"fm_2to1",0.25f},{"filter_cutoff",7000.f},{"amp_sustain",0.8f}});
     add("Sub Growl", {{"osc1_table",0.1f},{"osc3_octave",-2.f},{"osc3_level",0.8f},{"fm_3to1",0.7f},{"filter_cutoff",600.f},{"filter_reso",0.65f},{"filter_drive",0.45f},{"master_drive",0.4f}});
-    add("Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"delay_mix",0.4f},{"arp_on",1.f},{"arp_rate",4.f}});
-    add("Wide Pad+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_release",3.f},{"delay_mix",0.45f},{"lfo_rate",0.2f},{"lfo_amount",0.25f}});
+    add("Glass Arp", {{"osc1_table",0.85f},{"osc1_warp",0.5f},{"unison_voices",3.f},{"filter_cutoff",9000.f},{"amp_attack",0.001f},{"amp_decay",0.2f},{"amp_sustain",0.f},{"delay_mix",0.4f},{"reverb_mix",0.25f},{"arp_on",1.f},{"arp_rate",4.f}});
+    add("Wide Pad+", {{"osc1_table",0.6f},{"osc2_table",0.9f},{"unison_voices",7.f},{"unison_detune",25.f},{"unison_spread",1.f},{"amp_attack",1.2f},{"amp_release",3.f},{"delay_mix",0.45f},{"reverb_mix",0.4f},{"chorus_mix",0.3f},{"lfo_rate",0.2f},{"lfo_amount",0.25f}});
     add("Screech Stack", {{"osc1_table",0.72f},{"osc1_fold",0.55f},{"osc1_drive",0.45f},{"unison_voices",4.f},{"unison_detune",14.f},{"filter_cutoff",1800.f},{"filter_reso",0.8f},{"filter_env",0.85f},{"lfo_rate",8.f},{"lfo_amount",0.3f}});
     add("Table Morph Bass", {{"osc1_table",0.35f},{"osc1_warp",0.2f},{"osc3_octave",-1.f},{"osc3_level",0.7f},{"fm_3to1",0.55f},{"unison_voices",3.f},{"filter_cutoff",900.f},{"filter_drive",0.35f},{"master_drive",0.3f}});
-    add("Stereo Lead+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"delay_mix",0.22f},{"amp_sustain",0.85f}});
+    add("Stereo Lead+", {{"osc1_table",0.5f},{"osc1_fold",0.15f},{"unison_voices",7.f},{"unison_detune",22.f},{"unison_spread",1.f},{"fm_2to1",0.3f},{"filter_cutoff",7500.f},{"delay_mix",0.22f},{"chorus_mix",0.35f},{"amp_sustain",0.85f}});
     add("Cyber Pluck", {{"osc1_warp",0.4f},{"filter_cutoff",5000.f},{"filter_env",0.6f},{"amp_attack",0.002f},{"amp_decay",0.25f},{"amp_sustain",0.f},{"delay_mix",0.25f}});
 }
 
@@ -93,8 +95,13 @@ const juce::String SalekHightechAudioProcessor::getProgramName(int index)
 
 void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
 {
-    synthEngine.prepareToPlay(sr, spb); delay.prepare(sr, spb); arpeggiator.prepare(sr);
-    stepSequencer.prepare(sr); stepSequencer.initDefaultPattern();
+    synthEngine.prepareToPlay(sr, spb);
+    delay.prepare(sr, spb);
+    chorus.prepare(sr, spb);
+    reverb.prepare(sr, spb);
+    arpeggiator.prepare(sr);
+    stepSequencer.prepare(sr);
+    stepSequencer.initDefaultPattern();
 }
 bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
@@ -124,6 +131,8 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
     delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb")); delay.setMix(g("delay_mix"));
+    chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth")); chorus.setMix(g("chorus_mix"));
+    reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay")); reverb.setMix(g("reverb_mix"));
     synthEngine.setUnison((int)g("unison_voices"));
     synthEngine.setUnisonDetune(g("unison_detune"));
     synthEngine.setUnisonSpread(g("unison_spread"));
@@ -181,7 +190,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             for (int i = 0; i < buffer.getNumSamples(); ++i) d[i] = std::tanh(d[i]*gain)*0.9f;
         }
     }
-    buffer.applyGain(mg); delay.process(buffer);
+    buffer.applyGain(mg);
+    chorus.process(buffer);
+    delay.process(buffer);
+    reverb.process(buffer);
 }
 
 juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor() { return new SalekHightechAudioProcessorEditor(*this); }
