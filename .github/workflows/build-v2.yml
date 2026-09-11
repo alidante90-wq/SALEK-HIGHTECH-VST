@@ -8,51 +8,56 @@ on:
 permissions:
   contents: read
 
-env:
-  SOURCE_REPO: alidante90-wq/SALEK_HIGHTECH
-
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
-      - name: Checkout V2 repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
         with:
-          fetch-depth: 0
+          path: JUCE
+          key: juce-8.0.4-v2
 
-      - name: Obtain clean source
-        shell: pwsh
-        run: |
-          if (Test-Path ".\SALEK_HIGHTECH\CMakeLists.txt") {
-            Write-Host "Using source already present in V2 repository."
-          } else {
-            git clone --depth 1 "https://github.com/${env:SOURCE_REPO}.git" upstream
-            Copy-Item "upstream\SALEK_HIGHTECH" ".\SALEK_HIGHTECH" -Recurse -Force
-            Copy-Item "upstream\CMakeLists.txt" ".\CMakeLists.txt" -Force
-          }
+      - name: Clone JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
 
-      - name: Configure
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure (Ninja + MSVC)
         shell: pwsh
-        run: cmake -S . -B build-v2 -G "Visual Studio 17 2022" -A x64
+        run: cmake -S . -B build-v2 -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Release
         shell: pwsh
         run: cmake --build build-v2 --config Release --parallel
 
-      - name: Verify VST3
+      - name: Package
         shell: pwsh
         run: |
-          $vst = Get-ChildItem -Path . -Filter *.vst3 -File -Recurse | Select-Object -First 1
-          if (-not $vst) { Write-Error "No VST3 artifact was produced."; exit 1 }
-          Write-Host "VST3: $($vst.FullName)"
-          "VST3_PATH=$($vst.FullName)" | Out-File $env:GITHUB_ENV -Append
-
-      - name: Package VST3
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force package | Out-Null
-          Copy-Item $env:VST3_PATH "package\SALEK_HIGHTECH.vst3" -Recurse -Force
-          Copy-Item "README_V2.md" "package\README_V2.md" -Force
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          $vst3 = Get-ChildItem -Path build-v2 -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $exe  = Get-ChildItem -Path build-v2 -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1
+          Write-Host "VST3: $($vst3.FullName)"
+          Write-Host "EXE:  $($exe.FullName)"
+          if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\SALEK HIGHTECH.vst3" }
+          if ($exe)  { Copy-Item $exe.FullName "package\SALEK HIGHTECH.exe" }
+          if (-not (Get-ChildItem package -ErrorAction SilentlyContinue)) {
+            Write-Error "No artifacts found"
+            Get-ChildItem -Path build-v2 -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
+            exit 1
+          }
           Compress-Archive -Path "package\*" -DestinationPath "SALEK_HIGHTECH_V2_VST3.zip" -Force
 
       - name: Upload VST3 package
