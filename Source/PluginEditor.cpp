@@ -182,18 +182,56 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour (0xff0d0d10));
-    juce::ColourGradient top (juce::Colour (0xff1a1a22), 0, 0, juce::Colour (0xff0d0d10), 0, 64.0f, false);
-    g.setGradientFill (top);
-    g.fillRect (0.0f, 0.0f, (float) getWidth(), 64.0f);
-    g.setColour (juce::Colour (0xff2a2a35));
-    g.fillRect (0, 62, getWidth(), 1);
+    g.fillAll (juce::Colour (0xff08080c));
+    auto bounds = getLocalBounds().toFloat();
+
+    juce::ColourGradient outerG (juce::Colour (0xff2a2a38), 0, 0,
+                                 juce::Colour (0xff0a0a10), 0, bounds.getHeight(), false);
+    g.setGradientFill (outerG);
+    g.fillRoundedRectangle (bounds.reduced (3.0f), 14.0f);
+    g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.35f));
+    g.drawRoundedRectangle (bounds.reduced (3.0f), 14.0f, 1.5f);
+    g.setColour (juce::Colour (0xff1a1a24));
+    g.fillRoundedRectangle (bounds.reduced (8.0f), 12.0f);
+
+    auto head = juce::Rectangle<float> (12.0f, 10.0f, bounds.getWidth() - 24.0f, 52.0f);
+    juce::ColourGradient hg (juce::Colour (0xff222230), head.getX(), head.getY(),
+                             juce::Colour (0xff101018), head.getX(), head.getBottom(), false);
+    g.setGradientFill (hg);
+    g.fillRoundedRectangle (head, 10.0f);
+    g.setColour (juce::Colour (0xff3a3a48));
+    g.drawRoundedRectangle (head, 10.0f, 1.0f);
+
     g.setColour (juce::Colour (0xff4fc3f7));
-    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", 16, 12, 280, 28, juce::Justification::centredLeft);
-    g.setColour (juce::Colour (0xff8888a0));
+    g.setFont (juce::FontOptions (24.0f, juce::Font::bold));
+    g.drawText ("SALEK HIGHTECH", head.getX() + 14.0f, head.getY() + 8.0f, 300.0f, 28.0f,
+                juce::Justification::centredLeft);
+    g.setColour (juce::Colour (0xff8890a8));
     g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("WAVETABLE SYNTH", 16, 38, 200, 16, juce::Justification::centredLeft);
+    g.drawText ("WAVETABLE  ·  FM  ·  UNISON  ·  FX", head.getX() + 14.0f, head.getY() + 32.0f, 320.0f, 16.0f,
+                juce::Justification::centredLeft);
+
+    // Original anime-style cyber silhouette (NOT any existing character / IP)
+    const float ax = head.getRight() - 200.0f;
+    const float ay = head.getY() + 6.0f;
+    juce::Path hair;
+    hair.startNewSubPath (ax + 40, ay + 8);
+    hair.cubicTo (ax + 20, ay + 5, ax + 10, ay + 20, ax + 18, ay + 38);
+    hair.cubicTo (ax + 25, ay + 42, ax + 55, ay + 40, ax + 62, ay + 28);
+    hair.cubicTo (ax + 70, ay + 12, ax + 55, ay + 4, ax + 40, ay + 8);
+    g.setColour (juce::Colour (0xff7b2cbf).withAlpha (0.55f));
+    g.fillPath (hair);
+    g.setColour (juce::Colour (0xffc77dff).withAlpha (0.4f));
+    g.strokePath (hair, juce::PathStrokeType (1.2f));
+    g.setColour (juce::Colour (0xffe8d0f0).withAlpha (0.35f));
+    g.fillEllipse (ax + 28, ay + 14, 22, 26);
+    g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.7f));
+    g.fillEllipse (ax + 32, ay + 22, 6, 4);
+    g.fillEllipse (ax + 42, ay + 22, 6, 4);
+    g.setColour (juce::Colour (0xff4fc3f7).withAlpha (0.25f));
+    g.drawLine (ax + 70, ay + 18, ax + 110, ay + 18, 1.0f);
+    g.drawLine (ax + 110, ay + 18, ax + 118, ay + 28, 1.0f);
+    g.fillEllipse (ax + 116, ay + 26, 5, 5);
 }
 
 void SalekHightechAudioProcessorEditor::timerCallback()
@@ -204,12 +242,12 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    auto a = getLocalBounds().reduced (10);
+    auto a = getLocalBounds().reduced (12);
     keyboard.setBounds (a.removeFromBottom (68).reduced (2));
     a.removeFromBottom (4);
     title.setVisible (false);
     tagline.setVisible (false);
-    auto header = a.removeFromTop (48);
+    auto header = a.removeFromTop (52);
     scope.setBounds (header.removeFromRight (150).reduced (4));
     if (wtDisplay != nullptr)
         wtDisplay->setBounds (header.removeFromRight (240).reduced (4));
