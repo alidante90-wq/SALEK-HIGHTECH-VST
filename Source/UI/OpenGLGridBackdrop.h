@@ -2,7 +2,7 @@
 #include <JuceHeader.h>
 #include <cmath>
 
-/** OpenGL 3.2 shader backdrop: perspective 3D mesh grid + floating cubes. */
+/** OpenGL 3.2 shader backdrop as transparent skin under controls (not a separate opaque panel). */
 class OpenGLGridBackdrop : public juce::Component,
                            private juce::OpenGLRenderer,
                            private juce::Timer
@@ -15,6 +15,8 @@ public:
         openGLContext.attachTo (*this);
         openGLContext.setContinuousRepainting (true);
         startTimerHz (30);
+        setOpaque (false);
+        setInterceptsMouseClicks (false, false); // UI stays on top / clickable
     }
     ~OpenGLGridBackdrop() override
     {
@@ -51,7 +53,7 @@ public:
             in float vFade;
             out vec4 fragColor;
             void main() {
-                float a = vFade * (0.25 + pulse * 0.45);
+                float a = vFade * (0.22 + pulse * 0.4);
                 fragColor = vec4(accentColor, a);
             }
         )";
@@ -75,7 +77,8 @@ public:
     void renderOpenGL() override
     {
         using namespace ::juce::gl;
-        juce::OpenGLHelpers::clear (juce::Colour::fromFloatRGBA (0.015f, 0.01f, 0.03f, 1.0f));
+        // Dark base — mesh lines drawn with alpha on top (skin, not a floating window)
+        juce::OpenGLHelpers::clear (juce::Colour::fromFloatRGBA (0.02f, 0.01f, 0.04f, 1.0f));
         if (! glReady || shader == nullptr) return;
 
         const float w = (float) juce::jmax (1, getWidth());
@@ -137,10 +140,11 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        // Soft vignette only — no solid fill (mesh is the skin)
         auto b = getLocalBounds().toFloat();
         if (! glReady)
         {
-            g.setColour (accent.withAlpha (0.08f + pulse * 0.1f));
+            g.setColour (accent.withAlpha (0.06f + pulse * 0.08f));
             float y0 = b.getHeight() * 0.45f;
             for (int i = 0; i < 14; ++i)
             {
@@ -150,12 +154,9 @@ public:
             }
         }
         juce::ColourGradient vig (juce::Colours::transparentBlack, b.getCentreX(), b.getCentreY(),
-                                  juce::Colours::black.withAlpha (0.55f), b.getX(), b.getY(), true);
+                                  juce::Colours::black.withAlpha (0.4f), b.getX(), b.getY(), true);
         g.setGradientFill (vig);
         g.fillAll();
-        g.setColour (accent.withAlpha (glReady ? 0.55f : 0.25f));
-        g.setFont (juce::FontOptions (9.0f));
-        g.drawText (glReady ? "GL MESH 3D" : "CPU GRID", b.getRight() - 72, 4, 68, 12, juce::Justification::centredRight);
     }
 
     void timerCallback() override
