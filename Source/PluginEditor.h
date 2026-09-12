@@ -24,35 +24,63 @@ public:
         setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xffa080c0));
     }
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-        float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override {
-        auto bounds = juce::Rectangle<float>((float)x,(float)y,(float)width,(float)height).reduced(3.f);
-        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.46f;
-        auto cx = bounds.getCentreX(), cy = bounds.getCentreY();
+        float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override
+    {
+        auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)width, (float)height).reduced(2.5f);
+        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.48f;
+        auto cx = bounds.getCentreX();
+        auto cy = bounds.getCentreY();
         auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
-        g.setColour(juce::Colours::black.withAlpha(0.45f));
-        g.fillEllipse(cx-radius+2, cy-radius+3, radius*2, radius*2);
-        juce::ColourGradient body(juce::Colour(0xff2a1a40), cx, cy-radius, juce::Colour(0xff0c0814), cx, cy+radius, false);
+
+        // Soft outer glow
+        g.setColour(fill.withAlpha(0.18f));
+        g.fillEllipse(cx - radius - 3.f, cy - radius - 3.f, (radius + 3.f) * 2.f, (radius + 3.f) * 2.f);
+
+        // Drop shadow
+        g.setColour(juce::Colours::black.withAlpha(0.55f));
+        g.fillEllipse(cx - radius + 2.5f, cy - radius + 3.5f, radius * 2.f, radius * 2.f);
+
+        // Main body - dark metallic gradient
+        juce::ColourGradient body(
+            juce::Colour(0xff3a2a55), cx, cy - radius,
+            juce::Colour(0xff0c0818), cx, cy + radius, false);
         g.setGradientFill(body);
-        g.fillEllipse(cx-radius, cy-radius, radius*2, radius*2);
-        g.setColour(fill.withAlpha(0.5f));
-        g.drawEllipse(cx-radius, cy-radius, radius*2, radius*2, 1.5f);
+        g.fillEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f);
+
+        // Inner rim
+        g.setColour(juce::Colour(0xff1a1028));
+        g.drawEllipse(cx - radius + 1.5f, cy - radius + 1.5f, (radius - 1.5f) * 2.f, (radius - 1.5f) * 2.f, 2.0f);
+
+        // Outer neon ring
+        g.setColour(fill.withAlpha(0.65f));
+        g.drawEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.8f);
+
+        // Background track
         juce::Path track;
-        track.addCentredArc(cx, cy, radius*0.78f, radius*0.78f, 0, rotaryStartAngle, rotaryEndAngle, true);
-        g.setColour(juce::Colour(0xff1e1028));
-        g.strokePath(track, juce::PathStrokeType(3.2f));
+        track.addCentredArc(cx, cy, radius * 0.76f, radius * 0.76f, 0.f, rotaryStartAngle, rotaryEndAngle, true);
+        g.setColour(juce::Colour(0xff160c24));
+        g.strokePath(track, juce::PathStrokeType(4.0f));
+
+        // Value arc (glow + solid)
         juce::Path arc;
-        arc.addCentredArc(cx, cy, radius*0.78f, radius*0.78f, 0, rotaryStartAngle, angle, true);
-        g.setColour(fill.withAlpha(0.4f));
-        g.strokePath(arc, juce::PathStrokeType(5.f));
+        arc.addCentredArc(cx, cy, radius * 0.76f, radius * 0.76f, 0.f, rotaryStartAngle, angle, true);
+        g.setColour(fill.withAlpha(0.35f));
+        g.strokePath(arc, juce::PathStrokeType(6.5f));
         g.setColour(fill);
-        g.strokePath(arc, juce::PathStrokeType(2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.strokePath(arc, juce::PathStrokeType(2.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        // Needle
         juce::Path needle;
-        needle.addRoundedRectangle(-1.5f, -radius*0.68f, 3.f, radius*0.42f, 1.2f);
-        g.setColour(juce::Colours::white);
+        needle.addRoundedRectangle(-1.6f, -radius * 0.70f, 3.2f, radius * 0.45f, 1.4f);
+        g.setColour(juce::Colours::white.withAlpha(0.95f));
         g.fillPath(needle, juce::AffineTransform::rotation(angle).translated(cx, cy));
-        g.setColour(fill.brighter(0.3f));
-        g.fillEllipse(cx-4.5f, cy-4.5f, 9.f, 9.f);
+
+        // Center cap
+        g.setColour(fill.brighter(0.25f));
+        g.fillEllipse(cx - 5.f, cy - 5.f, 10.f, 10.f);
+        g.setColour(juce::Colour(0xff0c0814));
+        g.fillEllipse(cx - 2.2f, cy - 2.2f, 4.4f, 4.4f);
     }
 };
 
@@ -240,7 +268,7 @@ private:
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
-    Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
+    Knob& addKnob(juce::Component& parent, const char* id, the char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
 };
