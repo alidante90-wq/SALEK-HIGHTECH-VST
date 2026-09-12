@@ -155,7 +155,7 @@ public:
     explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (20); }
     void paint (juce::Graphics& g) override {
         auto r=getLocalBounds().toFloat().reduced(2.f);
-        g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
+        g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle (r,8.f);
         g.setColour(juce::Colour(0xff00f0ff).withAlpha(0.45f)); g.drawRoundedRectangle(r,8.f,1.f);
         auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
         float a=juce::jmax(0.001f,gval("amp_attack",0.01f)), d=juce::jmax(0.001f,gval("amp_decay",0.15f));
@@ -268,7 +268,7 @@ private:
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
-    Knob& addKnob(juce::Component& parent, const char* id, the char* label, juce::Colour c);
+    Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
 };
