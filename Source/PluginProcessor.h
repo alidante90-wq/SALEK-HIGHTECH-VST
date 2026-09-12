@@ -12,6 +12,7 @@
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
+#include "UI/VisualFifo.h"
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
@@ -45,6 +46,7 @@ public:
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
     float getOutputPeak() const { return outputPeak.load(); }
+    VisualFifo& getVisualFifo() { return visualFifo; }
     salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     salek::ModMatrix& getModMatrix() { return modMatrix; }
 
@@ -69,6 +71,7 @@ private:
     salek::ModMatrix modMatrix;
     juce::MidiKeyboardState keyboardState;
     std::atomic<float> outputPeak { 0.0f };
+    VisualFifo visualFifo;
 
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
     std::vector<FactoryPreset> factoryPresets;
