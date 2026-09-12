@@ -1,4 +1,6 @@
-// SALEK HIGHTECH v2 — cyber / anime / neon pro paint (body only; included inside paint())
+// SALEK HIGHTECH v2 — cyber / anime / neon pro paint
+void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
+{
     const int theme = themeBox.getSelectedId();
     juce::Colour bgDeep (0xff03020a), bgMid (0xff0a0618), accent (0xff00e8ff), accent2 (0xffff2d9b), accent3 (0xffb44dff);
     if (theme == 2) { bgDeep = juce::Colour (0xff020a06); bgMid = juce::Colour (0xff06140c); accent = juce::Colour (0xff39ff14); accent2 = juce::Colour (0xffc0ff00); accent3 = juce::Colour (0xff00ffaa); }
@@ -8,23 +10,16 @@
     const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.6f);
     const float t = animPhase;
 
-    auto gval = [&](const char* id, float d = 0.f) -> float {
-        if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
-        return d;
-    };
-
     juce::ColourGradient bg (bgDeep, 0, 0, bgMid, (float) getWidth() * 0.6f, (float) getHeight(), true);
     g.setGradientFill (bg);
     g.fillAll();
 
-    // Soft grid
     g.setColour (accent.withAlpha (0.04f + pulse * 0.03f));
     for (int x = 0; x < getWidth(); x += 40)
         g.drawVerticalLine (x, 0.0f, (float) getHeight());
     for (int y = 0; y < getHeight(); y += 40)
         g.drawHorizontalLine (y, 0.0f, (float) getWidth());
 
-    // Left hero panel
     auto left = juce::Rectangle<int> (8, 52, 170, getHeight() - 140);
     g.setColour (juce::Colour (0xff0a0614).withAlpha (0.85f));
     g.fillRoundedRectangle (left.toFloat(), 12.0f);
@@ -50,7 +45,6 @@
         g.setOpacity (1.0f);
     }
 
-    // Neon rings (2D, non-OpenGL)
     {
         auto cx = (float) getWidth() * 0.55f;
         auto cy = (float) getHeight() * 0.42f;
@@ -62,7 +56,7 @@
         }
     }
 
-    // Bottom status
     g.setColour (accent.withAlpha (0.7f));
     g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH  //  CYBER PERSIAN", 12, getHeight() - 22, 400, 16, juce::Justification::centredLeft);
+    g.drawText ("SALEK HIGHTECH  //  PRESET LIBRARY ON MAIN", 12, getHeight() - 22, 420, 16, juce::Justification::centredLeft);
+}
