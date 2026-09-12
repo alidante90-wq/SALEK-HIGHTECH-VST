@@ -6,6 +6,7 @@
 #include "../Filters/StateVariableFilter.h"
 #include "../Modulation/LFO.h"
 #include "../DSP/SmoothedValue.h"
+#include "PersianScale.h"
 
 namespace salek {
 
@@ -70,11 +71,14 @@ public:
     void labRegenerate(){sharedWavetable.generateDefaultTables();}
     void labProcessFrames(float fold, float drive){ for(int i=0;i<sharedWavetable.getNumFrames();++i) sharedWavetable.processFrame(i,fold,drive); }
     void labMorph(float t){ if(sharedWavetable.getNumFrames()>=4) sharedWavetable.morphFrames(0,3,1,t); }
+    void setScaleMode(int m){ scaleMode = juce::jlimit(0, PersianScale::NumModes-1, m); updateFrequencies(); }
+    void setKoronCents(float c){ koronCents = juce::jlimit(-50.f, 50.f, c); updateFrequencies(); }
+    void setScaleRoot(int r){ scaleRoot = r; updateFrequencies(); }
 
 private:
     void updateFrequencies();
-    static float noteToHz(int note, int oct, int semi, float fine) {
-        return 440.0f * std::pow(2.0f, (float)(note - 69 + oct * 12 + semi) / 12.0f + fine / 1200.0f);
+    float noteToHz(int note, int oct, int semi, float fine) const {
+        return PersianScale::noteToHz (note, oct, semi, fine, scaleMode, koronCents, scaleRoot);
     }
     static constexpr int maxUnison = 7;
     WavetableOscillator osc1, osc2, osc3;
@@ -88,6 +92,9 @@ private:
     double currentSampleRate = 44100;
     float currentVelocity = 0;
     int currentMidiNote = 60;
+    int scaleMode = 0;
+    float koronCents = 0.f;
+    int scaleRoot = 60;
     int osc1Octave=0, osc2Octave=0, osc3Octave=-1;
     int osc1Semi=0, osc2Semi=0, osc3Semi=0;
     float osc1Fine=0, osc2Fine=0, osc3Fine=0;
