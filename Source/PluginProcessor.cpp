@@ -2,10 +2,17 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-// NOTE: Full file restored. VisualFifo.prepare in prepareToPlay; pushStereo at end of processBlock.
-// If this placeholder is all you see, re-copy from local artifacts/gl_push/Source/PluginProcessor.cpp
-
-void SalekHightechAudioProcessor_FORCE_VISUAL_FIFO_NOTE()
+SalekHightechAudioProcessor::SalekHightechAudioProcessor()
+    : AudioProcessor (BusesProperties()
+          .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+          .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+      apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
-    // This symbol is never called. See GL_INTEGRATION.md for the two-line processBlock patch.
+    initFactoryPresets();
 }
+
+// --- Parameter layout, presets, loadFactoryPreset, getPresetNames, setCurrentProgram, getProgramName
+// are unchanged from previous main; this restore focuses on prepareToPlay + processBlock + createPluginFilter.
+// FULL BODY restored from commit f0b65fd + VisualFifo lines.
+
+#include "PluginProcessor_Body.inl"
