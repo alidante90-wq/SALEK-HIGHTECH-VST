@@ -8,10 +8,33 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 {
     keyboard.setAvailableRange (21, 108);
     keyboard.setOctaveForMiddleC (4);
-    glBackdrop = std::make_unique<OpenGLGridBackdrop>();
-    glBackdrop->setVisible (false);
+        glBackdrop = std::make_unique<OpenGLGridBackdrop>();
+    glBackdrop->setVisible (true);
+    glBackdrop->setInterceptsMouseClicks (false, false);
+    addAndMakeVisible (*glBackdrop);
+    sonicCore = std::make_unique<SonicCoreGL> (processor.getVisualFifo());
+    addAndMakeVisible (*sonicCore);
     addAndMakeVisible (keyboard);
-    startTimerHz (30);
+    vblank = juce::VBlankAttachment (this, [this] (double) {
+        animPhase += 0.025f;
+        if (sonicCore != nullptr)
+        {
+            sonicCore->setPulse (processor.getOutputPeak());
+            const int th = themeBox.getSelectedId();
+            juce::Colour a1 (0xff00e8ff), a2 (0xffff2d9b);
+            if (th == 2) { a1 = juce::Colour (0xff39ff14); a2 = juce::Colour (0xffc0ff00); }
+            if (th == 3) { a1 = juce::Colour (0xff4fc3f7); a2 = juce::Colour (0xff7c4dff); }
+            sonicCore->setAccent (a1);
+            sonicCore->setAccent2 (a2);
+        }
+        if (glBackdrop != nullptr)
+            glBackdrop->setPulse (processor.getOutputPeak());
+        repaint();
+    });
+    startTimerHz (15);
+    
+    
+    
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
     heroImg   = SalekAssets::loadToronowla();
@@ -167,7 +190,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
 SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
 {
-    stopTimer();
+stopTimer();
+    vblank = {};
+    sonicCore.reset();
+    glBackdrop.reset();
     setLookAndFeel (nullptr);
 }
 
@@ -266,10 +292,6 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 40) resized();
-    animPhase += 0.04f;
-    if (glBackdrop != nullptr)
-        glBackdrop->setPulse (processor.getOutputPeak());
-    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
@@ -277,7 +299,16 @@ void SalekHightechAudioProcessorEditor::resized()
     if (glBackdrop != nullptr)
         glBackdrop->setBounds (getLocalBounds());
 
-    auto full = getLocalBounds().reduced (6);
+    auto full = getLocalBounds().reduced (6);     if (sonicCore != nullptr)
+    {
+        auto core = full;
+        core.removeFromLeft (190);
+        core.removeFromBottom (90);
+        core.removeFromTop (56);
+        core = core.withSizeKeepingCentre (juce::jmin (420, core.getWidth()),
+                                           juce::jmin (360, core.getHeight()));
+        sonicCore->setBounds (core);
+    }
     {
         auto kbArea = full.removeFromBottom (78).reduced (2, 2);
         const int whiteKeys = 52;
