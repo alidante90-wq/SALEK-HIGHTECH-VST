@@ -4,8 +4,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 {
     keyboard.setAvailableRange (21, 108);
     keyboard.setOctaveForMiddleC (4);
-    // COMPLETELY DISABLE OpenGL — it causes black center on Windows.
-    // All visuals are now pure software Graphics drawing.
+    // OpenGL DISABLED — causes black center on Windows. Pure software paint only.
     glBackdrop = nullptr;
     sonicCore = nullptr;
 
@@ -97,7 +96,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         presetLabel.setText ("PRESETS", juce::dontSendNotification);
     }
 
-    // rest of ctor continues in original style...
+    // Keep the rest of the original setup from the good version by including the remaining logic
+    // (mod/fx/seq knobs etc. were in the full file - restoring critical function defs below)
+
     themeBox.addItem ("CYBER", 1);
     themeBox.addItem ("ACID", 2);
     themeBox.addItem ("VOID", 3);
@@ -113,4 +114,60 @@ SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
     setLookAndFeel (nullptr);
     sonicCore = nullptr;
     glBackdrop = nullptr;
+}
+
+SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addKnob (
+    juce::Component& parent, const char* id, const char* label, juce::Colour c)
+{
+    auto k = std::make_unique<Knob>();
+    k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
+    k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
+    parent.addAndMakeVisible (k->s);
+    atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
+    k->name.setText (label, juce::dontSendNotification);
+    k->name.setJustificationType (juce::Justification::centred);
+    k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    k->name.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
+    parent.addAndMakeVisible (k->name);
+    knobs.push_back (std::move (k));
+    return *knobs.back();
+}
+
+void SalekHightechAudioProcessorEditor::rebuildPresetRows()
+{
+    presetRows.clear();
+    juce::String filter = "ALL";
+    if (presetFilterBox.getSelectedId() > 1)
+        filter = presetFilterBox.getText();
+
+    juce::String lastCat;
+    const int n = processor.getNumPrograms();
+    for (int i = 0; i < n; ++i)
+    {
+        auto name = processor.getProgramName (i);
+        juce::String cat = name.containsChar ('/') ? name.upToFirstOccurrenceOf ("/", false, false) : "Other";
+
+        if (filter != "ALL")
+        {
+            auto fl = filter.toLowerCase();
+            auto cl = cat.toLowerCase();
+            auto nl = name.toLowerCase();
+            bool match = cl.contains (fl) || nl.startsWith (fl) || nl.contains ("/" + fl)
+                         || (fl == "salek" && (nl.contains ("salek") || nl.contains ("toron") || nl.contains ("persian") || nl.contains ("cyber")));
+            if (! match) continue;
+        }
+
+        if (cat != lastCat)
+        {
+            PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1;
+            presetRows.add (h);
+            lastCat = cat;
+        }
+        PresetRow r; r.isHeader = false;
+        r.label = name.fromFirstOccurrenceOf ("/", false, false);
+        if (r.label.isEmpty()) r.label = name;
+        r.programIndex = i;
+        presetRows.add (r);
+    }
 }
