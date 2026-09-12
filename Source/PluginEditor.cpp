@@ -38,20 +38,6 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     });
     startTimerHz (15);
 
-    setLookAndFeel (&lnf);
-    logoImg   = SalekAssets::loadLogo();
-    heroImg   = SalekAssets::loadToronowla();
-    faceImg   = SalekAssets::loadFace();
-    lianImg   = SalekAssets::loadLian();
-    cyanImg   = SalekAssets::loadCyanGirl();
-    setSize (1280, 820);
-    setResizable (true, true);
-    setResizeLimits (1020, 700, 1700, 1100);
-    title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
-    addAndMakeVisible (title);
-    tagline.setText ("ALIEN", juce::dontSendNotification);
-    addAndMakeVisible (tagline);
-
 #include "PluginEditorCtor.inl"
 }
 
