@@ -1,18 +1,16 @@
-# SALEK UI Assets
+# SALEK HIGHTECH — UI Assets
 
-Place these PNG files here so the plugin can load them at runtime:
+Upload your PNG files here (GitHub → Add file → Upload):
 
-| File | Description |
-|------|-------------|
-| `logo.png` | Brand logo (also embedded in code as fallback) |
-| `toronowla.png` | TORONOWLA hero art (scythe girl) |
-| `face.png` | Close-up reactive face |
-| `lian.png` | LIAN character (theme variant) |
-| `cyan_girl.png` | Secondary character |
-| `headphones.png` | Optional soft art |
+| File | Use |
+|------|-----|
+| `logo.png` | Top-left brand mark |
+| `toronowla.png` | Main hero art (left panel) |
+| `face.png` | Theme 3 / reactive face |
+| `lian.png` | Theme 2 character |
+| `cyan_girl.png` | Extra art |
+| `headphones.png` | Optional |
 
-**How to add:** GitHub → this folder → Add file → Upload files → drag the PNGs from your machine.
+After upload, rebuild. `AssetsData.h` loads these from `Source/Assets/`.
 
-After upload, rebuild the plugin. The left panel will show your real logo + TORONOWLA art.
-
-Logo is already embedded in `AssetsData.h` so something always draws even before you upload.
+**Cyber redesign v2** uses all of these with glow, sonic core visualizer, and glass panels.
