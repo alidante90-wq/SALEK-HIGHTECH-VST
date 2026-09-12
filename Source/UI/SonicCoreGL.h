@@ -67,10 +67,11 @@ public:
             shader.reset();
             return;
         }
-        posAttr = shader->getAttributeID ("position");
-        colAttr = shader->getAttributeID ("colour");
-        scaleUni = shader->getUniformID ("scale");
-        offsetUni = shader->getUniformID ("offset");
+        // Correct JUCE OpenGL API (no getAttributeID / getUniformID)
+        posAttr  = (GLint) glGetAttribLocation (shader->getProgramID(), "position");
+        colAttr  = (GLint) glGetAttribLocation (shader->getProgramID(), "colour");
+        scaleUni  = shader->getUniformIDFromName ("scale");
+        offsetUni = shader->getUniformIDFromName ("offset");
         ready = true;
         time0 = juce::Time::getMillisecondCounterHiRes() * 0.001;
     }
