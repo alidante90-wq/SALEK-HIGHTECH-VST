@@ -51,23 +51,36 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (gold.withAlpha (0.85f + pulse * 0.12f));
         g.drawRoundedRectangle (left, 14.0f, 2.0f);
 
-        if (heroImg.isValid())
         {
-            auto imgArea = left.reduced (12.0f).withHeight (90.0f);
-            g.setOpacity (0.75f + pulse * 0.2f);
-            g.drawImageWithin (heroImg, (int) imgArea.getX(), (int) imgArea.getY(),
-                               (int) imgArea.getWidth(), (int) imgArea.getHeight(),
-                               juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-            g.setOpacity (1.0f);
-        }
-        else if (logoImg.isValid())
-        {
-            auto imgArea = left.reduced (30.0f).withHeight (70.0f);
-            g.setOpacity (0.7f);
-            g.drawImageWithin (logoImg, (int) imgArea.getX(), (int) imgArea.getY(),
-                               (int) imgArea.getWidth(), (int) imgArea.getHeight(),
-                               juce::RectanglePlacement::centred);
-            g.setOpacity (1.0f);
+            auto& src = heroImg.isValid() ? heroImg : logoImg;
+            if (src.isValid())
+            {
+                const float diam = 78.0f;
+                const float ix = left.getCentreX() - diam * 0.5f;
+                const float iy = left.getY() + 12.0f;
+                juce::Path clip;
+                clip.addEllipse (ix, iy, diam, diam);
+                g.saveState();
+                g.reduceClipRegion (clip);
+                g.setOpacity (0.9f + pulse * 0.1f);
+                g.drawImageWithin (src, (int) ix, (int) iy, (int) diam, (int) diam,
+                                   juce::RectanglePlacement::centred | juce::RectanglePlacement::fillDestination);
+                g.restoreState();
+                g.setOpacity (1.0f);
+                g.setColour (gold.withAlpha (0.7f + pulse * 0.25f));
+                g.drawEllipse (ix, iy, diam, diam, 2.0f);
+            }
+            else
+            {
+                const float diam = 78.0f;
+                const float ix = left.getCentreX() - diam * 0.5f;
+                const float iy = left.getY() + 12.0f;
+                g.setColour (cyan.withAlpha (0.35f + pulse * 0.3f));
+                g.drawEllipse (ix, iy, diam, diam, 3.0f);
+                g.setColour (gold.withAlpha (0.8f));
+                g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+                g.drawText ("SALEK", ix, iy + diam * 0.35f, diam, 18.0f, juce::Justification::centred);
+            }
         }
 
         g.setColour (gold);
