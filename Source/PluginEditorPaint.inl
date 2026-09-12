@@ -10,7 +10,6 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     const float pulse = juce::jlimit (0.0f, 1.0f, peak * 3.2f);
     const float t     = animPhase;
 
-    // === Animated deep background ===
     {
         juce::Colour c0 (0xff06031a), c1 (0xff12082a);
         float shift = 0.5f + 0.5f * std::sin (t * 0.4f);
@@ -20,7 +19,6 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillAll();
     }
 
-    // Moving grid
     {
         const float off = std::fmod (t * 12.0f, 48.0f);
         g.setColour (cyan.withAlpha (0.035f + pulse * 0.03f));
@@ -30,8 +28,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             g.drawHorizontalLine ((int) y, 0.0f, (float) getWidth());
     }
 
-    // Floating particles
-    for (int i = 0; i < 28; ++i)
+    for (int i = 0; i < 42; ++i)
     {
         float px = std::fmod (40.0f + i * 97.3f + t * (8.0f + (i % 5)), (float) getWidth());
         float py = std::fmod (20.0f + i * 53.1f + t * (5.0f + (i % 3)), (float) getHeight());
@@ -41,14 +38,12 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillEllipse (px, py, sz, sz);
     }
 
-    // === TOP-LEFT brand ===
     g.setColour (cyan);
     g.setFont (juce::FontOptions (26.0f, juce::Font::bold));
     g.drawText ("SALEK HIGHTECH", 16, 6, 380, 32, juce::Justification::centredLeft, false);
     g.setColour (gold.withAlpha (0.55f + pulse * 0.35f));
     g.fillRect (16, 38, 260, 2);
 
-    // === LEFT logo panel + images ===
     {
         auto left = juce::Rectangle<float> (10.0f, 48.0f, 210.0f, 210.0f);
         g.setColour (juce::Colour (0xff0a0614).withAlpha (0.95f));
@@ -59,7 +54,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         if (heroImg.isValid())
         {
             auto imgArea = left.reduced (12.0f).withHeight (90.0f);
-            g.setOpacity (0.55f + pulse * 0.2f);
+            g.setOpacity (0.75f + pulse * 0.2f);
             g.drawImageWithin (heroImg, (int) imgArea.getX(), (int) imgArea.getY(),
                                (int) imgArea.getWidth(), (int) imgArea.getHeight(),
                                juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
@@ -95,13 +90,12 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillPath (star);
     }
 
-    // === CENTRAL animated visualizer ===
     {
         const float cx = (float) getWidth() * 0.58f;
         const float cy = (float) getHeight() * 0.40f;
-        const float baseR = 70.0f + pulse * 28.0f;
+        const float baseR = 85.0f + pulse * 35.0f;
 
-        for (int i = 0; i < 6; ++i)
+        for (int i = 0; i < 8; ++i)
         {
             float rad = baseR + i * 22.0f + 8.0f * std::sin (t * 1.6f + i * 0.9f);
             juce::Colour c = (i % 3 == 0) ? cyan : ((i % 3 == 1) ? magenta : gold);
@@ -134,7 +128,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     {
         auto& img = faceImg.isValid() ? faceImg : cyanImg;
         auto area = juce::Rectangle<int> (getWidth() - 160, 50, 140, 140);
-        g.setOpacity (0.18f + pulse * 0.12f);
+        g.setOpacity (0.32f + pulse * 0.18f);
         g.drawImageWithin (img, area.getX(), area.getY(), area.getWidth(), area.getHeight(),
                            juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
         g.setOpacity (1.0f);
