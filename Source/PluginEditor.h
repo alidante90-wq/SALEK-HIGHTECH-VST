@@ -232,7 +232,7 @@ private:
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
-    juce::Image logoImg, heroImg;
+    juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
