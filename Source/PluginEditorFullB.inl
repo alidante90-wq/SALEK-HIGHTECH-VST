@@ -77,29 +77,29 @@ void SalekHightechAudioProcessorEditor::resized()
     tabs.toFront (false);
     keyboard.toFront (false);
 
-    // MAIN tab
+    // MAIN tab — clean non-overlapping layout
     {
         auto b = mainTab.getLocalBounds().reduced (6);
-        presetTab.setBounds (b.removeFromLeft (200));
-        filterTab.setBounds (b.removeFromRight (260));
-        envTab.setBounds (b.removeFromBottom (140));
+        presetTab.setBounds (b.removeFromLeft (190));
+        filterTab.setBounds (b.removeFromRight (240));
+        envTab.setBounds (b.removeFromBottom (130));
         oscTab.setBounds (b);
 
+        // Preset list
         {
             auto pb = presetTab.getLocalBounds().reduced (4);
-            auto top = pb.removeFromTop (32);
-            prevPreset.setBounds (top.removeFromLeft (32).reduced (1));
-            nextPreset.setBounds (top.removeFromLeft (32).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (50).reduced (1));
+            auto top = pb.removeFromTop (30);
+            prevPreset.setBounds (top.removeFromLeft (30).reduced (1));
+            nextPreset.setBounds (top.removeFromLeft (30).reduced (1));
+            initBtn.setBounds (top.removeFromLeft (48).reduced (1));
             presetLabel.setBounds (top.reduced (1));
             presetList.setBounds (pb);
         }
 
-        auto layoutKnobs = [] (juce::Component& parent, std::vector<std::unique_ptr<Knob>>& all, int start, int count)
+        auto layoutKnobsIn = [] (juce::Rectangle<int> r, std::vector<std::unique_ptr<Knob>>& all, int start, int count, int maxCols)
         {
-            auto r = parent.getLocalBounds().reduced (4);
-            if (count <= 0) return;
-            int cols = juce::jmin (count, 5);
+            if (count <= 0 || r.isEmpty()) return;
+            int cols = juce::jmin (count, maxCols);
             int rows = (count + cols - 1) / cols;
             int cellW = juce::jmax (1, r.getWidth() / cols);
             int cellH = juce::jmax (1, r.getHeight() / juce::jmax (1, rows));
@@ -109,20 +109,30 @@ void SalekHightechAudioProcessorEditor::resized()
                 if (idx >= (int) all.size()) break;
                 auto* k = all[(size_t) idx].get();
                 int c = i % cols, row = i / cols;
-                auto cell = juce::Rectangle<int> (r.getX() + c * cellW, r.getY() + row * cellH, cellW, cellH).reduced (3);
-                k->name.setBounds (cell.removeFromBottom (14));
+                auto cell = juce::Rectangle<int> (r.getX() + c * cellW, r.getY() + row * cellH, cellW, cellH).reduced (4);
+                k->name.setBounds (cell.removeFromBottom (13));
                 k->s.setBounds (cell);
             }
         };
 
-        layoutKnobs (oscTab, knobs, 0, 17);
-        layoutKnobs (filterTab, knobs, 17, 4);
-        layoutKnobs (envTab, knobs, 21, 4);
+        // OSC: full area, 5 columns
+        layoutKnobsIn (oscTab.getLocalBounds().reduced (4), knobs, 0, 17, 5);
 
-        if (filterDisplay != nullptr)
-            filterDisplay->setBounds (filterTab.getLocalBounds().removeFromTop (80).reduced (3));
-        if (adsrDisplay != nullptr)
-            adsrDisplay->setBounds (envTab.getLocalBounds().removeFromTop (60).reduced (3));
+        // FILTER: curve on top, knobs below
+        {
+            auto fr = filterTab.getLocalBounds().reduced (4);
+            if (filterDisplay != nullptr)
+                filterDisplay->setBounds (fr.removeFromTop (70).reduced (2));
+            layoutKnobsIn (fr, knobs, 17, 4, 2);
+        }
+
+        // ENV: curve on top, knobs below
+        {
+            auto er = envTab.getLocalBounds().reduced (4);
+            if (adsrDisplay != nullptr)
+                adsrDisplay->setBounds (er.removeFromTop (55).reduced (2));
+            layoutKnobsIn (er, knobs, 21, 4, 4);
+        }
     }
 
     // MOD tab
@@ -169,17 +179,6 @@ void SalekHightechAudioProcessorEditor::resized()
         if (stepGrid != nullptr) stepGrid->setBounds (bounds.reduced (3));
     }
 
-    // OpenGL visualizer - large central area behind everything
-    if (sonicCore != nullptr)
-    {
-        auto center = getLocalBounds();
-        center.removeFromLeft (230);
-        center.removeFromBottom (90);
-        center.removeFromTop (50);
-        sonicCore->setBounds (center);
-        sonicCore->toBack();
-    }
-
     if (glBackdrop != nullptr)
-        glBackdrop->setBounds (0, 0, 1, 1); // keep tiny / off
+        glBackdrop->setBounds (0, 0, 1, 1);
 }
