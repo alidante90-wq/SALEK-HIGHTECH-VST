@@ -33,22 +33,18 @@ public:
         auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
 
-        // Outer soft glow (light ring)
         g.setColour(fill.withAlpha(0.22f));
         g.fillEllipse(cx - radius - 4.f, cy - radius - 4.f, (radius + 4.f) * 2.f, (radius + 4.f) * 2.f);
 
-        // Drop shadow
         g.setColour(juce::Colours::black.withAlpha(0.5f));
         g.fillEllipse(cx - radius + 2.f, cy - radius + 3.f, radius * 2.f, radius * 2.f);
 
-        // Body
         juce::ColourGradient body(
             juce::Colour(0xff2e2048), cx, cy - radius,
             juce::Colour(0xff0a0614), cx, cy + radius, false);
         g.setGradientFill(body);
         g.fillEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f);
 
-        // LED tick marks around the knob (monitor lights)
         const int numLeds = 12;
         for (int i = 0; i < numLeds; ++i)
         {
@@ -66,11 +62,9 @@ public:
             }
         }
 
-        // Neon outer ring
         g.setColour(fill.withAlpha(0.7f));
         g.drawEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.6f);
 
-        // Value arc
         juce::Path arc;
         arc.addCentredArc(cx, cy, radius * 0.72f, radius * 0.72f, 0.f, rotaryStartAngle, angle, true);
         g.setColour(fill.withAlpha(0.3f));
@@ -78,19 +72,16 @@ public:
         g.setColour(fill);
         g.strokePath(arc, juce::PathStrokeType(2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Needle
         juce::Path needle;
         needle.addRoundedRectangle(-1.4f, -radius * 0.65f, 2.8f, radius * 0.42f, 1.2f);
         g.setColour(juce::Colours::white.withAlpha(0.95f));
         g.fillPath(needle, juce::AffineTransform::rotation(angle).translated(cx, cy));
 
-        // Center LED
         g.setColour(fill.brighter(0.4f));
         g.fillEllipse(cx - 4.5f, cy - 4.5f, 9.f, 9.f);
         g.setColour(juce::Colour(0xff0a0614));
         g.fillEllipse(cx - 2.0f, cy - 2.0f, 4.f, 4.f);
 
-        // Mini horizontal monitor bar under knob (value meter)
         float barY = cy + radius + 6.0f;
         float barW = radius * 1.6f;
         float barX = cx - barW * 0.5f;
@@ -145,27 +136,7 @@ private:
     float phase = 0.f;
 };
 
-class StepGridComponent : public juce::Component, private juce::Timer {
-public:
-    explicit StepGridComponent (salek::StepSequencer& seq) : sequencer (seq) { startTimerHz (16); }
-    void paint (juce::Graphics& g) override {
-        auto r = getLocalBounds().toFloat().reduced (2.0f);
-        g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (r, 6.0f);
-        const int n = salek::StepSequencer::NumSteps; const float gap=3.f; const float w=(r.getWidth()-gap*(n+1))/(float)n; const float h=r.getHeight()-gap*2;
-        const int play = sequencer.getCurrentStep();
-        for (int i=0;i<n;++i){ auto cell=juce::Rectangle<float>(r.getX()+gap+i*(w+gap),r.getY()+gap,w,h);
-            const auto& st=sequencer.getStep(i);
-            g.setColour(st.active?(i==play?juce::Colour(0xffff00aa):juce::Colour(0xff00f0ff).withAlpha(0.7f)):juce::Colour(0xff1a1028));
-            g.fillRoundedRectangle(cell,3.f);}
-    }
-    void mouseDown (const juce::MouseEvent& e) override {
-        auto r=getLocalBounds().toFloat().reduced(2.f); const int n=salek::StepSequencer::NumSteps; const float gap=3.f; const float w=(r.getWidth()-gap*(n+1))/(float)n;
-        int idx=(int)((e.position.x-r.getX()-gap)/(w+gap)); if(idx>=0&&idx<n){sequencer.getStep(idx).active=!sequencer.getStep(idx).active; repaint();}
-    }
-    void timerCallback() override { repaint(); }
-private:
-    salek::StepSequencer& sequencer;
-};
+#include "PluginEditorStepGrid.inl"
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
@@ -195,7 +166,7 @@ public:
         auto r=getLocalBounds().toFloat().reduced(2.f);
         g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
         g.setColour(juce::Colour(0xffff00aa).withAlpha(0.4f)); g.drawRoundedRectangle(r,8.f,1.f);
-        auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return d;};
+        auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
         float cut=gval("filter_cutoff",8000.f), res=gval("filter_reso",0.25f); int mode=(int)gval("filter_mode",0.f);
         auto plot=r.reduced(8.f,6.f); juce::Path curve; const int N=80;
         for(int i=0;i<N;++i){ float t=(float)i/(N-1); float freq=20.f*std::pow(1000.f,t); float ratio=freq/juce::jmax(20.f,cut); float mag=1.f;
