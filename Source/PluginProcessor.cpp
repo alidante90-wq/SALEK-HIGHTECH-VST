@@ -54,6 +54,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("spatial_azim","Spatial Azim",-180,180,0); F("spatial_dist","Spatial Dist",0,1,0);
     F("spatial_size","Spatial Size",0,1,0.5f); F("spatial_elev","Spatial Elev",-90,90,0);
     F("input_mix","Input Mix",0,1,0);
+    C("scale_mode","Scale",{"Equal 12-TET","Shur","Segah","Homayun","Mahur","Free Koron"},0);
+    F("koron_cents","Koron Cents",-50,50,0);
     return { p.begin(), p.end() };
 }
 
@@ -140,6 +142,8 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setAmpAttack(g("amp_attack")); synthEngine.setAmpDecay(g("amp_decay"));
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
+    synthEngine.setScaleMode((int)g("scale_mode"));
+    synthEngine.setKoronCents(g("koron_cents"));
     modMatrix.setSourceValue(salek::ModMatrix::Source::LFO1, std::sin((float)juce::Time::getMillisecondCounter() * 0.001f * g("lfo_rate") * juce::MathConstants<float>::twoPi));
     modMatrix.setSourceValue(salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
     modMatrix.setSourceValue(salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
