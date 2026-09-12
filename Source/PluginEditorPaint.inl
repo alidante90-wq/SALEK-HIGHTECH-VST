@@ -1,62 +1,116 @@
-// SALEK HIGHTECH v2 — cyber / anime / neon pro paint
+// SALEK HIGHTECH — Final Persian Cyber Anime UI (ISATIS edition)
+// Hyper-realistic dark cyber + neon cyan/magenta/gold + Persian geometric accents
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    const int theme = themeBox.getSelectedId();
-    juce::Colour bgDeep (0xff03020a), bgMid (0xff0a0618), accent (0xff00e8ff), accent2 (0xffff2d9b), accent3 (0xffb44dff);
-    if (theme == 2) { bgDeep = juce::Colour (0xff020a06); bgMid = juce::Colour (0xff06140c); accent = juce::Colour (0xff39ff14); accent2 = juce::Colour (0xffc0ff00); accent3 = juce::Colour (0xff00ffaa); }
-    if (theme == 3) { bgDeep = juce::Colour (0xff02060e); bgMid = juce::Colour (0xff06101c); accent = juce::Colour (0xff4fc3f7); accent2 = juce::Colour (0xff7c4dff); accent3 = juce::Colour (0xff82b1ff); }
+    // Final palette from approved concept
+    const juce::Colour bgDeep   (0xff02010a);
+    const juce::Colour bgMid    (0xff0a0618);
+    const juce::Colour cyan     (0xff00e8ff);
+    const juce::Colour magenta  (0xffff2d9b);
+    const juce::Colour gold     (0xffffd700);
+    const juce::Colour purple   (0xffb44dff);
+    const juce::Colour panelBg  (0xff0a0614);
 
-    const float peak = processor.getOutputPeak();
-    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.6f);
-    const float t = animPhase;
+    const float peak  = processor.getOutputPeak();
+    const float pulse = juce::jlimit (0.0f, 1.0f, peak * 2.8f);
+    const float t     = animPhase;
 
-    juce::ColourGradient bg (bgDeep, 0, 0, bgMid, (float) getWidth() * 0.6f, (float) getHeight(), true);
+    // Deep background gradient
+    juce::ColourGradient bg (bgDeep, 0, 0, bgMid, (float) getWidth() * 0.55f, (float) getHeight(), false);
     g.setGradientFill (bg);
     g.fillAll();
 
-    g.setColour (accent.withAlpha (0.04f + pulse * 0.03f));
-    for (int x = 0; x < getWidth(); x += 40)
+    // Subtle cyber grid
+    g.setColour (cyan.withAlpha (0.035f + pulse * 0.025f));
+    for (int x = 0; x < getWidth(); x += 48)
         g.drawVerticalLine (x, 0.0f, (float) getHeight());
-    for (int y = 0; y < getHeight(); y += 40)
+    for (int y = 0; y < getHeight(); y += 48)
         g.drawHorizontalLine (y, 0.0f, (float) getWidth());
 
-    auto left = juce::Rectangle<int> (8, 52, 170, getHeight() - 140);
-    g.setColour (juce::Colour (0xff0a0614).withAlpha (0.85f));
-    g.fillRoundedRectangle (left.toFloat(), 12.0f);
-    g.setColour (accent.withAlpha (0.35f + pulse * 0.25f));
-    g.drawRoundedRectangle (left.toFloat(), 12.0f, 1.5f);
-
-    if (logoImg.isValid())
+    // ========== TOP-LEFT: SALEK HIGHTECH (very large) ==========
     {
-        auto lr = juce::Rectangle<int> (left.getX() + 20, left.getY() + 10, 130, 50);
-        g.drawImageWithin (logoImg, lr.getX(), lr.getY(), lr.getWidth(), lr.getHeight(),
-                           juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        g.setColour (cyan);
+        g.setFont (juce::FontOptions (28.0f, juce::Font::bold));
+        g.drawText ("SALEK HIGHTECH", 18, 8, 420, 36, juce::Justification::centredLeft, false);
+
+        // subtle gold underline accent
+        g.setColour (gold.withAlpha (0.55f + pulse * 0.3f));
+        g.fillRect (18, 42, 280, 2);
     }
 
-    auto art = left.reduced (10).withTrimmedTop (60).withTrimmedBottom (20);
-    juce::Image hero = heroImg.isValid() ? heroImg : (faceImg.isValid() ? faceImg : lianImg);
-    if (theme == 2 && lianImg.isValid()) hero = lianImg;
-    if (theme == 3 && cyanImg.isValid()) hero = cyanImg;
-    if (hero.isValid())
+    // ========== LEFT LOGO PANEL (سالک) ==========
     {
-        g.setOpacity (0.9f);
-        g.drawImageWithin (hero, art.getX(), art.getY(), art.getWidth(), art.getHeight(),
-                           juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-        g.setOpacity (1.0f);
+        auto left = juce::Rectangle<float> (12.0f, 55.0f, 210.0f, 210.0f);
+        g.setColour (panelBg.withAlpha (0.92f));
+        g.fillRoundedRectangle (left, 14.0f);
+
+        // ornate border
+        g.setColour (gold.withAlpha (0.75f + pulse * 0.2f));
+        g.drawRoundedRectangle (left, 14.0f, 2.0f);
+        g.setColour (cyan.withAlpha (0.35f));
+        g.drawRoundedRectangle (left.reduced (4.0f), 11.0f, 1.0f);
+
+        // Persian "سالک" big
+        g.setColour (gold);
+        g.setFont (juce::FontOptions (42.0f, juce::Font::bold));
+        g.drawText (juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd9\x84\xda\xa9"), left.getX(), left.getY() + 28, left.getWidth(), 55,
+                    juce::Justification::centred, false);
+
+        // small English + tagline
+        g.setColour (cyan.withAlpha (0.9f));
+        g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
+        g.drawText ("SALEK", left.getX(), left.getY() + 88, left.getWidth(), 20, juce::Justification::centred);
+
+        g.setColour (juce::Colours::white.withAlpha (0.7f));
+        g.setFont (juce::FontOptions (11.0f));
+        g.drawText ("PERSIAN CYBER SONIC CORE", left.getX(), left.getY() + 112, left.getWidth(), 16, juce::Justification::centred);
+
+        g.setColour (magenta.withAlpha (0.85f));
+        g.setFont (juce::FontOptions (10.0f));
+        g.drawText ("SYNTHESIZER VST", left.getX(), left.getY() + 135, left.getWidth(), 14, juce::Justification::centred);
+
+        // decorative geometric diamond
+        juce::Path diamond;
+        float dcx = left.getCentreX();
+        float dcy = left.getBottom() - 38.0f;
+        diamond.addStar (juce::Point<float>(dcx, dcy), 8, 14.0f, 7.0f);
+        g.setColour (gold.withAlpha (0.7f + pulse * 0.25f));
+        g.fillPath (diamond);
     }
 
+    // ========== BOTTOM-RIGHT: ISATIS (very large, English only) ==========
     {
-        auto cx = (float) getWidth() * 0.55f;
-        auto cy = (float) getHeight() * 0.42f;
-        for (int i = 0; i < 4; ++i)
+        g.setColour (cyan);
+        g.setFont (juce::FontOptions (36.0f, juce::Font::bold));
+        g.drawText ("ISATIS", getWidth() - 260, getHeight() - 58, 240, 42, juce::Justification::centredRight, false);
+
+        g.setColour (gold.withAlpha (0.8f));
+        g.setFont (juce::FontOptions (12.0f));
+        g.drawText ("VOICE OF THE ANCIENT FUTURE", getWidth() - 280, getHeight() - 22, 260, 16, juce::Justification::centredRight);
+    }
+
+    // ========== CENTRAL VISUALIZER GLOW RINGS (fallback) ==========
+    {
+        auto cx = (float) getWidth() * 0.52f;
+        auto cy = (float) getHeight() * 0.48f;
+
+        for (int i = 0; i < 6; ++i)
         {
-            float rad = 40.0f + i * 28.0f + pulse * 12.0f + 6.0f * std::sin (t + i);
-            g.setColour ((i % 2 == 0 ? accent : accent2).withAlpha (0.08f + pulse * 0.12f));
-            g.drawEllipse (cx - rad, cy - rad * 0.7f, rad * 2.0f, rad * 1.4f, 1.5f);
+            float rad = 55.0f + i * 32.0f + pulse * 18.0f + 8.0f * std::sin (t * 1.3f + i * 0.7f);
+            juce::Colour c = (i % 3 == 0) ? cyan : ((i % 3 == 1) ? magenta : gold);
+            g.setColour (c.withAlpha (0.07f + pulse * 0.09f));
+            g.drawEllipse (cx - rad, cy - rad * 0.82f, rad * 2.0f, rad * 1.64f, 2.0f + pulse);
         }
+
+        // inner mandala star
+        juce::Path star;
+        star.addStar (juce::Point<float>(cx, cy), 8, 38.0f + pulse * 6.0f, 18.0f);
+        g.setColour (gold.withAlpha (0.45f + pulse * 0.25f));
+        g.strokePath (star, juce::PathStrokeType (1.8f));
     }
 
-    g.setColour (accent.withAlpha (0.7f));
-    g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH  //  PRESET LIBRARY ON MAIN", 12, getHeight() - 22, 420, 16, juce::Justification::centredLeft);
+    // bottom status line
+    g.setColour (cyan.withAlpha (0.55f));
+    g.setFont (juce::FontOptions (11.0f));
+    g.drawText ("SALEK HIGHTECH  //  ISATIS ENGINE  //  PERSIAN CYBER", 18, getHeight() - 20, 480, 14, juce::Justification::centredLeft);
 }
