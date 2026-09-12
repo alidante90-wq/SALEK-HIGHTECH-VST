@@ -22,9 +22,9 @@
     tabs.setTabBarDepth (28);
     tabs.setOpaque (true);
 
-    filterDisplay = std::make_unique<FilterCurveDisplay>();
-    adsrDisplay = std::make_unique<ADSRDisplay>();
-    lfoDisplay = std::make_unique<LFODisplay>();
+    filterDisplay = std::make_unique<FilterCurveDisplay> (processor.getAPVTS());
+    adsrDisplay = std::make_unique<AdsrDisplay> (processor.getAPVTS());
+    lfoDisplay = std::make_unique<LfoDisplay> (processor.getAPVTS());
     matrixPanel = std::make_unique<salek::ModMatrixPanel>(processor.getModMatrix());
     stepGrid = std::make_unique<salek::StepGridComponent>(processor.getStepSequencer());
 
