@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "UI/ModMatrixPanel.h"
 #include "UI/OpenGLGridBackdrop.h"
+#include "UI/SonicCoreGL.h"
 
 class SalekLookAndFeel : public juce::LookAndFeel_V4 {
 public:
@@ -214,6 +215,8 @@ private:
     std::unique_ptr<LfoDisplay> lfoDisplay;
     std::unique_ptr<ModMatrixPanel> matrixPanel;
     std::unique_ptr<OpenGLGridBackdrop> glBackdrop;
+    std::unique_ptr<SonicCoreGL> sonicCore;
+    juce::VBlankAttachment vblank;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
     std::vector<std::unique_ptr<Knob>> knobs;
