@@ -43,142 +43,120 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
-    if (++ticks < 5) resized(); // only initial layout pass
+    if (++ticks < 5) resized();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
 {
     auto full = getLocalBounds();
 
-    // Keyboard bottom
     {
-        auto kbArea = full.removeFromBottom (72).reduced (2, 2);
-        const int whiteKeys = 52;
-        int keyW = juce::jmax (11, kbArea.getWidth() / whiteKeys);
+        auto kb = full.removeFromBottom (70).reduced (2, 2);
+        int keyW = juce::jmax (11, kb.getWidth() / 52);
         keyboard.setKeyWidth ((float) keyW);
-        keyboard.setBounds (kbArea);
+        keyboard.setBounds (kb);
     }
-    full.removeFromBottom (8); // room for ISATIS text
+    full.removeFromBottom (6);
+    full.removeFromLeft (228);
 
-    // Left branding panel reserved (matches paint logo panel)
-    full.removeFromLeft (230);
-
-    // Top header
-    auto header = full.removeFromTop (40);
-    themeBox.setBounds (header.removeFromRight (140).reduced (3));
-    scope.setBounds (header.removeFromRight (120).reduced (3));
+    auto header = full.removeFromTop (38);
+    themeBox.setBounds (header.removeFromRight (130).reduced (3));
+    scope.setBounds (header.removeFromRight (110).reduced (2));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (220).reduced (2));
+        wtDisplay->setBounds (header.removeFromRight (200).reduced (2));
 
-    full.removeFromTop (4);
-
-    // Tabs take remaining
+    full.removeFromTop (2);
     tabs.setBounds (full);
     tabs.toFront (false);
     keyboard.toFront (false);
 
-    // MAIN tab — clean non-overlapping layout
+    auto placeKnobs = [] (juce::Rectangle<int> area, std::vector<std::unique_ptr<Knob>>& all,
+                          int start, int count, int cols)
     {
-        auto b = mainTab.getLocalBounds().reduced (6);
-        presetTab.setBounds (b.removeFromLeft (190));
-        filterTab.setBounds (b.removeFromRight (240));
-        envTab.setBounds (b.removeFromBottom (130));
+        if (count <= 0 || area.isEmpty() || cols < 1) return;
+        int rows = (count + cols - 1) / cols;
+        int cw = juce::jmax (1, area.getWidth() / cols);
+        int ch = juce::jmax (1, area.getHeight() / juce::jmax (1, rows));
+        for (int i = 0; i < count; ++i)
+        {
+            int idx = start + i;
+            if (idx >= (int) all.size()) break;
+            auto* k = all[(size_t) idx].get();
+            int c = i % cols, row = i / cols;
+            auto cell = juce::Rectangle<int> (area.getX() + c * cw, area.getY() + row * ch, cw, ch).reduced (5);
+            k->name.setBounds (cell.removeFromBottom (12));
+            k->s.setBounds (cell);
+        }
+    };
+
+    // MAIN
+    {
+        auto b = mainTab.getLocalBounds().reduced (5);
+        presetTab.setBounds (b.removeFromLeft (185));
+        filterTab.setBounds (b.removeFromRight (230));
+        envTab.setBounds (b.removeFromBottom (125));
         oscTab.setBounds (b);
 
-        // Preset list
         {
-            auto pb = presetTab.getLocalBounds().reduced (4);
-            auto top = pb.removeFromTop (30);
-            prevPreset.setBounds (top.removeFromLeft (30).reduced (1));
-            nextPreset.setBounds (top.removeFromLeft (30).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (48).reduced (1));
+            auto pb = presetTab.getLocalBounds().reduced (3);
+            auto top = pb.removeFromTop (28);
+            prevPreset.setBounds (top.removeFromLeft (28).reduced (1));
+            nextPreset.setBounds (top.removeFromLeft (28).reduced (1));
+            initBtn.setBounds (top.removeFromLeft (46).reduced (1));
             presetLabel.setBounds (top.reduced (1));
             presetList.setBounds (pb);
         }
 
-        auto layoutKnobsIn = [] (juce::Rectangle<int> r, std::vector<std::unique_ptr<Knob>>& all, int start, int count, int maxCols)
-        {
-            if (count <= 0 || r.isEmpty()) return;
-            int cols = juce::jmin (count, maxCols);
-            int rows = (count + cols - 1) / cols;
-            int cellW = juce::jmax (1, r.getWidth() / cols);
-            int cellH = juce::jmax (1, r.getHeight() / juce::jmax (1, rows));
-            for (int i = 0; i < count; ++i)
-            {
-                int idx = start + i;
-                if (idx >= (int) all.size()) break;
-                auto* k = all[(size_t) idx].get();
-                int c = i % cols, row = i / cols;
-                auto cell = juce::Rectangle<int> (r.getX() + c * cellW, r.getY() + row * cellH, cellW, cellH).reduced (4);
-                k->name.setBounds (cell.removeFromBottom (13));
-                k->s.setBounds (cell);
-            }
-        };
+        placeKnobs (oscTab.getLocalBounds().reduced (4), knobs, 0, 17, 5);
 
-        // OSC: full area, 5 columns
-        layoutKnobsIn (oscTab.getLocalBounds().reduced (4), knobs, 0, 17, 5);
-
-        // FILTER: curve on top, knobs below
         {
             auto fr = filterTab.getLocalBounds().reduced (4);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (70).reduced (2));
-            layoutKnobsIn (fr, knobs, 17, 4, 2);
+                filterDisplay->setBounds (fr.removeFromTop (68).reduced (2));
+            placeKnobs (fr, knobs, 17, 4, 2);
         }
-
-        // ENV: curve on top, knobs below
         {
             auto er = envTab.getLocalBounds().reduced (4);
             if (adsrDisplay != nullptr)
-                adsrDisplay->setBounds (er.removeFromTop (55).reduced (2));
-            layoutKnobsIn (er, knobs, 21, 4, 4);
+                adsrDisplay->setBounds (er.removeFromTop (50).reduced (2));
+            placeKnobs (er, knobs, 21, 4, 4);
         }
     }
 
-    // MOD tab
+    // MOD
     {
-        auto r = modTab.getLocalBounds().reduced (4);
+        auto r = modTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (r.removeFromTop (70).reduced (2));
+            lfoDisplay->setBounds (r.removeFromTop (72).reduced (2));
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.removeFromLeft (260).reduced (2));
-        int x = r.getX(), y = r.getY(), w = 88, h = 95;
-        for (int i = 25; i < juce::jmin (37, (int) knobs.size()); ++i)
-        {
-            auto* k = knobs[(size_t) i].get();
-            k->s.setBounds (x, y, w, h - 16);
-            k->name.setBounds (x, y + h - 16, w, 14);
-            x += w;
-            if (x + w > r.getRight()) { x = r.getX(); y += h; }
-        }
+            matrixPanel->setBounds (r.removeFromLeft (250).reduced (2));
+        placeKnobs (r.reduced (2), knobs, 25, 12, 4);
     }
 
-    // FX tab
+    // FX — clean 4-col grid
     {
-        auto r = fxTab.getLocalBounds().reduced (6);
-        int cols = 4, i0 = 37;
-        int n = juce::jmin (22, (int) knobs.size() - i0);
-        int cellW = juce::jmax (1, r.getWidth() / cols);
-        int cellH = 105;
-        for (int i = 0; i < n; ++i)
-        {
-            auto* k = knobs[(size_t) (i0 + i)].get();
-            int c = i % cols, row = i / cols;
-            auto cell = juce::Rectangle<int> (r.getX() + c * cellW, r.getY() + row * cellH, cellW, cellH).reduced (3);
-            k->name.setBounds (cell.removeFromBottom (14));
-            k->s.setBounds (cell);
-        }
+        auto r = fxTab.getLocalBounds().reduced (8);
+        const int totalFx = juce::jmin (22, (int) knobs.size() - 37);
+        placeKnobs (r, knobs, 37, totalFx, 4);
     }
 
-    // SEQ tab
+    // SEQ — ARP/SEQ + rate knobs + large step grid
     {
-        auto bounds = seqTab.getLocalBounds().reduced (4);
-        auto top = bounds.removeFromTop (26);
-        arpOn.setBounds (top.removeFromLeft (70).reduced (2));
-        seqOn.setBounds (top.removeFromLeft (70).reduced (2));
-        if (stepGrid != nullptr) stepGrid->setBounds (bounds.reduced (3));
-    }
+        auto bounds = seqTab.getLocalBounds().reduced (8);
+        auto top = bounds.removeFromTop (36);
+        arpOn.setBounds (top.removeFromLeft (90).reduced (3));
+        seqOn.setBounds (top.removeFromLeft (90).reduced (3));
 
-    if (glBackdrop != nullptr)
-        glBackdrop->setBounds (0, 0, 1, 1);
+        const int seqKnobStart = 37 + juce::jmin (22, (int) knobs.size() - 37);
+        int nSeqKnobs = juce::jmax (0, (int) knobs.size() - seqKnobStart);
+        if (nSeqKnobs > 0)
+        {
+            auto knobStrip = top.removeFromRight (juce::jmin (top.getWidth(), nSeqKnobs * 100));
+            placeKnobs (knobStrip, knobs, seqKnobStart, nSeqKnobs, nSeqKnobs);
+        }
+
+        bounds.removeFromTop (6);
+        if (stepGrid != nullptr)
+            stepGrid->setBounds (bounds.reduced (2));
+    }
 }
