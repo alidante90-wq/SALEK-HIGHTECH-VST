@@ -79,4 +79,7 @@ void SynthEngine::setUnison (int v) { forEachVoice ([&] (SynthVoice& voice) { vo
 void SynthEngine::setUnisonDetune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonDetune (v); }); }
 void SynthEngine::setUnisonSpread (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonSpread (v); }); }
 
+void SynthEngine::setScaleMode (int m) { forEachVoice ([&] (SynthVoice& voice) { voice.setScaleMode (m); }); }
+void SynthEngine::setKoronCents (float c) { forEachVoice ([&] (SynthVoice& voice) { voice.setKoronCents (c); }); }
+
 } // namespace salek
