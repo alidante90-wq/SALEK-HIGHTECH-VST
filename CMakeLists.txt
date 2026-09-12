@@ -33,6 +33,14 @@ juce_add_plugin(SALEK_HIGHTECH
 
 juce_generate_juce_header(SALEK_HIGHTECH)
 
+# Embed brand images so VST always has art (no external Assets folder required)
+juce_add_binary_data(SalekBinaryAssets SOURCES
+    "Source/Assets/b4ef89321df2b8f2c7bd314d352b8f42.jpg"
+    "Source/Assets/purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg"
+    "Source/Assets/wp5627062.jpg"
+    "Source/Assets/OIP.webp"
+)
+
 target_sources(SALEK_HIGHTECH PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
@@ -68,7 +76,7 @@ target_compile_definitions(SALEK_HIGHTECH PUBLIC
 )
 
 target_link_libraries(SALEK_HIGHTECH
-    PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_opengl
+    PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_opengl SalekBinaryAssets
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags
 )
 
