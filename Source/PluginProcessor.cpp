@@ -1,6 +1,5 @@
 #include <cmath>
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
-// TEMPORARY: body restored via PluginProcessor_full.inl include until full inline push
-#include "PluginProcessor_full.inl"
+#include "PluginProcessor_full_p1.inl"
+#include "PluginProcessor_full_p2.inl"
