@@ -2,4 +2,5 @@
 #include "AssetsData.h"
 #include <cmath>
 
-#include "PluginEditorFull.inl"
+#include "PluginEditorFullA.inl"
+#include "PluginEditorFullB.inl"
