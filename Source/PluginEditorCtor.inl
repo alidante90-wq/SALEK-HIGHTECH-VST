@@ -25,8 +25,8 @@
     filterDisplay = std::make_unique<FilterCurveDisplay> (processor.getAPVTS());
     adsrDisplay = std::make_unique<AdsrDisplay> (processor.getAPVTS());
     lfoDisplay = std::make_unique<LfoDisplay> (processor.getAPVTS());
-    matrixPanel = std::make_unique<salek::ModMatrixPanel>(processor.getModMatrix());
-    stepGrid = std::make_unique<salek::StepGridComponent>(processor.getStepSequencer());
+    matrixPanel = std::make_unique<ModMatrixPanel> (processor.getModMatrix());
+    stepGrid = std::make_unique<StepGridComponent> (processor.getStepSequencer());
 
     {
         mainTab.addAndMakeVisible (oscTab);
