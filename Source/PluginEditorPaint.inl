@@ -18,103 +18,134 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.setGradientFill (bg);
     g.fillAll();
 
-    g.setColour (accent.withAlpha (0.04f + pulse * 0.08f));
-    const float y0 = (float) getHeight() * 0.62f;
-    for (int i = 0; i < 10; ++i) {
-        float t = (float) i / 9.0f;
-        float y = y0 + t * t * ((float) getHeight() - y0 - 80.0f);
-        g.drawLine (180.0f, y, (float) getWidth() - 8.0f, y, 1.0f);
+    {
+        float glowA = 0.03f + pulse * 0.12f;
+        g.setColour (accent.withAlpha (glowA));
+        g.fillEllipse ((float) getWidth() * 0.55f - 180.f - pulse * 40.f,
+                       (float) getHeight() * 0.35f - 120.f - pulse * 30.f,
+                       360.f + pulse * 80.f, 240.f + pulse * 60.f);
+        g.setColour (accent2.withAlpha (glowA * 0.7f));
+        g.fillEllipse ((float) getWidth() * 0.25f - 100.f,
+                       (float) getHeight() * 0.7f - 80.f,
+                       200.f + pulse * 40.f, 160.f + pulse * 30.f);
     }
 
-    auto col = juce::Rectangle<float> (6.0f, 8.0f, 170.0f, (float) getHeight() - 90.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.5f));
+    g.setColour (accent.withAlpha (0.035f + pulse * 0.07f));
+    const float y0 = (float) getHeight() * 0.55f;
+    for (int i = 0; i < 14; ++i) {
+        float t = (float) i / 13.0f;
+        float y = y0 + t * t * ((float) getHeight() - y0 - 90.0f);
+        g.drawLine (190.0f, y, (float) getWidth() - 8.0f, y, 1.0f);
+    }
+
+    auto col = juce::Rectangle<float> (6.0f, 8.0f, 178.0f, (float) getHeight() - 96.0f);
+    g.setColour (juce::Colours::black.withAlpha (0.55f));
     g.fillRoundedRectangle (col.translated (3, 4), 14.0f);
     juce::ColourGradient cg (juce::Colour (0xff1a0c28), col.getX(), col.getY(),
                              juce::Colour (0xff080412), col.getX(), col.getBottom(), false);
     g.setGradientFill (cg);
     g.fillRoundedRectangle (col, 14.0f);
-    g.setColour (accent.withAlpha (0.5f + pulse * 0.35f));
-    g.drawRoundedRectangle (col, 14.0f, 2.0f);
+    g.setColour (accent.withAlpha (0.55f + pulse * 0.4f));
+    g.drawRoundedRectangle (col, 14.0f, 2.2f + pulse * 1.5f);
 
-    if (logoImg.isValid()) {
-        auto lr = juce::Rectangle<float> (col.getX() + 35, col.getY() + 12, 100, 80);
-        g.setOpacity (0.95f);
+    if (logoImg.isValid())
+    {
+        auto lr = juce::Rectangle<float> (col.getX() + 24, col.getY() + 10, 130, 130);
+        g.setOpacity (0.98f);
         g.drawImage (logoImg, lr, juce::RectanglePlacement::centred);
         g.setOpacity (1.0f);
+        g.setColour (accent.withAlpha (0.15f + pulse * 0.25f));
+        g.drawEllipse (lr.expanded (6.f + pulse * 4.f), 2.0f + pulse);
     }
 
-    float cx = col.getCentreX();
-    float cy = col.getY() + 200.0f + (0.5f - cut) * 20.0f;
-    for (int r = 3; r >= 0; --r) {
-        float rad = 26.0f + r * 11.0f + pulse * 8.0f;
-        g.setColour (accent.withAlpha (0.06f + pulse * 0.07f));
-        g.drawEllipse (cx - rad, cy - rad * 0.85f, rad * 2.0f, rad * 1.7f, 1.3f);
+    {
+        juce::Image art = heroImg.isValid() ? heroImg : faceImg;
+        if (theme == 2 && lianImg.isValid()) art = lianImg;
+        if (theme == 3 && faceImg.isValid()) art = faceImg;
+
+        if (art.isValid())
+        {
+            auto ar = juce::Rectangle<float> (col.getX() + 8, col.getY() + 148, col.getWidth() - 16, 210);
+            juce::Path clip;
+            clip.addRoundedRectangle (ar, 12.0f);
+            g.saveState();
+            g.reduceClipRegion (clip);
+            g.setOpacity (0.92f + pulse * 0.08f);
+            g.drawImage (art, ar, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            g.restoreState();
+            g.setColour (accent2.withAlpha (0.5f + pulse * 0.35f));
+            g.drawRoundedRectangle (ar, 12.0f, 1.8f);
+            g.setColour (juce::Colours::white.withAlpha (0.08f + pulse * 0.12f));
+            g.fillRoundedRectangle (ar.withHeight (28.f), 12.0f);
+        }
+        else
+        {
+            float cx = col.getCentreX();
+            float cy = col.getY() + 220.0f + (0.5f - cut) * 18.0f;
+            auto headR = juce::Rectangle<float> (cx - 48, cy - 58, 96, 110);
+            juce::ColourGradient hg (juce::Colour (0xff3a1a55), headR.getX(), headR.getY(),
+                                     juce::Colour (0xff100818), headR.getX(), headR.getBottom(), false);
+            g.setGradientFill (hg);
+            g.fillRoundedRectangle (headR, 22.0f);
+            g.setColour (accent.withAlpha (0.8f + pulse * 0.2f));
+            g.drawRoundedRectangle (headR, 22.0f, 2.0f);
+        }
     }
-    auto headR = juce::Rectangle<float> (cx - 46, cy - 55, 92, 105);
-    juce::ColourGradient hg (juce::Colour (0xff3a1a55), headR.getX(), headR.getY(),
-                             juce::Colour (0xff100818), headR.getX(), headR.getBottom(), false);
-    g.setGradientFill (hg);
-    g.fillRoundedRectangle (headR, 20.0f);
-    g.setColour (accent.withAlpha (0.75f + pulse * 0.2f));
-    g.drawRoundedRectangle (headR, 20.0f, 2.0f);
 
-    auto visor = juce::Rectangle<float> (cx - 40, cy - 16, 80, 26);
-    g.setColour (accent2.withAlpha (0.4f + pulse * 0.35f));
-    g.fillRoundedRectangle (visor, 7.0f);
-    g.setColour (accent);
-    g.drawRoundedRectangle (visor, 7.0f, 1.2f);
-    g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (10.5f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", visor, juce::Justification::centred);
-
-    float eyeOff = (cut - 0.5f) * 7.0f;
-    for (int e = 0; e < 2; ++e) {
-        float ex = cx + (e == 0 ? -16.0f : 8.0f) + eyeOff;
-        g.setColour (accent.withAlpha (0.45f + pulse * 0.4f));
-        g.fillEllipse (ex - 5, cy + 16, 12, 9);
-        g.setColour (juce::Colours::white);
-        g.fillEllipse (ex - 1, cy + 18, 3.5f, 3.5f);
-    }
-    auto mouth = juce::Rectangle<float> (cx - 26, cy + 36, 52, 7);
-    g.setColour (juce::Colour (0xff1a1020));
-    g.fillRoundedRectangle (mouth, 3.0f);
-    g.setColour (accent2.interpolatedWith (accent, pulse));
-    g.fillRoundedRectangle (mouth.withWidth (mouth.getWidth() * juce::jlimit (0.06f, 1.0f, pulse)), 3.0f);
-
-    float ly = col.getBottom() - 100.0f;
+    float ly = col.getBottom() - 92.0f;
     auto led = [&](const char* lab, bool on, juce::Colour c) {
         g.setColour (on ? c : juce::Colour (0xff222230));
-        g.fillEllipse (col.getX() + 16, ly, 12, 12);
-        if (on) { g.setColour (c.withAlpha (0.35f)); g.fillEllipse (col.getX() + 13, ly - 3, 18, 18); }
+        g.fillEllipse (col.getX() + 14, ly, 11, 11);
+        if (on) {
+            g.setColour (c.withAlpha (0.4f + pulse * 0.3f));
+            g.fillEllipse (col.getX() + 10, ly - 4, 19, 19);
+        }
         g.setColour (juce::Colour (0xffc0c0d8));
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        g.drawText (lab, col.getX() + 34, ly - 1, 90, 14, juce::Justification::centredLeft);
-        ly += 20.0f;
+        g.setFont (juce::FontOptions (10.5f, juce::Font::bold));
+        g.drawText (lab, col.getX() + 32, ly - 1, 100, 14, juce::Justification::centredLeft);
+        ly += 18.0f;
     };
     led ("ARP", gval ("arp_on") > 0.5f, accent);
     led ("SEQ", gval ("seq_on") > 0.5f, accent2);
     led ("DRV", gval ("master_drive") > 0.15f, juce::Colour (0xffff00aa));
 
-    auto meter = juce::Rectangle<float> (col.getX() + 14, col.getBottom() - 28, col.getWidth() - 28, 12);
+    auto meter = juce::Rectangle<float> (col.getX() + 12, col.getBottom() - 26, col.getWidth() - 24, 11);
     g.setColour (juce::Colour (0xff1a1020));
     g.fillRoundedRectangle (meter, 4.0f);
     g.setColour (accent.interpolatedWith (accent2, pulse));
     g.fillRoundedRectangle (meter.withWidth (meter.getWidth() * pulse), 4.0f);
-    g.setColour (accent.withAlpha (0.6f));
+    g.setColour (accent.withAlpha (0.65f));
     g.drawRoundedRectangle (meter, 4.0f, 1.0f);
 
-    g.setColour (accent.withAlpha (0.15f + pulse * 0.25f));
-    g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (2.0f), 14.0f, 2.0f + pulse);
+    g.setColour (accent.withAlpha (0.12f + pulse * 0.28f));
+    g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (2.0f), 14.0f, 2.0f + pulse * 1.5f);
 
-    auto head = juce::Rectangle<float> (184.0f, 8.0f, juce::jmax (120.0f, (float) getWidth() - 560.0f), 40.0f);
+    auto head = juce::Rectangle<float> (190.0f, 8.0f, juce::jmax (120.0f, (float) getWidth() - 560.0f), 40.0f);
     g.setColour (juce::Colour (0xcc10081a));
     g.fillRoundedRectangle (head, 8.0f);
-    g.setColour (accent.withAlpha (0.45f + pulse * 0.3f));
-    g.drawRoundedRectangle (head, 8.0f, 1.2f);
+    g.setColour (accent.withAlpha (0.5f + pulse * 0.35f));
+    g.drawRoundedRectangle (head, 8.0f, 1.4f);
     g.setColour (accent);
-    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+    g.setFont (juce::FontOptions (17.0f, juce::Font::bold));
     g.drawText ("SALEK HIGHTECH", head.reduced (10, 4), juce::Justification::centredLeft);
     g.setColour (accent2);
     g.setFont (juce::FontOptions (10.0f));
-    g.drawText ("v1.1  ·  REACTIVE", head.getX() + 10, head.getY() + 22, 200, 14, juce::Justification::centredLeft);
+    g.drawText ("v1.2  ·  TORONOWLA  ·  REACTIVE", head.getX() + 10, head.getY() + 22, 280, 14, juce::Justification::centredLeft);
+
+    {
+        auto vis = juce::Rectangle<float> (190.0f, (float) getHeight() - 108.0f, (float) getWidth() - 200.0f, 28.0f);
+        g.setColour (juce::Colour (0x66080814));
+        g.fillRoundedRectangle (vis, 6.0f);
+        g.setColour (accent.withAlpha (0.25f + pulse * 0.4f));
+        g.drawRoundedRectangle (vis, 6.0f, 1.0f);
+        const int bars = 48;
+        float bw = (vis.getWidth() - 8.f) / bars;
+        for (int i = 0; i < bars; ++i)
+        {
+            float h = (0.15f + 0.85f * pulse * (0.4f + 0.6f * std::sin (animPhase * 3.f + i * 0.35f))) * (vis.getHeight() - 6.f);
+            float x = vis.getX() + 4.f + i * bw;
+            g.setColour (accent.interpolatedWith (accent2, (float) i / bars).withAlpha (0.55f + pulse * 0.35f));
+            g.fillRoundedRectangle (x, vis.getBottom() - 3.f - h, bw * 0.7f, h, 2.0f);
+        }
+    }
 }
