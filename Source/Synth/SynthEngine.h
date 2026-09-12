@@ -26,6 +26,7 @@ public:
     void setOsc1Drive (float v); void setOsc2Drive (float v); void setOsc3Drive (float v);
     void setOsc1Phase (float v); void setOsc2Phase (float v); void setOsc3Phase (float v);
     void setUnison (int voices); void setUnisonDetune (float cents); void setUnisonSpread (float s);
+    void setScaleMode (int m); void setKoronCents (float c);
 
     void setFm2to1 (float v); void setFm3to1 (float v); void setFm3to2 (float v);
     void setPm2to1 (float v); void setPm3to1 (float v);
