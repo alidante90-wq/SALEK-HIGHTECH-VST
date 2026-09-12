@@ -1,39 +1,68 @@
-# OpenGL Sonic Core + VBlank Integration
+# OpenGL Sonic Core + VBlank — Integration complete checklist
 
-## Added
-- `Source/UI/VisualFifo.h` — lock-free mono ring for viz samples
-- `Source/UI/SonicCoreGL.h` — OpenGL waveform + FFT spectrum + cyber rings
-- Processor pushes stereo mix into VisualFifo every block
-- Editor: VBlankAttachment drives animPhase + pulse; SonicCoreGL center panel
+## Already on main
+- `Source/UI/VisualFifo.h`
+- `Source/UI/SonicCoreGL.h`
+- `Source/PluginProcessor.h` — `getVisualFifo()` + `visualFifo` member
+- `Source/PluginProcessor.cpp` — `visualFifo.prepare` + `pushStereo`
 
-## Manual patch if auto-merge missed processBlock
+## Apply to PluginEditor.h (if not present)
 
-In `prepareToPlay` add:
+1. Add include:
 ```cpp
-visualFifo.prepare ((int) sr * 2);
+#include "UI/SonicCoreGL.h"
 ```
 
-At end of `processBlock` after `outputPeak.store (peak);`:
+2. In private members after `glBackdrop`:
 ```cpp
-visualFifo.pushStereo (buffer);
+std::unique_ptr<SonicCoreGL> sonicCore;
+juce::VBlankAttachment vblank;
 ```
 
-Editor constructor (after glBackdrop):
+## Apply to PluginEditor.cpp constructor (after glBackdrop create)
+
 ```cpp
+glBackdrop->setVisible (true);
+addAndMakeVisible (*glBackdrop);
 sonicCore = std::make_unique<SonicCoreGL> (processor.getVisualFifo());
 addAndMakeVisible (*sonicCore);
 vblank = juce::VBlankAttachment (this, [this] (double) {
     animPhase += 0.025f;
-    if (sonicCore) {
+    if (sonicCore != nullptr) {
         sonicCore->setPulse (processor.getOutputPeak());
-        sonicCore->setAccent (juce::Colour (0xff00e8ff));
-        sonicCore->setAccent2 (juce::Colour (0xffff2d9b));
+        const int th = themeBox.getSelectedId();
+        juce::Colour a1 (0xff00e8ff), a2 (0xffff2d9b);
+        if (th == 2) { a1 = juce::Colour (0xff39ff14); a2 = juce::Colour (0xffc0ff00); }
+        if (th == 3) { a1 = juce::Colour (0xff4fc3f7); a2 = juce::Colour (0xff7c4dff); }
+        sonicCore->setAccent (a1);
+        sonicCore->setAccent2 (a2);
     }
-    if (glBackdrop) glBackdrop->setPulse (processor.getOutputPeak());
+    if (glBackdrop != nullptr)
+        glBackdrop->setPulse (processor.getOutputPeak());
     repaint();
 });
 ```
 
-In `resized()` center sonicCore over main area (~420x360).
+## resized() — center sonic core
 
-Rebuild with existing Cyber / Windows workflow.
+```cpp
+if (sonicCore != nullptr) {
+    auto core = getLocalBounds().reduced (6);
+    core.removeFromLeft (190);
+    core.removeFromBottom (90);
+    core.removeFromTop (56);
+    core = core.withSizeKeepingCentre (juce::jmin (420, core.getWidth()), juce::jmin (360, core.getHeight()));
+    sonicCore->setBounds (core);
+}
+if (glBackdrop != nullptr)
+    glBackdrop->setBounds (getLocalBounds());
+```
+
+## Destructor
+```cpp
+vblank = {};
+sonicCore.reset();
+glBackdrop.reset();
+```
+
+Rebuild via **SALEK HIGHTECH Cyber Build** workflow.
