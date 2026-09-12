@@ -13,8 +13,11 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     startTimerHz (30);
     setLookAndFeel (&lnf);
-    logoImg = SalekAssets::loadLogo();
-    heroImg = SalekAssets::loadHero();
+    logoImg   = SalekAssets::loadLogo();
+    heroImg   = SalekAssets::loadToronowla();
+    faceImg   = SalekAssets::loadFace();
+    lianImg   = SalekAssets::loadLian();
+    cyanImg   = SalekAssets::loadCyanGirl();
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);
@@ -272,14 +275,20 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 void SalekHightechAudioProcessorEditor::resized()
 {
     if (glBackdrop != nullptr)
-        glBackdrop->setBounds (0, 0, 0, 0);
+        glBackdrop->setBounds (getLocalBounds());
 
     auto full = getLocalBounds().reduced (6);
-    keyboard.setBounds (full.removeFromBottom (72).reduced (2, 2));
-    full.removeFromBottom (2);
+    {
+        auto kbArea = full.removeFromBottom (78).reduced (2, 2);
+        const int whiteKeys = 52;
+        int keyW = juce::jmax (12, kbArea.getWidth() / whiteKeys);
+        keyboard.setKeyWidth ((float) keyW);
+        keyboard.setBounds (kbArea);
+    }
+    full.removeFromBottom (4);
 
     auto a = full;
-    a.removeFromLeft (176);
+    a.removeFromLeft (182);
     title.setVisible (false);
     tagline.setVisible (false);
 
@@ -416,8 +425,7 @@ void SalekHightechAudioProcessorEditor::resized()
                 knobsArr[i]->setBounds (cell);
             }
         }
-        auto row = bounds.removeFromTop (36);
-        for (auto* o : others) o->setBounds (row.removeFromLeft (120).reduced (4));
+        for (auto* o : others) o->setBounds (top.removeFromRight (90).reduced (4));
         if (stepGrid != nullptr) stepGrid->setBounds (bounds.reduced (4));
     }
 }
