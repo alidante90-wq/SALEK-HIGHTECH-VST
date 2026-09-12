@@ -3,14 +3,12 @@
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
-    k->s.setColour (juce::Slider::thumbColourId, c.brighter());
+    parent.addAndMakeVisible (k->s);
+    atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
     k->name.setText (label, juce::dontSendNotification);
     k->name.setJustificationType (juce::Justification::centred);
-    k->name.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.85f));
-    parent.addAndMakeVisible (k->s);
+    k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    k->name.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
     parent.addAndMakeVisible (k->name);
-    sliderAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
-        processor.getAPVTS(), id, k->s));
-    auto* raw = k.get();
-    knobs.add (std::move (k));
-    return *raw;
+    knobs.push_back (std::move (k));
+    return *knobs.back();
