@@ -18,6 +18,11 @@ void SynthEngine::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void SynthEngine::releaseResources() {}
 
+void SynthEngine::allNotesOff()
+{
+    synth.allNotesOff (0, true);
+}
+
 void SynthEngine::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     synth.renderNextBlock (buffer, midi, 0, buffer.getNumSamples());
@@ -78,7 +83,6 @@ void SynthEngine::labMorph (float t) { forEachVoice ([&] (SynthVoice& v) { v.lab
 void SynthEngine::setUnison (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnison (v); }); }
 void SynthEngine::setUnisonDetune (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonDetune (v); }); }
 void SynthEngine::setUnisonSpread (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setUnisonSpread (v); }); }
-
 void SynthEngine::setScaleMode (int m) { forEachVoice ([&] (SynthVoice& voice) { voice.setScaleMode (m); }); }
 void SynthEngine::setKoronCents (float c) { forEachVoice ([&] (SynthVoice& voice) { voice.setKoronCents (c); }); }
 
