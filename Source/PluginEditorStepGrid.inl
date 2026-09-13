@@ -31,83 +31,101 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat();
-        g.setColour (juce::Colour (0xff080414));
-        g.fillRoundedRectangle (r, 10.0f);
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
-        g.drawRoundedRectangle (r, 10.0f, 1.3f);
+        g.setColour (juce::Colour (0xff060312));
+        g.fillRoundedRectangle (r, 12.0f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.45f));
+        g.drawRoundedRectangle (r, 12.0f, 1.5f);
 
-        r.removeFromTop (28.0f);
-        r = r.reduced (4.0f);
+        auto header = r.removeFromTop (28.0f);
+        g.setColour (juce::Colour (0xff0c0820));
+        g.fillRoundedRectangle (header.reduced (1.0f), 8.0f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.7f));
+        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.drawText ("STEP SEQUENCER  ·  click=on  drag=vel  alt=gate  shift=±12",
+                    header.withTrimmedLeft (170.0f).reduced (4, 0),
+                    juce::Justification::centredLeft, false);
+
+        r = r.reduced (6.0f);
 
         const int n = salek::StepSequencer::NumSteps;
-        const float gap = 3.0f;
+        const float gap = 4.0f;
         const float w = (r.getWidth() - gap * (n + 1)) / (float) n;
-        const float h = r.getHeight() - gap * 2 - 16.0f;
+        const float h = r.getHeight() - gap * 2 - 18.0f;
         const int play = sequencer.getCurrentStep();
 
         for (int g4 = 0; g4 < n; g4 += 4)
         {
             auto band = juce::Rectangle<float> (
-                r.getX() + gap + g4 * (w + gap) - 1.0f, r.getY() + gap - 1.0f,
-                4 * (w + gap) - gap + 2.0f, h + 2.0f);
-            g.setColour (juce::Colour (0xff120820).withAlpha (0.5f));
-            g.fillRoundedRectangle (band, 4.0f);
+                r.getX() + gap + g4 * (w + gap) - 2.0f,
+                r.getY(),
+                4 * (w + gap) - gap + 4.0f,
+                h + 8.0f);
+            g.setColour (juce::Colour ((g4 / 4) % 2 == 0 ? 0xff0a1830 : 0xff120820).withAlpha (0.55f));
+            g.fillRoundedRectangle (band, 6.0f);
         }
 
         for (int i = 0; i < n; ++i)
         {
-            auto cell = juce::Rectangle<float> (r.getX() + gap + i * (w + gap), r.getY() + gap, w, h);
             const auto& st = sequencer.getStep (i);
-            bool on = st.active;
-            bool isPlay = (i == play && sequencer.isEnabled());
+            const bool on = st.active;
+            const bool isPlay = (i == play) && sequencer.isEnabled();
 
-            g.setColour (on ? juce::Colour (0xff1a1050) : juce::Colour (0xff0c0818));
-            g.fillRoundedRectangle (cell, 4.0f);
+            auto cell = juce::Rectangle<float> (
+                r.getX() + gap + i * (w + gap),
+                r.getY() + 4.0f, w, h);
 
-            float velH = h * juce::jlimit (0.06f, 1.0f, st.velocity);
-            auto velBar = juce::Rectangle<float> (cell.getX() + 3, cell.getBottom() - velH, cell.getWidth() - 6, velH - 2);
+            if (isPlay)
+            {
+                g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.25f));
+                g.fillRoundedRectangle (cell.expanded (2.0f), 7.0f);
+            }
+            g.setColour (on ? juce::Colour (0xff12102a) : juce::Colour (0xff0a0618));
+            g.fillRoundedRectangle (cell, 6.0f);
+
             if (on)
             {
+                float vh = cell.getHeight() * juce::jlimit (0.08f, 1.0f, st.velocity);
+                auto velBar = cell.withTop (cell.getBottom() - vh).reduced (3.0f, 2.0f);
                 juce::Colour vc = isPlay ? juce::Colour (0xffff2d9b) : juce::Colour (0xff00e8ff);
-                juce::ColourGradient gr (vc, velBar.getCentreX(), velBar.getY(),
-                                         vc.darker (0.4f), velBar.getCentreX(), velBar.getBottom(), false);
+                juce::ColourGradient gr (vc.brighter (0.3f), velBar.getCentreX(), velBar.getY(),
+                                         vc.darker (0.5f), velBar.getCentreX(), velBar.getBottom(), false);
                 g.setGradientFill (gr);
-                g.fillRoundedRectangle (velBar, 3.0f);
+                g.fillRoundedRectangle (velBar, 4.0f);
+                g.setColour (vc.withAlpha (0.8f));
+                g.fillEllipse (cell.getCentreX() - 3.5f, cell.getY() + 4.0f, 7.0f, 7.0f);
             }
 
             if (on)
             {
                 float gateW = cell.getWidth() * juce::jlimit (0.1f, 1.0f, st.gate);
-                g.setColour (juce::Colour (0xffffd700).withAlpha (0.7f));
-                g.fillRect (cell.getX() + 2, cell.getY() + 2, gateW - 4, 3.0f);
+                g.setColour (juce::Colour (0xffffd700).withAlpha (0.75f));
+                g.fillRoundedRectangle (cell.getX() + 3.0f, cell.getY() + 3.0f, gateW - 6.0f, 3.5f, 1.5f);
             }
 
             if (on && st.noteOffset != 0)
             {
-                g.setColour (juce::Colours::white.withAlpha (0.7f));
-                g.setFont (juce::FontOptions (8.0f, juce::Font::bold));
+                g.setColour (juce::Colours::white.withAlpha (0.8f));
+                g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
                 g.drawText ((st.noteOffset > 0 ? "+" : "") + juce::String (st.noteOffset),
-                            cell.reduced (1, 6), juce::Justification::centredTop);
+                            cell.reduced (1, 8), juce::Justification::centredTop);
             }
 
             if (isPlay)
             {
-                g.setColour (juce::Colour (0xffffd700).withAlpha (0.9f));
-                g.drawRoundedRectangle (cell.expanded (1.5f), 5.0f, 2.2f);
-                g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.2f));
-                g.fillRoundedRectangle (cell.expanded (3.0f), 6.0f);
+                g.setColour (juce::Colour (0xffffd700).withAlpha (0.95f));
+                g.drawRoundedRectangle (cell.expanded (1.5f), 6.0f, 2.4f);
             }
             else
             {
-                g.setColour (on ? juce::Colour (0xff00e8ff).withAlpha (0.45f) : juce::Colour (0xff2a1840));
-                g.drawRoundedRectangle (cell, 4.0f, 1.0f);
+                g.setColour (on ? juce::Colour (0xff00e8ff).withAlpha (0.55f) : juce::Colour (0xff2a1840));
+                g.drawRoundedRectangle (cell, 6.0f, 1.2f);
             }
 
-            g.setColour (isPlay ? juce::Colour (0xffffd700) : juce::Colours::white.withAlpha (0.35f));
-            g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
+            g.setColour (isPlay ? juce::Colour (0xffffd700) : juce::Colours::white.withAlpha (0.4f));
+            g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
             g.drawText (juce::String (i + 1),
-                        (int) (r.getX() + gap + i * (w + gap)), (int) (r.getBottom() - 14),
-                        (int) w, 12, juce::Justification::centred);
+                        (int) (r.getX() + gap + i * (w + gap)), (int) (r.getBottom() - 16),
+                        (int) w, 14, juce::Justification::centred);
         }
     }
 
@@ -119,17 +137,17 @@ public:
 
         if (e.mods.isRightButtonDown())
         {
-            st.active = false; st.velocity = 0.8f; st.gate = 0.6f; st.noteOffset = 0;
-            repaint(); return;
+            st.active = false;
+            st.noteOffset = 0;
+            repaint();
+            return;
         }
         if (e.mods.isShiftDown())
         {
-            static const int offs[] = { 0, 12, -12, 7, -7, 5, -5 };
-            int cur = 0;
-            for (int i = 0; i < 7; ++i) if (st.noteOffset == offs[i]) { cur = i; break; }
-            st.noteOffset = offs[(cur + 1) % 7];
+            st.noteOffset = (st.noteOffset == 0) ? 12 : ((st.noteOffset == 12) ? -12 : 0);
             st.active = true;
-            repaint(); return;
+            repaint();
+            return;
         }
         st.active = ! st.active;
         if (st.active && st.velocity < 0.05f) st.velocity = 0.8f;
