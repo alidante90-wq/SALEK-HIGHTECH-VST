@@ -7,7 +7,6 @@
 namespace salek
 {
 
-/** Real MIDI arpeggiator. Generates note events from held notes. */
 class Arpeggiator
 {
 public:
@@ -40,28 +39,32 @@ public:
 
     void noteOn (int note, float velocity)
     {
-        for (auto& n : heldNotes)
-            if (n.note == note) return;
         heldNotes.push_back ({ note, velocity });
         std::sort (heldNotes.begin(), heldNotes.end(),
                    [] (const Note& a, const Note& b) { return a.note < b.note; });
         rebuildPattern();
+        stepIndex = 0;
     }
 
     void noteOff (int note)
     {
         heldNotes.erase (std::remove_if (heldNotes.begin(), heldNotes.end(),
-                          [note] (const Note& n) { return n.note == note; }),
-                         heldNotes.end());
+            [note] (const Note& n) { return n.note == note; }), heldNotes.end());
         rebuildPattern();
-        if (heldNotes.empty())
-            currentPlaying = -1;
+        if (heldNotes.empty()) stepIndex = 0;
     }
 
     void process (int numSamples, juce::MidiBuffer& outMidi)
     {
         if (! enabled || pattern.empty())
+        {
+            if (currentPlaying >= 0)
+            {
+                outMidi.addEvent (juce::MidiMessage::noteOff (1, currentPlaying), 0);
+                currentPlaying = -1;
+            }
             return;
+        }
 
         for (int i = 0; i < numSamples; ++i)
         {
@@ -72,10 +75,9 @@ public:
                     outMidi.addEvent (juce::MidiMessage::noteOff (1, currentPlaying), i);
                     currentPlaying = -1;
                 }
-
                 if (! pattern.empty())
                 {
-                    const auto& step = pattern[static_cast<size_t> (stepIndex % static_cast<int> (pattern.size()))];
+                    auto& step = pattern[static_cast<size_t> (stepIndex % (int) pattern.size())];
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, step.note, step.velocity), i);
                     currentPlaying = step.note;
                     gateSamplesLeft = static_cast<int> (samplesPerStep * gate);
@@ -124,6 +126,15 @@ private:
         {
             for (int i = static_cast<int> (pattern.size()) - 2; i > 0; --i)
                 pattern.push_back (pattern[static_cast<size_t> (i)]);
+        }
+        if (direction == Direction::Random && pattern.size() > 1)
+        {
+            juce::Random rng;
+            for (int i = (int) pattern.size() - 1; i > 0; --i)
+            {
+                int j = rng.nextInt (i + 1);
+                std::swap (pattern[(size_t) i], pattern[(size_t) j]);
+            }
         }
     }
 
