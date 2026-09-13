@@ -24,6 +24,7 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (fullName.startsWith ("Kick")) tc = selected ? tc : juce::Colour (0xffffab40);
     if (fullName.startsWith ("FM"))   tc = selected ? tc : juce::Colour (0xffff66cc);
     if (fullName.startsWith ("Retro"))tc = selected ? tc : juce::Colour (0xffa0a0ff);
+    if (fullName.startsWith ("SALEK")) tc = selected ? tc : juce::Colour (0xffffd700);
     g.setColour (tc);
     g.setFont (juce::FontOptions (12.5f));
     g.drawText ("   " + pr.label, 8, 0, width - 12, height, juce::Justification::centredLeft);
@@ -44,7 +45,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 8) resized();
-    animPhase += 0.04f; // extra motion boost
+    animPhase += 0.04f;
     repaint();
 }
 
@@ -95,7 +96,7 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto b = mainTab.getLocalBounds().reduced (4);
-        presetTab.setBounds (b.removeFromLeft (178));
+        presetTab.setBounds (b.removeFromLeft (200));
         envTab.setBounds (b.removeFromBottom (128));
         filterTab.setBounds (b.removeFromRight (248));
         oscTab.setBounds (b);
