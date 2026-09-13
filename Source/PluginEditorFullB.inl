@@ -140,7 +140,7 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto r = fxTab.getLocalBounds().reduced (10);
-        place (r, knobs, 39, 22, 4);
+        place (r, knobs, 39, 28, 4);
     }
 
     {
@@ -148,7 +148,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto top = bounds.removeFromTop (52);
         arpOn.setBounds (top.removeFromLeft (100).reduced (4));
         seqOn.setBounds (top.removeFromLeft (100).reduced (4));
-        place (top.removeFromRight (360).reduced (4), knobs, 61, 3, 3);
+        place (top.removeFromRight (360).reduced (4), knobs, 67, 3, 3);
         bounds.removeFromTop (8);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
