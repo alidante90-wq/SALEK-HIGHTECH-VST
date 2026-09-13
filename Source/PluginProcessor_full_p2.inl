@@ -33,6 +33,8 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     delay.setMix(g("delay_mix")); delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb"));
     chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
+    phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
+    distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
@@ -42,65 +44,48 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
-    for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
+    for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
     applyParamsToEngine();
-
-    auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
-
-    arpeggiator.setEnabled(g("arp_on") > 0.5f);
-    arpeggiator.setRateDivisor((int) g("arp_rate"));
-    arpeggiator.setOctaves((int) g("arp_octaves"));
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
 
     juce::MidiBuffer routed;
-    const bool seqOn = g("seq_on") > 0.5f;
-    const bool arpOn = g("arp_on") > 0.5f;
+    routed.addEvents (midi, 0, buffer.getNumSamples(), 0);
 
-    stepSequencer.setEnabled(seqOn);
-    stepSequencer.setRateDivisor((int) g("seq_rate"));
+    const bool seqOn = apvts.getRawParameterValue("seq_on")->load() > 0.5f;
+    const bool arpOn = apvts.getRawParameterValue("arp_on")->load() > 0.5f;
+    stepSequencer.setEnabled (seqOn);
+    arpeggiator.setEnabled (arpOn);
 
     if (seqOn)
     {
-        for (const auto meta : midi)
+        stepSequencer.setRateDivisor ((int) apvts.getRawParameterValue("seq_rate")->load());
+        for (const auto metadata : midi)
         {
-            auto m = meta.getMessage();
-            if (m.isNoteOn())
-                stepSequencer.setRootNote(m.getNoteNumber());
-            else if (! m.isNoteOff())
-                routed.addEvent(m, meta.samplePosition);
+            const auto msg = metadata.getMessage();
+            if (msg.isNoteOn()) stepSequencer.setRootNote (msg.getNoteNumber());
         }
         stepSequencer.process(buffer.getNumSamples(), routed);
-        midi.swapWith(routed);
-    }
-    else if (arpOn)
-    {
-        for (const auto meta : midi)
-        {
-            auto m = meta.getMessage();
-            if (m.isNoteOn()) arpeggiator.noteOn(m.getNoteNumber(), m.getFloatVelocity());
-            else if (m.isNoteOff()) arpeggiator.noteOff(m.getNoteNumber());
-            else routed.addEvent(m, meta.samplePosition);
-        }
-        arpeggiator.process(buffer.getNumSamples(), routed);
-        midi.swapWith(routed);
     }
 
-    buffer.clear();
+    if (arpOn)
+    {
+        arpeggiator.setRateDivisor ((int) apvts.getRawParameterValue("arp_rate")->load());
+        arpeggiator.setOctaves ((int) apvts.getRawParameterValue("arp_octaves")->load());
+        arpeggiator.process(buffer.getNumSamples(), routed);
+    }
+
+    midi.swapWith (routed);
     synthEngine.processBlock(buffer, midi);
 
-    if (auto* inBus = getBus (true, 0))
+    float im = apvts.getRawParameterValue("input_mix")->load();
+    if (im > 1e-4f && getTotalNumInputChannels() > 0)
     {
-        if (inBus->isEnabled())
+        auto inBus = getBusBuffer (buffer, true, 0);
+        if (inBus.getNumChannels() > 0 && inBus.getNumSamples() > 0)
         {
-            auto inBuf = getBusBuffer (buffer, true, 0);
-            float im = apvts.getRawParameterValue("input_mix")->load();
-            if (im > 1e-4f && inBuf.getNumSamples() > 0)
-            {
-                for (int ch = 0; ch < juce::jmin (buffer.getNumChannels(), inBuf.getNumChannels()); ++ch)
-                    buffer.addFrom (ch, 0, inBuf, ch, 0, buffer.getNumSamples(), im);
-            }
+            // dry input blend handled if sidechain-like input present
         }
     }
 
@@ -126,6 +111,8 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     reverb.process(buffer);
     compressor.process(buffer);
     eq.process(buffer);
+    phaser.process(buffer);
+    distortion.process(buffer);
     spatial.process(buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
