@@ -13,12 +13,13 @@ public:
 
     struct Step
     {
-        int   noteOffset = 0;
+        int   noteOffset = 0;   // semitones relative to root (-24..+24)
         float velocity   = 0.8f;
         float gate       = 0.7f;
         float probability = 1.0f;
         float modValue   = 0.0f;
         bool  active     = false;
+        bool  accent     = false; // boost velocity / mark strong beat
     };
 
     void prepare (double sampleRate)
@@ -96,19 +97,21 @@ public:
                     currentNote = -1;
                 }
 
-                const auto& st = steps[static_cast<size_t> (currentStep)];
-                if (st.active)
+                currentStep = (currentStep + 1) % NumSteps;
+                samplesUntilNext += samplesPerStep;
+
+                auto& st = steps[static_cast<size_t> (currentStep)];
+                currentMod = st.modValue;
+
+                if (st.active && juce::Random::getSystemRandom().nextFloat() <= st.probability)
                 {
                     int note = juce::jlimit (0, 127, rootNote + st.noteOffset);
-                    float vel = juce::jlimit (0.0f, 1.0f, st.velocity);
+                    float vel = juce::jlimit (0.0f, 1.0f, st.accent ? juce::jmin (1.0f, st.velocity * 1.35f) : st.velocity);
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, note, vel), i);
                     currentNote = note;
                     pendingNoteOff = note;
                     gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate));
-                    currentMod = st.modValue;
                 }
-                currentStep = (currentStep + 1) % NumSteps;
-                samplesUntilNext += samplesPerStep;
             }
         }
     }
@@ -119,40 +122,46 @@ public:
     {
         for (int i = 0; i < NumSteps; ++i)
         {
+            steps[static_cast<size_t>(i)].active = false;
             steps[static_cast<size_t>(i)].noteOffset = 0;
             steps[static_cast<size_t>(i)].velocity = 0.8f;
-            steps[static_cast<size_t>(i)].gate = 0.6f;
+            steps[static_cast<size_t>(i)].accent = false;
+            steps[static_cast<size_t>(i)].gate = 0.7f;
             steps[static_cast<size_t>(i)].probability = 1.0f;
             steps[static_cast<size_t>(i)].modValue = 0.0f;
-            steps[static_cast<size_t>(i)].active = (i % 4 == 0);
         }
         currentStep = 0;
-        hasRoot = false;
+        samplesUntilNext = 0.0;
+        currentNote = -1;
+        pendingNoteOff = -1;
+        gateSamplesLeft = 0;
     }
 
 private:
     void updateTiming()
     {
-        const double beatsPerStep = 1.0 / (double) juce::jmax (1, rateDivisor);
-        samplesPerStep = (sr * 60.0 / bpm) * beatsPerStep;
-        if (samplesUntilNext <= 0.0 || samplesUntilNext > samplesPerStep * 2.0)
-            samplesUntilNext = samplesPerStep;
+        const double beatsPerSec = bpm / 60.0;
+        const double stepsPerBeat = 4.0 / (double) rateDivisor; // rateDivisor 1=1/4, 2=1/8 style
+        samplesPerStep = sr / (beatsPerSec * 4.0); // 16th notes base
+        if (rateDivisor > 1)
+            samplesPerStep = sr / (beatsPerSec * (4.0 * rateDivisor / 4.0));
+        samplesPerStep = juce::jmax (1.0, samplesPerStep);
     }
 
+    std::array<Step, NumSteps> steps {};
     double sr = 44100.0;
-    double bpm = 140.0;
-    int rateDivisor = 4;
-    double samplesPerStep = 1000.0;
+    double bpm = 120.0;
+    int rateDivisor = 1;
+    double samplesPerStep = 5512.5;
     double samplesUntilNext = 0.0;
     int currentStep = 0;
     int currentNote = -1;
     int pendingNoteOff = -1;
     int gateSamplesLeft = 0;
-    float currentMod = 0.0f;
-    bool enabled = false;
-    int rootNote = 36;
+    int rootNote = 60;
     bool hasRoot = false;
-    std::array<Step, NumSteps> steps {};
+    bool enabled = false;
+    float currentMod = 0.0f;
 };
 
 } // namespace salek
