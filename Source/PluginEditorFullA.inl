@@ -160,6 +160,12 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (fxTab, "spatial_size", "SIZE", M);
         addKnob (fxTab, "spatial_elev", "ELEV", G);
         addKnob (fxTab, "input_mix", "IN MIX", V);
+        addKnob (fxTab, "phaser_mix", "PHASER", O);
+        addKnob (fxTab, "phaser_rate", "P RATE", C);
+        addKnob (fxTab, "phaser_depth", "P DEPTH", M);
+        addKnob (fxTab, "dist_mix", "DIST", G);
+        addKnob (fxTab, "dist_drive", "D DRV", M);
+        addKnob (fxTab, "dist_crush", "CRUSH", O);
     }
 
     {
