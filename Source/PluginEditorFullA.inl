@@ -4,16 +4,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 {
     keyboard.setAvailableRange (21, 108);
     keyboard.setOctaveForMiddleC (4);
-    // OpenGL DISABLED (black center on Windows). Software paint only.
     glBackdrop = nullptr;
     sonicCore = nullptr;
 
     addAndMakeVisible (keyboard);
     vblank = juce::VBlankAttachment (this, [this] (double) {
-        animPhase += 0.045f;
+        animPhase += 0.085f;
         repaint();
     });
-    startTimerHz (20);
+    startTimerHz (30);
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
@@ -97,17 +96,20 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             int i = processor.getCurrentProgram();
             if (i > 0) processor.setCurrentProgram (i - 1);
             presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
+            presetList.updateContent();
             presetList.repaint();
         };
         nextPreset.onClick = [this] {
             int i = processor.getCurrentProgram();
             if (i + 1 < processor.getNumPrograms()) processor.setCurrentProgram (i + 1);
             presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
+            presetList.updateContent();
             presetList.repaint();
         };
         initBtn.onClick = [this] {
             processor.setCurrentProgram (0);
             presetLabel.setText (processor.getProgramName (0), juce::dontSendNotification);
+            presetList.updateContent();
             presetList.repaint();
         };
         rebuildPresetRows();
@@ -242,4 +244,6 @@ void SalekHightechAudioProcessorEditor::rebuildPresetRows()
         r.programIndex = i;
         presetRows.add (r);
     }
+    presetList.updateContent();
+    presetList.repaint();
 }
