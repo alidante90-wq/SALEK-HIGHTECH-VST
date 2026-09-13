@@ -28,29 +28,23 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(wave, juce::PathStrokeType(1.5f));
 }
 
-class FilterCurveDisplay : public juce::Component, private juce::Timer {
+class ScopeDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (24); }
-    void paint (juce::Graphics& g) override;
-    void timerCallback() override { repaint(); }
+    ScopeDisplay() { startTimerHz(24); }
+    void paint (juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced(1.f);
+        g.setColour(juce::Colour(0xff0a0614)); g.fillRoundedRectangle(r, 4.f);
+        g.setColour(juce::Colour(0xff00e8ff).withAlpha(0.5f)); g.drawRoundedRectangle(r, 4.f, 1.f);
+        juce::Path p; const int N=48;
+        for(int i=0;i<N;++i){ float t=(float)i/(N-1); float y=std::sin(t*6.28f*2.f+phase)*0.4f;
+            float x=r.getX()+4+t*(r.getWidth()-8); float py=r.getCentreY()+y*r.getHeight()*0.4f;
+            if(i==0)p.startNewSubPath(x,py); else p.lineTo(x,py);}
+        g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(p, juce::PathStrokeType(1.2f));
+    }
+    void timerCallback() override { phase += 0.15f; repaint(); }
 private:
-    juce::AudioProcessorValueTreeState& apvts;
+    float phase = 0.f;
 };
-inline void FilterCurveDisplay::paint (juce::Graphics& g) {
-    auto r=getLocalBounds().toFloat().reduced(2.f);
-    g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,6.f);
-    g.setColour(juce::Colour(0xffff2d9b).withAlpha(0.4f)); g.drawRoundedRectangle(r,6.f,1.f);
-    auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
-    float cut=gval("filter_cutoff",1000.f); float reso=gval("filter_reso",0.3f);
-    float norm=juce::jlimit(0.f,1.f, std::log10(juce::jmax(20.f,cut)/20.f)/3.f);
-    juce::Path curve; auto plot=r.reduced(6.f,4.f);
-    for(int i=0;i<80;++i){ float t=(float)i/79.f; float x=plot.getX()+t*plot.getWidth();
-        float d=t-norm; float y=plot.getBottom()-4.f;
-        if(t<norm) y=plot.getY()+plot.getHeight()*0.25f;
-        else y=plot.getY()+plot.getHeight()*0.25f + juce::jmin(plot.getHeight()*0.7f, d*d*800.f*(1.f-reso*0.5f));
-        if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);}
-    g.setColour(juce::Colour(0xffff2d9b)); g.strokePath(curve, juce::PathStrokeType(1.8f));
-}
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
@@ -71,11 +65,34 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
     float x0=plot.getX(), y0=plot.getBottom();
     float x1=x0+plot.getWidth()*(a/sum), y1=plot.getY();
     float x2=x1+plot.getWidth()*(d/sum), y2=plot.getY()+plot.getHeight()*(1.f-s);
-    float x3=x2+plot.getWidth()*0.4f*(0.4f/(a+d+0.4f+rel)*sum/0.4f), y3=y2;
-    if(x3>plot.getRight()-20) x3=plot.getRight()-plot.getWidth()*(rel/sum);
+    float x3=x2+plot.getWidth()*0.35f, y3=y2;
     float x4=plot.getRight(), y4=plot.getBottom();
     env.startNewSubPath(x0,y0); env.lineTo(x1,y1); env.lineTo(x2,y2); env.lineTo(x3,y3); env.lineTo(x4,y4);
     g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(env, juce::PathStrokeType(1.6f));
+}
+
+class FilterCurveDisplay : public juce::Component, private juce::Timer {
+public:
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (24); }
+    void paint (juce::Graphics& g) override;
+    void timerCallback() override { repaint(); }
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+};
+inline void FilterCurveDisplay::paint (juce::Graphics& g) {
+    auto r=getLocalBounds().toFloat().reduced(2.f);
+    g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,6.f);
+    g.setColour(juce::Colour(0xffff2d9b).withAlpha(0.4f)); g.drawRoundedRectangle(r,6.f,1.f);
+    auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
+    float cut=gval("filter_cutoff",1000.f); float reso=gval("filter_reso",0.3f);
+    float norm=juce::jlimit(0.f,1.f, std::log10(juce::jmax(20.f,cut)/20.f)/3.f);
+    juce::Path curve; auto plot=r.reduced(6.f,4.f);
+    for(int i=0;i<80;++i){ float t=(float)i/79.f; float x=plot.getX()+t*plot.getWidth();
+        float dd=t-norm; float y=plot.getBottom()-4.f;
+        if(t<norm) y=plot.getY()+plot.getHeight()*0.25f;
+        else y=plot.getY()+plot.getHeight()*0.25f + juce::jmin(plot.getHeight()*0.7f, dd*dd*800.f*(1.f-reso*0.5f));
+        if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);}
+    g.setColour(juce::Colour(0xffff2d9b)); g.strokePath(curve, juce::PathStrokeType(1.8f));
 }
 
 class LfoDisplay : public juce::Component, private juce::Timer {
@@ -110,52 +127,48 @@ class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor,
 public:
     explicit SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor&);
     ~SalekHightechAudioProcessorEditor() override;
-
     void paint (juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
-
     int getNumRows() override;
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
-
 private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;
-    juce::MidiKeyboardComponent keyboard;
-    juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
-    juce::Component mainTab, modTab, fxTab, seqTab;
-    juce::Component presetTab, oscTab, filterTab, envTab;
+    ScopeDisplay scope;
     std::unique_ptr<WavetableDisplay> wtDisplay;
-    std::unique_ptr<FilterCurveDisplay> filterDisplay;
     std::unique_ptr<AdsrDisplay> adsrDisplay;
+    std::unique_ptr<FilterCurveDisplay> filterDisplay;
     std::unique_ptr<LfoDisplay> lfoDisplay;
     std::unique_ptr<ModMatrixPanel> matrixPanel;
-    std::unique_ptr<StepGridComponent> stepGrid;
-    juce::Slider scope;
-    juce::ComboBox themeBox, presetFilterBox, filterMode, lfoWave;
+    std::unique_ptr<OpenGLGridBackdrop> glBackdrop;
+    std::unique_ptr<SonicCoreGL> sonicCore;
+    juce::VBlankAttachment vblank;
+    juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
+    struct Knob { juce::Slider s; juce::Label name; };
+    std::vector<std::unique_ptr<Knob>> knobs;
+    using SAtt = juce::AudioProcessorValueTreeState::SliderAttachment;
+    std::vector<std::unique_ptr<SAtt>> atts;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
+    juce::Component mainTab, oscTab, filterTab, envTab, modTab, fxTab, seqTab, presetTab, modularTab;
+    juce::ComboBox themeBox;
+    juce::ComboBox presetFilterBox;
+    juce::ComboBox filterMode, lfoWave;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
     juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" };
-    juce::Label presetLabel;
-    juce::ListBox presetList;
+    juce::Label presetLabel, title, tagline;
+    juce::ListBox presetList { "presets", this };
+    std::unique_ptr<StepGridComponent> stepGrid;
+    juce::MidiKeyboardComponent keyboard;
+    float phaseLights = 0.0f;
+    float animPhase = 0.0f;
+    juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
-
-    struct Knob {
-        juce::Slider s;
-        juce::Label name;
-    };
-    std::vector<std::unique_ptr<Knob>> knobs;
-    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>> atts;
-    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
-    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
-
-    Knob& addKnob (juce::Component& parent, const char* paramId, const char* label, juce::Colour c);
-    void addCombo (juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
-
-    juce::Image heroImg, logoImg, faceImg, cyanImg;
-    float animPhase = 0.f;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SalekHightechAudioProcessorEditor)
+    Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
+    void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
 };
