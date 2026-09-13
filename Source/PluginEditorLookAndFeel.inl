@@ -6,6 +6,13 @@ public:
         setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff00e8ff));
         setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff2a1840));
         setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff12081c));
+        setColour(juce::ResizableWindow::backgroundColourId, juce::Colour(0xff0a0614));
+        setColour(juce::TabbedComponent::backgroundColourId, juce::Colour(0xff0a0614));
+        setColour(juce::TabbedComponent::outlineColourId, juce::Colour(0xff1a1030));
+        setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xff2a1840));
+        setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff00e8ff));
+        setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff0a0614));
+        setColour(juce::ListBox::outlineColourId, juce::Colour(0xff1a1030));
         setColour(juce::ComboBox::outlineColourId, juce::Colour(0xffff00aa));
         setColour(juce::ComboBox::textColourId, juce::Colour(0xffe0e0ff));
         setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1a1030));
