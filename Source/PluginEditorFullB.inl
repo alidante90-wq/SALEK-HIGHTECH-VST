@@ -141,12 +141,12 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        auto bounds = seqTab.getLocalBounds().reduced (6);
-        auto top = bounds.removeFromTop (44);
-        arpOn.setBounds (top.removeFromLeft (88).reduced (3));
-        seqOn.setBounds (top.removeFromLeft (88).reduced (3));
-        place (top.removeFromRight (320).reduced (2), knobs, 61, 3, 3);
-        bounds.removeFromTop (6);
+        auto bounds = seqTab.getLocalBounds().reduced (8);
+        auto top = bounds.removeFromTop (52);
+        arpOn.setBounds (top.removeFromLeft (100).reduced (4));
+        seqOn.setBounds (top.removeFromLeft (100).reduced (4));
+        place (top.removeFromRight (360).reduced (4), knobs, 61, 3, 3);
+        bounds.removeFromTop (8);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
     }
