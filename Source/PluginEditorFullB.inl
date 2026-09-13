@@ -48,10 +48,6 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 
 void SalekHightechAudioProcessorEditor::resized()
 {
-    // CORRECT knob index map (from FullA addKnob order):
-    // OSC  0..18  (19) | FILTER 19..22 (4) | ENV 23..26 (4)
-    // MOD 27..38 (12) | FX 39..60 (22) | SEQ 61..63 (3)
-
     auto full = getLocalBounds();
 
     {
@@ -95,13 +91,9 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     };
 
-    // ---- MAIN ----
-    // Layout: [PRESETS | OSC ........ | FILTER]
-    //         [PRESETS | ENV ADSR ..............]
     {
         auto b = mainTab.getLocalBounds().reduced (4);
         presetTab.setBounds (b.removeFromLeft (178));
-        // ENV takes bottom strip first so FILTER does not collide with ADSR knobs
         envTab.setBounds (b.removeFromBottom (128));
         filterTab.setBounds (b.removeFromRight (248));
         oscTab.setBounds (b);
@@ -116,10 +108,8 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setBounds (pb);
         }
 
-        // OSC: 19 knobs in 5 columns
         place (oscTab.getLocalBounds().reduced (4), knobs, 0, 19, 5);
 
-        // FILTER: curve on top, 4 knobs in 2x2 under it (CUTOFF RESO / F DRIVE F ENV)
         {
             auto fr = filterTab.getLocalBounds().reduced (4);
             if (filterDisplay != nullptr)
@@ -128,7 +118,6 @@ void SalekHightechAudioProcessorEditor::resized()
             place (fr, knobs, 19, 4, 2);
         }
 
-        // ENV: curve + ATTACK DECAY SUSTAIN RELEASE in one row
         {
             auto er = envTab.getLocalBounds().reduced (4);
             if (adsrDisplay != nullptr)
@@ -137,7 +126,6 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    // ---- MOD ----
     {
         auto r = modTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr)
@@ -147,20 +135,20 @@ void SalekHightechAudioProcessorEditor::resized()
         place (r.reduced (2), knobs, 27, 12, 4);
     }
 
-    // ---- FX ----
     {
         auto r = fxTab.getLocalBounds().reduced (10);
         place (r, knobs, 39, 22, 4);
     }
 
-    // ---- SEQ ----
     {
-        auto bounds = seqTab.getLocalBounds().reduced (8);
-        auto top = bounds.removeFromTop (40);
-        arpOn.setBounds (top.removeFromLeft (88).reduced (4));
-        seqOn.setBounds (top.removeFromLeft (88).reduced (4));
-        place (top.removeFromRight (300).reduced (2), knobs, 61, 3, 3);
-        bounds.removeFromTop (4);
+        auto bounds = seqTab.getLocalBounds().reduced (6);
+        auto top = bounds.removeFromTop (44);
+        arpOn.setBounds (top.removeFromLeft (80).reduced (3));
+        seqOn.setBounds (top.removeFromLeft (80).reduced (3));
+        if (arpDirBox != nullptr)
+            arpDirBox->setBounds (top.removeFromLeft (110).reduced (3));
+        place (top.removeFromRight (320).reduced (2), knobs, 61, 3, 3);
+        bounds.removeFromTop (6);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
     }
