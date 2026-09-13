@@ -1,4 +1,4 @@
-/** 16-step grid: click = toggle, drag Y = velocity, alt+drag = gate, shift = note offset, right-click = clear */
+/** 16-step grid: click=on, drag=vel, alt=gate, shift=pitch, ctrl=accent, wheel=pitch */
 class StepGridComponent : public juce::Component, private juce::Timer
 {
 public:
@@ -41,7 +41,7 @@ public:
         g.fillRoundedRectangle (header.reduced (1.0f), 8.0f);
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.7f));
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        g.drawText ("STEP SEQUENCER  ·  click=on  drag=vel  alt=gate  shift=±12",
+        g.drawText ("SEQ  ·  click=on  drag=vel  alt=gate  shift=pitch  ctrl=accent  wheel=pitch",
                     header.withTrimmedLeft (170.0f).reduced (4, 0),
                     juce::Justification::centredLeft, false);
 
@@ -93,21 +93,24 @@ public:
                 g.fillRoundedRectangle (velBar, 4.0f);
                 g.setColour (vc.withAlpha (0.8f));
                 g.fillEllipse (cell.getCentreX() - 3.5f, cell.getY() + 4.0f, 7.0f, 7.0f);
-            }
 
-            if (on)
-            {
                 float gateW = cell.getWidth() * juce::jlimit (0.1f, 1.0f, st.gate);
                 g.setColour (juce::Colour (0xffffd700).withAlpha (0.75f));
                 g.fillRoundedRectangle (cell.getX() + 3.0f, cell.getY() + 3.0f, gateW - 6.0f, 3.5f, 1.5f);
-            }
 
-            if (on && st.noteOffset != 0)
-            {
-                g.setColour (juce::Colours::white.withAlpha (0.8f));
+                g.setColour (juce::Colour (0xffffd700).withAlpha (0.9f));
                 g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
-                g.drawText ((st.noteOffset > 0 ? "+" : "") + juce::String (st.noteOffset),
-                            cell.reduced (1, 8), juce::Justification::centredTop);
+                juce::String pitchTxt = (st.noteOffset == 0) ? "0" : ((st.noteOffset > 0 ? "+" : "") + juce::String (st.noteOffset));
+                g.drawText (pitchTxt, cell.reduced (1, 8), juce::Justification::centredTop);
+
+                if (st.accent)
+                {
+                    juce::Path tri;
+                    float ax = cell.getRight() - 8.0f, ay = cell.getY() + 4.0f;
+                    tri.addTriangle (ax, ay, ax + 6.0f, ay, ax + 3.0f, ay + 6.0f);
+                    g.setColour (juce::Colour (0xffff2d9b));
+                    g.fillPath (tri);
+                }
             }
 
             if (isPlay)
@@ -139,12 +142,24 @@ public:
         {
             st.active = false;
             st.noteOffset = 0;
+            st.accent = false;
+            repaint();
+            return;
+        }
+        if (e.mods.isCtrlDown() || e.mods.isCommandDown())
+        {
+            st.accent = ! st.accent;
+            st.active = true;
+            if (st.accent) st.velocity = juce::jmax (st.velocity, 0.9f);
             repaint();
             return;
         }
         if (e.mods.isShiftDown())
         {
-            st.noteOffset = (st.noteOffset == 0) ? 12 : ((st.noteOffset == 12) ? -12 : 0);
+            static const int cycle[] = { 0, 7, 12, -12, -7 };
+            int cidx = 0;
+            for (int i = 0; i < 5; ++i) if (cycle[i] == st.noteOffset) { cidx = i; break; }
+            st.noteOffset = cycle[(cidx + 1) % 5];
             st.active = true;
             repaint();
             return;
@@ -177,6 +192,18 @@ public:
         repaint();
     }
 
+    void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override
+    {
+        int idx = hitStep (e.position);
+        if (idx < 0) return;
+        auto& st = sequencer.getStep (idx);
+        int delta = (wheel.deltaY > 0.0f) ? 1 : -1;
+        if (e.mods.isShiftDown()) delta *= 12;
+        st.noteOffset = juce::jlimit (-24, 24, st.noteOffset + delta);
+        st.active = true;
+        repaint();
+    }
+
     void timerCallback() override { repaint(); }
 
 private:
@@ -202,7 +229,7 @@ private:
         for (int i = 0; i < salek::StepSequencer::NumSteps; ++i)
         {
             auto& st = sequencer.getStep (i);
-            st.active = false; st.velocity = 0.8f; st.gate = 0.6f; st.noteOffset = 0;
+            st.active = false; st.velocity = 0.8f; st.gate = 0.6f; st.noteOffset = 0; st.accent = false;
         }
         repaint();
     }
@@ -217,7 +244,9 @@ private:
             st.velocity = 0.4f + rng.nextFloat() * 0.6f;
             st.gate = 0.3f + rng.nextFloat() * 0.6f;
             st.noteOffset = 0;
+            st.accent = false;
             if (rng.nextFloat() > 0.85f) st.noteOffset = (rng.nextBool() ? 12 : -12);
+            if (st.active && (i % 4) == 0) { st.accent = true; st.velocity = juce::jmax (st.velocity, 0.9f); }
         }
         repaint();
     }
