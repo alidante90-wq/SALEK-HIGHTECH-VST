@@ -113,6 +113,8 @@ public:
         }
     }
 
+    void initDefaultPattern() { reset(); }
+
     void reset()
     {
         for (int i = 0; i < NumSteps; ++i)
