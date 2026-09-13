@@ -1,27 +1,23 @@
 #pragma once
 #include <JuceHeader.h>
-#include <atomic>
-#include <map>
 #include "Synth/SynthEngine.h"
+#include "Modulation/ModMatrix.h"
 #include "FX/SimpleDelay.h"
 #include "FX/SimpleChorus.h"
 #include "FX/SimpleReverb.h"
-#include "FX/SimpleCompressor.h"
-#include "FX/SimpleEQ.h"
-#include "FX/SimpleSpatial.h"
-#include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
-#include "Modulation/ModMatrix.h"
-#include "UI/VisualFifo.h"
+#include "Sequencer/Arpeggiator.h"
+#include <map>
+#include <vector>
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
 public:
     SalekHightechAudioProcessor();
-    ~SalekHightechAudioProcessor() override = default;
+    ~SalekHightechAudioProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void releaseResources() override {}
+    void releaseResources() override;
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -45,37 +41,30 @@ public:
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
-    float getOutputPeak() const { return outputPeak.load(); }
-    VisualFifo& getVisualFifo() { return visualFifo; }
-    salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     salek::ModMatrix& getModMatrix() { return modMatrix; }
-
-    juce::StringArray getPresetNames() const;
+    salek::StepSequencer& getStepSequencer() { return stepSequencer; }
+    salek::Arpeggiator& getArpeggiator() { return arpeggiator; }
+    float getOutputPeak() const { return outputPeak.load(); }
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void applyParamsToEngine();
     void initFactoryPresets();
     void loadFactoryPreset (int index);
 
     juce::AudioProcessorValueTreeState apvts;
+    juce::MidiKeyboardState keyboardState;
     salek::SynthEngine synthEngine;
+    salek::ModMatrix modMatrix;
     salek::SimpleDelay delay;
     salek::SimpleChorus chorus;
     salek::SimpleReverb reverb;
-    salek::SimpleCompressor compressor;
-    salek::SimpleEQ eq;
-    salek::SimpleSpatial spatial;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
-    salek::ModMatrix modMatrix;
-    juce::MidiKeyboardState keyboardState;
-    std::atomic<float> outputPeak { 0.0f };
-    VisualFifo visualFifo;
 
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
     std::vector<FactoryPreset> factoryPresets;
     int currentProgram = 0;
+    std::atomic<float> outputPeak { 0.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SalekHightechAudioProcessor)
 };
