@@ -1,7 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
 
-// Embedded via juce_add_binary_data(SalekBinaryAssets) in CMakeLists.txt
 #if __has_include(<BinaryData.h>)
  #include <BinaryData.h>
  #define SALEK_HAS_BINARY_DATA 1
@@ -23,6 +22,7 @@ inline juce::File findAssetsDir()
     for (auto f : {
         exe.getSiblingFile ("Assets"),
         exe.getParentDirectory().getChildFile ("Assets"),
+        exe.getParentDirectory().getParentDirectory().getChildFile ("Source/Assets"),
         juce::File ("Source/Assets"),
         juce::File ("../Source/Assets")
     })
@@ -62,19 +62,27 @@ inline juce::Image makeFallbackLogo()
 }
 
 #if SALEK_HAS_BINARY_DATA
-inline juce::Image fromBinaryByIndex (int index)
+inline juce::Image fromBinaryName (const char* name)
 {
-    if (index < 0 || index >= BinaryData::namedResourceListSize) return {};
     int sz = 0;
-    const char* data = BinaryData::getNamedResource (BinaryData::namedResourceList[index], sz);
+    const char* data = BinaryData::getNamedResource (name, sz);
     return fromMemory (data, sz);
 }
 
 inline juce::Image anyEmbedded()
 {
+    for (auto* n : { "face_png", "lian_png", "wp5627062_jpg",
+                     "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhqfullview_jpg",
+                     "b4ef89321df2b8f2c7bd314d352b8f42_jpg", "OIP_webp" })
+    {
+        auto img = fromBinaryName (n);
+        if (img.isValid()) return img;
+    }
     for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
     {
-        auto img = fromBinaryByIndex (i);
+        int sz = 0;
+        const char* data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], sz);
+        auto img = fromMemory (data, sz);
         if (img.isValid()) return img;
     }
     return {};
@@ -87,7 +95,7 @@ inline juce::Image loadLogo()
 {
     auto img = anyEmbedded();
     if (img.isValid()) return img;
-    img = fromDisk ({ "logo.png", "OIP.webp", "b4ef89321df2b8f2c7bd314d352b8f42.jpg" });
+    img = fromDisk ({ "face.png", "lian.png", "OIP.webp", "b4ef89321df2b8f2c7bd314d352b8f42.jpg" });
     return img.isValid() ? img : makeFallbackLogo();
 }
 
@@ -95,17 +103,16 @@ inline juce::Image loadToronowla()
 {
     auto img = anyEmbedded();
     if (img.isValid()) return img;
-    img = fromDisk ({ "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg",
-                      "wp5627062.jpg", "face.png", "lian.png" });
+    img = fromDisk ({ "face.png", "lian.png", "akhd 1.png", "wp5627062.jpg",
+                      "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg" });
     return img.isValid() ? img : loadLogo();
 }
 
 inline juce::Image loadFace()
 {
-    auto img = anyEmbedded();
+    auto img = fromDisk ({ "face.png" });
     if (img.isValid()) return img;
-    img = fromDisk ({ "face.png", "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg" });
-    return img.isValid() ? img : loadLogo();
+    return loadToronowla();
 }
 
 inline juce::Image loadLian()
@@ -116,10 +123,9 @@ inline juce::Image loadLian()
 
 inline juce::Image loadCyanGirl()
 {
-    auto img = fromDisk ({ "tumblr_rorujgb5gF1tpwuis_smart1.jpg" });
+    auto img = fromDisk ({ "tumblr_rorujgb5gF1tpwuis_smart1.jpg", "face.png" });
     return img.isValid() ? img : loadFace();
 }
 
 inline juce::Image loadHero() { return loadToronowla(); }
-inline juce::Image loadHeadphones() { return fromDisk ({ "wp5627062.jpg" }); }
 }

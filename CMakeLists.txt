@@ -4,17 +4,7 @@ project(SALEK_HIGHTECH VERSION 0.8.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
-    add_subdirectory(JUCE)
-else()
-    include(FetchContent)
-    FetchContent_Declare(
-        JUCE
-        GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-        GIT_TAG 8.0.4
-    )
-    FetchContent_MakeAvailable(JUCE)
-endif()
+add_subdirectory(JUCE)
 
 juce_add_plugin(SALEK_HIGHTECH
     COMPANY_NAME "Salek"
@@ -27,17 +17,16 @@ juce_add_plugin(SALEK_HIGHTECH
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE
-    COPY_PLUGIN_AFTER_BUILD FALSE
-    VST3_CATEGORIES "Instrument Synth"
+    COPY_PLUGIN_AFTER_BUILD TRUE
 )
-
-juce_generate_juce_header(SALEK_HIGHTECH)
 
 # Embed brand images so VST always has art (no external Assets folder required)
 juce_add_binary_data(SalekBinaryAssets SOURCES
+    "Source/Assets/face.png"
+    "Source/Assets/lian.png"
+    "Source/Assets/wp5627062.jpg"
     "Source/Assets/b4ef89321df2b8f2c7bd314d352b8f42.jpg"
     "Source/Assets/purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg"
-    "Source/Assets/wp5627062.jpg"
     "Source/Assets/OIP.webp"
 )
 
@@ -63,9 +52,11 @@ target_sources(SALEK_HIGHTECH PRIVATE
     Source/FX/SimpleDelay.h
     Source/FX/SimpleChorus.h
     Source/FX/SimpleReverb.h
-    Source/Sequencer/Arpeggiator.h
+    Source/FX/SimpleCompressor.h
+    Source/FX/SimpleEQ.h
+    Source/FX/SpatialProcessor.h
     Source/Sequencer/StepSequencer.h
-    Source/DSP/SmoothedValue.h
+    Source/UI/ModMatrixPanel.h
 )
 
 target_compile_definitions(SALEK_HIGHTECH PUBLIC
