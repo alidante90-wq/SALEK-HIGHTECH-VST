@@ -96,11 +96,14 @@ void SalekHightechAudioProcessorEditor::resized()
     };
 
     // ---- MAIN ----
+    // Layout: [PRESETS | OSC ........ | FILTER]
+    //         [PRESETS | ENV ADSR ..............]
     {
         auto b = mainTab.getLocalBounds().reduced (4);
         presetTab.setBounds (b.removeFromLeft (178));
-        filterTab.setBounds (b.removeFromRight (220));
-        envTab.setBounds (b.removeFromBottom (118));
+        // ENV takes bottom strip first so FILTER does not collide with ADSR knobs
+        envTab.setBounds (b.removeFromBottom (128));
+        filterTab.setBounds (b.removeFromRight (248));
         oscTab.setBounds (b);
 
         {
@@ -113,19 +116,23 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setBounds (pb);
         }
 
+        // OSC: 19 knobs in 5 columns
         place (oscTab.getLocalBounds().reduced (4), knobs, 0, 19, 5);
 
+        // FILTER: curve on top, 4 knobs in 2x2 under it (CUTOFF RESO / F DRIVE F ENV)
         {
-            auto fr = filterTab.getLocalBounds().reduced (3);
+            auto fr = filterTab.getLocalBounds().reduced (4);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (64).reduced (2));
+                filterDisplay->setBounds (fr.removeFromTop (72).reduced (2));
+            fr.removeFromTop (4);
             place (fr, knobs, 19, 4, 2);
         }
 
+        // ENV: curve + ATTACK DECAY SUSTAIN RELEASE in one row
         {
-            auto er = envTab.getLocalBounds().reduced (3);
+            auto er = envTab.getLocalBounds().reduced (4);
             if (adsrDisplay != nullptr)
-                adsrDisplay->setBounds (er.removeFromTop (48).reduced (2));
+                adsrDisplay->setBounds (er.removeFromTop (52).reduced (2));
             place (er, knobs, 23, 4, 4);
         }
     }
