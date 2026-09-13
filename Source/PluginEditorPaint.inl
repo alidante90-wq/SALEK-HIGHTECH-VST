@@ -82,17 +82,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (gold);
         g.setFont (juce::FontOptions (34.0f, juce::Font::bold));
         g.drawText (juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd9\x84\xda\xa9"),
-                    left.getX(), left.getY() + 162.0f, left.getWidth(), 40.0f,
+                    juce::Rectangle<float> (left.getX(), left.getY() + 162.0f, left.getWidth(), 40.0f),
                     juce::Justification::centred, false);
         g.setColour (cyan.withAlpha (0.95f));
         g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-        g.drawText ("SALEK", left.getX(), left.getY() + 200.0f, left.getWidth(), 16.0f, juce::Justification::centred);
+        g.drawText ("SALEK", juce::Rectangle<float> (left.getX(), left.getY() + 200.0f, left.getWidth(), 16.0f), juce::Justification::centred);
         g.setColour (juce::Colours::white.withAlpha (0.55f));
         g.setFont (juce::FontOptions (9.5f));
-        g.drawText ("PERSIAN CYBER SONIC CORE", left.getX(), left.getY() + 218.0f, left.getWidth(), 14.0f, juce::Justification::centred);
+        g.drawText ("PERSIAN CYBER SONIC CORE", juce::Rectangle<float> (left.getX(), left.getY() + 218.0f, left.getWidth(), 14.0f), juce::Justification::centred);
         g.setColour (magenta.withAlpha (0.9f));
         g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-        g.drawText ("SYNTHESIZER VST", left.getX(), left.getY() + 234.0f, left.getWidth(), 14.0f, juce::Justification::centred);
+        g.drawText ("SYNTHESIZER VST", juce::Rectangle<float> (left.getX(), left.getY() + 234.0f, left.getWidth(), 14.0f), juce::Justification::centred);
 
         juce::Path star;
         star.addStar (juce::Point<float> (left.getCentreX(), left.getBottom() - 16.0f), 8, 12.0f, 5.5f);
