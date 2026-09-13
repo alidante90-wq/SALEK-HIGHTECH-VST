@@ -44,6 +44,8 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 8) resized();
+    animPhase += 0.04f; // extra motion boost
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
