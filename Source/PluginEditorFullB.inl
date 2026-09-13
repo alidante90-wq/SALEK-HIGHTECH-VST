@@ -143,10 +143,8 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto bounds = seqTab.getLocalBounds().reduced (6);
         auto top = bounds.removeFromTop (44);
-        arpOn.setBounds (top.removeFromLeft (80).reduced (3));
-        seqOn.setBounds (top.removeFromLeft (80).reduced (3));
-        if (arpDirBox != nullptr)
-            arpDirBox->setBounds (top.removeFromLeft (110).reduced (3));
+        arpOn.setBounds (top.removeFromLeft (88).reduced (3));
+        seqOn.setBounds (top.removeFromLeft (88).reduced (3));
         place (top.removeFromRight (320).reduced (2), knobs, 61, 3, 3);
         bounds.removeFromTop (6);
         if (stepGrid != nullptr)
