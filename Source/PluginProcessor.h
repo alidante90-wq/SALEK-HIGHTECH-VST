@@ -1,7 +1,8 @@
 #pragma once
+
 #include <JuceHeader.h>
-#include <atomic>
 #include <map>
+#include <vector>
 #include "Synth/SynthEngine.h"
 #include "FX/SimpleDelay.h"
 #include "FX/SimpleChorus.h"
@@ -9,6 +10,8 @@
 #include "FX/SimpleCompressor.h"
 #include "FX/SimpleEQ.h"
 #include "FX/SimpleSpatial.h"
+#include "FX/SimplePhaser.h"
+#include "FX/SimpleDistortion.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
@@ -18,7 +21,7 @@ class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
 public:
     SalekHightechAudioProcessor();
-    ~SalekHightechAudioProcessor() override = default;
+    ~SalekHightechAudioProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -67,6 +70,8 @@ private:
     salek::SimpleCompressor compressor;
     salek::SimpleEQ eq;
     salek::SimpleSpatial spatial;
+    salek::SimplePhaser phaser;
+    salek::SimpleDistortion distortion;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
