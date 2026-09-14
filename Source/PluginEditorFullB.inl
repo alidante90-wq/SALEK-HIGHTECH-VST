@@ -25,6 +25,7 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (fullName.startsWith ("FM"))   tc = selected ? tc : juce::Colour (0xffff66cc);
     if (fullName.startsWith ("Retro"))tc = selected ? tc : juce::Colour (0xffa0a0ff);
     if (fullName.startsWith ("SALEK")) tc = selected ? tc : juce::Colour (0xffffd700);
+    if (fullName.startsWith ("USER")) tc = selected ? tc : juce::Colour (0xffffaa00);
     g.setColour (tc);
     g.setFont (juce::FontOptions (12.5f));
     g.drawText ("   " + pr.label, 8, 0, width - 12, height, juce::Justification::centredLeft);
@@ -106,7 +107,8 @@ void SalekHightechAudioProcessorEditor::resized()
             auto top = pb.removeFromTop (26);
             prevPreset.setBounds (top.removeFromLeft (26).reduced (1));
             nextPreset.setBounds (top.removeFromLeft (26).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (44).reduced (1));
+            initBtn.setBounds (top.removeFromLeft (40).reduced (1));
+            savePresetBtn.setBounds (top.removeFromLeft (48).reduced (1));
             presetLabel.setBounds (top.reduced (1));
             presetList.setBounds (pb);
         }
@@ -139,8 +141,39 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        auto r = fxTab.getLocalBounds().reduced (10);
-        place (r, knobs, 41, 28, 3);
+        auto area = fxTab.getLocalBounds().reduced (8);
+        const int fxStart = 41;
+        struct Sec { int off; int count; };
+        const Sec secs2[10] = {
+            {0,3},{3,3},{6,3},{9,2},{11,3},{14,3},{17,4},{21,1},{22,3},{25,3}
+        };
+        const int numSec = 10;
+        const int rowH = juce::jmax (68, area.getHeight() / numSec);
+        for (int s = 0; s < numSec; ++s)
+        {
+            auto row = area.removeFromTop (rowH).reduced (2, 1);
+            if (s < fxSectionLabels.size())
+            {
+                auto head = row.removeFromLeft (100);
+                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (96, 22));
+                fxSectionLabels[s]->setVisible (true);
+            }
+            int off = secs2[s].off;
+            int cnt = secs2[s].count;
+            const int cw = row.getWidth() / juce::jmax (1, cnt);
+            for (int i = 0; i < cnt; ++i)
+            {
+                const int idx = fxStart + off + i;
+                if (idx < 0 || idx >= (int) knobs.size()) break;
+                auto* k = knobs[(size_t) idx].get();
+                auto cell = juce::Rectangle<int> (row.getX() + i * cw, row.getY(), cw, row.getHeight()).reduced (3);
+                if (cell.getHeight() < 28) continue;
+                k->name.setBounds (cell.removeFromBottom (12));
+                k->s.setBounds (cell);
+            }
+        }
+        for (int s = numSec; s < fxSectionLabels.size(); ++s)
+            fxSectionLabels[s]->setVisible (false);
     }
 
     {
