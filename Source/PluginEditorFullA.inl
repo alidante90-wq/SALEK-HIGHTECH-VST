@@ -93,9 +93,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         presetTab.addAndMakeVisible (nextPreset);
         presetTab.addAndMakeVisible (initBtn);
         presetTab.addAndMakeVisible (savePresetBtn);
+        presetTab.addAndMakeVisible (loadPresetBtn);
         presetTab.addAndMakeVisible (presetLabel);
+        presetLabel.setFont (juce::FontOptions (11.0f));
+        presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
         savePresetBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a1050));
         savePresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
+        loadPresetBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff0a3050));
+        loadPresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
         prevPreset.onClick = [this] {
             int i = processor.getCurrentProgram();
             if (i > 0) processor.setCurrentProgram (i - 1);
@@ -134,6 +139,16 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
                 }
                 delete aw;
             }));
+        };
+        loadPresetBtn.onClick = [this] {
+            processor.loadUserPresetsFromDisk();
+            rebuildPresetRows();
+            int i = processor.getCurrentProgram();
+            if (i >= 0 && i < processor.getNumPrograms())
+                processor.setCurrentProgram (i);
+            presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
+            presetList.updateContent();
+            presetList.repaint();
         };
         rebuildPresetRows();
         presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
