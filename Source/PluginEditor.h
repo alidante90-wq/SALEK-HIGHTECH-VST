@@ -133,6 +133,7 @@ public:
     int getNumRows() override;
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
+    void mouseDown (const juce::MouseEvent&) override;
 private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;
@@ -165,6 +166,9 @@ private:
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
     juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
+    int heroIndex = 0;
+    void applyHeroFromTheme();
+    void cycleHero();
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
