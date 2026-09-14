@@ -94,6 +94,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         presetTab.addAndMakeVisible (initBtn);
         presetTab.addAndMakeVisible (savePresetBtn);
         presetTab.addAndMakeVisible (loadPresetBtn);
+        presetTab.addAndMakeVisible (bankBtn);
         presetTab.addAndMakeVisible (presetLabel);
         presetLabel.setFont (juce::FontOptions (11.0f));
         presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
@@ -101,6 +102,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         savePresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
         loadPresetBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff0a3050));
         loadPresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+        bankBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff201040));
+        bankBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffaa00));
         prevPreset.onClick = [this] {
             int i = processor.getCurrentProgram();
             if (i > 0) processor.setCurrentProgram (i - 1);
