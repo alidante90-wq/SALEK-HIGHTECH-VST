@@ -55,6 +55,9 @@ public:
     salek::ModMatrix& getModMatrix() { return modMatrix; }
 
     juce::StringArray getPresetNames() const;
+    int saveCurrentAsUserPreset (const juce::String& name);
+    void loadUserPresetsFromDisk();
+    void saveUserPresetsToDisk();
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
