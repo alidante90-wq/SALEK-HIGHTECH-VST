@@ -8,6 +8,8 @@ SalekHightechAudioProcessor::SalekHightechAudioProcessor()
     initFactoryPresets();
 }
 
+SalekHightechAudioProcessor::~SalekHightechAudioProcessor() = default;
+
 juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor::createParameterLayout()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> p;
