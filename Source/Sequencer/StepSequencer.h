@@ -13,13 +13,13 @@ public:
 
     struct Step
     {
-        int   noteOffset = 0;   // semitones relative to root (-24..+24)
+        int   noteOffset = 0;
         float velocity   = 0.8f;
         float gate       = 0.7f;
         float probability = 1.0f;
         float modValue   = 0.0f;
         bool  active     = false;
-        bool  accent     = false; // boost velocity / mark strong beat
+        bool  accent     = false;
     };
 
     void prepare (double sampleRate)
@@ -140,11 +140,10 @@ public:
 private:
     void updateTiming()
     {
-        const double beatsPerSec = bpm / 60.0;
-        const double stepsPerBeat = 4.0 / (double) rateDivisor; // rateDivisor 1=1/4, 2=1/8 style
-        samplesPerStep = sr / (beatsPerSec * 4.0); // 16th notes base
-        if (rateDivisor > 1)
-            samplesPerStep = sr / (beatsPerSec * (4.0 * rateDivisor / 4.0));
+        // rateDivisor: 1 → 16th (4 steps/beat), 2 → 32nd (8 steps/beat), ...
+        const double beatsPerSec = juce::jmax (1.0, bpm) / 60.0;
+        const double stepsPerBeat = 4.0 * (double) juce::jmax (1, rateDivisor);
+        samplesPerStep = sr / (beatsPerSec * stepsPerBeat);
         samplesPerStep = juce::jmax (1.0, samplesPerStep);
     }
 
