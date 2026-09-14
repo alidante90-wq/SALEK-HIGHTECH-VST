@@ -105,11 +105,12 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto pb = presetTab.getLocalBounds().reduced (3);
             auto top = pb.removeFromTop (24);
-            prevPreset.setBounds (top.removeFromLeft (24).reduced (1));
-            nextPreset.setBounds (top.removeFromLeft (24).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (36).reduced (1));
-            savePresetBtn.setBounds (top.removeFromLeft (42).reduced (1));
-            loadPresetBtn.setBounds (top.removeFromLeft (42).reduced (1));
+            prevPreset.setBounds (top.removeFromLeft (22).reduced (1));
+            nextPreset.setBounds (top.removeFromLeft (22).reduced (1));
+            initBtn.setBounds (top.removeFromLeft (32).reduced (1));
+            savePresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
+            loadPresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
+            bankBtn.setBounds (top.removeFromLeft (40).reduced (1));
             auto nameRow = pb.removeFromTop (20);
             presetLabel.setBounds (nameRow.reduced (2, 0));
             presetLabel.setJustificationType (juce::Justification::centredLeft);
