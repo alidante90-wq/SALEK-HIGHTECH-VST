@@ -35,7 +35,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     I("unison_voices","Unison",1,7,1); F("unison_detune","Uni Detune",0,50,12); F("unison_spread","Uni Spread",0,1,0.7f);
     F("fm_2to1","FM 2to1",0,1,0); F("fm_3to1","FM 3to1",0,1,0); F("fm_3to2","FM 3to2",0,1,0);
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
-    F("filter_cutoff","Cutoff",20,20000,8000); F("filter_reso","Reso",0,1,0.25f);
+    // Log-skewed cutoff: fine control in low/mid, natural musical curve
+    p.push_back (std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"filter_cutoff",1}, "Cutoff",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
+    F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
     C("filter_mode","F Mode",{"LowPass","HighPass","BandPass","Notch"},0);
     F("amp_attack","Attack",0.001f,5,0.01f); F("amp_decay","Decay",0.01f,5,0.25f);
