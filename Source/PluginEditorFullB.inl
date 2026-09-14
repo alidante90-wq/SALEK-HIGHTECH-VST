@@ -111,21 +111,22 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setBounds (pb);
         }
 
-        place (oscTab.getLocalBounds().reduced (4), knobs, 0, 19, 5);
+        // OSC: 6 cols → row1=OSC1, row2=OSC2, row3=OSC3, row4=UNISON
+        place (oscTab.getLocalBounds().reduced (4), knobs, 0, 21, 6);
 
         {
             auto fr = filterTab.getLocalBounds().reduced (4);
             if (filterDisplay != nullptr)
                 filterDisplay->setBounds (fr.removeFromTop (72).reduced (2));
             fr.removeFromTop (4);
-            place (fr, knobs, 19, 4, 2);
+            place (fr, knobs, 21, 4, 2);
         }
 
         {
             auto er = envTab.getLocalBounds().reduced (4);
             if (adsrDisplay != nullptr)
                 adsrDisplay->setBounds (er.removeFromTop (52).reduced (2));
-            place (er, knobs, 23, 4, 4);
+            place (er, knobs, 25, 4, 4);
         }
     }
 
@@ -135,12 +136,13 @@ void SalekHightechAudioProcessorEditor::resized()
             lfoDisplay->setBounds (r.removeFromTop (64).reduced (2));
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (r.removeFromLeft (240).reduced (2));
-        place (r.reduced (2), knobs, 27, 12, 4);
+        place (r.reduced (2), knobs, 29, 12, 4);
     }
 
     {
+        // FX: 3 cols → each effect (mix/rate/depth) on one row
         auto r = fxTab.getLocalBounds().reduced (10);
-        place (r, knobs, 39, 28, 4);
+        place (r, knobs, 41, 28, 3);
     }
 
     {
@@ -148,9 +150,39 @@ void SalekHightechAudioProcessorEditor::resized()
         auto top = bounds.removeFromTop (52);
         arpOn.setBounds (top.removeFromLeft (100).reduced (4));
         seqOn.setBounds (top.removeFromLeft (100).reduced (4));
-        place (top.removeFromRight (360).reduced (4), knobs, 67, 3, 3);
+        place (top.removeFromRight (360).reduced (4), knobs, 69, 3, 3);
         bounds.removeFromTop (8);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
     }
+}
+
+void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
+{
+    const int id = themeBox.getSelectedId();
+    if (id == 2 && faceImg.isValid()) { heroImg = faceImg; heroIndex = 1; }
+    else if (id == 3 && cyanImg.isValid()) { heroImg = cyanImg; heroIndex = 2; }
+    else if (lianImg.isValid()) { heroImg = lianImg; heroIndex = 0; }
+    else if (faceImg.isValid()) { heroImg = faceImg; heroIndex = 1; }
+}
+
+void SalekHightechAudioProcessorEditor::cycleHero()
+{
+    juce::Image imgs[4] = { lianImg, faceImg, cyanImg, logoImg };
+    for (int n = 0; n < 4; ++n)
+    {
+        heroIndex = (heroIndex + 1) % 4;
+        if (imgs[heroIndex].isValid())
+        {
+            heroImg = imgs[heroIndex];
+            repaint();
+            return;
+        }
+    }
+}
+
+void SalekHightechAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
+{
+    if (e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
+        cycleHero();
 }
