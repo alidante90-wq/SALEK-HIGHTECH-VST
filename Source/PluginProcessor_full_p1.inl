@@ -35,7 +35,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     I("unison_voices","Unison",1,7,1); F("unison_detune","Uni Detune",0,50,12); F("unison_spread","Uni Spread",0,1,0.7f);
     F("fm_2to1","FM 2to1",0,1,0); F("fm_3to1","FM 3to1",0,1,0); F("fm_3to2","FM 3to2",0,1,0);
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
-    // Log-skewed cutoff: fine control in low/mid, natural musical curve
     p.push_back (std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{"filter_cutoff",1}, "Cutoff",
         juce::NormalisableRange<float>(20.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
@@ -127,3 +126,4 @@ bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
 }
 
 #include "PluginProcessorUserPresets.inl"
+#include "PluginProcessorBankIO.inl"
