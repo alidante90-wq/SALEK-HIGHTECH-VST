@@ -111,7 +111,6 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setBounds (pb);
         }
 
-        // OSC: 6 cols → row1=OSC1, row2=OSC2, row3=OSC3, row4=UNISON
         place (oscTab.getLocalBounds().reduced (4), knobs, 0, 21, 6);
 
         {
@@ -140,7 +139,6 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        // FX: 3 cols → each effect (mix/rate/depth) on one row
         auto r = fxTab.getLocalBounds().reduced (10);
         place (r, knobs, 41, 28, 3);
     }
@@ -160,10 +158,21 @@ void SalekHightechAudioProcessorEditor::resized()
 void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
 {
     const int id = themeBox.getSelectedId();
-    if (id == 2 && faceImg.isValid()) { heroImg = faceImg; heroIndex = 1; }
-    else if (id == 3 && cyanImg.isValid()) { heroImg = cyanImg; heroIndex = 2; }
-    else if (lianImg.isValid()) { heroImg = lianImg; heroIndex = 0; }
-    else if (faceImg.isValid()) { heroImg = faceImg; heroIndex = 1; }
+    if (! lianImg.isValid()) lianImg = SalekAssets::loadLian();
+    if (! faceImg.isValid()) faceImg = SalekAssets::loadFace();
+    if (! cyanImg.isValid()) cyanImg = SalekAssets::loadCyanGirl();
+
+    if (id == 2) {
+        heroImg = faceImg.isValid() ? faceImg : (lianImg.isValid() ? lianImg : logoImg);
+        heroIndex = 1;
+    } else if (id == 3) {
+        heroImg = cyanImg.isValid() ? cyanImg : (faceImg.isValid() ? faceImg : lianImg);
+        heroIndex = 2;
+    } else {
+        heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
+        heroIndex = 0;
+    }
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::cycleHero()
