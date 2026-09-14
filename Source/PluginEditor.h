@@ -158,7 +158,7 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
-    juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" }, savePresetBtn { "SAVE" }, loadPresetBtn { "LOAD" };
+    juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" }, savePresetBtn { "SAVE" }, loadPresetBtn { "LOAD" }, bankBtn { "BANK" };
     juce::Label presetLabel, title, tagline;
     juce::ListBox presetList { "presets", this };
     std::unique_ptr<StepGridComponent> stepGrid;
