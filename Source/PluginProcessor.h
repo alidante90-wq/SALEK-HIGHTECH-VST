@@ -1,21 +1,21 @@
 #pragma once
-
 #include <JuceHeader.h>
-#include <map>
-#include <vector>
 #include "Synth/SynthEngine.h"
-#include "FX/SimpleDelay.h"
-#include "FX/SimpleChorus.h"
-#include "FX/SimpleReverb.h"
-#include "FX/SimpleCompressor.h"
-#include "FX/SimpleEQ.h"
-#include "FX/SimpleSpatial.h"
-#include "FX/SimplePhaser.h"
-#include "FX/SimpleDistortion.h"
+#include "Effects/SimpleDelay.h"
+#include "Effects/SimpleChorus.h"
+#include "Effects/SimpleReverb.h"
+#include "Effects/SimpleCompressor.h"
+#include "Effects/SimpleEQ.h"
+#include "Effects/SimpleSpatial.h"
+#include "Effects/SimplePhaser.h"
+#include "Effects/SimpleDistortion.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
 #include "UI/VisualFifo.h"
+#include <map>
+#include <vector>
+#include <atomic>
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
@@ -58,6 +58,10 @@ public:
     int saveCurrentAsUserPreset (const juce::String& name);
     void loadUserPresetsFromDisk();
     void saveUserPresetsToDisk();
+    /** Write current params as a shareable single-preset .salek.xml file */
+    bool exportCurrentPresetToFile (const juce::File& file, const juce::String& displayName);
+    /** Load a shareable preset file, apply it, add to USER bank. Returns program index or -1 */
+    int importPresetFromFile (const juce::File& file);
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -79,8 +83,8 @@ private:
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
     juce::MidiKeyboardState keyboardState;
-    std::atomic<float> outputPeak { 0.0f };
     VisualFifo visualFifo;
+    std::atomic<float> outputPeak { 0.f };
 
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
     std::vector<FactoryPreset> factoryPresets;
