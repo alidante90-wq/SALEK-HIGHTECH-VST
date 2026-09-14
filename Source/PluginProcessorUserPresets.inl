@@ -10,32 +10,59 @@ void SalekHightechAudioProcessor::loadUserPresetsFromDisk()
 {
     auto f = salekUserPresetFile();
     if (! f.existsAsFile()) return;
-    if (auto xml = juce::XmlDocument::parse (f))
+
+    std::unique_ptr<juce::XmlElement> xml (juce::XmlDocument::parse (f));
+    if (xml == nullptr)
+        return;
+    if (! xml->hasTagName ("SALEK_USER_PRESETS") && ! xml->hasTagName ("USER_PRESETS"))
+        return;
+
+    const int version = xml->getIntAttribute ("version", 1);
+    juce::ignoreUnused (version);
+
+    for (auto* presetXml : xml->getChildIterator())
     {
-        for (auto* presetXml : xml->getChildIterator())
+        if (! presetXml->hasTagName ("PRESET")) continue;
+
+        FactoryPreset pr;
+        pr.name = presetXml->getStringAttribute ("name");
+        if (pr.name.isEmpty()) continue;
+        if (! pr.name.startsWith ("USER/"))
+            pr.name = "USER/" + pr.name;
+
+        for (auto* pXml : presetXml->getChildIterator())
         {
-            if (! presetXml->hasTagName ("PRESET")) continue;
-            FactoryPreset pr;
-            pr.name = presetXml->getStringAttribute ("name");
-            if (! pr.name.startsWith ("USER/"))
-                pr.name = "USER/" + pr.name;
-            for (auto* pXml : presetXml->getChildIterator())
+            if (pXml->hasTagName ("PARAM"))
             {
-                if (pXml->hasTagName ("P"))
-                    pr.values[pXml->getStringAttribute ("id")] = (float) pXml->getDoubleAttribute ("v");
+                const auto id = pXml->getStringAttribute ("id");
+                if (id.isNotEmpty())
+                    pr.values[id] = (float) pXml->getDoubleAttribute ("value");
             }
-            bool exists = false;
-            for (auto& e : factoryPresets)
-                if (e.name == pr.name) { exists = true; break; }
-            if (! exists)
-                factoryPresets.push_back (std::move (pr));
+            else if (pXml->hasTagName ("P"))
+            {
+                const auto id = pXml->getStringAttribute ("id");
+                if (id.isNotEmpty())
+                    pr.values[id] = (float) pXml->getDoubleAttribute ("v");
+            }
         }
+
+        int found = -1;
+        for (int i = 0; i < (int) factoryPresets.size(); ++i)
+            if (factoryPresets[(size_t) i].name == pr.name) { found = i; break; }
+
+        if (found >= 0)
+            factoryPresets[(size_t) found].values = std::move (pr.values);
+        else
+            factoryPresets.push_back (std::move (pr));
     }
 }
 
 void SalekHightechAudioProcessor::saveUserPresetsToDisk()
 {
-    juce::XmlElement root ("USER_PRESETS");
+    juce::XmlElement root ("SALEK_USER_PRESETS");
+    root.setAttribute ("version", 2);
+    root.setAttribute ("plugin", "SALEK HIGHTECH");
+
     for (auto& pr : factoryPresets)
     {
         if (! pr.name.startsWith ("USER/")) continue;
@@ -43,18 +70,23 @@ void SalekHightechAudioProcessor::saveUserPresetsToDisk()
         px->setAttribute ("name", pr.name);
         for (auto& kv : pr.values)
         {
-            auto* p = px->createNewChildElement ("P");
+            auto* p = px->createNewChildElement ("PARAM");
             p->setAttribute ("id", kv.first);
-            p->setAttribute ("v", (double) kv.second);
+            p->setAttribute ("value", (double) kv.second);
         }
     }
-    root.writeTo (salekUserPresetFile());
+
+    auto target = salekUserPresetFile();
+    auto tmp = target.getSiblingFile (target.getFileNameWithoutExtension() + ".tmp.xml");
+    if (root.writeTo (tmp))
+        tmp.moveFileTo (target);
 }
 
 int SalekHightechAudioProcessor::saveCurrentAsUserPreset (const juce::String& name)
 {
     juce::String clean = name.trim();
     if (clean.isEmpty()) clean = "My Preset";
+    clean = clean.replaceCharacter ('/', '-').replaceCharacter ('\\', '-');
     juce::String full = clean.startsWith ("USER/") ? clean : ("USER/" + clean);
 
     std::map<juce::String, float> vals;
