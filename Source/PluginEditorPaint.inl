@@ -1,11 +1,28 @@
 // SALEK HIGHTECH — hyper-dynamic software graphics (no OpenGL)
 void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    const juce::Colour cyan    (0xff00e8ff);
-    const juce::Colour magenta (0xffff2d9b);
-    const juce::Colour gold    (0xffffd700);
-    const juce::Colour purple  (0xffb44dff);
-    const juce::Colour lime    (0xff39ff14);
+    // Theme-driven palette (CYBER / ACID / NEON)
+    const int themeId = themeBox.getSelectedId();
+    juce::Colour cyan, magenta, gold, purple, lime;
+    if (themeId == 2) { // ACID — toxic green / yellow
+        cyan    = juce::Colour (0xffb8ff00);
+        magenta = juce::Colour (0xffff6b00);
+        gold    = juce::Colour (0xffffee00);
+        purple  = juce::Colour (0xff88ff00);
+        lime    = juce::Colour (0xff39ff14);
+    } else if (themeId == 3) { // NEON — hot pink / electric purple
+        cyan    = juce::Colour (0xffff00dd);
+        magenta = juce::Colour (0xff00ffff);
+        gold    = juce::Colour (0xffff66ff);
+        purple  = juce::Colour (0xffaa00ff);
+        lime    = juce::Colour (0xffff2d9b);
+    } else { // CYBER — cyan / magenta default
+        cyan    = juce::Colour (0xff00e8ff);
+        magenta = juce::Colour (0xffff2d9b);
+        gold    = juce::Colour (0xffffd700);
+        purple  = juce::Colour (0xffb44dff);
+        lime    = juce::Colour (0xff39ff14);
+    }
 
     const float peak  = processor.getOutputPeak();
     const float pulse = juce::jlimit (0.0f, 1.0f, peak * 5.0f);
@@ -79,7 +96,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         auto& src = heroImg.isValid() ? heroImg : logoImg;
         if (src.isValid())
         {
-            auto imgR = left.reduced (10.0f, 10.0f).withHeight (150.0f);
+            auto imgR = left.reduced (8.0f, 8.0f).withHeight (168.0f);
             g.saveState();
             juce::Path clip;
             clip.addRoundedRectangle (imgR, 10.0f);
@@ -97,22 +114,22 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (gold);
         g.setFont (juce::FontOptions (34.0f, juce::Font::bold));
         g.drawText (juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd9\x84\xda\xa9"),
-                    juce::Rectangle<float> (left.getX(), left.getY() + 162.0f, left.getWidth(), 40.0f),
+                    juce::Rectangle<float> (left.getX(), left.getY() + 178.0f, left.getWidth(), 36.0f),
                     juce::Justification::centred, false);
         g.setColour (cyan.withAlpha (0.95f));
         g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-        g.drawText ("SALEK", juce::Rectangle<float> (left.getX(), left.getY() + 200.0f, left.getWidth(), 16.0f), juce::Justification::centred);
+        g.drawText ("SALEK", juce::Rectangle<float> (left.getX(), left.getY() + 210.0f, left.getWidth(), 16.0f), juce::Justification::centred);
         g.setColour (juce::Colours::white.withAlpha (0.55f));
         g.setFont (juce::FontOptions (9.5f));
-        g.drawText ("PERSIAN CYBER SONIC CORE", juce::Rectangle<float> (left.getX(), left.getY() + 218.0f, left.getWidth(), 14.0f), juce::Justification::centred);
+        g.drawText ("PERSIAN CYBER SONIC CORE", juce::Rectangle<float> (left.getX(), left.getY() + 226.0f, left.getWidth(), 14.0f), juce::Justification::centred);
         g.setColour (magenta.withAlpha (0.9f));
         g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-        g.drawText ("SYNTHESIZER VST", juce::Rectangle<float> (left.getX(), left.getY() + 234.0f, left.getWidth(), 14.0f), juce::Justification::centred);
+        g.drawText ("SYNTHESIZER VST", juce::Rectangle<float> (left.getX(), left.getY() + 242.0f, left.getWidth(), 14.0f), juce::Justification::centred);
 
         float starA = 0.55f + 0.45f * std::sin (t * 2.4f);
         g.setColour (gold.withAlpha (starA));
         juce::Path star;
-        star.addStar (juce::Point<float> (left.getCentreX(), left.getBottom() - 22.0f), 6, 9.0f + pulse * 3.0f, 3.5f);
+        star.addStar (juce::Point<float> (left.getCentreX(), left.getBottom() - 18.0f), 6, 9.0f + pulse * 3.0f, 3.5f);
         g.fillPath (star);
     }
 
