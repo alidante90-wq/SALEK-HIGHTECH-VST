@@ -121,35 +121,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             presetList.updateContent();
             presetList.repaint();
         };
-        savePresetBtn.onClick = [this] {
-            auto* aw = new juce::AlertWindow ("Save Preset", "Name for USER preset:", juce::AlertWindow::NoIcon);
-            aw->addTextEditor ("name", "My Sound", "Name");
-            aw->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
-            aw->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
-            aw->enterModalState (true, juce::ModalCallbackFunction::create ([this, aw] (int r) {
-                if (r == 1)
-                {
-                    auto name = aw->getTextEditorContents ("name");
-                    int idx = processor.saveCurrentAsUserPreset (name);
-                    rebuildPresetRows();
-                    processor.setCurrentProgram (idx);
-                    presetLabel.setText (processor.getProgramName (idx), juce::dontSendNotification);
-                    presetList.updateContent();
-                    presetList.repaint();
-                }
-                delete aw;
-            }));
-        };
-        loadPresetBtn.onClick = [this] {
-            processor.loadUserPresetsFromDisk();
-            rebuildPresetRows();
-            int i = processor.getCurrentProgram();
-            if (i >= 0 && i < processor.getNumPrograms())
-                processor.setCurrentProgram (i);
-            presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
-            presetList.updateContent();
-            presetList.repaint();
-        };
+        #include "PluginEditorPresetIO.inl"
         rebuildPresetRows();
         presetLabel.setText (processor.getProgramName (processor.getCurrentProgram()), juce::dontSendNotification);
     }
