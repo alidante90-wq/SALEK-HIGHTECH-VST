@@ -6,6 +6,7 @@ SalekHightechAudioProcessor::SalekHightechAudioProcessor()
       apvts (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     initFactoryPresets();
+    loadUserPresetsFromDisk();
 }
 
 SalekHightechAudioProcessor::~SalekHightechAudioProcessor() = default;
@@ -120,3 +121,5 @@ bool SalekHightechAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
         return false;
     return true;
 }
+
+#include "PluginProcessorUserPresets.inl"
