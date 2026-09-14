@@ -14,8 +14,11 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setUnisonSpread(g("unison_spread"));
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
-    float cut = g("filter_cutoff") * (0.35f + 0.65f*(1.f-g("macro1")) + g("macro1")*2.2f);
-    cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 2.0f);
+    // Musical cutoff: base Hz from log-skewed param, mild macro, 1-octave mod depth
+    float cut = g("filter_cutoff");
+    const float macroAmt = g("macro1");
+    cut *= (0.85f + 0.15f * (1.0f - macroAmt) + macroAmt * 1.35f); // ~0.85x .. 1.35x
+    cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
     synthEngine.setFilterResonance(g("filter_reso"));
     synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(g("filter_env"));
@@ -80,14 +83,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     synthEngine.processBlock(buffer, midi);
 
     float im = apvts.getRawParameterValue("input_mix")->load();
-    if (im > 1e-4f && getTotalNumInputChannels() > 0)
-    {
-        auto inBus = getBusBuffer (buffer, true, 0);
-        if (inBus.getNumChannels() > 0 && inBus.getNumSamples() > 0)
-        {
-            // dry input blend handled if sidechain-like input present
-        }
-    }
+    juce::ignoreUnused (im);
 
     float drive = apvts.getRawParameterValue("master_drive")->load();
     if (drive > 1e-4f)
