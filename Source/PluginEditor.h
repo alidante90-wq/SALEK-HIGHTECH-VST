@@ -158,10 +158,11 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
-    juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" };
+    juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" }, savePresetBtn { "SAVE" };
     juce::Label presetLabel, title, tagline;
     juce::ListBox presetList { "presets", this };
     std::unique_ptr<StepGridComponent> stepGrid;
+    juce::OwnedArray<juce::Label> fxSectionLabels;
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
