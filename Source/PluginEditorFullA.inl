@@ -16,10 +16,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
-    heroImg   = SalekAssets::loadToronowla();
     faceImg   = SalekAssets::loadFace();
     lianImg   = SalekAssets::loadLian();
     cyanImg   = SalekAssets::loadCyanGirl();
+    heroImg   = SalekAssets::loadLian(); // default LIAN
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);
@@ -61,14 +61,19 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto V = juce::Colour (0xffc0ff00);
         const auto G = juce::Colour (0xff7c4dff);
 
-        addKnob (oscTab, "osc1_level", "LVL 1", C); addKnob (oscTab, "osc1_table", "TABLE", M);
+        // Row OSC1: LVL TABLE WARP FOLD DRIVE OCT
+        addKnob (oscTab, "osc1_level", "LVL", C); addKnob (oscTab, "osc1_table", "TABLE", M);
         addKnob (oscTab, "osc1_warp", "WARP", O); addKnob (oscTab, "osc1_fold", "FOLD", M);
         addKnob (oscTab, "osc1_drive", "DRIVE", O); addKnob (oscTab, "osc1_octave", "OCT", V);
-        addKnob (oscTab, "osc2_level", "LVL 2", C); addKnob (oscTab, "osc2_table", "TABLE2", M);
-        addKnob (oscTab, "osc2_warp", "WARP2", O); addKnob (oscTab, "osc2_fold", "FOLD2", M);
-        addKnob (oscTab, "osc2_drive", "DRIVE2", O); addKnob (oscTab, "osc2_octave", "OCT2", V);
-        addKnob (oscTab, "osc3_level", "LVL 3", C); addKnob (oscTab, "osc3_table", "TABLE3", M);
-        addKnob (oscTab, "osc3_warp", "WARP3", O); addKnob (oscTab, "osc3_fold", "FOLD3", M);
+        // Row OSC2
+        addKnob (oscTab, "osc2_level", "LVL", C); addKnob (oscTab, "osc2_table", "TABLE", M);
+        addKnob (oscTab, "osc2_warp", "WARP", O); addKnob (oscTab, "osc2_fold", "FOLD", M);
+        addKnob (oscTab, "osc2_drive", "DRIVE", O); addKnob (oscTab, "osc2_octave", "OCT", V);
+        // Row OSC3
+        addKnob (oscTab, "osc3_level", "LVL", C); addKnob (oscTab, "osc3_table", "TABLE", M);
+        addKnob (oscTab, "osc3_warp", "WARP", O); addKnob (oscTab, "osc3_fold", "FOLD", M);
+        addKnob (oscTab, "osc3_drive", "DRIVE", O); addKnob (oscTab, "osc3_octave", "OCT", V);
+        // Row UNISON
         addKnob (oscTab, "unison_voices", "UNISON", C);
         addKnob (oscTab, "unison_detune", "U DET", M);
         addKnob (oscTab, "unison_spread", "SPREAD", O);
@@ -138,6 +143,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto O = juce::Colour (0xff39ff14);
         const auto V = juce::Colour (0xffc0ff00);
         const auto G = juce::Colour (0xff7c4dff);
+        // each effect = one row of 3 (cols=3 in resized)
         addKnob (fxTab, "chorus_mix", "CHORUS", O);
         addKnob (fxTab, "chorus_rate", "C RATE", C);
         addKnob (fxTab, "chorus_depth", "C DEPTH", M);
@@ -189,7 +195,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.addItem ("ACID", 2);
     themeBox.addItem ("NEON", 3);
     themeBox.setSelectedId (1);
+    themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
+    applyHeroFromTheme();
 
     rebuildPresetRows();
 }
