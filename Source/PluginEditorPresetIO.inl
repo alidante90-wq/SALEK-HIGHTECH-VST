@@ -1,6 +1,6 @@
         savePresetBtn.onClick = [this] {
             auto aw = std::make_shared<juce::AlertWindow> ("Save / Export Preset",
-                "Name this preset, then choose where to save the .salek.xml file (you can send that file to anyone):",
+                "Name this preset. Save File = shareable .salek.xml for others.",
                 juce::AlertWindow::NoIcon);
             aw->addTextEditor ("name", "My Sound", "Name");
             aw->addButton ("Save File...", 1, juce::KeyPress (juce::KeyPress::returnKey));
@@ -41,15 +41,28 @@
         };
         loadPresetBtn.onClick = [this] {
             auto chooser = std::make_shared<juce::FileChooser> (
-                "Load SALEK preset file",
+                "Load SALEK preset / bank",
                 juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
-                "*.salek.xml;*.xml");
+                "*.salek.xml;*.salekbank.xml;*.xml");
             chooser->launchAsync (
                 juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                 [this, chooser] (const juce::FileChooser& fc)
                 {
                     auto f = fc.getResult();
                     if (f == juce::File()) return;
+
+                    std::unique_ptr<juce::XmlElement> probe (juce::XmlDocument::parse (f));
+                    if (probe != nullptr
+                        && (probe->hasTagName ("SALEK_USER_PRESETS") || probe->hasTagName ("USER_PRESETS")))
+                    {
+                        int n = processor.importUserBankFromFile (f);
+                        rebuildPresetRows();
+                        presetLabel.setText ("Bank import: " + juce::String (n) + " presets", juce::dontSendNotification);
+                        presetList.updateContent();
+                        presetList.repaint();
+                        return;
+                    }
+
                     int idx = processor.importPresetFromFile (f);
                     if (idx < 0)
                     {
@@ -61,5 +74,73 @@
                     presetLabel.setText (processor.getProgramName (idx), juce::dontSendNotification);
                     presetList.updateContent();
                     presetList.repaint();
+                });
+        };
+        bankBtn.onClick = [this] {
+            juce::PopupMenu m;
+            m.addItem (1, "Export Full USER Bank...");
+            m.addItem (2, "Import Bank File...");
+            m.addSeparator();
+            const int cur = processor.getCurrentProgram();
+            const bool isUser = processor.getProgramName (cur).startsWith ("USER/");
+            m.addItem (3, "Delete Selected USER Preset", isUser);
+            m.addSeparator();
+            m.addItem (4, "USER count: " + juce::String (processor.getNumUserPresets()), false);
+
+            m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&bankBtn),
+                [this] (int result)
+                {
+                    if (result == 1)
+                    {
+                        auto chooser = std::make_shared<juce::FileChooser> (
+                            "Export SALEK USER bank",
+                            juce::File::getSpecialLocation (juce::File::userDocumentsDirectory)
+                                .getChildFile ("SALEK_USER_Bank.salekbank.xml"),
+                            "*.salekbank.xml;*.xml");
+                        chooser->launchAsync (
+                            juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
+                                | juce::FileBrowserComponent::warnAboutOverwriting,
+                            [this, chooser] (const juce::FileChooser& fc)
+                            {
+                                auto f = fc.getResult();
+                                if (f == juce::File()) return;
+                                if (processor.exportUserBankToFile (f))
+                                    presetLabel.setText ("Bank exported: " + f.getFileName(), juce::dontSendNotification);
+                                else
+                                    presetLabel.setText ("Bank export failed (empty?)", juce::dontSendNotification);
+                            });
+                    }
+                    else if (result == 2)
+                    {
+                        auto chooser = std::make_shared<juce::FileChooser> (
+                            "Import SALEK bank",
+                            juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+                            "*.salekbank.xml;*.salek.xml;*.xml");
+                        chooser->launchAsync (
+                            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                            [this, chooser] (const juce::FileChooser& fc)
+                            {
+                                auto f = fc.getResult();
+                                if (f == juce::File()) return;
+                                int n = processor.importUserBankFromFile (f);
+                                rebuildPresetRows();
+                                presetLabel.setText ("Imported " + juce::String (n) + " presets", juce::dontSendNotification);
+                                presetList.updateContent();
+                                presetList.repaint();
+                            });
+                    }
+                    else if (result == 3)
+                    {
+                        int cur = processor.getCurrentProgram();
+                        auto name = processor.getProgramName (cur);
+                        if (! name.startsWith ("USER/")) return;
+                        if (processor.deleteUserPreset (cur))
+                        {
+                            rebuildPresetRows();
+                            presetLabel.setText ("Deleted " + name, juce::dontSendNotification);
+                            presetList.updateContent();
+                            presetList.repaint();
+                        }
+                    }
                 });
         };

@@ -58,10 +58,12 @@ public:
     int saveCurrentAsUserPreset (const juce::String& name);
     void loadUserPresetsFromDisk();
     void saveUserPresetsToDisk();
-    /** Write current params as a shareable single-preset .salek.xml file */
     bool exportCurrentPresetToFile (const juce::File& file, const juce::String& displayName);
-    /** Load a shareable preset file, apply it, add to USER bank. Returns program index or -1 */
     int importPresetFromFile (const juce::File& file);
+    bool exportUserBankToFile (const juce::File& file);
+    int importUserBankFromFile (const juce::File& file);
+    bool deleteUserPreset (int programIndex);
+    int getNumUserPresets() const;
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
