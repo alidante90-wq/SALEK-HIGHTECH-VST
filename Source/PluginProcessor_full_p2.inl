@@ -14,10 +14,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setUnisonSpread(g("unison_spread"));
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
-    // Musical cutoff: base Hz from log-skewed param, mild macro, 1-octave mod depth
     float cut = g("filter_cutoff");
     const float macroAmt = g("macro1");
-    cut *= (0.85f + 0.15f * (1.0f - macroAmt) + macroAmt * 1.35f); // ~0.85x .. 1.35x
+    cut *= (0.85f + 0.15f * (1.0f - macroAmt) + macroAmt * 1.35f);
     cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
     synthEngine.setFilterResonance(g("filter_reso"));
@@ -82,9 +81,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     midi.swapWith (routed);
     synthEngine.processBlock(buffer, midi);
 
-    float im = apvts.getRawParameterValue("input_mix")->load();
-    juce::ignoreUnused (im);
-
     float drive = apvts.getRawParameterValue("master_drive")->load();
     if (drive > 1e-4f)
     {
@@ -139,14 +135,30 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    if (auto xml = apvts.copyState().createXml())
-        copyXmlToBinary (*xml, destData);
+    juce::XmlElement root ("SALEK_STATE");
+    root.setAttribute ("version", 1);
+    root.setAttribute ("program", currentProgram);
+    if (auto ap = apvts.copyState().createXml())
+        root.addChildElement (new juce::XmlElement (*ap));
+    copyXmlToBinary (root, destData);
 }
 void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
-        if (xml->hasTagName (apvts.state.getType()))
+    {
+        if (xml->hasTagName ("SALEK_STATE"))
+        {
+            if (auto* ap = xml->getChildByName (apvts.state.getType()))
+                apvts.replaceState (juce::ValueTree::fromXml (*ap));
+            const int prog = xml->getIntAttribute ("program", -1);
+            if (prog >= 0 && prog < (int) factoryPresets.size())
+                currentProgram = prog;
+        }
+        else if (xml->hasTagName (apvts.state.getType()))
+        {
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
+        }
+    }
 }
 
 juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor()
