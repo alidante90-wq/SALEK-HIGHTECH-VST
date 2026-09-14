@@ -93,39 +93,69 @@ inline juce::Image anyEmbedded() { return {}; }
 
 inline juce::Image loadLogo()
 {
-    auto img = anyEmbedded();
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("lian_png");
     if (img.isValid()) return img;
-    img = fromDisk ({ "face.png", "lian.png", "OIP.webp", "b4ef89321df2b8f2c7bd314d352b8f42.jpg" });
+    img = anyEmbedded();
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "lian.png", "face.png", "OIP.webp" });
     return img.isValid() ? img : makeFallbackLogo();
 }
 
 inline juce::Image loadToronowla()
 {
-    auto img = anyEmbedded();
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("wp5627062_jpg");
     if (img.isValid()) return img;
-    img = fromDisk ({ "face.png", "lian.png", "akhd 1.png", "wp5627062.jpg",
-                      "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg" });
+    img = fromBinaryName ("b4ef89321df2b8f2c7bd314d352b8f42_jpg");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "wp5627062.jpg", "toronowla.png", "b4ef89321df2b8f2c7bd314d352b8f42.jpg" });
     return img.isValid() ? img : loadLogo();
 }
 
 inline juce::Image loadFace()
 {
-    auto img = fromDisk ({ "face.png" });
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("face_png");
     if (img.isValid()) return img;
-    return loadToronowla();
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "face.png" });
+    return img.isValid() ? img : loadToronowla();
 }
 
 inline juce::Image loadLian()
 {
-    auto img = fromDisk ({ "lian.png" });
-    return img.isValid() ? img : loadToronowla();
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("lian_png");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "lian.png" });
+    return img.isValid() ? img : loadFace();
 }
 
 inline juce::Image loadCyanGirl()
 {
-    auto img = fromDisk ({ "tumblr_rorujgb5gF1tpwuis_smart1.jpg", "face.png" });
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhqfullview_jpg");
+    if (img.isValid()) return img;
+    img = fromBinaryName ("OIP_webp");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg", "OIP.webp" });
     return img.isValid() ? img : loadFace();
 }
 
-inline juce::Image loadHero() { return loadToronowla(); }
+inline juce::Image loadHero() { return loadLian(); }
 }
