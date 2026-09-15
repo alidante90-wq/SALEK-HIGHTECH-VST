@@ -2,9 +2,16 @@
 void SalekHightechAudioProcessor::applyParamsToEngine()
 {
     auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
-    synthEngine.setOsc1Level(g("osc1_level")); synthEngine.setOsc2Level(g("osc2_level")); synthEngine.setOsc3Level(g("osc3_level"));
-    synthEngine.setOsc1TablePos(g("osc1_table")); synthEngine.setOsc2TablePos(g("osc2_table")); synthEngine.setOsc3TablePos(g("osc3_table"));
-    synthEngine.setOsc1Warp(g("osc1_warp")); synthEngine.setOsc2Warp(g("osc2_warp")); synthEngine.setOsc3Warp(g("osc3_warp"));
+    float o1l = juce::jlimit(0.f,1.f, g("osc1_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Level)*0.5f);
+    float o2l = juce::jlimit(0.f,1.f, g("osc2_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Level)*0.5f);
+    float o3l = juce::jlimit(0.f,1.f, g("osc3_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Level)*0.5f);
+    synthEngine.setOsc1Level(o1l); synthEngine.setOsc2Level(o2l); synthEngine.setOsc3Level(o3l);
+    synthEngine.setOsc1TablePos(juce::jlimit(0.f,1.f, g("osc1_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Table)*0.5f));
+    synthEngine.setOsc2TablePos(juce::jlimit(0.f,1.f, g("osc2_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Table)*0.5f));
+    synthEngine.setOsc3TablePos(juce::jlimit(0.f,1.f, g("osc3_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Table)*0.5f));
+    synthEngine.setOsc1Warp(juce::jlimit(0.f,1.f, g("osc1_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Warp)*0.5f));
+    synthEngine.setOsc2Warp(juce::jlimit(0.f,1.f, g("osc2_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Warp)*0.5f));
+    synthEngine.setOsc3Warp(juce::jlimit(0.f,1.f, g("osc3_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Warp)*0.5f));
     synthEngine.setOsc1Fold(g("osc1_fold")); synthEngine.setOsc2Fold(g("osc2_fold")); synthEngine.setOsc3Fold(g("osc3_fold"));
     synthEngine.setOsc1Drive(g("osc1_drive")); synthEngine.setOsc2Drive(g("osc2_drive")); synthEngine.setOsc3Drive(g("osc3_drive"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
@@ -19,7 +26,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     cut *= (0.85f + 0.15f * (1.0f - macroAmt) + macroAmt * 1.35f);
     cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
-    synthEngine.setFilterResonance(g("filter_reso"));
+    synthEngine.setFilterResonance(juce::jlimit(0.f,1.f, g("filter_reso")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterReso)*0.5f));
     synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(g("filter_env"));
     synthEngine.setFilterMode((int)g("filter_mode"));
     synthEngine.setAmpAttack(g("amp_attack")); synthEngine.setAmpDecay(g("amp_decay"));
@@ -27,11 +34,34 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
     synthEngine.setScaleMode((int)g("scale_mode"));
     synthEngine.setKoronCents(g("koron_cents"));
-    modMatrix.setSourceValue(salek::ModMatrix::Source::LFO1, std::sin((float)juce::Time::getMillisecondCounter() * 0.001f * g("lfo_rate") * juce::MathConstants<float>::twoPi));
-    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
-    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
-    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
-    modMatrix.setSourceValue(salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
+
+    auto setLfo = [] (salek::LFO& lfo, float rate, float amt, int wave)
+    {
+        lfo.setRate (rate);
+        lfo.setAmount (1.0f);
+        static const salek::LFO::Wave waves[] = {
+            salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
+            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH
+        };
+        lfo.setWave (waves[juce::jlimit (0, 4, wave)]);
+        juce::ignoreUnused (amt);
+    };
+    setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"));
+    setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"));
+    setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"));
+
+    float v1 = lfo1.process() * g("lfo_amount");
+    float v2 = lfo2.process() * g("lfo2_amount");
+    float v3 = lfo3.process() * g("lfo3_amount");
+    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
+        juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
     delay.setMix(g("delay_mix")); delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb"));
     chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
