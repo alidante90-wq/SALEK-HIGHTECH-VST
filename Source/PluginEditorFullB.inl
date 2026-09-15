@@ -137,17 +137,13 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    // MOD: matrix left, 10 knobs right (6 FM row + 4 macros) — no LFO overlap
     {
         auto r = modTab.getLocalBounds().reduced (6);
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (r.removeFromLeft (juce::jmax (320, r.getWidth() * 55 / 100)).reduced (2));
-
         auto right = r.reduced (4);
-        // row 1: FM/PM/RM/AM (6)
         auto row1 = right.removeFromTop (right.getHeight() / 2);
         place (row1, knobs, 29, 6, 3);
-        // row 2: Macros (4)
         place (right, knobs, 35, 4, 4);
     }
 
@@ -155,7 +151,6 @@ void SalekHightechAudioProcessorEditor::resized()
         auto r = lfoTab.getLocalBounds().reduced (8);
         if (lfoDisplay != nullptr)
             lfoDisplay->setBounds (r.removeFromTop (80).reduced (2));
-
         auto presetRow = r.removeFromTop (28);
         const int bw = presetRow.getWidth() / 6;
         lfoPresetSine.setBounds  (presetRow.removeFromLeft (bw).reduced (2));
@@ -164,100 +159,38 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoPresetSqr.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
         lfoPresetPulse.setBounds (presetRow.removeFromLeft (bw).reduced (2));
         lfoPresetCustom.setBounds(presetRow.reduced (2));
-
         auto waveRow = r.removeFromTop (28);
         lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (3));
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (3));
         lfo3WaveBox.setBounds (waveRow.reduced (3));
-
-        // LFO rate/amt knobs (indices 39..44) parented to lfoTab
         auto knobArea = r.removeFromBottom (110);
         place (knobArea, knobs, 39, 6, 6);
-
         lfoShapeEditor.setBounds (r.reduced (4));
     }
 
-    {
-        auto area = fxTab.getLocalBounds().reduced (8);
-        const int fxStart = 45;
-        struct Sec { int off; int count; };
-        const Sec secs2[6] = {
-            {0,3}, {3,3}, {6,3}, {9,2}, {22,3}, {25,3}
-        };
-        const int numSec = 6;
-        const int labelW = 90;
-        const int monW = 100;
-        const int rowH = juce::jmax (78, area.getHeight() / numSec);
-
-        for (int idx = fxStart + 11; idx < fxStart + 22; ++idx)
-            if (idx < (int) knobs.size())
-            {
-                knobs[(size_t) idx]->s.setBounds ({});
-                knobs[(size_t) idx]->name.setBounds ({});
-            }
-
-        for (int s = 0; s < numSec; ++s)
-        {
-            auto row = area.removeFromTop (rowH).reduced (2, 3);
-            if (s < fxSectionLabels.size())
-            {
-                auto head = row.removeFromLeft (labelW);
-                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 6, 24));
-                fxSectionLabels[s]->setVisible (true);
-            }
-            if (s < fxMonitors.size())
-            {
-                auto monArea = row.removeFromLeft (monW).reduced (2);
-                fxMonitors[s]->setBounds (monArea);
-                const int k0 = fxStart + secs2[s].off;
-                if (k0 < (int) knobs.size())
-                {
-                    float nv = (float) knobs[(size_t) k0]->s.getValue();
-                    float lv = juce::jlimit (0.f, 1.f, std::abs (nv) > 2.f ? std::abs (nv) / 20.f : std::abs (nv));
-                    if (secs2[s].off == 9) lv = (float) knobs[(size_t) k0]->s.getValue();
-                    fxMonitors[s]->setLevel (lv);
-                }
-            }
-            const int off = secs2[s].off;
-            const int cnt = secs2[s].count;
-            const int cellW = juce::jmin (130, juce::jmax (80, row.getWidth() / 4));
-            const int cellH = juce::jmin (row.getHeight(), 86);
-            for (int i = 0; i < cnt; ++i)
-            {
-                const int idx = fxStart + off + i;
-                if (idx < 0 || idx >= (int) knobs.size()) break;
-                auto* k = knobs[(size_t) idx].get();
-                auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
-                                                  row.getCentreY() - cellH / 2,
-                                                  cellW, cellH).reduced (5, 3);
-                if (cell.getHeight() < 28) continue;
-                k->name.setBounds (cell.removeFromBottom (13));
-                k->s.setBounds (cell);
-            }
-        }
-        for (int s = numSec; s < fxSectionLabels.size(); ++s)
-            fxSectionLabels[s]->setVisible (false);
-    }
+    #include "PluginEditorFullB_FxLayout.inl"
 
     {
         auto r = magicTab.getLocalBounds().reduced (10);
-        auto top = r.removeFromTop (36);
-        const int bw = top.getWidth() / 4;
-        magicLoopBtn.setBounds (top.removeFromLeft (bw).reduced (3));
-        magicGlitchBtn.setBounds (top.removeFromLeft (bw).reduced (3));
-        magicFlangeBtn.setBounds (top.removeFromLeft (bw).reduced (3));
-        magicPsychBtn.setBounds (top.reduced (3));
-        magicHint.setBounds (r.removeFromBottom (24));
+        auto top = r.removeFromTop (32);
+        const int bw = top.getWidth() / 5;
+        magicLoopBtn.setBounds (top.removeFromLeft (bw).reduced (2));
+        magicGlitchBtn.setBounds (top.removeFromLeft (bw).reduced (2));
+        magicFlangeBtn.setBounds (top.removeFromLeft (bw).reduced (2));
+        magicPsychBtn.setBounds (top.removeFromLeft (bw).reduced (2));
+        magicHold.setBounds (top.reduced (2));
+        magicHint.setBounds (r.removeFromBottom (22));
         if (magicPad != nullptr)
-            magicPad->setBounds (r.reduced (8));
+            magicPad->setBounds (r.reduced (6));
     }
 
     {
+        // FX now 24 knobs (45..68), SEQ starts at 69
         auto bounds = seqTab.getLocalBounds().reduced (8);
         auto top = bounds.removeFromTop (52);
         arpOn.setBounds (top.removeFromLeft (100).reduced (4));
         seqOn.setBounds (top.removeFromLeft (100).reduced (4));
-        place (top.removeFromRight (360).reduced (4), knobs, 73, 3, 3);
+        place (top.removeFromRight (360).reduced (4), knobs, 69, 3, 3);
         bounds.removeFromTop (8);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
