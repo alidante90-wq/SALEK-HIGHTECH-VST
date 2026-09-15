@@ -7,16 +7,16 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (pr.isHeader)
     {
         g.fillAll (juce::Colour (0xff12081c));
-        g.setColour (juce::Colour (0xff00f0ff));
+        g.setColour (themeAccent.isTransparent() ? juce::Colour (0xff00f0ff) : themeAccent);
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
         g.drawText ("  " + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
-        g.setColour (juce::Colour (0xffff2d6a).withAlpha (0.5f));
+        g.setColour (themeAccent2.withAlpha (0.5f));
         g.drawLine (4.0f, (float) height - 1.0f, (float) width - 4.0f, (float) height - 1.0f, 1.0f);
         return;
     }
     if (selected) g.fillAll (juce::Colour (0xff3a0066));
-    else g.fillAll (juce::Colour (0xff0a0614));
-    juce::Colour tc = selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffd0c0e0);
+    else g.fillAll (themePanelBg);
+    juce::Colour tc = selected ? themeAccent : juce::Colour (0xffd0c0e0);
     auto fullName = processor.getProgramName (pr.programIndex);
     if (fullName.startsWith ("Acid")) tc = selected ? tc : juce::Colour (0xffffcc44);
     if (fullName.startsWith ("Bass")) tc = selected ? tc : juce::Colour (0xff66ff99);
@@ -114,7 +114,7 @@ void SalekHightechAudioProcessorEditor::resized()
             auto nameRow = pb.removeFromTop (20);
             presetLabel.setBounds (nameRow.reduced (2, 0));
             presetLabel.setJustificationType (juce::Justification::centredLeft);
-            presetLabel.setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
+            presetLabel.setColour (juce::Label::textColourId, themeAccent);
             presetList.setBounds (pb);
         }
 
@@ -146,32 +146,48 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        auto area = fxTab.getLocalBounds().reduced (8);
+        // FX: label column + fixed-width knob cells (left-aligned, no sparse stretch)
+        auto area = fxTab.getLocalBounds().reduced (6);
         const int fxStart = 45;
         struct Sec { int off; int count; };
         const Sec secs2[10] = {
-            {0,3},{3,3},{6,3},{9,2},{11,3},{14,3},{17,4},{21,1},{22,3},{25,3}
+            {0,3},  // CHORUS
+            {3,3},  // DELAY
+            {6,3},  // REVERB
+            {9,2},  // MASTER
+            {11,3}, // COMP
+            {14,3}, // EQ
+            {17,4}, // SPATIAL
+            {21,1}, // INPUT
+            {22,3}, // PHASER
+            {25,3}  // DISTORT
         };
         const int numSec = 10;
-        const int rowH = juce::jmax (68, area.getHeight() / numSec);
+        const int labelW = 88;
+        const int knobCols = 4;
+        const int rowH = juce::jmax (62, area.getHeight() / numSec);
+
         for (int s = 0; s < numSec; ++s)
         {
-            auto row = area.removeFromTop (rowH).reduced (2, 1);
+            auto row = area.removeFromTop (rowH).reduced (1, 1);
             if (s < fxSectionLabels.size())
             {
-                auto head = row.removeFromLeft (100);
-                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (96, 22));
+                auto head = row.removeFromLeft (labelW);
+                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 4, 20));
                 fxSectionLabels[s]->setVisible (true);
             }
-            int off = secs2[s].off;
-            int cnt = secs2[s].count;
-            const int cw = row.getWidth() / juce::jmax (1, cnt);
+            const int off = secs2[s].off;
+            const int cnt = secs2[s].count;
+            const int cellW = juce::jmin (118, juce::jmax (72, row.getWidth() / knobCols));
+            const int cellH = juce::jmin (row.getHeight(), 78);
             for (int i = 0; i < cnt; ++i)
             {
                 const int idx = fxStart + off + i;
                 if (idx < 0 || idx >= (int) knobs.size()) break;
                 auto* k = knobs[(size_t) idx].get();
-                auto cell = juce::Rectangle<int> (row.getX() + i * cw, row.getY(), cw, row.getHeight()).reduced (3);
+                auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
+                                                  row.getCentreY() - cellH / 2,
+                                                  cellW, cellH).reduced (4, 2);
                 if (cell.getHeight() < 28) continue;
                 k->name.setBounds (cell.removeFromBottom (12));
                 k->s.setBounds (cell);
@@ -200,16 +216,66 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
     if (! faceImg.isValid()) faceImg = SalekAssets::loadFace();
     if (! cyanImg.isValid()) cyanImg = SalekAssets::loadCyanGirl();
 
-    if (id == 2) {
+    juce::Colour accent, accent2, panelBg, labelBg, labelTx;
+    if (id == 2) // ACID
+    {
         heroImg = faceImg.isValid() ? faceImg : (lianImg.isValid() ? lianImg : logoImg);
         heroIndex = 1;
-    } else if (id == 3) {
+        accent  = juce::Colour (0xffc0ff00);
+        accent2 = juce::Colour (0xffff6b00);
+        panelBg = juce::Colour (0xff0a1204);
+        labelBg = juce::Colour (0xff1a2a08);
+        labelTx = juce::Colour (0xffc0ff00);
+    }
+    else if (id == 3) // NEON
+    {
         heroImg = cyanImg.isValid() ? cyanImg : (faceImg.isValid() ? faceImg : lianImg);
         heroIndex = 2;
-    } else {
+        accent  = juce::Colour (0xffff2d9b);
+        accent2 = juce::Colour (0xff7c4dff);
+        panelBg = juce::Colour (0xff12061a);
+        labelBg = juce::Colour (0xff2a0a30);
+        labelTx = juce::Colour (0xffff66cc);
+    }
+    else // CYBER
+    {
         heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
         heroIndex = 0;
+        accent  = juce::Colour (0xff00e8ff);
+        accent2 = juce::Colour (0xffffd700);
+        panelBg = juce::Colour (0xff0a0614);
+        labelBg = juce::Colour (0xff1a0a30);
+        labelTx = juce::Colour (0xff00e8ff);
     }
+
+    tabs.setColour (juce::TabbedComponent::backgroundColourId, panelBg);
+    tabs.setColour (juce::TabbedComponent::outlineColourId, accent.withAlpha (0.35f));
+    for (int i = 0; i < fxSectionLabels.size(); ++i)
+    {
+        fxSectionLabels[i]->setColour (juce::Label::textColourId, labelTx);
+        fxSectionLabels[i]->setColour (juce::Label::backgroundColourId, labelBg);
+    }
+    presetLabel.setColour (juce::Label::textColourId, accent);
+    title.setColour (juce::Label::textColourId, accent);
+    tagline.setColour (juce::Label::textColourId, accent2);
+
+    for (size_t i = 0; i < knobs.size(); ++i)
+    {
+        auto c = (i % 2 == 0) ? accent : accent2;
+        knobs[i]->s.setColour (juce::Slider::rotarySliderFillColourId, c);
+        knobs[i]->s.setColour (juce::Slider::thumbColourId, c.brighter (0.2f));
+        knobs[i]->name.setColour (juce::Label::textColourId, c.withAlpha (0.85f));
+    }
+
+    presetList.setColour (juce::ListBox::backgroundColourId, panelBg);
+    presetList.setColour (juce::ListBox::outlineColourId, accent.withAlpha (0.3f));
+    savePresetBtn.setColour (juce::TextButton::textColourOffId, accent2);
+    loadPresetBtn.setColour (juce::TextButton::textColourOffId, accent);
+    bankBtn.setColour (juce::TextButton::textColourOffId, accent2);
+
+    themeAccent = accent;
+    themeAccent2 = accent2;
+    themePanelBg = panelBg;
     repaint();
 }
 
