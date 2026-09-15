@@ -46,12 +46,15 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xff00e8ff).withAlpha(0.35f)); g.drawRoundedRectangle(r,6.f,1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float a=gval("amp_attack",0.01f), d=gval("amp_decay",0.2f), s=gval("amp_sustain",0.7f), rel=gval("amp_release",0.3f);
-    float sum=a+d+0.4f+rel; auto plot=r.reduced(8.f,6.f);
+    // visual weight favors short times (matches skewed knobs)
+    auto mapT=[&](float t){ return std::pow (juce::jlimit(0.001f,1.f, t / 2.f), 0.55f); };
+    float wa=mapT(a), wd=mapT(d), wr=mapT(rel), ws=0.28f;
+    float sum=wa+wd+ws+wr; auto plot=r.reduced(8.f,6.f);
     juce::Path env;
     float x0=plot.getX(), y0=plot.getBottom();
-    float x1=x0+plot.getWidth()*(a/sum), y1=plot.getY();
-    float x2=x1+plot.getWidth()*(d/sum), y2=plot.getY()+plot.getHeight()*(1.f-s);
-    float x3=x2+plot.getWidth()*0.35f, y3=y2;
+    float x1=x0+plot.getWidth()*(wa/sum), y1=plot.getY();
+    float x2=x1+plot.getWidth()*(wd/sum), y2=plot.getY()+plot.getHeight()*(1.f-s);
+    float x3=x2+plot.getWidth()*(ws/sum), y3=y2;
     float x4=plot.getRight(), y4=plot.getBottom();
     env.startNewSubPath(x0,y0); env.lineTo(x1,y1); env.lineTo(x2,y2); env.lineTo(x3,y3); env.lineTo(x4,y4);
     g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(env, juce::PathStrokeType(1.6f));
@@ -71,14 +74,29 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xffff2d9b).withAlpha(0.4f)); g.drawRoundedRectangle(r,6.f,1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float cut=gval("filter_cutoff",1000.f); float reso=gval("filter_reso",0.3f);
-    float norm=juce::jlimit(0.f,1.f, std::log10(juce::jmax(20.f,cut)/20.f)/3.f);
+    // log map 20Hz..20kHz → 0..1
+    float norm=juce::jlimit(0.f,1.f, std::log (juce::jmax(20.f,cut)/20.f) / std::log (1000.f));
     juce::Path curve; auto plot=r.reduced(6.f,4.f);
-    for(int i=0;i<80;++i){ float t=(float)i/79.f; float x=plot.getX()+t*plot.getWidth();
-        float dd=t-norm; float y=plot.getBottom()-4.f;
-        if(t<norm) y=plot.getY()+plot.getHeight()*0.25f;
-        else y=plot.getY()+plot.getHeight()*0.25f + juce::jmin(plot.getHeight()*0.7f, dd*dd*800.f*(1.f-reso*0.5f));
-        if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);}
+    for(int i=0;i<96;++i){
+        float t=(float)i/95.f; float x=plot.getX()+t*plot.getWidth();
+        float dist = t - norm;
+        // passband height + resonance peak near cutoff
+        float yNorm = 0.55f;
+        if (dist > 0.f)
+            yNorm = 0.55f * std::exp (-dist * dist * (18.f + (1.f - reso) * 40.f));
+        else
+            yNorm = 0.55f + 0.08f * (1.f - std::exp (dist * 6.f));
+        // resonance peak
+        float peak = reso * 0.55f * std::exp (-dist * dist * 220.f);
+        yNorm += peak;
+        float y = plot.getBottom() - juce::jlimit (0.05f, 0.95f, yNorm) * plot.getHeight();
+        if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);
+    }
     g.setColour(juce::Colour(0xffff2d9b)); g.strokePath(curve, juce::PathStrokeType(1.8f));
+    // cutoff marker
+    float mx = plot.getX() + norm * plot.getWidth();
+    g.setColour(juce::Colour(0xffffd700).withAlpha(0.5f));
+    g.drawVerticalLine ((int) mx, plot.getY(), plot.getBottom());
 }
 
 class LfoDisplay : public juce::Component, private juce::Timer {
@@ -183,6 +201,7 @@ private:
     int lfoShapeTarget = 0;
     std::unique_ptr<MagicPad> magicPad;
     juce::TextButton magicLoopBtn, magicGlitchBtn, magicFlangeBtn, magicPsychBtn;
+    juce::TextButton magicHold { "HOLD" };
     juce::Label magicHint;
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
@@ -190,6 +209,7 @@ private:
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
     juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
     int heroIndex = 0;
+    bool sideCollapsed = false;
     void applyHeroFromTheme();
     void cycleHero();
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
