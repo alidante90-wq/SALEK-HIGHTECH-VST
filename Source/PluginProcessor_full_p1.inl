@@ -44,7 +44,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
     C("filter_mode","F Mode",{"LowPass","HighPass","BandPass","Notch"},0);
-    // Skewed ADSR — fine control in short range, long times still available
     Fs("amp_attack","Attack",0.001f,5.0f,0.35f,0.01f);
     Fs("amp_decay","Decay",0.005f,5.0f,0.4f,0.25f);
     F("amp_sustain","Sustain",0,1,0.7f);
@@ -59,7 +58,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
     F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
-    C("reverb_mode","Reverb Mode",{"Room","Hall","Plate"},0);
+    C("reverb_mode","Reverb Mode",{"Room","Hall","Plate","Chamber","Spring"},0);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
@@ -70,8 +69,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("input_mix","Input Mix",0,1,0);
     F("phaser_mix","Phaser Mix",0,1,0); F("phaser_rate","Phaser Rate",0.05f,8,0.4f); F("phaser_depth","Phaser Depth",0,1,0.6f);
     F("dist_mix","Dist Mix",0,1,0); F("dist_drive","Dist Drive",0,1,0.3f); F("dist_crush","Bitcrush",0,1,0);
-    C("dist_mode","Dist Mode",{"Tube","Hard","Fold","Rectify"},0);
-    F("bassify","Bassify",0,1,0); // dubstep / bass grit
+    C("dist_mode","Dist Mode",{"Tube","Sat","Hard","Fold","Bit","Rect"},0);
+    F("bassify","Bassify",0,1,0);
     C("scale_mode","Scale",{"Equal 12-TET","Shur","Segah","Homayun","Mahur","Free Koron"},0);
     F("koron_cents","Koron Cents",-50,50,0);
     F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
