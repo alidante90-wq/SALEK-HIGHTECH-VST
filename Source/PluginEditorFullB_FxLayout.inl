@@ -1,8 +1,10 @@
-    // FX 8 rows — indices after LFO (45):
-    // 0-2 chorus, 3-5 delay, 6-8 reverb, 9-11 master+bassify,
-    // 12-14 comp, 15-17 eq, 18-20 phaser, 21-23 dist
+    // FX 8 rows + mode combos for Reverb/Dist
     {
         auto area = fxTab.getLocalBounds().reduced (6);
+        auto modeRow = area.removeFromTop (26);
+        reverbModeBox.setBounds (modeRow.removeFromLeft (140).reduced (2));
+        distModeBox.setBounds (modeRow.removeFromLeft (140).reduced (2));
+
         const int fxStart = 45;
         struct Sec { int off; int count; };
         const Sec secs2[8] = {
@@ -11,15 +13,15 @@
         const int numSec = 8;
         const int labelW = 78;
         const int monW = 72;
-        const int rowH = juce::jmax (62, area.getHeight() / numSec);
+        const int rowH = juce::jmax (56, area.getHeight() / numSec);
 
         for (int s = 0; s < numSec; ++s)
         {
-            auto row = area.removeFromTop (rowH).reduced (1, 2);
+            auto row = area.removeFromTop (rowH).reduced (1, 1);
             if (s < fxSectionLabels.size())
             {
                 auto head = row.removeFromLeft (labelW);
-                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 4, 20));
+                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 4, 18));
                 fxSectionLabels[s]->setVisible (true);
             }
             if (s < fxMonitors.size())
@@ -34,10 +36,11 @@
                     fxMonitors[s]->setLevel (lv);
                 }
             }
+            // REVERB row: leave space already used by mode combo at top
             const int off = secs2[s].off;
             const int cnt = secs2[s].count;
-            const int cellW = juce::jmin (120, juce::jmax (70, row.getWidth() / juce::jmax (1, cnt)));
-            const int cellH = juce::jmin (row.getHeight(), 72);
+            const int cellW = juce::jmin (110, juce::jmax (64, row.getWidth() / juce::jmax (1, cnt)));
+            const int cellH = juce::jmin (row.getHeight(), 68);
             for (int i = 0; i < cnt; ++i)
             {
                 const int idx = fxStart + off + i;
@@ -45,9 +48,9 @@
                 auto* k = knobs[(size_t) idx].get();
                 auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
                                                   row.getCentreY() - cellH / 2,
-                                                  cellW, cellH).reduced (4, 2);
-                if (cell.getHeight() < 24) continue;
-                k->name.setBounds (cell.removeFromBottom (12));
+                                                  cellW, cellH).reduced (3, 1);
+                if (cell.getHeight() < 22) continue;
+                k->name.setBounds (cell.removeFromBottom (11));
                 k->s.setBounds (cell);
             }
         }
