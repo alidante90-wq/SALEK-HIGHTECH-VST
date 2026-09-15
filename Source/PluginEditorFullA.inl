@@ -27,7 +27,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (title);
     tagline.setText ("ALIEN", juce::dontSendNotification);
     addAndMakeVisible (tagline);
+    scope.setFifo (&processor.getVisualFifo());
+    spectrum.setFifo (&processor.getVisualFifo());
     addAndMakeVisible (scope);
+    addAndMakeVisible (spectrum);
     wtDisplay = std::make_unique<WavetableDisplay> (processor.getAPVTS());
     addAndMakeVisible (*wtDisplay);
     adsrDisplay = std::make_unique<AdsrDisplay> (processor.getAPVTS());
