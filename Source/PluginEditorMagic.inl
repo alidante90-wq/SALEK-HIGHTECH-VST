@@ -1,7 +1,9 @@
-// MAGIC tab: Kaossilator-style hex pad + mode buttons
+// MAGIC tab: Kaossilator-style hex pad + mode buttons (v2)
 {
     magicPad = std::make_unique<MagicPad>();
     magicTab.addAndMakeVisible (*magicPad);
+    magicPad->setModeColour (juce::Colour (0xff00e8ff));
+    magicPad->setModeName ("LOOP");
     magicPad->onChange = [this] (float mx, float my, bool act)
     {
         if (auto* px = processor.getAPVTS().getParameter ("magic_x"))
@@ -16,8 +18,8 @@
 
     auto styleBtn = [] (juce::TextButton& b, juce::Colour c)
     {
-        b.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a30));
-        b.setColour (juce::TextButton::buttonOnColourId, c.darker (0.2f));
+        b.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
+        b.setColour (juce::TextButton::buttonOnColourId, c.darker (0.15f));
         b.setColour (juce::TextButton::textColourOffId, c);
         b.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
         b.setClickingTogglesState (true);
@@ -51,15 +53,19 @@
             magicPad->setModeName (name);
         }
     };
-    magicLoopBtn.onClick  = [setMode] { setMode (0, juce::Colour (0xff00e8ff), "LOOP"); };
+    magicLoopBtn.onClick   = [setMode] { setMode (0, juce::Colour (0xff00e8ff), "LOOP"); };
     magicGlitchBtn.onClick = [setMode] { setMode (1, juce::Colour (0xffff2d9b), "GLITCH"); };
     magicFlangeBtn.onClick = [setMode] { setMode (2, juce::Colour (0xff39ff14), "FLANGE+VERB"); };
     magicPsychBtn.onClick  = [setMode] { setMode (3, juce::Colour (0xffffd700), "PSYCHEDELIC"); };
 
-    magicHint.setText ("Touch the hex — X/Y morph the selected MAGIC effect  |  release = bypass",
-                       juce::dontSendNotification);
+    magicHint.setText (
+        "Touch hex = engage  |  X/Y morph effect  |  Release = smooth bypass  |  LOOP freezes on touch",
+        juce::dontSendNotification);
     magicHint.setJustificationType (juce::Justification::centred);
     magicHint.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
-    magicHint.setFont (juce::FontOptions (12.f));
+    magicHint.setFont (juce::FontOptions (11.5f));
     magicTab.addAndMakeVisible (magicHint);
+
+    // ensure engine mode matches default UI
+    processor.getMagic().setMode (0);
 }
