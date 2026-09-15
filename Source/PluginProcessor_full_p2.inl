@@ -65,8 +65,10 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     delay.setMix(g("delay_mix")); delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb"));
     chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
+    reverb.setMode ((int) g("reverb_mode"));
     phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
+    distortion.setMode ((int) g("dist_mode"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
@@ -114,6 +116,30 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     midi.swapWith (routed);
     synthEngine.processBlock(buffer, midi);
+
+    // Bassify: low-shelf-ish boost + soft grit (dubstep noise colour)
+    const float bassify = apvts.getRawParameterValue("bassify")->load();
+    if (bassify > 1e-4f)
+    {
+        static float lpL = 0.f, lpR = 0.f;
+        const float coeff = 0.08f + bassify * 0.12f;
+        const float grit = bassify * 0.35f;
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float L = buffer.getSample (0, i);
+            float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
+            lpL += coeff * (L - lpL);
+            lpR += coeff * (R - lpR);
+            float subL = lpL * (1.f + bassify * 1.8f);
+            float subR = lpR * (1.f + bassify * 1.8f);
+            // subtle even-order grit
+            subL = subL + grit * subL * subL * (subL >= 0.f ? 1.f : -1.f);
+            subR = subR + grit * subR * subR * (subR >= 0.f ? 1.f : -1.f);
+            buffer.setSample (0, i, L * (1.f - bassify * 0.3f) + subL * bassify * 0.55f);
+            if (buffer.getNumChannels() > 1)
+                buffer.setSample (1, i, R * (1.f - bassify * 0.3f) + subR * bassify * 0.55f);
+        }
+    }
 
     float drive = apvts.getRawParameterValue("master_drive")->load();
     if (drive > 1e-4f)
