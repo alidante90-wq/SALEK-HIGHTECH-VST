@@ -154,59 +154,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto O = juce::Colour (0xff39ff14);
         const auto V = juce::Colour (0xffc0ff00);
         const auto G = juce::Colour (0xff7c4dff);
-        addKnob (fxTab, "chorus_mix", "CHORUS", O);
-        addKnob (fxTab, "chorus_rate", "C RATE", C);
-        addKnob (fxTab, "chorus_depth", "C DEPTH", M);
-        addKnob (fxTab, "delay_mix", "DELAY", O);
-        addKnob (fxTab, "delay_time", "D TIME", C);
-        addKnob (fxTab, "delay_fb", "D FB", M);
-        addKnob (fxTab, "reverb_mix", "REVERB", O);
-        addKnob (fxTab, "reverb_size", "R SIZE", C);
-        addKnob (fxTab, "reverb_decay", "R DECAY", M);
-        addKnob (fxTab, "master_drive", "DRIVE", M);
-        addKnob (fxTab, "master_gain", "GAIN", G);
-        addKnob (fxTab, "comp_threshold", "C THR", O);
-        addKnob (fxTab, "comp_ratio", "C RATIO", M);
-        addKnob (fxTab, "comp_mix", "C MIX", C);
-        addKnob (fxTab, "eq_low", "EQ LOW", G);
-        addKnob (fxTab, "eq_mid", "EQ MID", O);
-        addKnob (fxTab, "eq_high", "EQ HI", M);
-        addKnob (fxTab, "spatial_azim", "AZIM", C);
-        addKnob (fxTab, "spatial_dist", "DIST", O);
-        addKnob (fxTab, "spatial_size", "SIZE", M);
-        addKnob (fxTab, "spatial_elev", "ELEV", G);
-        addKnob (fxTab, "input_mix", "IN MIX", V);
-        addKnob (fxTab, "phaser_mix", "PHASER", O);
-        addKnob (fxTab, "phaser_rate", "P RATE", C);
-        addKnob (fxTab, "phaser_depth", "P DEPTH", M);
-        addKnob (fxTab, "dist_mix", "DIST", G);
-        addKnob (fxTab, "dist_drive", "D DRV", M);
-        addKnob (fxTab, "dist_crush", "CRUSH", O);
-
-        const char* secs[] = { "CHORUS", "DELAY", "REVERB", "MASTER", "PHASER", "DISTORT" };
-        const FxMonitor::Kind kinds[] = {
-            FxMonitor::Chorus, FxMonitor::Delay, FxMonitor::Reverb,
-            FxMonitor::Master, FxMonitor::Phaser, FxMonitor::Dist
-        };
-        juce::Colour monCols[] = {
-            juce::Colour (0xff39ff14), juce::Colour (0xff00e8ff), juce::Colour (0xff7c4dff),
-            juce::Colour (0xffffd700), juce::Colour (0xffff2d9b), juce::Colour (0xffff6b00)
-        };
-        for (int i = 0; i < 6; ++i)
-        {
-            auto* lab = fxSectionLabels.add (new juce::Label());
-            lab->setText (secs[i], juce::dontSendNotification);
-            lab->setJustificationType (juce::Justification::centred);
-            lab->setFont (juce::FontOptions (12.0f, juce::Font::bold));
-            lab->setColour (juce::Label::textColourId, monCols[i]);
-            lab->setColour (juce::Label::backgroundColourId, juce::Colour (0xff1a0a30));
-            fxTab.addAndMakeVisible (lab);
-            auto* mon = fxMonitors.add (new FxMonitor());
-            mon->setKind (kinds[i]);
-            mon->setAccent (monCols[i]);
-            mon->setLevel (0.4f);
-            fxTab.addAndMakeVisible (mon);
-        }
+        #include "PluginEditorFxSections.inl"
     }
 
     {
