@@ -5,6 +5,7 @@
 #include "UI/OpenGLGridBackdrop.h"
 #include "UI/SonicCoreGL.h"
 #include "UI/MagicPad.h"
+#include "UI/OscShapeMonitor.h"
 
 #include "PluginEditorLookAndFeel.inl"
 #include "PluginEditorFxLfo.inl"
@@ -46,7 +47,6 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xff00e8ff).withAlpha(0.35f)); g.drawRoundedRectangle(r,6.f,1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float a=gval("amp_attack",0.01f), d=gval("amp_decay",0.2f), s=gval("amp_sustain",0.7f), rel=gval("amp_release",0.3f);
-    // visual weight favors short times (matches skewed knobs)
     auto mapT=[&](float t){ return std::pow (juce::jlimit(0.001f,1.f, t / 2.f), 0.55f); };
     float wa=mapT(a), wd=mapT(d), wr=mapT(rel), ws=0.28f;
     float sum=wa+wd+ws+wr; auto plot=r.reduced(8.f,6.f);
@@ -74,26 +74,22 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xffff2d9b).withAlpha(0.4f)); g.drawRoundedRectangle(r,6.f,1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float cut=gval("filter_cutoff",1000.f); float reso=gval("filter_reso",0.3f);
-    // log map 20Hz..20kHz → 0..1
     float norm=juce::jlimit(0.f,1.f, std::log (juce::jmax(20.f,cut)/20.f) / std::log (1000.f));
     juce::Path curve; auto plot=r.reduced(6.f,4.f);
     for(int i=0;i<96;++i){
         float t=(float)i/95.f; float x=plot.getX()+t*plot.getWidth();
         float dist = t - norm;
-        // passband height + resonance peak near cutoff
         float yNorm = 0.55f;
         if (dist > 0.f)
             yNorm = 0.55f * std::exp (-dist * dist * (18.f + (1.f - reso) * 40.f));
         else
             yNorm = 0.55f + 0.08f * (1.f - std::exp (dist * 6.f));
-        // resonance peak
         float peak = reso * 0.55f * std::exp (-dist * dist * 220.f);
         yNorm += peak;
         float y = plot.getBottom() - juce::jlimit (0.05f, 0.95f, yNorm) * plot.getHeight();
         if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);
     }
     g.setColour(juce::Colour(0xffff2d9b)); g.strokePath(curve, juce::PathStrokeType(1.8f));
-    // cutoff marker
     float mx = plot.getX() + norm * plot.getWidth();
     g.setColour(juce::Colour(0xffffd700).withAlpha(0.5f));
     g.drawVerticalLine ((int) mx, plot.getY(), plot.getBottom());
@@ -175,6 +171,7 @@ private:
     std::unique_ptr<ModMatrixPanel> matrixPanel;
     std::unique_ptr<OpenGLGridBackdrop> glBackdrop;
     std::unique_ptr<SonicCoreGL> sonicCore;
+    std::unique_ptr<OscShapeMonitor> oscMon1, oscMon2, oscMon3;
     juce::VBlankAttachment vblank;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
     struct Knob { juce::Slider s; juce::Label name; };
@@ -187,6 +184,7 @@ private:
     juce::ComboBox themeBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
+    juce::ComboBox distModeBox, reverbModeBox;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
     juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" }, savePresetBtn { "SAVE" }, loadPresetBtn { "LOAD" }, bankBtn { "BANK" };
     juce::Label presetLabel, title, tagline;
@@ -197,7 +195,9 @@ private:
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
-                     lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" };
+                     lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" },
+                     lfoPresetExp { "EXP" }, lfoPresetLog { "LOG" }, lfoPresetBell { "BELL" },
+                     lfoPresetWob { "WOB" }, lfoPresetChaos { "CHAOS" }, lfoPresetGate { "GATE" };
     int lfoShapeTarget = 0;
     std::unique_ptr<MagicPad> magicPad;
     juce::TextButton magicLoopBtn, magicGlitchBtn, magicFlangeBtn, magicPsychBtn;
