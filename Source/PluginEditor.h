@@ -28,23 +28,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
     g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(wave, juce::PathStrokeType(1.5f));
 }
 
-class ScopeDisplay : public juce::Component, private juce::Timer {
-public:
-    ScopeDisplay() { startTimerHz(24); }
-    void paint (juce::Graphics& g) override {
-        auto r = getLocalBounds().toFloat().reduced(1.f);
-        g.setColour(juce::Colour(0xff0a0614)); g.fillRoundedRectangle(r, 4.f);
-        g.setColour(juce::Colour(0xff00e8ff).withAlpha(0.5f)); g.drawRoundedRectangle(r, 4.f, 1.f);
-        juce::Path p; const int N=48;
-        for(int i=0;i<N;++i){ float t=(float)i/(N-1); float y=std::sin(t*6.28f*2.f+phase)*0.4f;
-            float x=r.getX()+4+t*(r.getWidth()-8); float py=r.getCentreY()+y*r.getHeight()*0.4f;
-            if(i==0)p.startNewSubPath(x,py); else p.lineTo(x,py);}
-        g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(p, juce::PathStrokeType(1.2f));
-    }
-    void timerCallback() override { phase += 0.15f; repaint(); }
-private:
-    float phase = 0.f;
-};
+#include "PluginEditorVisualizers.inl"
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
@@ -163,6 +147,7 @@ private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;
     ScopeDisplay scope;
+    SpectrumDisplay spectrum;
     std::unique_ptr<WavetableDisplay> wtDisplay;
     std::unique_ptr<AdsrDisplay> adsrDisplay;
     std::unique_ptr<FilterCurveDisplay> filterDisplay;
