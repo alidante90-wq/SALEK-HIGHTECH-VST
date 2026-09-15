@@ -44,11 +44,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("amp_attack","Attack",0.001f,5,0.01f); F("amp_decay","Decay",0.01f,5,0.25f);
     F("amp_sustain","Sustain",0,1,0.7f); F("amp_release","Release",0.01f,8,0.4f);
     F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.5f);
-    C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H"},0);
+    C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);
     F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.5f);
-    C("lfo2_wave","LFO2 Wave",{"Sine","Triangle","Saw","Square","S&H"},0);
+    C("lfo2_wave","LFO2 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);
     F("lfo3_rate","LFO3 Rate",0.01f,30,2.f); F("lfo3_amount","LFO3 Amt",0,1,0.5f);
-    C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H"},0);
+    C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);
     F("macro1","Macro 1",0,1,0); F("macro2","Macro 2",0,1,0); F("macro3","Macro 3",0,1,0); F("macro4","Macro 4",0,1,0);
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
