@@ -5,7 +5,7 @@
 class FxMonitor : public juce::Component, private juce::Timer
 {
 public:
-    enum Kind { Chorus, Delay, Reverb, Master, Phaser, Dist };
+    enum Kind { Chorus, Delay, Reverb, Master, Comp, EQ, Phaser, Dist };
     FxMonitor() { startTimerHz (24); }
     void setKind (Kind k) { kind = k; }
     void setLevel (float v) { level = juce::jlimit (0.f, 1.f, v); }
@@ -34,6 +34,9 @@ public:
                 case Reverb:  y = (std::sin (x * 20.f + t * 2.f) * 0.15f
                                   + std::sin (x * 7.f + t) * 0.2f) * (0.3f + level); break;
                 case Master:  y = juce::jlimit (-0.45f, 0.45f, level * 0.5f * std::sin (x * 8.f + t)); break;
+                case Comp:    y = std::tanh (std::sin (x * 5.f + t) * (0.5f + level)) * 0.35f; break;
+                case EQ:      y = std::sin (x * 4.f + t) * 0.2f
+                                  + std::sin (x * 14.f + t * 1.5f) * 0.15f * level; break;
                 case Phaser:  y = std::sin (x * 8.f + t * 2.f + std::sin (t) * 2.f) * 0.35f * (0.3f + level); break;
                 case Dist:    {
                     float s = std::sin (x * 6.f + t);
@@ -59,7 +62,7 @@ private:
     juce::Colour accent { 0xff00e8ff };
 };
 
-/** Editable LFO shape (16 points) — drag to draw custom waveform */
+/** Editable LFO shape — Shift=linear interpolate neighbors, Alt=smooth nearby */
 class LfoShapeEditor : public juce::Component
 {
 public:
@@ -118,23 +121,50 @@ public:
 
         g.setColour (juce::Colour (0xffffd700).withAlpha (0.85f));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("CUSTOM SHAPE — drag points",
+        g.drawText ("CUSTOM SHAPE  |  drag  |  Shift=linear  |  Alt=smooth",
                     getLocalBounds().removeFromTop (14).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
-    void mouseDown (const juce::MouseEvent& e) override { dragAt (e.position); }
-    void mouseDrag (const juce::MouseEvent& e) override { dragAt (e.position); }
+    void mouseDown (const juce::MouseEvent& e) override { dragAt (e); }
+    void mouseDrag (const juce::MouseEvent& e) override { dragAt (e); }
 private:
     salek::LFO* lfo = nullptr;
     float points[16] {};
-    void dragAt (juce::Point<float> pos)
+    void dragAt (const juce::MouseEvent& e)
     {
         auto plot = getLocalBounds().toFloat().reduced (12.f, 16.f);
         if (plot.getWidth() < 1) return;
-        int idx = juce::jlimit (0, 15, (int) std::round ((pos.x - plot.getX()) / plot.getWidth() * 15.f));
-        float v = juce::jlimit (-1.f, 1.f, (plot.getCentreY() - pos.y) / (plot.getHeight() * 0.45f));
+        int idx = juce::jlimit (0, 15, (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * 15.f));
+        float v = juce::jlimit (-1.f, 1.f, (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
         points[idx] = v;
-        if (lfo) lfo->setCustomPoint (idx, v);
+
+        if (e.mods.isShiftDown())
+        {
+            // linear ramp from previous anchor to this point
+            int left = juce::jmax (0, idx - 1);
+            for (int i = left; i <= idx; ++i)
+            {
+                float t = (idx == left) ? 1.f : (float) (i - left) / (float) (idx - left);
+                points[i] = points[left] * (1.f - t) + v * t;
+                if (lfo) lfo->setCustomPoint (i, points[i]);
+            }
+        }
+        else if (e.mods.isAltDown())
+        {
+            // soft smooth neighbors
+            for (int d = -2; d <= 2; ++d)
+            {
+                int j = idx + d;
+                if (j < 0 || j > 15) continue;
+                float w = 1.f - std::abs (d) * 0.35f;
+                points[j] = points[j] * (1.f - w * 0.5f) + v * (w * 0.5f);
+                if (lfo) lfo->setCustomPoint (j, points[j]);
+            }
+        }
+        else
+        {
+            if (lfo) lfo->setCustomPoint (idx, v);
+        }
         repaint();
     }
 };

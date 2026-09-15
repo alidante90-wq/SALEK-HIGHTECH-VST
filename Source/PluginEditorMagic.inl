@@ -1,4 +1,4 @@
-// MAGIC tab: Kaossilator-style hex pad + mode buttons (v2)
+// MAGIC tab: Kaossilator pad + HOLD (latch) + mode buttons
 {
     magicPad = std::make_unique<MagicPad>();
     magicTab.addAndMakeVisible (*magicPad);
@@ -10,10 +10,12 @@
             px->setValueNotifyingHost (px->convertTo0to1 (mx));
         if (auto* py = processor.getAPVTS().getParameter ("magic_y"))
             py->setValueNotifyingHost (py->convertTo0to1 (my));
+        // HOLD latches FX on; otherwise follow finger
+        const bool on = magicHold.getToggleState() ? true : act;
         if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
-            pa->setValueNotifyingHost (act ? 1.f : 0.f);
+            pa->setValueNotifyingHost (on ? 1.f : 0.f);
         processor.getMagic().setXY (mx, my);
-        processor.getMagic().setActive (act);
+        processor.getMagic().setActive (on);
     };
 
     auto styleBtn = [] (juce::TextButton& b, juce::Colour c)
@@ -28,15 +30,34 @@
     styleBtn (magicGlitchBtn, juce::Colour (0xffff2d9b));
     styleBtn (magicFlangeBtn, juce::Colour (0xff39ff14));
     styleBtn (magicPsychBtn, juce::Colour (0xffffd700));
+    styleBtn (magicHold, juce::Colour (0xffffaa00));
     magicLoopBtn.setButtonText ("LOOP");
     magicGlitchBtn.setButtonText ("GLITCH");
     magicFlangeBtn.setButtonText ("FLANGE+VERB");
     magicPsychBtn.setButtonText ("PSYCHEDELIC");
+    magicHold.setButtonText ("HOLD");
     magicLoopBtn.setToggleState (true, juce::dontSendNotification);
     magicTab.addAndMakeVisible (magicLoopBtn);
     magicTab.addAndMakeVisible (magicGlitchBtn);
     magicTab.addAndMakeVisible (magicFlangeBtn);
     magicTab.addAndMakeVisible (magicPsychBtn);
+    magicTab.addAndMakeVisible (magicHold);
+
+    magicHold.onClick = [this]
+    {
+        if (! magicHold.getToggleState())
+        {
+            if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+                pa->setValueNotifyingHost (0.f);
+            processor.getMagic().setActive (false);
+        }
+        else
+        {
+            if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+                pa->setValueNotifyingHost (1.f);
+            processor.getMagic().setActive (true);
+        }
+    };
 
     auto setMode = [this] (int m, juce::Colour col, const char* name)
     {
@@ -59,13 +80,12 @@
     magicPsychBtn.onClick  = [setMode] { setMode (3, juce::Colour (0xffffd700), "PSYCHEDELIC"); };
 
     magicHint.setText (
-        "Touch hex = engage  |  X/Y morph effect  |  Release = smooth bypass  |  LOOP freezes on touch",
+        "HOLD = latch FX on (no cut on release)  |  Drag XY to morph  |  Modes are exclusive",
         juce::dontSendNotification);
     magicHint.setJustificationType (juce::Justification::centred);
     magicHint.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
     magicHint.setFont (juce::FontOptions (11.5f));
     magicTab.addAndMakeVisible (magicHint);
 
-    // ensure engine mode matches default UI
     processor.getMagic().setMode (0);
 }
