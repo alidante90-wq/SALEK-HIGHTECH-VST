@@ -1,17 +1,18 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Synth/SynthEngine.h"
-#include "Effects/SimpleDelay.h"
-#include "Effects/SimpleChorus.h"
-#include "Effects/SimpleReverb.h"
-#include "Effects/SimpleCompressor.h"
-#include "Effects/SimpleEQ.h"
-#include "Effects/SimpleSpatial.h"
-#include "Effects/SimplePhaser.h"
-#include "Effects/SimpleDistortion.h"
+#include "FX/SimpleDelay.h"
+#include "FX/SimpleChorus.h"
+#include "FX/SimpleReverb.h"
+#include "FX/SimpleCompressor.h"
+#include "FX/SimpleEQ.h"
+#include "FX/SimpleSpatial.h"
+#include "FX/SimplePhaser.h"
+#include "FX/SimpleDistortion.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
+#include "Modulation/LFO.h"
 #include "UI/VisualFifo.h"
 #include <map>
 #include <vector>
@@ -84,6 +85,7 @@ private:
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
+    salek::LFO lfo1, lfo2, lfo3;
     juce::MidiKeyboardState keyboardState;
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
