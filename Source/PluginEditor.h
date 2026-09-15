@@ -4,6 +4,7 @@
 #include "UI/ModMatrixPanel.h"
 #include "UI/OpenGLGridBackdrop.h"
 #include "UI/SonicCoreGL.h"
+#include "UI/MagicPad.h"
 
 #include "PluginEditorLookAndFeel.inl"
 #include "PluginEditorFxLfo.inl"
@@ -164,7 +165,7 @@ private:
     std::vector<std::unique_ptr<SAtt>> atts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
-    juce::Component mainTab, oscTab, filterTab, envTab, modTab, lfoTab, fxTab, seqTab, presetTab, modularTab;
+    juce::Component mainTab, oscTab, filterTab, envTab, modTab, lfoTab, fxTab, magicTab, seqTab, presetTab, modularTab;
     juce::ComboBox themeBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
@@ -180,6 +181,9 @@ private:
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
                      lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" };
     int lfoShapeTarget = 0;
+    std::unique_ptr<MagicPad> magicPad;
+    juce::TextButton magicLoopBtn, magicGlitchBtn, magicFlangeBtn, magicPsychBtn;
+    juce::Label magicHint;
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
