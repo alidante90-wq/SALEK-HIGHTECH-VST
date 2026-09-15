@@ -54,6 +54,9 @@ public:
     salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     salek::Arpeggiator& getArpeggiator() { return arpeggiator; }
     salek::ModMatrix& getModMatrix() { return modMatrix; }
+    salek::LFO& getLfo1() { return lfo1; }
+    salek::LFO& getLfo2() { return lfo2; }
+    salek::LFO& getLfo3() { return lfo3; }
 
     juce::StringArray getPresetNames() const;
     int saveCurrentAsUserPreset (const juce::String& name);
