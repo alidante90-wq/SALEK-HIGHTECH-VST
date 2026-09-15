@@ -24,24 +24,53 @@ public:
     }
     std::array<float, TableSize>& getTable() noexcept { return customTable; }
     const std::array<float, TableSize>& getTable() const noexcept { return customTable; }
+
+    /** Serum-inspired shape bank (0..15) written into custom table */
     void loadPresetShape (int preset) noexcept
     {
+        const float twoPi = juce::MathConstants<float>::twoPi;
         for (int i = 0; i < TableSize; ++i)
         {
             float t = (float) i / (float) (TableSize - 1);
             float v = 0.f;
             switch (preset)
             {
-                case 0: v = std::sin (t * juce::MathConstants<float>::twoPi); break;
-                case 1: v = 1.f - 4.f * std::abs (t - 0.5f); break;
-                case 2: v = 2.f * t - 1.f; break;
-                case 3: v = t < 0.5f ? 1.f : -1.f; break;
-                case 4: v = t < 0.25f ? 1.f : -1.f; break;
-                case 5: v = t * t * 2.f - 1.f; break;
-                case 6: v = std::sin (t * juce::MathConstants<float>::twoPi * 2.f) * (1.f - t); break;
-                default: v = (i % 3 == 0) ? 1.f : ((i % 3 == 1) ? -0.5f : 0.2f); break;
+                case 0:  // sine
+                    v = std::sin (t * twoPi); break;
+                case 1:  // triangle
+                    v = 1.f - 4.f * std::abs (t - 0.5f); break;
+                case 2:  // saw up
+                    v = 2.f * t - 1.f; break;
+                case 3:  // saw down
+                    v = 1.f - 2.f * t; break;
+                case 4:  // square 50%
+                    v = t < 0.5f ? 1.f : -1.f; break;
+                case 5:  // pulse 25%
+                    v = t < 0.25f ? 1.f : -1.f; break;
+                case 6:  // pulse 12%
+                    v = t < 0.12f ? 1.f : -1.f; break;
+                case 7:  // exponential rise (pluck / filter snap)
+                    v = 2.f * (1.f - std::exp (-4.f * t)) - 1.f; break;
+                case 8:  // exponential fall
+                    v = 2.f * std::exp (-4.f * t) - 1.f; break;
+                case 9:  // log / slow attack curve
+                    v = 2.f * std::log (1.f + 9.f * t) / std::log (10.f) - 1.f; break;
+                case 10: // cosine bell (smooth hump)
+                    v = 0.5f - 0.5f * std::cos (t * twoPi); break;
+                case 11: // double peak (wobble)
+                    v = std::sin (t * twoPi * 2.f) * (1.f - 0.35f * t); break;
+                case 12: // chaos-ish stepped
+                    v = (i % 3 == 0) ? 1.f : ((i % 3 == 1) ? -0.6f : 0.15f); break;
+                case 13: // ramp hold (gate style)
+                    v = t < 0.15f ? (t / 0.15f) * 2.f - 1.f
+                        : (t < 0.7f ? 1.f : 1.f - (t - 0.7f) / 0.3f * 2.f); break;
+                case 14: // bipolar S-curve
+                    v = std::tanh ((t - 0.5f) * 6.f); break;
+                default: // noise-ish sparse spikes
+                    v = (i == 2 || i == 9 || i == 13) ? 1.f
+                        : ((i == 5 || i == 11) ? -1.f : 0.f); break;
             }
-            customTable[(size_t) i] = v;
+            customTable[(size_t) i] = juce::jlimit (-1.f, 1.f, v);
         }
     }
 

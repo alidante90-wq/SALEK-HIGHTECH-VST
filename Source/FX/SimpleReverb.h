@@ -6,7 +6,7 @@
 
 namespace salek
 {
-/** Multi-model reverb: 0=Room 1=Hall 2=Plate */
+/** Multi-model reverb: 0 Room 1 Hall 2 Plate 3 Chamber 4 Spring */
 class SimpleReverb
 {
 public:
@@ -20,7 +20,7 @@ public:
     void setMix (float m) noexcept { mix = juce::jlimit (0.0f, 1.0f, m); }
     void setMode (int m) noexcept
     {
-        const int nm = juce::jlimit (0, 2, m);
+        const int nm = juce::jlimit (0, 4, m);
         if (nm != mode) { mode = nm; rebuild (mode); }
     }
     void process (juce::AudioBuffer<float>& buffer)
@@ -28,7 +28,11 @@ public:
         if (mix < 1e-4f) return;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
-        const float fb = 0.55f + decay * 0.4f * (0.5f + 0.5f * size);
+        // spring: more metallic feedback; chamber: tighter
+        float fbBase = 0.55f;
+        if (mode == 4) fbBase = 0.62f;
+        if (mode == 3) fbBase = 0.48f;
+        const float fb = fbBase + decay * 0.4f * (0.5f + 0.5f * size);
         for (int i = 0; i < n; ++i) {
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
@@ -56,6 +60,12 @@ public:
                 wetL = processAP (apL[a], apPos[a], wetL);
                 wetR = processAP (apR[a], apPos[a], wetR);
             }
+            // spring coloration
+            if (mode == 4)
+            {
+                wetL = std::tanh (wetL * 1.15f);
+                wetR = std::tanh (wetR * 1.15f);
+            }
             buffer.setSample (0, i, inL * (1.0f - mix) + wetL * mix);
             if (ch > 1) buffer.setSample (1, i, inR * (1.0f - mix) + wetR * mix);
         }
@@ -63,15 +73,21 @@ public:
 private:
     void rebuild (int m)
     {
-        // Room / Hall / Plate delay sets (ms)
-        static constexpr float roomC[4]  = { 29.7f, 37.1f, 41.1f, 43.7f };
-        static constexpr float hallC[4]  = { 41.2f, 53.8f, 67.4f, 79.1f };
-        static constexpr float plateC[4] = { 17.1f, 23.3f, 31.7f, 39.5f };
-        static constexpr float roomA[2]  = { 5.0f, 1.7f };
-        static constexpr float hallA[2]  = { 8.3f, 3.1f };
-        static constexpr float plateA[2] = { 3.2f, 1.1f };
-        const float* cm = (m == 1) ? hallC : (m == 2) ? plateC : roomC;
-        const float* am = (m == 1) ? hallA : (m == 2) ? plateA : roomA;
+        static constexpr float roomC[4]    = { 29.7f, 37.1f, 41.1f, 43.7f };
+        static constexpr float hallC[4]    = { 41.2f, 53.8f, 67.4f, 79.1f };
+        static constexpr float plateC[4]   = { 17.1f, 23.3f, 31.7f, 39.5f };
+        static constexpr float chamberC[4] = { 22.4f, 28.9f, 34.2f, 40.1f };
+        static constexpr float springC[4]  = { 14.3f, 19.7f, 26.5f, 33.1f };
+        static constexpr float roomA[2]    = { 5.0f, 1.7f };
+        static constexpr float hallA[2]    = { 8.3f, 3.1f };
+        static constexpr float plateA[2]   = { 3.2f, 1.1f };
+        static constexpr float chamberA[2] = { 4.1f, 1.9f };
+        static constexpr float springA[2]  = { 2.4f, 0.9f };
+        const float* cm = roomC; const float* am = roomA;
+        if (m == 1) { cm = hallC; am = hallA; }
+        else if (m == 2) { cm = plateC; am = plateA; }
+        else if (m == 3) { cm = chamberC; am = chamberA; }
+        else if (m == 4) { cm = springC; am = springA; }
         for (int i = 0; i < 4; ++i) {
             int len = juce::jmax (16, (int) (cm[i] * 0.001 * sr));
             combL[i].assign ((size_t) len, 0.0f);
