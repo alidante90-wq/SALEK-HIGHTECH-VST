@@ -128,13 +128,14 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
+    // FX chain: modulation → colour → tone → dynamics → time → space
     chorus.process(buffer);
-    delay.process(buffer);
-    reverb.process(buffer);
-    compressor.process(buffer);
-    eq.process(buffer);
     phaser.process(buffer);
     distortion.process(buffer);
+    eq.process(buffer);
+    compressor.process(buffer);
+    delay.process(buffer);
+    reverb.process(buffer);
     spatial.process(buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
