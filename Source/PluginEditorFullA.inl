@@ -40,6 +40,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     tabs.addTab ("MAIN", juce::Colours::transparentBlack, &mainTab, false);
     tabs.addTab ("MOD", juce::Colours::transparentBlack, &modTab, false);
+    tabs.addTab ("LFO", juce::Colours::transparentBlack, &lfoTab, false);
     tabs.addTab ("FX", juce::Colours::transparentBlack, &fxTab, false);
     tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
@@ -47,7 +48,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.setOpaque (false);
     tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colour (0xff0a0614));
     tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0xff1a1030));
-    for (auto* panel : { &mainTab, &modTab, &fxTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
+    for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
         panel->setOpaque (false);
 
     {
@@ -133,7 +134,6 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     }
 
     {
-        if (lfoDisplay != nullptr) modTab.addAndMakeVisible (*lfoDisplay);
         if (matrixPanel != nullptr) modTab.addAndMakeVisible (*matrixPanel);
         const auto C = juce::Colour (0xff00e8ff);
         const auto M = juce::Colour (0xffff2d9b);
@@ -141,6 +141,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto V = juce::Colour (0xffc0ff00);
         const auto G = juce::Colour (0xff7c4dff);
         #include "PluginEditorModKnobs.inl"
+    }
+
+    {
+        #include "PluginEditorLfoSetup.inl"
     }
 
     {
@@ -178,16 +182,29 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (fxTab, "dist_drive", "D DRV", M);
         addKnob (fxTab, "dist_crush", "CRUSH", O);
 
-        const char* secs[] = { "CHORUS", "DELAY", "REVERB", "MASTER", "COMP", "EQ", "SPATIAL", "INPUT", "PHASER", "DISTORT" };
-        for (auto* s : secs)
+        const char* secs[] = { "CHORUS", "DELAY", "REVERB", "MASTER", "PHASER", "DISTORT" };
+        const FxMonitor::Kind kinds[] = {
+            FxMonitor::Chorus, FxMonitor::Delay, FxMonitor::Reverb,
+            FxMonitor::Master, FxMonitor::Phaser, FxMonitor::Dist
+        };
+        juce::Colour monCols[] = {
+            juce::Colour (0xff39ff14), juce::Colour (0xff00e8ff), juce::Colour (0xff7c4dff),
+            juce::Colour (0xffffd700), juce::Colour (0xffff2d9b), juce::Colour (0xffff6b00)
+        };
+        for (int i = 0; i < 6; ++i)
         {
             auto* lab = fxSectionLabels.add (new juce::Label());
-            lab->setText (s, juce::dontSendNotification);
+            lab->setText (secs[i], juce::dontSendNotification);
             lab->setJustificationType (juce::Justification::centred);
-            lab->setFont (juce::FontOptions (11.0f, juce::Font::bold));
-            lab->setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
+            lab->setFont (juce::FontOptions (12.0f, juce::Font::bold));
+            lab->setColour (juce::Label::textColourId, monCols[i]);
             lab->setColour (juce::Label::backgroundColourId, juce::Colour (0xff1a0a30));
             fxTab.addAndMakeVisible (lab);
+            auto* mon = fxMonitors.add (new FxMonitor());
+            mon->setKind (kinds[i]);
+            mon->setAccent (monCols[i]);
+            mon->setLevel (0.4f);
+            fxTab.addAndMakeVisible (mon);
         }
     }
 
