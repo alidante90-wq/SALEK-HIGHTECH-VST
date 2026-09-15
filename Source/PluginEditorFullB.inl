@@ -139,38 +139,81 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto r = modTab.getLocalBounds().reduced (6);
-        if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (r.removeFromTop (72).reduced (2));
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.removeFromLeft (juce::jmax (280, r.getWidth() / 2)).reduced (2));
+            matrixPanel->setBounds (r.removeFromLeft (juce::jmax (320, r.getWidth() * 55 / 100)).reduced (2));
         place (r.reduced (2), knobs, 29, 16, 4);
     }
 
     {
-        auto area = fxTab.getLocalBounds().reduced (6);
+        auto r = lfoTab.getLocalBounds().reduced (8);
+        if (lfoDisplay != nullptr)
+            lfoDisplay->setBounds (r.removeFromTop (80).reduced (2));
+
+        auto presetRow = r.removeFromTop (28);
+        const int bw = presetRow.getWidth() / 6;
+        lfoPresetSine.setBounds  (presetRow.removeFromLeft (bw).reduced (2));
+        lfoPresetTri.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
+        lfoPresetSaw.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
+        lfoPresetSqr.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
+        lfoPresetPulse.setBounds (presetRow.removeFromLeft (bw).reduced (2));
+        lfoPresetCustom.setBounds(presetRow.reduced (2));
+
+        auto waveRow = r.removeFromTop (28);
+        lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (3));
+        lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (3));
+        lfo3WaveBox.setBounds (waveRow.reduced (3));
+
+        auto knobArea = r.removeFromBottom (100);
+        place (knobArea, knobs, 35, 6, 6);
+
+        lfoShapeEditor.setBounds (r.reduced (4));
+    }
+
+    {
+        auto area = fxTab.getLocalBounds().reduced (8);
         const int fxStart = 45;
         struct Sec { int off; int count; };
-        const Sec secs2[10] = {
-            {0,3},{3,3},{6,3},{9,2},{11,3},{14,3},{17,4},{21,1},{22,3},{25,3}
+        const Sec secs2[6] = {
+            {0,3}, {3,3}, {6,3}, {9,2}, {22,3}, {25,3}
         };
-        const int numSec = 10;
-        const int labelW = 88;
-        const int knobCols = 4;
-        const int rowH = juce::jmax (62, area.getHeight() / numSec);
+        const int numSec = 6;
+        const int labelW = 90;
+        const int monW = 100;
+        const int rowH = juce::jmax (78, area.getHeight() / numSec);
+
+        for (int idx = fxStart + 11; idx < fxStart + 22; ++idx)
+            if (idx < (int) knobs.size())
+            {
+                knobs[(size_t) idx]->s.setBounds ({});
+                knobs[(size_t) idx]->name.setBounds ({});
+            }
 
         for (int s = 0; s < numSec; ++s)
         {
-            auto row = area.removeFromTop (rowH).reduced (1, 1);
+            auto row = area.removeFromTop (rowH).reduced (2, 3);
             if (s < fxSectionLabels.size())
             {
                 auto head = row.removeFromLeft (labelW);
-                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 4, 20));
+                fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 6, 24));
                 fxSectionLabels[s]->setVisible (true);
+            }
+            if (s < fxMonitors.size())
+            {
+                auto monArea = row.removeFromLeft (monW).reduced (2);
+                fxMonitors[s]->setBounds (monArea);
+                const int k0 = fxStart + secs2[s].off;
+                if (k0 < (int) knobs.size())
+                {
+                    float nv = (float) knobs[(size_t) k0]->s.getValue();
+                    float lv = juce::jlimit (0.f, 1.f, std::abs (nv) > 2.f ? std::abs (nv) / 20.f : std::abs (nv));
+                    if (secs2[s].off == 9) lv = (float) knobs[(size_t) k0]->s.getValue();
+                    fxMonitors[s]->setLevel (lv);
+                }
             }
             const int off = secs2[s].off;
             const int cnt = secs2[s].count;
-            const int cellW = juce::jmin (118, juce::jmax (72, row.getWidth() / knobCols));
-            const int cellH = juce::jmin (row.getHeight(), 78);
+            const int cellW = juce::jmin (130, juce::jmax (80, row.getWidth() / 4));
+            const int cellH = juce::jmin (row.getHeight(), 86);
             for (int i = 0; i < cnt; ++i)
             {
                 const int idx = fxStart + off + i;
@@ -178,9 +221,9 @@ void SalekHightechAudioProcessorEditor::resized()
                 auto* k = knobs[(size_t) idx].get();
                 auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
                                                   row.getCentreY() - cellH / 2,
-                                                  cellW, cellH).reduced (4, 2);
+                                                  cellW, cellH).reduced (5, 3);
                 if (cell.getHeight() < 28) continue;
-                k->name.setBounds (cell.removeFromBottom (12));
+                k->name.setBounds (cell.removeFromBottom (13));
                 k->s.setBounds (cell);
             }
         }
