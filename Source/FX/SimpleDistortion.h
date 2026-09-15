@@ -2,12 +2,14 @@
 #include <JuceHeader.h>
 #include <cmath>
 namespace salek {
+/** Multi-model distortion: 0=Tube(tanh) 1=Hard 2=Fold 3=Rectify */
 class SimpleDistortion {
 public:
     void prepare (double, int) {}
     void setDrive (float d) noexcept { drive = juce::jlimit (0.f, 1.f, d); }
     void setBitcrush (float b) noexcept { bits = juce::jlimit (0.f, 1.f, b); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setMode (int m) noexcept { mode = juce::jlimit (0, 3, m); }
     void process (juce::AudioBuffer<float>& buf) noexcept {
         if (mix < 1e-4f && drive < 1e-4f && bits < 1e-4f) return;
         const int n = buf.getNumSamples();
@@ -19,7 +21,23 @@ public:
             for (int i = 0; i < n; ++i) {
                 float x = d[i];
                 float y = x * gain;
-                y = std::tanh (y);
+                switch (mode)
+                {
+                    case 1: // hard clip
+                        y = juce::jlimit (-1.f, 1.f, y);
+                        break;
+                    case 2: // wavefold
+                    {
+                        y = std::sin (y * juce::MathConstants<float>::halfPi * (1.f + drive));
+                        break;
+                    }
+                    case 3: // half-wave rectify + boost
+                        y = std::abs (std::tanh (y)) * (x >= 0.f ? 1.f : -0.35f);
+                        break;
+                    default: // tube
+                        y = std::tanh (y);
+                        break;
+                }
                 if (levels > 1.f)
                     y = std::floor (y * levels + 0.5f) / levels;
                 d[i] = x * (1.f - mix) + y * mix;
@@ -28,5 +46,6 @@ public:
     }
 private:
     float drive = 0.f, bits = 0.f, mix = 0.f;
+    int mode = 0;
 };
 }
