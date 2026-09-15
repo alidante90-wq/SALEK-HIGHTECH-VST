@@ -9,6 +9,7 @@
 #include "FX/SimpleSpatial.h"
 #include "FX/SimplePhaser.h"
 #include "FX/SimpleDistortion.h"
+#include "FX/MagicEngine.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
@@ -57,6 +58,7 @@ public:
     salek::LFO& getLfo1() { return lfo1; }
     salek::LFO& getLfo2() { return lfo2; }
     salek::LFO& getLfo3() { return lfo3; }
+    salek::MagicEngine& getMagic() { return magic; }
 
     juce::StringArray getPresetNames() const;
     int saveCurrentAsUserPreset (const juce::String& name);
@@ -85,6 +87,7 @@ private:
     salek::SimpleSpatial spatial;
     salek::SimplePhaser phaser;
     salek::SimpleDistortion distortion;
+    salek::MagicEngine magic;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
