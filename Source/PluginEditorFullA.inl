@@ -42,13 +42,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.addTab ("MOD", juce::Colours::transparentBlack, &modTab, false);
     tabs.addTab ("LFO", juce::Colours::transparentBlack, &lfoTab, false);
     tabs.addTab ("FX", juce::Colours::transparentBlack, &fxTab, false);
+    tabs.addTab ("MAGIC", juce::Colours::transparentBlack, &magicTab, false);
     tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
     tabs.setTabBarDepth (28);
     tabs.setOpaque (false);
     tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colour (0xff0a0614));
     tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0xff1a1030));
-    for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
+    for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &magicTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
         panel->setOpaque (false);
 
     {
@@ -206,6 +207,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             mon->setLevel (0.4f);
             fxTab.addAndMakeVisible (mon);
         }
+    }
+
+    {
+        #include "PluginEditorMagic.inl"
     }
 
     {
