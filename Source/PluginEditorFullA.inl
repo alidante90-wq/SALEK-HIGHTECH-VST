@@ -79,6 +79,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (oscTab, "unison_detune", "U DET", M);
         addKnob (oscTab, "unison_spread", "SPREAD", O);
 
+        #include "PluginEditorOscMonitors.inl"
+
         addKnob (filterTab, "filter_cutoff", "CUTOFF", C);
         addKnob (filterTab, "filter_reso", "RESO", M);
         addKnob (filterTab, "filter_drive", "F DRIVE", O);
