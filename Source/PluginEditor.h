@@ -6,6 +6,7 @@
 #include "UI/SonicCoreGL.h"
 
 #include "PluginEditorLookAndFeel.inl"
+#include "PluginEditorFxLfo.inl"
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
@@ -163,7 +164,7 @@ private:
     std::vector<std::unique_ptr<SAtt>> atts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
-    juce::Component mainTab, oscTab, filterTab, envTab, modTab, fxTab, seqTab, presetTab, modularTab;
+    juce::Component mainTab, oscTab, filterTab, envTab, modTab, lfoTab, fxTab, seqTab, presetTab, modularTab;
     juce::ComboBox themeBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
@@ -173,6 +174,12 @@ private:
     juce::ListBox presetList { "presets", this };
     std::unique_ptr<StepGridComponent> stepGrid;
     juce::OwnedArray<juce::Label> fxSectionLabels;
+    juce::OwnedArray<FxMonitor> fxMonitors;
+    LfoShapeEditor lfoShapeEditor;
+    juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
+    juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
+                     lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" };
+    int lfoShapeTarget = 0;
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
