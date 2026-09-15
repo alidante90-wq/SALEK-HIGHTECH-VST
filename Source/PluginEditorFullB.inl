@@ -137,11 +137,18 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
+    // MOD: matrix left, 10 knobs right (6 FM row + 4 macros) — no LFO overlap
     {
         auto r = modTab.getLocalBounds().reduced (6);
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (r.removeFromLeft (juce::jmax (320, r.getWidth() * 55 / 100)).reduced (2));
-        place (r.reduced (2), knobs, 29, 16, 4);
+
+        auto right = r.reduced (4);
+        // row 1: FM/PM/RM/AM (6)
+        auto row1 = right.removeFromTop (right.getHeight() / 2);
+        place (row1, knobs, 29, 6, 3);
+        // row 2: Macros (4)
+        place (right, knobs, 35, 4, 4);
     }
 
     {
@@ -163,8 +170,9 @@ void SalekHightechAudioProcessorEditor::resized()
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (3));
         lfo3WaveBox.setBounds (waveRow.reduced (3));
 
-        auto knobArea = r.removeFromBottom (100);
-        place (knobArea, knobs, 35, 6, 6);
+        // LFO rate/amt knobs (indices 39..44) parented to lfoTab
+        auto knobArea = r.removeFromBottom (110);
+        place (knobArea, knobs, 39, 6, 6);
 
         lfoShapeEditor.setBounds (r.reduced (4));
     }
@@ -232,7 +240,6 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        // MAGIC Kaossilator pad
         auto r = magicTab.getLocalBounds().reduced (10);
         auto top = r.removeFromTop (36);
         const int bw = top.getWidth() / 4;
