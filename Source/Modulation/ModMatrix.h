@@ -10,11 +10,13 @@ namespace salek
 class ModMatrix
 {
 public:
-    static constexpr int MaxRoutes = 16;
+    static constexpr int MaxRoutes = 24;
 
     enum class Source : int
     {
         LFO1 = 0,
+        LFO2,
+        LFO3,
         Env1,
         Velocity,
         ModWheel,
@@ -37,12 +39,38 @@ public:
         Osc2Table,
         Osc3Table,
         Osc1Warp,
+        Osc2Warp,
+        Osc3Warp,
         Osc1Fold,
+        Osc2Fold,
+        Osc3Fold,
         Fm2to1,
         Fm3to1,
         Pitch,
+        Amp,
         NumDests
     };
+
+    static const char* sourceName (Source s)
+    {
+        static const char* n[] = {
+            "LFO1","LFO2","LFO3","ENV","VEL","MW",
+            "MAC1","MAC2","MAC3","MAC4","RND"
+        };
+        int i = (int) s;
+        return (i >= 0 && i < (int) Source::NumSources) ? n[i] : "?";
+    }
+
+    static const char* destName (Dest d)
+    {
+        static const char* n[] = {
+            "CUT","RESO","O1LVL","O2LVL","O3LVL",
+            "O1TBL","O2TBL","O3TBL","O1WRP","O2WRP","O3WRP",
+            "O1FLD","O2FLD","O3FLD","FM21","FM31","PITCH","AMP"
+        };
+        int i = (int) d;
+        return (i >= 0 && i < (int) Dest::NumDests) ? n[i] : "?";
+    }
 
     struct Route
     {
@@ -86,9 +114,23 @@ public:
             routes[static_cast<size_t>(slot)].active = false;
     }
 
+    void removeRoute (Source src, Dest dst) noexcept
+    {
+        for (int i = 0; i < MaxRoutes; ++i)
+            if (routes[static_cast<size_t>(i)].active
+                && routes[static_cast<size_t>(i)].source == src
+                && routes[static_cast<size_t>(i)].dest == dst)
+                routes[static_cast<size_t>(i)].active = false;
+    }
+
     void setSourceValue (Source s, float v) noexcept
     {
         sourceValues[static_cast<size_t>(s)] = v;
+    }
+
+    float getSourceValue (Source s) const noexcept
+    {
+        return sourceValues[static_cast<size_t>(s)];
     }
 
     float getModulation (Dest d) const noexcept
@@ -103,6 +145,7 @@ public:
     }
 
     const std::array<Route, MaxRoutes>& getRoutes() const noexcept { return routes; }
+    Route& getRoute (int i) noexcept { return routes[static_cast<size_t>(juce::jlimit(0, MaxRoutes-1, i))]; }
 
 private:
     std::array<Route, MaxRoutes> routes {};
