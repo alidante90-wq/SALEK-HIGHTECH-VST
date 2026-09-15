@@ -41,9 +41,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
         lfo.setAmount (1.0f);
         static const salek::LFO::Wave waves[] = {
             salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
-            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH
+            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom
         };
-        lfo.setWave (waves[juce::jlimit (0, 4, wave)]);
+        lfo.setWave (waves[juce::jlimit (0, 5, wave)]);
         juce::ignoreUnused (amt);
     };
     setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"));
@@ -128,7 +128,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-    // FX chain: modulation → colour → tone → dynamics → time → space
     chorus.process(buffer);
     phaser.process(buffer);
     distortion.process(buffer);
