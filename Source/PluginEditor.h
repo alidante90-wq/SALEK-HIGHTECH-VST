@@ -99,19 +99,44 @@ class LfoDisplay : public juce::Component, private juce::Timer {
 public:
     explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
     void paint (juce::Graphics& g) override {
-        auto r=getLocalBounds().toFloat().reduced(2.f);
-        g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,8.f);
-        g.setColour(juce::Colour(0xff66ff99).withAlpha(0.45f)); g.drawRoundedRectangle(r,8.f,1.f);
+        auto bounds = getLocalBounds().toFloat().reduced (2.f);
+        g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (bounds, 8.f);
+        g.setColour (juce::Colour (0xff66ff99).withAlpha (0.4f)); g.drawRoundedRectangle (bounds, 8.f, 1.f);
         auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
-        float rate=gval("lfo_rate",2.f); int wave=(int)gval("lfo_wave",0.f); float amt=gval("lfo_amount",0.f); juce::ignoreUnused(rate);
-        auto plot=r.reduced(8.f,4.f); juce::Path curve; const int N=100;
-        for(int i=0;i<N;++i){ float t=(float)i/(N-1); float ph=t*juce::MathConstants<float>::twoPi*2.f+phase; float y=0.f;
-            if(wave==0)y=std::sin(ph); else if(wave==1)y=1.f-4.f*std::abs(std::fmod(ph/juce::MathConstants<float>::twoPi+0.25f,1.f)-0.5f);
-            else if(wave==2)y=2.f*(ph/juce::MathConstants<float>::twoPi-std::floor(ph/juce::MathConstants<float>::twoPi+0.5f));
-            else if(wave==3)y=(std::sin(ph)>=0.f?1.f:-1.f); else y=(std::sin(ph*0.5f)>0.f?1.f:-1.f);
-            y*=(0.35f+0.65f*amt); float px=plot.getX()+t*plot.getWidth(); float py=plot.getCentreY()-y*plot.getHeight()*0.42f;
-            if(i==0)curve.startNewSubPath(px,py); else curve.lineTo(px,py);}
-        g.setColour(juce::Colour(0xff66ff99)); g.strokePath(curve, juce::PathStrokeType(1.8f));
+        const char* rates[] = {"lfo_rate","lfo2_rate","lfo3_rate"};
+        const char* amts[]  = {"lfo_amount","lfo2_amount","lfo3_amount"};
+        const char* waves[] = {"lfo_wave","lfo2_wave","lfo3_wave"};
+        juce::Colour cols[3] = { juce::Colour(0xff00e8ff), juce::Colour(0xffff2d9b), juce::Colour(0xff39ff14) };
+        const char* labels[3] = { "LFO1", "LFO2", "LFO3" };
+        float w = bounds.getWidth() / 3.f;
+        for (int L = 0; L < 3; ++L)
+        {
+            auto r = bounds.withX (bounds.getX() + L * w).withWidth (w).reduced (4.f, 3.f);
+            g.setColour (cols[L].withAlpha (0.25f)); g.drawRoundedRectangle (r, 6.f, 1.f);
+            float rate = gval (rates[L], 1.f); int wave = (int) gval (waves[L], 0.f); float amt = gval (amts[L], 0.5f);
+            g.setColour (cols[L]); g.setFont (juce::FontOptions (10.f, juce::Font::bold));
+            g.drawText (juce::String (labels[L]) + "  " + juce::String (rate, 2) + "Hz",
+                        r.removeFromTop (14).toNearestInt(), juce::Justification::centred);
+            auto plot = r.reduced (2.f, 2.f);
+            juce::Path curve; const int N = 64;
+            float spd = juce::jmax (0.05f, rate) * 0.15f;
+            for (int i = 0; i < N; ++i)
+            {
+                float t = (float) i / (N - 1);
+                float ph = t * juce::MathConstants<float>::twoPi * 2.f + phase * spd * (1.f + L * 0.3f);
+                float y = 0.f;
+                if (wave == 0) y = std::sin (ph);
+                else if (wave == 1) y = 1.f - 4.f * std::abs (std::fmod (ph / juce::MathConstants<float>::twoPi + 0.25f, 1.f) - 0.5f);
+                else if (wave == 2) y = 2.f * (ph / juce::MathConstants<float>::twoPi - std::floor (ph / juce::MathConstants<float>::twoPi + 0.5f));
+                else if (wave == 3) y = (std::sin (ph) >= 0.f ? 1.f : -1.f);
+                else y = (std::sin (ph * 0.37f) > 0.f ? 1.f : -1.f);
+                y *= (0.25f + 0.75f * amt);
+                float px = plot.getX() + t * plot.getWidth();
+                float py = plot.getCentreY() - y * plot.getHeight() * 0.4f;
+                if (i == 0) curve.startNewSubPath (px, py); else curve.lineTo (px, py);
+            }
+            g.setColour (cols[L]); g.strokePath (curve, juce::PathStrokeType (1.6f));
+        }
     }
     void timerCallback() override { phase += 0.12f; repaint(); }
 private:
@@ -166,6 +191,7 @@ private:
     juce::MidiKeyboardComponent keyboard;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
+    juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
     juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
     int heroIndex = 0;
     void applyHeroFromTheme();
