@@ -139,15 +139,15 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto r = modTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (r.removeFromTop (64).reduced (2));
+            lfoDisplay->setBounds (r.removeFromTop (72).reduced (2));
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.removeFromLeft (240).reduced (2));
-        place (r.reduced (2), knobs, 29, 12, 4);
+            matrixPanel->setBounds (r.removeFromLeft (juce::jmax (280, r.getWidth() / 2)).reduced (2));
+        place (r.reduced (2), knobs, 29, 16, 4);
     }
 
     {
         auto area = fxTab.getLocalBounds().reduced (8);
-        const int fxStart = 41;
+        const int fxStart = 45;
         struct Sec { int off; int count; };
         const Sec secs2[10] = {
             {0,3},{3,3},{6,3},{9,2},{11,3},{14,3},{17,4},{21,1},{22,3},{25,3}
@@ -186,7 +186,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto top = bounds.removeFromTop (52);
         arpOn.setBounds (top.removeFromLeft (100).reduced (4));
         seqOn.setBounds (top.removeFromLeft (100).reduced (4));
-        place (top.removeFromRight (360).reduced (4), knobs, 69, 3, 3);
+        place (top.removeFromRight (360).reduced (4), knobs, 73, 3, 3);
         bounds.removeFromTop (8);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
