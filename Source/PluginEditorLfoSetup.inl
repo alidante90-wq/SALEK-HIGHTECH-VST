@@ -3,33 +3,53 @@
         lfoTab.addAndMakeVisible (lfoShapeEditor);
         lfoShapeEditor.setLfo (&processor.getLfo1());
 
-        for (auto* b : { &lfoPresetSine, &lfoPresetTri, &lfoPresetSaw,
-                         &lfoPresetSqr, &lfoPresetPulse, &lfoPresetCustom })
+        // Serum-inspired shape bank buttons
+        struct ShapeBtn { juce::TextButton* b; const char* label; int preset; };
+        ShapeBtn shapes[] = {
+            { &lfoPresetSine,  "SIN",  0 },
+            { &lfoPresetTri,   "TRI",  1 },
+            { &lfoPresetSaw,   "SAW",  2 },
+            { &lfoPresetSqr,   "SQR",  4 },
+            { &lfoPresetPulse, "PLS",  5 },
+            { &lfoPresetExp,   "EXP",  7 },
+            { &lfoPresetLog,   "LOG",  9 },
+            { &lfoPresetBell,  "BELL", 10 },
+            { &lfoPresetWob,   "WOB",  11 },
+            { &lfoPresetChaos, "CHAOS",12 },
+            { &lfoPresetGate,  "GATE", 13 },
+            { &lfoPresetCustom,"DRAW", -1 }
+        };
+        for (auto& sh : shapes)
         {
-            b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a30));
-            b->setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
-            lfoTab.addAndMakeVisible (*b);
+            sh.b->setButtonText (sh.label);
+            sh.b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a30));
+            sh.b->setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+            lfoTab.addAndMakeVisible (*sh.b);
         }
+
         auto loadShape = [this] (int preset)
         {
             salek::LFO* targets[3] = { &processor.getLfo1(), &processor.getLfo2(), &processor.getLfo3() };
             auto* L = targets[juce::jlimit (0, 2, lfoShapeTarget)];
             L->loadPresetShape (preset);
+            L->setWave (salek::LFO::Wave::Custom);
             lfoShapeEditor.setLfo (L);
             lfoShapeEditor.syncFromLfo();
             const char* ids[] = { "lfo_wave", "lfo2_wave", "lfo3_wave" };
             if (auto* p = processor.getAPVTS().getParameter (ids[juce::jlimit(0,2,lfoShapeTarget)]))
-            {
-                int waveIdx = (preset <= 3) ? preset : 5;
-                if (preset == 4) waveIdx = 3;
-                p->setValueNotifyingHost (p->convertTo0to1 ((float) waveIdx));
-            }
+                p->setValueNotifyingHost (p->convertTo0to1 (5.f)); // Custom
         };
         lfoPresetSine.onClick  = [loadShape] { loadShape (0); };
         lfoPresetTri.onClick   = [loadShape] { loadShape (1); };
         lfoPresetSaw.onClick   = [loadShape] { loadShape (2); };
-        lfoPresetSqr.onClick   = [loadShape] { loadShape (3); };
-        lfoPresetPulse.onClick = [loadShape] { loadShape (4); };
+        lfoPresetSqr.onClick   = [loadShape] { loadShape (4); };
+        lfoPresetPulse.onClick = [loadShape] { loadShape (5); };
+        lfoPresetExp.onClick   = [loadShape] { loadShape (7); };
+        lfoPresetLog.onClick   = [loadShape] { loadShape (9); };
+        lfoPresetBell.onClick  = [loadShape] { loadShape (10); };
+        lfoPresetWob.onClick   = [loadShape] { loadShape (11); };
+        lfoPresetChaos.onClick = [loadShape] { loadShape (12); };
+        lfoPresetGate.onClick  = [loadShape] { loadShape (13); };
         lfoPresetCustom.onClick = [this] {
             if (auto* p = processor.getAPVTS().getParameter ("lfo_wave"))
                 p->setValueNotifyingHost (p->convertTo0to1 (5.f));
@@ -63,7 +83,6 @@
             { lfoShapeTarget = 2; lfoShapeEditor.setLfo (&processor.getLfo3()); }
         };
 
-        // LFO rate/amount knobs belong on LFO tab (indices 39..44 after 10 MOD knobs)
         {
             const auto C = juce::Colour (0xff00e8ff);
             const auto M = juce::Colour (0xffff2d9b);

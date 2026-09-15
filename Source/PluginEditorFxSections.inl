@@ -23,7 +23,20 @@
         addKnob (fxTab, "dist_drive", "D DRV", M);
         addKnob (fxTab, "dist_crush", "CRUSH", O);
 
-        // 8 visible sections filling the FX panel (spatial hidden to free space)
+        // Mode selectors
+        reverbModeBox.addItemList ({ "Room", "Hall", "Plate", "Chamber", "Spring" }, 1);
+        distModeBox.addItemList ({ "Tube", "Sat", "Hard", "Fold", "Bit", "Rect" }, 1);
+        fxTab.addAndMakeVisible (reverbModeBox);
+        fxTab.addAndMakeVisible (distModeBox);
+        comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+            processor.getAPVTS(), "reverb_mode", reverbModeBox));
+        comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+            processor.getAPVTS(), "dist_mode", distModeBox));
+        reverbModeBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        reverbModeBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xff7c4dff));
+        distModeBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        distModeBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffff6b00));
+
         const char* secs[] = { "CHORUS", "DELAY", "REVERB", "MASTER", "COMP", "EQ", "PHASER", "DISTORT" };
         const FxMonitor::Kind kinds[] = {
             FxMonitor::Chorus, FxMonitor::Delay, FxMonitor::Reverb, FxMonitor::Master,
