@@ -16,6 +16,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> p;
     auto F = [&](const char* id, const char* n, float a, float b, float d) {
         p.push_back (std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{id,1}, n, juce::NormalisableRange<float>(a,b), d)); };
+    auto Fs = [&](const char* id, const char* n, float a, float b, float skew, float d) {
+        p.push_back (std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{id,1}, n,
+            juce::NormalisableRange<float>(a, b, 0.0f, skew), d)); };
     auto I = [&](const char* id, const char* n, int a, int b, int d) {
         p.push_back (std::make_unique<juce::AudioParameterInt>(juce::ParameterID{id,1}, n, a, b, d)); };
     auto C = [&](const char* id, const char* n, juce::StringArray ch, int d) {
@@ -41,8 +44,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
     C("filter_mode","F Mode",{"LowPass","HighPass","BandPass","Notch"},0);
-    F("amp_attack","Attack",0.001f,5,0.01f); F("amp_decay","Decay",0.01f,5,0.25f);
-    F("amp_sustain","Sustain",0,1,0.7f); F("amp_release","Release",0.01f,8,0.4f);
+    // Skewed ADSR — fine control in short range, long times still available
+    Fs("amp_attack","Attack",0.001f,5.0f,0.35f,0.01f);
+    Fs("amp_decay","Decay",0.005f,5.0f,0.4f,0.25f);
+    F("amp_sustain","Sustain",0,1,0.7f);
+    Fs("amp_release","Release",0.005f,8.0f,0.4f,0.4f);
     F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.5f);
     C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);
     F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.5f);
@@ -53,6 +59,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
     F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
+    C("reverb_mode","Reverb Mode",{"Room","Hall","Plate"},0);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
@@ -63,9 +70,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("input_mix","Input Mix",0,1,0);
     F("phaser_mix","Phaser Mix",0,1,0); F("phaser_rate","Phaser Rate",0.05f,8,0.4f); F("phaser_depth","Phaser Depth",0,1,0.6f);
     F("dist_mix","Dist Mix",0,1,0); F("dist_drive","Dist Drive",0,1,0.3f); F("dist_crush","Bitcrush",0,1,0);
+    C("dist_mode","Dist Mode",{"Tube","Hard","Fold","Rectify"},0);
+    F("bassify","Bassify",0,1,0); // dubstep / bass grit
     C("scale_mode","Scale",{"Equal 12-TET","Shur","Segah","Homayun","Mahur","Free Koron"},0);
     F("koron_cents","Koron Cents",-50,50,0);
-    // MAGIC Kaossilator pad
     F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
     B("magic_on","Magic On",false);
     C("magic_mode","Magic Mode",{"Loop","Glitch","FlangeVerb","Psychedelic"},0);
