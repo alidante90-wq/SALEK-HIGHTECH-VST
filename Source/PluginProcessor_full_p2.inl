@@ -71,6 +71,10 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
+
+    magic.setMode ((int) g("magic_mode"));
+    magic.setXY (g("magic_x"), g("magic_y"));
+    magic.setActive (g("magic_on") > 0.5f);
 }
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
@@ -136,6 +140,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     delay.process(buffer);
     reverb.process(buffer);
     spatial.process(buffer);
+    magic.process(buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
     buffer.applyGain(gain * 0.95f);
