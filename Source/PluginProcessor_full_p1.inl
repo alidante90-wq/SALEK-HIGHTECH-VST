@@ -65,6 +65,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("dist_mix","Dist Mix",0,1,0); F("dist_drive","Dist Drive",0,1,0.3f); F("dist_crush","Bitcrush",0,1,0);
     C("scale_mode","Scale",{"Equal 12-TET","Shur","Segah","Homayun","Mahur","Free Koron"},0);
     F("koron_cents","Koron Cents",-50,50,0);
+    // MAGIC Kaossilator pad
+    F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
+    B("magic_on","Magic On",false);
+    C("magic_mode","Magic Mode",{"Loop","Glitch","FlangeVerb","Psychedelic"},0);
     return { p.begin(), p.end() };
 }
 
@@ -106,6 +110,7 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     spatial.prepare(sr, spb);
     phaser.prepare(sr, spb);
     distortion.prepare(sr, spb);
+    magic.prepare(sr, spb);
     arpeggiator.prepare(sr);
     stepSequencer.prepare(sr);
     stepSequencer.initDefaultPattern();
