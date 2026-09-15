@@ -7,7 +7,7 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (pr.isHeader)
     {
         g.fillAll (juce::Colour (0xff12081c));
-        g.setColour (themeAccent.isTransparent() ? juce::Colour (0xff00f0ff) : themeAccent);
+        g.setColour (themeAccent);
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
         g.drawText ("  " + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
         g.setColour (themeAccent2.withAlpha (0.5f));
@@ -63,10 +63,11 @@ void SalekHightechAudioProcessorEditor::resized()
     full.removeFromLeft (222);
 
     auto header = full.removeFromTop (36);
-    themeBox.setBounds (header.removeFromRight (120).reduced (2));
-    scope.setBounds (header.removeFromRight (100).reduced (2));
+    themeBox.setBounds (header.removeFromRight (110).reduced (2));
+    spectrum.setBounds (header.removeFromRight (90).reduced (2));
+    scope.setBounds (header.removeFromRight (110).reduced (2));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (190).reduced (2));
+        wtDisplay->setBounds (header.removeFromRight (160).reduced (2));
 
     full.removeFromTop (2);
     tabs.setBounds (full);
@@ -146,21 +147,11 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        // FX: label column + fixed-width knob cells (left-aligned, no sparse stretch)
         auto area = fxTab.getLocalBounds().reduced (6);
         const int fxStart = 45;
         struct Sec { int off; int count; };
         const Sec secs2[10] = {
-            {0,3},  // CHORUS
-            {3,3},  // DELAY
-            {6,3},  // REVERB
-            {9,2},  // MASTER
-            {11,3}, // COMP
-            {14,3}, // EQ
-            {17,4}, // SPATIAL
-            {21,1}, // INPUT
-            {22,3}, // PHASER
-            {25,3}  // DISTORT
+            {0,3},{3,3},{6,3},{9,2},{11,3},{14,3},{17,4},{21,1},{22,3},{25,3}
         };
         const int numSec = 10;
         const int labelW = 88;
@@ -217,7 +208,7 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
     if (! cyanImg.isValid()) cyanImg = SalekAssets::loadCyanGirl();
 
     juce::Colour accent, accent2, panelBg, labelBg, labelTx;
-    if (id == 2) // ACID
+    if (id == 2)
     {
         heroImg = faceImg.isValid() ? faceImg : (lianImg.isValid() ? lianImg : logoImg);
         heroIndex = 1;
@@ -227,7 +218,7 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         labelBg = juce::Colour (0xff1a2a08);
         labelTx = juce::Colour (0xffc0ff00);
     }
-    else if (id == 3) // NEON
+    else if (id == 3)
     {
         heroImg = cyanImg.isValid() ? cyanImg : (faceImg.isValid() ? faceImg : lianImg);
         heroIndex = 2;
@@ -237,7 +228,7 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         labelBg = juce::Colour (0xff2a0a30);
         labelTx = juce::Colour (0xffff66cc);
     }
-    else // CYBER
+    else
     {
         heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
         heroIndex = 0;
