@@ -232,6 +232,20 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
+        // MAGIC Kaossilator pad
+        auto r = magicTab.getLocalBounds().reduced (10);
+        auto top = r.removeFromTop (36);
+        const int bw = top.getWidth() / 4;
+        magicLoopBtn.setBounds (top.removeFromLeft (bw).reduced (3));
+        magicGlitchBtn.setBounds (top.removeFromLeft (bw).reduced (3));
+        magicFlangeBtn.setBounds (top.removeFromLeft (bw).reduced (3));
+        magicPsychBtn.setBounds (top.reduced (3));
+        magicHint.setBounds (r.removeFromBottom (24));
+        if (magicPad != nullptr)
+            magicPad->setBounds (r.reduced (8));
+    }
+
+    {
         auto bounds = seqTab.getLocalBounds().reduced (8);
         auto top = bounds.removeFromTop (52);
         arpOn.setBounds (top.removeFromLeft (100).reduced (4));
