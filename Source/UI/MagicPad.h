@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-/** Hexagonal Kaossilator-style XY pad for MAGIC tab (v2 — smoother visual feedback) */
+/** Hexagonal Kaossilator-style XY pad — cursor clamped inside hex */
 class MagicPad : public juce::Component, private juce::Timer
 {
 public:
@@ -27,9 +27,8 @@ public:
         g.setColour (accent.withAlpha (0.35f));
         g.drawRoundedRectangle (r, 14.f, 1.5f);
 
-        auto hex = makeHex (r.reduced (20.f));
+        auto hex = makeHex (hexArea());
 
-        // outer glow pulse when active
         if (touching)
         {
             g.setColour (accent.withAlpha (0.06f + 0.04f * std::sin (anim * 3.f)));
@@ -44,9 +43,8 @@ public:
         g.setColour (accent.withAlpha (0.65f));
         g.strokePath (hex, juce::PathStrokeType (2.4f));
 
-        // concentric guide rings
         auto c = hex.getBounds().getCentre();
-        float rad = juce::jmin (hex.getBounds().getWidth(), hex.getBounds().getHeight()) * 0.48f;
+        float rad = hexRadius (hexArea());
         for (int ring = 1; ring <= 3; ++ring)
         {
             float rr = rad * (float) ring / 3.f;
@@ -54,7 +52,6 @@ public:
             g.drawEllipse (c.x - rr, c.y - rr, rr * 2.f, rr * 2.f, 1.f);
         }
 
-        // radial spokes
         g.setColour (accent.withAlpha (0.14f));
         for (int i = 0; i < 6; ++i)
         {
@@ -63,18 +60,17 @@ public:
             g.drawLine (c.x, c.y, c.x + std::cos (a) * rad, c.y + std::sin (a) * rad, 1.f);
         }
 
-        // motion trail
         for (size_t i = 0; i < trail.size(); ++i)
         {
             float a = (float) (i + 1) / (float) juce::jmax ((size_t) 1, trail.size());
             g.setColour (accent.withAlpha (0.12f * a));
-            auto p = toScreen (trail[i], hex.getBounds());
+            auto p = toScreen (trail[i]);
             float s = 3.f + 4.f * a;
             g.fillEllipse (p.x - s, p.y - s, s * 2.f, s * 2.f);
         }
 
-        // cursor
-        auto pt = toScreen ({ x, y }, hex.getBounds());
+        // cursor always inside hex
+        auto pt = toScreen ({ x, y });
         if (touching)
         {
             g.setColour (accent.withAlpha (0.28f));
@@ -85,13 +81,11 @@ public:
         g.setColour (accent);
         g.drawEllipse (pt.x - 11.f, pt.y - 11.f, 22.f, 22.f, 2.2f);
 
-        // header
         g.setColour (accent);
         g.setFont (juce::FontOptions (15.f, juce::Font::bold));
-        g.drawText ("MAGIC  ·  " + modeName, r.removeFromTop (24).reduced (10, 0),
+        g.drawText ("MAGIC | " + modeName, r.removeFromTop (24).reduced (10, 0),
                     juce::Justification::centredLeft, false);
 
-        // XY readout
         g.setColour (accent.withAlpha (0.85f));
         g.setFont (juce::FontOptions (11.f, juce::Font::bold));
         g.drawText ("X " + juce::String (x, 2) + "   Y " + juce::String (y, 2),
@@ -100,7 +94,7 @@ public:
 
         g.setColour (juce::Colours::white.withAlpha (0.4f));
         g.setFont (juce::FontOptions (10.f));
-        g.drawText (touching ? "ACTIVE  ·  drag to morph" : "touch hex  ·  release = bypass",
+        g.drawText (touching ? "ACTIVE  |  drag to morph" : "touch inside hex  |  release = bypass",
                     getLocalBounds().removeFromBottom (18).reduced (10, 0),
                     juce::Justification::centred);
     }
@@ -134,11 +128,21 @@ private:
     juce::String modeName { "LOOP" };
     std::vector<juce::Point<float>> trail;
 
+    juce::Rectangle<float> hexArea() const
+    {
+        return getLocalBounds().toFloat().reduced (28.f, 36.f);
+    }
+
+    float hexRadius (juce::Rectangle<float> r) const
+    {
+        return juce::jmin (r.getWidth(), r.getHeight()) * 0.48f;
+    }
+
     juce::Path makeHex (juce::Rectangle<float> r) const
     {
         juce::Path p;
         auto c = r.getCentre();
-        float rad = juce::jmin (r.getWidth(), r.getHeight()) * 0.48f;
+        float rad = hexRadius (r);
         for (int i = 0; i < 6; ++i)
         {
             float a = (float) i / 6.f * juce::MathConstants<float>::twoPi
@@ -151,19 +155,63 @@ private:
         return p;
     }
 
-    juce::Point<float> toScreen (juce::Point<float> norm, juce::Rectangle<float> bounds) const
+    /** Map normalised XY (0..1) to screen; uses inscribed square of hex for uniform mapping */
+    juce::Point<float> toScreen (juce::Point<float> norm) const
     {
-        return { bounds.getX() + norm.x * bounds.getWidth(),
-                 bounds.getY() + (1.f - norm.y) * bounds.getHeight() };
+        auto area = hexArea();
+        auto c = area.getCentre();
+        float rad = hexRadius (area);
+        // use flat-to-flat inscribed square (hex width = sqrt(3)*rad for pointy-top? 
+        // Our hex is pointy-top: horizontal extent = rad * sqrt(3), vertical = 2*rad
+        // Simpler: map through centre using radius * 0.85 so corners stay inside
+        const float usable = rad * 0.82f;
+        float px = c.x + (norm.x * 2.f - 1.f) * usable;
+        float py = c.y - (norm.y * 2.f - 1.f) * usable; // y up
+        return { px, py };
+    }
+
+    /** Clamp a screen point into the hex, return normalised 0..1 */
+    void screenToNormClamped (juce::Point<float> pos, float& nx, float& ny) const
+    {
+        auto area = hexArea();
+        auto c = area.getCentre();
+        float rad = hexRadius (area);
+        const float usable = rad * 0.82f;
+
+        float dx = pos.x - c.x;
+        float dy = c.y - pos.y; // y up
+
+        // clamp to circle first (conservative inside hex)
+        float len = std::sqrt (dx * dx + dy * dy);
+        if (len > usable && len > 1e-6f)
+        {
+            dx *= usable / len;
+            dy *= usable / len;
+        }
+
+        // also reject points outside actual hex path
+        auto hex = makeHex (area);
+        juce::Point<float> candidate { c.x + dx, c.y - dy };
+        if (! hex.contains (candidate))
+        {
+            // pull toward centre until inside
+            for (int i = 0; i < 8; ++i)
+            {
+                dx *= 0.85f;
+                dy *= 0.85f;
+                candidate = { c.x + dx, c.y - dy };
+                if (hex.contains (candidate)) break;
+            }
+        }
+
+        nx = juce::jlimit (0.f, 1.f, 0.5f + 0.5f * (dx / usable));
+        ny = juce::jlimit (0.f, 1.f, 0.5f + 0.5f * (dy / usable));
     }
 
     void updateFromPos (juce::Point<float> pos, bool act)
     {
-        auto r = getLocalBounds().toFloat().reduced (24.f);
-        auto hex = makeHex (r);
-        auto b = hex.getBounds().reduced (4.f);
-        float nx = juce::jlimit (0.f, 1.f, (pos.x - b.getX()) / juce::jmax (1.f, b.getWidth()));
-        float ny = juce::jlimit (0.f, 1.f, 1.f - (pos.y - b.getY()) / juce::jmax (1.f, b.getHeight()));
+        float nx, ny;
+        screenToNormClamped (pos, nx, ny);
         x = nx; y = ny; touching = act;
         if (onChange) onChange (x, y, act);
         repaint();

@@ -62,3 +62,18 @@
             if (lfo3WaveBox.getSelectedItemIndex() == 5)
             { lfoShapeTarget = 2; lfoShapeEditor.setLfo (&processor.getLfo3()); }
         };
+
+        // LFO rate/amount knobs belong on LFO tab (indices 39..44 after 10 MOD knobs)
+        {
+            const auto C = juce::Colour (0xff00e8ff);
+            const auto M = juce::Colour (0xffff2d9b);
+            const auto O = juce::Colour (0xff39ff14);
+            const auto V = juce::Colour (0xffc0ff00);
+            const auto G = juce::Colour (0xff7c4dff);
+            addKnob (lfoTab, "lfo_rate", "LFO1 RT", C);
+            addKnob (lfoTab, "lfo_amount", "LFO1 AMT", M);
+            addKnob (lfoTab, "lfo2_rate", "LFO2 RT", O);
+            addKnob (lfoTab, "lfo2_amount", "LFO2 AMT", V);
+            addKnob (lfoTab, "lfo3_rate", "LFO3 RT", G);
+            addKnob (lfoTab, "lfo3_amount", "LFO3 AMT", C);
+        }
