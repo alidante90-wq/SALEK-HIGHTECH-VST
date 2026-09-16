@@ -7,7 +7,6 @@
 namespace salek
 {
 
-/** Real MIDI arpeggiator. Generates note events from held notes. */
 class Arpeggiator
 {
 public:
@@ -27,7 +26,7 @@ public:
         samplesPerStep = static_cast<int> (sr * 60.0 / (bpm * static_cast<double> (rateDivisor)));
     }
 
-    void setRateDivisor (int div) noexcept // 1=1/4, 2=1/8, 4=1/16 etc.
+    void setRateDivisor (int div) noexcept
     {
         rateDivisor = juce::jlimit (1, 16, div);
         samplesPerStep = static_cast<int> (sr * 60.0 / (bpm * static_cast<double> (rateDivisor)));
@@ -40,49 +39,45 @@ public:
 
     void noteOn (int note, float velocity)
     {
-        // avoid duplicates
-        for (auto& n : heldNotes)
-            if (n.note == note) return;
         heldNotes.push_back ({ note, velocity });
         std::sort (heldNotes.begin(), heldNotes.end(),
                    [] (const Note& a, const Note& b) { return a.note < b.note; });
         rebuildPattern();
+        stepIndex = 0;
     }
 
     void noteOff (int note)
     {
         heldNotes.erase (std::remove_if (heldNotes.begin(), heldNotes.end(),
-                          [note] (const Note& n) { return n.note == note; }),
-                         heldNotes.end());
+            [note] (const Note& n) { return n.note == note; }), heldNotes.end());
         rebuildPattern();
-        if (heldNotes.empty())
-        {
-            // send note-off for current if needed
-            currentPlaying = -1;
-        }
+        if (heldNotes.empty()) stepIndex = 0;
     }
 
-    /** Call every block. Appends generated MIDI to outMidi. */
     void process (int numSamples, juce::MidiBuffer& outMidi)
     {
         if (! enabled || pattern.empty())
+        {
+            if (currentPlaying >= 0)
+            {
+                outMidi.addEvent (juce::MidiMessage::noteOff (1, currentPlaying), 0);
+                currentPlaying = -1;
+            }
             return;
+        }
 
         for (int i = 0; i < numSamples; ++i)
         {
             if (sampleCounter <= 0)
             {
-                // Note off previous
                 if (currentPlaying >= 0)
                 {
                     outMidi.addEvent (juce::MidiMessage::noteOff (1, currentPlaying), i);
                     currentPlaying = -1;
                 }
-
-                // Next step
                 if (! pattern.empty())
                 {
-                    const auto& step = pattern[static_cast<size_t> (stepIndex % static_cast<int> (pattern.size()))];
+                    auto& step = pattern[static_cast<size_t> (stepIndex % (int) pattern.size())];
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, step.note, step.velocity), i);
                     currentPlaying = step.note;
                     gateSamplesLeft = static_cast<int> (samplesPerStep * gate);
@@ -127,18 +122,25 @@ private:
             }
         }
 
-        if (direction == Direction::UpDown && octaves > 0 && pattern.size() > 1)
+        if (direction == Direction::UpDown && pattern.size() > 1)
         {
-            // simple up-down by appending reverse without endpoints
             for (int i = static_cast<int> (pattern.size()) - 2; i > 0; --i)
                 pattern.push_back (pattern[static_cast<size_t> (i)]);
         }
-        // Random is handled by shuffling occasionally - keep ordered for stability
+        if (direction == Direction::Random && pattern.size() > 1)
+        {
+            juce::Random rng;
+            for (int i = (int) pattern.size() - 1; i > 0; --i)
+            {
+                int j = rng.nextInt (i + 1);
+                std::swap (pattern[(size_t) i], pattern[(size_t) j]);
+            }
+        }
     }
 
     double sr = 44100.0;
     double bpm = 175.0;
-    int rateDivisor = 4; // 1/16 at 175 BPM default (psy range)
+    int rateDivisor = 4;
     int samplesPerStep = 1000;
     int sampleCounter = 0;
     int stepIndex = 0;

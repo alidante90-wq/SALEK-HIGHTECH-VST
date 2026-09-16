@@ -1,5 +1,2 @@
 #include "SynthSound.h"
-
-namespace salek
-{
-}
+namespace salek {}

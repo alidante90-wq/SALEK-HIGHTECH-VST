@@ -1,63 +1,46 @@
 # SALEK HIGHTECH
 
-Professional JUCE/C++ **VST3 + Standalone** synthesizer  
-Target: **Hi-Tech • Darkpsy • Psytrance • FM Bass/Lead • Acid • Screech • Metallic • Alien • Cyberpunk**  
-Typical range: 170–190+ BPM
+**Persian Cyber Anime • ISATIS Engine**
 
-## Milestone Status
+Professional JUCE 8 **VST3 + Standalone** wavetable synthesizer for Windows.
 
-| # | Feature | Status |
-|---|---------|--------|
-| M0 | Architecture (CMake / JUCE 8 / VST3 / Standalone) | **DONE** |
-| M1 | 3 real oscillators | **DONE** |
-| M2 | Wavetable morph (8 frames) | **DONE** |
-| M3 | Waveshaping (Warp / Fold / Drive) | **DONE** |
-| M4 | Cross-mod FM / PM / AM / RM | **DONE** |
-| M5 | Multimode SVF Filter | **DONE** |
-| M6 | Amp ADSR | **DONE** |
-| M7 | LFO | **DONE** |
-| M8 | Modulation Matrix | **DONE** |
-| M9 | Macros ×4 | **DONE** |
-| M10 | FX (Master Drive + Delay) | **DONE** |
-| M11 | Arpeggiator | **DONE** |
-| M12 | 16-step Sequencer | **DONE** |
-| M13 | Presets (versioned APVTS) | **DONE** |
-| M14 | Wavetable Lab | **DONE** |
-| M15 | SALEK UI | **PARTIAL** (functional + neon identity) |
-| M16 | Drag-drop Mod UI | PENDING |
-| M17 | Optimisation | **PARTIAL** (smoothing, denormals, CMake) |
-| M18 | Windows Release CI | **READY** |
+## Final UI Design (vFinal)
 
-## Real Signal Path
+- Hyper-realistic Anime Persian Cyber style
+- 3D-inspired knobs + holographic panels
+- Central psychedelic mandala / sonic core visualizer
+- **SALEK HIGHTECH** large top-left branding
+- **ISATIS** large bottom-right branding
+- Persian logo «سالک» with geometric frame
+- Neon cyan / magenta / gold palette
+- OpenGL visualizers + live meters
 
-```
-MIDI → Arpeggiator / 16-step Sequencer
-         ↓
-3× Wavetable Oscillators
-   (morph • phase warp • wavefold • drive)
-         ↓ Cross modulation (FM / PM / AM / RM)
-Multimode State-Variable Filter
-   (cutoff smoothed, env + LFO + matrix)
-         ↓
-Amp ADSR → Master soft-drive → Stereo Delay
-         +
-4 Macros + Modulation Matrix + Wavetable Lab
-```
+## Features (real DSP)
+
+- 3 wavetable oscillators (morph, warp, fold, drive)
+- Cross-mod: FM / PM / AM / RM
+- Unison 1–7 with detune + stereo spread
+- Virus-inspired SVF filter + drive
+- ADSR + filter env
+- LFO + macros
+- FX: Chorus → Delay → Reverb
+- Arpeggiator + 16-step sequencer
+- Factory presets
+- MIDI keyboard
+
+## Tabs
+
+`OSC` · `FILTER` · `ENV` · `MOD` · `FX` · `ARP` · `PRESET`
 
 ## Build (Windows)
 
-1. Push to `master` **or** run the **Windows VST3 + Standalone** workflow manually.
-2. Artifact: `SALEK-HIGHTECH-Windows.zip`  
-   Contains: `SALEK HIGHTECH.vst3` + `SALEK HIGHTECH.exe`
+GitHub Actions builds VST3 + Standalone EXE on every push.
 
 ```bash
-# Local (after placing JUCE in ./JUCE)
-cmake -B build -G "Visual Studio 17 2022" -A x64
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-## Notes
+## Note
 
-- All listed parameters affect real audio / MIDI generation.
-- No decorative / non-functional controls in the current editor.
-- Further visual identity (full M15) and drag-drop matrix UI (M16) are the main remaining UI work.
+Original engine and UI. Not a clone of Serum, Vital or Virus TI.

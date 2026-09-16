@@ -1,39 +1,15 @@
 #pragma once
-
-namespace salek
-{
-
-/** Very lightweight one-pole smoother. Real-time safe. */
-class SmoothedValue
-{
+#include <cmath>
+namespace salek {
+class SmoothedValue {
 public:
-    void reset (float initial = 0.0f) noexcept
-    {
-        current = target = initial;
+    void reset(float v=0) noexcept { current=target=v; }
+    void setTarget(float t) noexcept { target=t; }
+    void setTimeMs(float ms, double sr) noexcept {
+        coeff = (ms<=0||sr<=0) ? 1.f : 1.f - std::exp(-1.f/(float(sr)*ms*0.001f));
     }
-
-    void setTarget (float t) noexcept { target = t; }
-
-    void setTimeMs (float ms, double sampleRate) noexcept
-    {
-        if (ms <= 0.0f || sampleRate <= 0.0)
-            coeff = 1.0f;
-        else
-            coeff = 1.0f - std::exp (-1.0f / (static_cast<float> (sampleRate) * ms * 0.001f));
-    }
-
-    float getNext() noexcept
-    {
-        current += coeff * (target - current);
-        return current;
-    }
-
-    float getCurrent() const noexcept { return current; }
-
+    float getNext() noexcept { current += coeff*(target-current); return current; }
 private:
-    float current = 0.0f;
-    float target = 0.0f;
-    float coeff = 0.1f;
+    float current=0, target=0, coeff=0.1f;
 };
-
-} // namespace salek
+}

@@ -1,0 +1,17 @@
+build/
+build-*/
+Builds/
+cmake-build-*/
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.dll
+*.exe
+*.vst3
+*.component
+*.app
+*.zip
+.DS_Store
+Thumbs.db

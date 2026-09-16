@@ -1,15 +1,9 @@
 #pragma once
-
 #include <JuceHeader.h>
-
-namespace salek
-{
-
-class SynthSound : public juce::SynthesiserSound
-{
+namespace salek {
+class SynthSound : public juce::SynthesiserSound {
 public:
-    bool appliesToNote (int /*midiNoteNumber*/) override { return true; }
-    bool appliesToChannel (int /*midiChannel*/) override { return true; }
+    bool appliesToNote(int) override { return true; }
+    bool appliesToChannel(int) override { return true; }
 };
-
-} // namespace salek
+}

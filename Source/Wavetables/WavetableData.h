@@ -8,14 +8,12 @@
 namespace salek
 {
 
-/** Single wavetable frame (one cycle). Power-of-two size for fast masking. */
 struct WavetableFrame
 {
     static constexpr int tableSize = 2048;
     static constexpr int tableMask = tableSize - 1;
     std::array<float, tableSize> samples {};
 
-    /** Linear interpolation. phase in [0, 1). */
     float getSample (float phase) const noexcept
     {
         const float pos = phase * static_cast<float> (tableSize);
@@ -40,16 +38,12 @@ struct WavetableFrame
     }
 };
 
-/** Multi-frame wavetable with continuous morph / position. */
 class Wavetable
 {
 public:
     static constexpr int maxFrames = 64;
 
-    Wavetable()
-    {
-        generateDefaultTables();
-    }
+    Wavetable() { generateDefaultTables(); }
 
     void setNumFrames (int n)
     {
@@ -69,195 +63,163 @@ public:
         return frames[static_cast<size_t> (juce::jlimit (0, getNumFrames() - 1, index))];
     }
 
-    /** Interpolated sample. tablePos [0,1], phase [0,1). */
     float getSample (float tablePos, float phase) const noexcept
     {
         const int n = getNumFrames();
-        if (n <= 0)
-            return 0.0f;
-        if (n == 1)
-            return frames[0].getSample (phase);
+        if (n <= 0) return 0.0f;
+        if (n == 1) return frames[0].getSample (phase);
 
         const float scaled = juce::jlimit (0.0f, 1.0f, tablePos) * static_cast<float> (n - 1);
         const int f0 = static_cast<int> (scaled);
         const int f1 = juce::jmin (f0 + 1, n - 1);
         const float frac = scaled - static_cast<float> (f0);
-
         const float s0 = frames[static_cast<size_t> (f0)].getSample (phase);
         const float s1 = frames[static_cast<size_t> (f1)].getSample (phase);
-        return s0 + frac * (s1 - s0);
+        return s0 * (1.0f - frac) + s1 * frac;
     }
 
-    /** Clear a frame to silence. */
-    void clearFrame (int index) noexcept
+    void clearFrame (int index)
     {
         if (index < 0 || index >= getNumFrames()) return;
         frames[static_cast<size_t>(index)].samples.fill (0.0f);
     }
 
-    /** Set a single sample in a frame (for drawing). */
-    void setSample (int frameIdx, int sampleIdx, float value) noexcept
+    void setSample (int frameIdx, int sampleIdx, float value)
     {
         if (frameIdx < 0 || frameIdx >= getNumFrames()) return;
-        sampleIdx = sampleIdx & WavetableFrame::tableMask;
-        frames[static_cast<size_t>(frameIdx)].samples[static_cast<size_t>(sampleIdx)] =
-            juce::jlimit (-1.0f, 1.0f, value);
+        frames[static_cast<size_t>(frameIdx)].samples[static_cast<size_t>(sampleIdx & WavetableFrame::tableMask)] = value;
     }
 
-    /** Generate frame from harmonic amplitudes (0 = fundamental). Real additive synthesis. */
     void generateFromHarmonics (int frameIdx, const float* amps, int numHarmonics) noexcept
     {
         if (frameIdx < 0 || frameIdx >= getNumFrames() || amps == nullptr || numHarmonics <= 0)
             return;
-
         auto& frame = frames[static_cast<size_t>(frameIdx)];
+        frame.samples.fill (0.0f);
         for (int i = 0; i < WavetableFrame::tableSize; ++i)
         {
-            const float phase = static_cast<float>(i) / static_cast<float>(WavetableFrame::tableSize)
-                                * juce::MathConstants<float>::twoPi;
+            const float phase = static_cast<float> (i) / static_cast<float> (WavetableFrame::tableSize)
+                              * juce::MathConstants<float>::twoPi;
             float s = 0.0f;
             for (int h = 0; h < numHarmonics; ++h)
-            {
-                if (std::abs (amps[h]) > 1.0e-6f)
-                    s += amps[h] * std::sin (phase * static_cast<float>(h + 1));
-            }
+                s += amps[h] * std::sin (phase * static_cast<float> (h + 1));
             frame.samples[static_cast<size_t>(i)] = s;
         }
         frame.normalize();
     }
 
-    /** Morph two frames into a third (or overwrite). */
     void morphFrames (int srcA, int srcB, int dest, float t) noexcept
     {
         const int n = getNumFrames();
-        if (srcA < 0 || srcA >= n || srcB < 0 || srcB >= n || dest < 0 || dest >= n) return;
+        if (srcA < 0 || srcB < 0 || dest < 0 || srcA >= n || srcB >= n || dest >= n) return;
         t = juce::jlimit (0.0f, 1.0f, t);
         auto& a = frames[static_cast<size_t>(srcA)];
         auto& b = frames[static_cast<size_t>(srcB)];
         auto& d = frames[static_cast<size_t>(dest)];
         for (int i = 0; i < WavetableFrame::tableSize; ++i)
-            d.samples[static_cast<size_t>(i)] =
-                a.samples[static_cast<size_t>(i)] * (1.0f - t) + b.samples[static_cast<size_t>(i)] * t;
+            d.samples[static_cast<size_t>(i)] = a.samples[static_cast<size_t>(i)] * (1.0f - t)
+                                              + b.samples[static_cast<size_t>(i)] * t;
         d.normalize();
     }
 
-    /** Soft saturate / wavefold an entire frame in-place. */
     void processFrame (int frameIdx, float foldAmt, float driveAmt) noexcept
     {
         if (frameIdx < 0 || frameIdx >= getNumFrames()) return;
         auto& frame = frames[static_cast<size_t>(frameIdx)];
         for (float& s : frame.samples)
         {
-            if (foldAmt > 1.0e-4f)
+            if (foldAmt > 1e-4f)
             {
-                float x = s * (1.0f + foldAmt * 3.0f);
-                const float thr = 1.0f - foldAmt * 0.7f;
-                for (int k = 0; k < 2; ++k)
+                float thresh = 1.0f - foldAmt * 0.85f;
+                float x = s * (1.0f + foldAmt * 4.0f);
+                for (int k = 0; k < 3; ++k)
                 {
-                    if (x > thr) x = thr - (x - thr);
-                    else if (x < -thr) x = -thr - (x + thr);
+                    if (x > thresh) x = thresh - (x - thresh);
+                    else if (x < -thresh) x = -thresh - (x + thresh);
                     else break;
                 }
-                s = x;
+                s = x / (1.0f + foldAmt * 1.5f);
             }
-            if (driveAmt > 1.0e-4f)
-                s = std::tanh (s * (1.0f + driveAmt * 4.0f));
+            if (driveAmt > 1e-4f)
+                s = std::tanh (s * (1.0f + driveAmt * 6.0f));
         }
         frame.normalize();
     }
 
-    /** Rebuild factory tables optimised for hi-tech / psy / alien / metallic. */
     void generateDefaultTables()
     {
-        frames.resize (8);
-
+        frames.resize (16);
         for (int i = 0; i < WavetableFrame::tableSize; ++i)
         {
             const float t = static_cast<float> (i) / static_cast<float> (WavetableFrame::tableSize);
             const float phase = t * juce::MathConstants<float>::twoPi;
             const size_t idx = static_cast<size_t> (i);
-
-            // 0 — Clean Saw (additive, limited harmonics)
-            {
+            auto addSaw = [&](int harm) {
                 float s = 0.0f;
-                for (int h = 1; h <= 32; ++h)
+                for (int h = 1; h <= harm; ++h)
                     s += std::sin (static_cast<float> (h) * phase) / static_cast<float> (h);
-                frames[0].samples[idx] = s * 0.55f;
-            }
-
-            // 1 — Soft Square / Pulse
-            {
+                return s;
+            };
+            auto addSqr = [&](int harm) {
                 float s = 0.0f;
-                for (int h = 1; h <= 31; h += 2)
+                for (int h = 1; h <= harm; h += 2)
                     s += std::sin (static_cast<float> (h) * phase) / static_cast<float> (h);
-                frames[1].samples[idx] = s * 0.7f;
-            }
-
-            // 2 — Triangle (odd harmonics 1/h²)
+                return s;
+            };
+            frames[0].samples[idx] = (std::sin(phase) + 0.25f*std::sin(2.f*phase)) * 0.9f;
             {
                 float s = 0.0f;
-                for (int h = 1; h <= 15; h += 2)
-                {
-                    const float sign = ((h - 1) / 2) % 2 == 0 ? 1.0f : -1.0f;
-                    s += sign * std::sin (static_cast<float> (h) * phase)
-                         / static_cast<float> (h * h);
+                for (int h = 1; h <= 15; h += 2) {
+                    float sign = ((h - 1) / 2) % 2 == 0 ? 1.0f : -1.0f;
+                    s += sign * std::sin((float)h * phase) / (float)(h * h);
                 }
-                frames[2].samples[idx] = s * 0.9f;
+                frames[1].samples[idx] = s * 0.95f;
             }
-
-            // 3 — Sine + strong 2nd/3rd (warm fundamental)
+            frames[2].samples[idx] = addSqr(15) * 0.9f;
+            frames[3].samples[idx] = addSaw(32) * 0.85f;
+            frames[4].samples[idx] = addSaw(48) * 0.7f;
+            frames[5].samples[idx] = (addSqr(31) * 0.7f + addSaw(16) * 0.3f) * 0.85f;
             {
-                float s = std::sin (phase);
-                s += 0.45f * std::sin (2.0f * phase);
-                s += 0.22f * std::sin (3.0f * phase);
-                frames[3].samples[idx] = s * 0.75f;
+                float s = std::sin(phase);
+                for (int h : {3,5,7,11,13,17})
+                    s += (0.35f / (float)(h/2+1)) * std::sin((float)h * phase);
+                frames[6].samples[idx] = s * 0.7f;
             }
-
-            // 4 — Metallic / inharmonic-ish (odd + selected high)
             {
-                float s = std::sin (phase);
-                s += 0.4f * std::sin (3.0f * phase);
-                s += 0.25f * std::sin (5.0f * phase);
-                s += 0.18f * std::sin (7.0f * phase);
-                s += 0.12f * std::sin (11.0f * phase);
-                s += 0.08f * std::sin (13.0f * phase);
-                frames[4].samples[idx] = s * 0.65f;
+                float s = std::sin(phase);
+                for (int h : {4,5,8,9,12,16})
+                    s += 0.28f * std::sin((float)h * phase);
+                frames[7].samples[idx] = s * 0.65f;
             }
-
-            // 5 — Alien / formant-ish (clustered harmonics)
             {
-                float s = std::sin (phase);
-                s += 0.55f * std::sin (4.0f * phase);
-                s += 0.35f * std::sin (5.0f * phase);
-                s += 0.2f  * std::sin (8.0f * phase);
-                s += 0.15f * std::sin (9.0f * phase);
-                s += 0.1f  * std::sin (12.0f * phase);
-                frames[5].samples[idx] = s * 0.6f;
+                float s = addSaw(20);
+                s = std::floor(s * 6.0f) / 6.0f;
+                frames[8].samples[idx] = s * 0.8f;
             }
-
-            // 6 — Aggressive / screech potential (bright)
+            frames[9].samples[idx] = addSqr(41) * 0.75f;
+            frames[10].samples[idx] = (std::sin(phase)*0.85f + 0.4f*std::sin(2.f*phase) + 0.15f*std::sin(3.f*phase));
             {
                 float s = 0.0f;
-                for (int h = 1; h <= 48; ++h)
-                {
-                    const float amp = 1.0f / (1.0f + 0.15f * static_cast<float> (h));
-                    s += amp * std::sin (static_cast<float> (h) * phase);
-                }
-                frames[6].samples[idx] = s * 0.35f;
+                for (int h = 1; h <= 64; ++h)
+                    s += (1.0f / (1.0f + 0.12f*(float)h)) * std::sin((float)h * phase);
+                frames[11].samples[idx] = s * 0.4f;
             }
-
-            // 7 — Cyber / digital edge (saw + pulse mix flavour)
             {
-                float saw = 0.0f;
-                for (int h = 1; h <= 24; ++h)
-                    saw += std::sin (static_cast<float> (h) * phase) / static_cast<float> (h);
-                float pulse = 0.0f;
-                for (int h = 1; h <= 31; h += 2)
-                    pulse += std::sin (static_cast<float> (h) * phase) / static_cast<float> (h);
-                frames[7].samples[idx] = (0.6f * saw + 0.4f * pulse) * 0.5f;
+                float s = std::sin(phase);
+                s += 0.5f * std::sin(6.f*phase) + 0.3f*std::sin(7.f*phase) + 0.2f*std::sin(11.f*phase);
+                frames[12].samples[idx] = s * 0.7f;
+            }
+            {
+                float s = std::sin(phase) - 0.6f*std::sin(2.f*phase) + 0.3f*std::sin(5.f*phase);
+                frames[13].samples[idx] = s * 0.75f;
+            }
+            frames[14].samples[idx] = (0.55f*addSaw(24) + 0.45f*addSqr(31)) * 0.85f;
+            {
+                float s = addSaw(8);
+                s += 0.15f * std::sin(23.f*phase) + 0.1f*std::sin(29.f*phase) + 0.08f*std::sin(31.f*phase);
+                frames[15].samples[idx] = s * 0.7f;
             }
         }
-
         for (auto& f : frames)
             f.normalize();
     }

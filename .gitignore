@@ -5,11 +5,9 @@ build/
 *.user
 CMakeUserPresets.json
 JUCE/
-JUCE_broken/
 *.o
 *.a
 *.so
-*.dylib
 *.exe
 *.vst3
 *.zip

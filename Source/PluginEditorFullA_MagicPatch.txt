@@ -1,0 +1,4 @@
+PATCH_NOTES:
+1. tabs.addTab ("MAGIC", ..., &magicTab, false) after FX or before SEQ
+2. for opaque panels include &magicTab
+3. after LFO setup block: #include "PluginEditorMagic.inl"

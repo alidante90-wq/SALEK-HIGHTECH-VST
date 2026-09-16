@@ -1,0 +1,68 @@
+name: SALEK HIGHTECH V2 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.4-v2
+
+      - name: Clone JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure (Ninja + MSVC)
+        shell: pwsh
+        run: cmake -S . -B build-v2 -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build-v2 --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          $vst3 = Get-ChildItem -Path build-v2 -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $exe  = Get-ChildItem -Path build-v2 -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1
+          Write-Host "VST3: $($vst3.FullName)"
+          Write-Host "EXE:  $($exe.FullName)"
+          if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\SALEK HIGHTECH.vst3" }
+          if ($exe)  { Copy-Item $exe.FullName "package\SALEK HIGHTECH.exe" }
+          if (-not (Get-ChildItem package -ErrorAction SilentlyContinue)) {
+            Write-Error "No artifacts found"
+            Get-ChildItem -Path build-v2 -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
+            exit 1
+          }
+          Compress-Archive -Path "package\*" -DestinationPath "SALEK_HIGHTECH_V2_VST3.zip" -Force
+
+      - name: Upload VST3 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SALEK_HIGHTECH_V2_VST3
+          path: SALEK_HIGHTECH_V2_VST3.zip
+          if-no-files-found: error

@@ -1,0 +1,77 @@
+name: SALEK HIGHTECH Cyber Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows VST3 + Standalone
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.4-salek-cyber-v1
+
+      - name: Clone JUCE 8.0.4
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          if (Test-Path "Source/Assets") {
+            New-Item -ItemType Directory -Force -Path artifact/Assets | Out-Null
+            Copy-Item -Path "Source/Assets/*" -Destination "artifact/Assets/" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch "cmake|ninja|juce|CMake" } | Select-Object -First 1
+          if ($vst3) { Copy-Item -Recurse $vst3.FullName "artifact/" }
+          if ($exe) { Copy-Item $exe.FullName "artifact/" }
+          Get-ChildItem -Recurse artifact
+          if (-not (Get-ChildItem artifact -ErrorAction SilentlyContinue)) {
+            Write-Host "No build outputs found"
+            Get-ChildItem -Path build -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
+            exit 1
+          }
+          Compress-Archive -Path artifact/* -DestinationPath SALEK-HIGHTECH-Cyber-Windows.zip -Force
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SALEK-HIGHTECH-Cyber-Windows
+          path: SALEK-HIGHTECH-Cyber-Windows.zip
+          if-no-files-found: error
+
+  summary:
+    name: Build summary
+    needs: windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: |
+          echo "SALEK HIGHTECH Cyber build finished."
+          echo "Download the Windows artifact from this run."

@@ -1,60 +1,31 @@
 #pragma once
 #include <JuceHeader.h>
 #include <vector>
-#include <cmath>
-
-namespace salek
-{
-
-class SimpleDelay
-{
+namespace salek {
+class SimpleDelay {
 public:
-    void prepare (double sampleRate, int maxBlock)
-    {
-        sr = sampleRate;
-        const int maxSamples = static_cast<int> (sampleRate * 2.0) + maxBlock;
-        buffer.resize (static_cast<size_t> (maxSamples * 2), 0.0f);
-        writePos = 0;
+    void prepare(double sampleRate, int maxBlock) {
+        sr=sampleRate; buffer.assign(size_t(sampleRate*2+maxBlock)*2, 0.f); writePos=0;
     }
-
-    void setTimeMs (float ms) noexcept
-    {
-        delaySamples = juce::jlimit (1.0f, static_cast<float> (sr * 1.8), ms * 0.001f * static_cast<float> (sr));
-    }
-
-    void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.0f, 0.95f, fb); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.0f, 1.0f, m); }
-
-    void process (juce::AudioBuffer<float>& buffer) noexcept
-    {
-        if (mix < 1.0e-4f) return;
-        const int n = buffer.getNumSamples();
-        const int ch = buffer.getNumChannels();
-        const int bufSize = static_cast<int> (buffer.size() / 2);
-
-        for (int i = 0; i < n; ++i)
-        {
-            for (int c = 0; c < juce::jmin (2, ch); ++c)
-            {
-                float* data = buffer.getWritePointer (c);
-                const int readPos = (writePos - static_cast<int> (delaySamples) + bufSize) % bufSize;
-                const float delayed = buffer[static_cast<size_t> (readPos * 2 + c)];
-                const float in = data[i];
-                const float out = in * (1.0f - mix) + delayed * mix;
-                data[i] = out;
-                buffer[static_cast<size_t> (writePos * 2 + c)] = in + delayed * feedback;
+    void setTimeMs(float ms) noexcept { delaySamples=juce::jlimit(1.f,float(sr*1.8),ms*0.001f*float(sr)); }
+    void setFeedback(float fb) noexcept { feedback=juce::jlimit(0.f,0.95f,fb); }
+    void setMix(float m) noexcept { mix=juce::jlimit(0.f,1.f,m); }
+    void process(juce::AudioBuffer<float>& buf) noexcept {
+        if(mix<1e-4f) return;
+        int n=buf.getNumSamples(), ch=buf.getNumChannels(), bs=int(buffer.size()/2);
+        for(int i=0;i<n;++i){
+            for(int c=0;c<juce::jmin(2,ch);++c){
+                float* d=buf.getWritePointer(c);
+                int rp=(writePos-int(delaySamples)+bs)%bs;
+                float delayed=buffer[size_t(rp*2+c)], in=d[i];
+                d[i]=in*(1-mix)+delayed*mix;
+                buffer[size_t(writePos*2+c)]=in+delayed*feedback;
             }
-            writePos = (writePos + 1) % bufSize;
+            writePos=(writePos+1)%bs;
         }
     }
-
 private:
-    double sr = 44100.0;
-    std::vector<float> buffer;
-    int writePos = 0;
-    float delaySamples = 300.0f;
-    float feedback = 0.3f;
-    float mix = 0.0f;
+    double sr=44100; std::vector<float> buffer; int writePos=0;
+    float delaySamples=300, feedback=0.3f, mix=0;
 };
-
-} // namespace salek
+}
