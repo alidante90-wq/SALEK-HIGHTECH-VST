@@ -104,8 +104,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (envTab, "amp_release", "RELEASE", G);
 
         presetList.setModel (this);
-        presetList.setRowHeight (22);
-        presetList.setColour (juce::ListBox::backgroundColourId, juce::Colour (0xff0a0614));
+        presetList.setRowHeight (24);
+        presetList.setColour (juce::ListBox::backgroundColourId, juce::Colour (0xff080414));
         presetList.setColour (juce::ListBox::outlineColourId, juce::Colour (0xff1a1030));
         presetTab.addAndMakeVisible (presetList);
         presetTab.addAndMakeVisible (prevPreset);
