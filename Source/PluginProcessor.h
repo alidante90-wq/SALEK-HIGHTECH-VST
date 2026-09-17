@@ -60,6 +60,9 @@ public:
     salek::LFO& getLfo2() { return lfo2; }
     salek::LFO& getLfo3() { return lfo3; }
     salek::MagicEngine& getMagic() { return magic; }
+    salek::SimpleCompressor& getCompressor() { return compressor; }
+    salek::SimpleReverb& getReverb() { return reverb; }
+    salek::GranularOscillator& getGranular() { return granular; }
 
     juce::StringArray getPresetNames() const;
     int saveCurrentAsUserPreset (const juce::String& name);
