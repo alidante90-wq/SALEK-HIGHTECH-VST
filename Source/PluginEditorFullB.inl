@@ -8,7 +8,7 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     // ===== Category header (mockup cyber) =====
     if (pr.isHeader)
     {
-        g.setColour (juce::Colour (0xff0c0418));
+        g.setColour (juce::Colour (0xcc0c0418)); // translucent header
         g.fillRect (0, 0, width, height);
         g.setColour (juce::Colour (0xffff2ec8).withAlpha (0.75f));
         g.fillRect (0, 0, 3, height);
@@ -27,24 +27,22 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     // ===== Preset row (mockup: cyan selected bar) =====
     if (selected)
     {
-        // bright cyan selection like reference art
-        g.setColour (juce::Colour (0xff0a2848));
+        g.setColour (juce::Colour (0xbb0a2848)); // translucent selected
         g.fillRect (0, 0, width, height);
         g.setColour (juce::Colour (0xff00e8ff));
         g.fillRect (0, 0, 4, height);
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f));
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
         g.drawRect (0, 0, width, height, 1);
-        // soft inner glow
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.12f));
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.15f));
         g.fillRect (4, 1, width - 5, height - 2);
     }
     else
     {
-        g.setColour (juce::Colour (0xff0a0614));
+        g.setColour (juce::Colour (0x880a0614)); // see-through so BG shows
         g.fillRect (0, 0, width, height);
         if ((row & 1) == 0)
         {
-            g.setColour (juce::Colour (0xff12081c).withAlpha (0.55f));
+            g.setColour (juce::Colour (0x5512081c));
             g.fillRect (0, 0, width, height);
         }
     }
@@ -203,7 +201,7 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto b = mainTab.getLocalBounds().reduced (2);
         // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 248;
+        const int presetW = presetCollapsed ? 28 : 260;
         presetTab.setBounds (b.removeFromLeft (presetW));
         envTab.setBounds (b.removeFromBottom (120));
         filterTab.setBounds (b.removeFromRight (220));
@@ -226,6 +224,8 @@ void SalekHightechAudioProcessorEditor::resized()
                 presetLabel.setJustificationType (juce::Justification::centredLeft);
                 presetLabel.setColour (juce::Label::textColourId, themeAccent);
                 presetList.setBounds (pb);
+                presetList.setOpaque (false);
+                presetTab.setOpaque (false);
                 presetList.setVisible (true);
                 prevPreset.setVisible (true);
                 nextPreset.setVisible (true);
@@ -466,7 +466,7 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         knobs[i]->name.setColour (juce::Label::textColourId, c.withAlpha (0.85f));
     }
 
-    presetList.setColour (juce::ListBox::backgroundColourId, panelBg);
+    presetList.setColour (juce::ListBox::backgroundColourId, juce::Colour (0x990a0614)); // semi-transparent
     presetList.setColour (juce::ListBox::outlineColourId, accent.withAlpha (0.3f));
     savePresetBtn.setColour (juce::TextButton::textColourOffId, accent2);
     loadPresetBtn.setColour (juce::TextButton::textColourOffId, accent);
