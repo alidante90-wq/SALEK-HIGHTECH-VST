@@ -157,5 +157,30 @@ inline juce::Image loadCyanGirl()
     return img.isValid() ? img : loadFace();
 }
 
-inline juce::Image loadHero() { return loadLian(); }
+inline juce::Image loadBgIsatis()
+{
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("bg_isatis_jpg");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "bg_isatis.jpg", "bg_isatis.png" });
+    return img.isValid() ? img : loadToronowla();
+}
+
+/** BG version 2 — anime girl / red cyber city */
+inline juce::Image loadBgSalek()
+{
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("bg_salek_jpg");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "bg_salek.jpg", "bg_salek.png" });
+    return img.isValid() ? img : loadCyanGirl();
+}
+
+inline juce::Image loadHero() { return loadBgIsatis(); }
 }
