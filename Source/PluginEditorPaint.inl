@@ -136,7 +136,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
     // ---- orbs with 3D specular (optimized count) ----
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 16; ++i)
     {
         float speed = 12.f + (i % 7) * 3.5f;
         float px = std::fmod (t * speed * 0.6f + i * 47.f, W + 60.f) - 30.f + mx * 40.f;
@@ -158,7 +158,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
     // ---- near sparks ----
-    for (int i = 0; i < 60; ++i)
+    for (int i = 0; i < 40; ++i)
     {
         float px = std::fmod (t * (11.f + i % 9) + i * 41.f + mx * 55.f, W);
         float py = std::fmod (t * (8.f + i % 5) + i * 59.f + my * 45.f, H);

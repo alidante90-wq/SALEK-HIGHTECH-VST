@@ -250,6 +250,10 @@ void SalekHightechAudioProcessorEditor::resized()
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));
         lfo3WaveBox.setBounds (waveRow.reduced (2));
 
+        // 32-shape bank selector
+        auto bankRow = r.removeFromTop (24);
+        lfoShapeBank.setBounds (bankRow.reduced (2));
+
         auto copyRow = r.removeFromTop (22);
         const int cw = copyRow.getWidth() / 9;
         lfoCopyTo1.setBounds (copyRow.removeFromLeft (cw).reduced (1));
@@ -347,7 +351,7 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         labelTx = juce::Colour (0xff00e8ff);
     }
 
-    tabs.setColour (juce::TabbedComponent::backgroundColourId, panelBg);
+    tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colours::transparentBlack);
     tabs.setColour (juce::TabbedComponent::outlineColourId, accent.withAlpha (0.35f));
     for (int i = 0; i < fxSectionLabels.size(); ++i)
     {

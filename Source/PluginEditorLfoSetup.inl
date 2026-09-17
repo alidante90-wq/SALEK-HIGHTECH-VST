@@ -161,3 +161,26 @@
             addKnob (lfoTab, "lfo3_rate", "LFO3 RT", G);
             addKnob (lfoTab, "lfo3_amount", "LFO3 AMT", C);
         }
+
+        // Full 32-shape bank (Serum/Vital style)
+        lfoShapeBank.clear (juce::dontSendNotification);
+        for (int i = 0; i < salek::LFO::NumShapes; ++i)
+            lfoShapeBank.addItem (salek::LFO::shapeName (i), i + 1);
+        lfoShapeBank.setSelectedId (1, juce::dontSendNotification);
+        lfoShapeBank.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        lfoShapeBank.setColour (juce::ComboBox::textColourId, juce::Colour (0xffffd700));
+        lfoTab.addAndMakeVisible (lfoShapeBank);
+        lfoShapeBank.onChange = [this]
+        {
+            const int preset = lfoShapeBank.getSelectedId() - 1;
+            if (preset < 0) return;
+            salek::LFO* targets[3] = { &processor.getLfo1(), &processor.getLfo2(), &processor.getLfo3() };
+            auto* L = targets[juce::jlimit (0, 2, lfoShapeTarget)];
+            L->loadPresetShape (preset);
+            L->setWave (salek::LFO::Wave::Custom);
+            lfoShapeEditor.setLfo (L);
+            lfoShapeEditor.syncFromLfo();
+            const char* ids[] = { "lfo_wave", "lfo2_wave", "lfo3_wave" };
+            if (auto* p = processor.getAPVTS().getParameter (ids[juce::jlimit (0, 2, lfoShapeTarget)]))
+                p->setValueNotifyingHost (p->convertTo0to1 (5.f));
+        };

@@ -46,14 +46,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
     tabs.setTabBarDepth (28);
-    tabs.setOpaque (true);
-    tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colour (0xff0a0614));
-    tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0xff1a1030));
-    // Opaque content prevents black voids after long sessions in some hosts
+    // Glass UI: transparent so animated theme shows through (no solid pink slab)
+    tabs.setOpaque (false);
+    tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colours::transparentBlack);
+    tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0x55ffffff));
     for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &magicTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
     {
-        panel->setOpaque (true);
-        panel->setColour (juce::ResizableWindow::backgroundColourId, juce::Colour (0xff0a0614));
+        panel->setOpaque (false);
+        panel->setColour (juce::ResizableWindow::backgroundColourId, juce::Colours::transparentBlack);
     }
 
     {
