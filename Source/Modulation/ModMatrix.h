@@ -10,7 +10,7 @@ namespace salek
 class ModMatrix
 {
 public:
-    static constexpr int MaxRoutes = 48; // was 24 — more free matrix slots
+    static constexpr int MaxRoutes = 64; // expanded — plenty of free matrix slots
 
     enum class Source : int
     {

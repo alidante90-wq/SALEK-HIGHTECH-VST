@@ -60,7 +60,13 @@ void SalekHightechAudioProcessorEditor::resized()
         keyboard.setBounds (kb);
     }
     full.removeFromBottom (4);
-    full.removeFromLeft (222);
+
+    // Collapsible left hero strip (default open = 222 px, collapsed = 36 px)
+    const int leftW = sideCollapsed ? 36 : 222;
+    full.removeFromLeft (leftW);
+    // Toggle sits under the hero image (or at left edge when collapsed)
+    sideToggle.setBounds (sideCollapsed ? 4 : 8, sideCollapsed ? 48 : 300, sideCollapsed ? 28 : 56, 22);
+    sideToggle.toFront (false);
 
     auto header = full.removeFromTop (36);
     themeBox.setBounds (header.removeFromRight (110).reduced (2));
@@ -284,6 +290,6 @@ void SalekHightechAudioProcessorEditor::cycleHero()
 
 void SalekHightechAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
 {
-    if (e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
+    if (! sideCollapsed && e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
         cycleHero();
 }

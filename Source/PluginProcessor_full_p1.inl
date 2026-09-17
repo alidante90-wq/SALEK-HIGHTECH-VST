@@ -44,10 +44,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
     C("filter_mode","F Mode",{"LowPass","HighPass","BandPass","Notch"},0);
-    Fs("amp_attack","Attack",0.0005f,4.0f,0.22f,0.008f);
-    Fs("amp_decay","Decay",0.003f,6.0f,0.28f,0.18f);
+    // Stronger low-end skew so short A/D/R (plucks, dubstep hits) are easy to dial
+    Fs("amp_attack","Attack",0.0005f,4.0f,0.18f,0.005f);
+    Fs("amp_decay","Decay",0.003f,6.0f,0.22f,0.12f);
     F("amp_sustain","Sustain",0,1,0.7f);
-    Fs("amp_release","Release",0.003f,10.0f,0.25f,0.35f);    F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.5f);
+    Fs("amp_release","Release",0.003f,10.0f,0.20f,0.22f);
+    F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.5f);
     C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);
     F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.5f);
     C("lfo2_wave","LFO2 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom"},0);

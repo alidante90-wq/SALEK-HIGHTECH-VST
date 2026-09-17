@@ -186,6 +186,23 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.setSelectedId (1);
     themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
+
+    // Collapsible left hero panel — frees horizontal space when closed
+    sideToggle.setButtonText ("<<");
+    sideToggle.setClickingTogglesState (true);
+    sideToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
+    sideToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2a1040));
+    sideToggle.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+    sideToggle.setColour (juce::TextButton::textColourOnId, juce::Colour (0xffffd700));
+    sideToggle.onClick = [this]
+    {
+        sideCollapsed = sideToggle.getToggleState();
+        sideToggle.setButtonText (sideCollapsed ? ">>" : "<<");
+        resized();
+        repaint();
+    };
+    addAndMakeVisible (sideToggle);
+
     applyHeroFromTheme();
 
     rebuildPresetRows();

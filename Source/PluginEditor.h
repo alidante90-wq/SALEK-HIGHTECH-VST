@@ -69,30 +69,59 @@ private:
     juce::AudioProcessorValueTreeState& apvts;
 };
 inline void FilterCurveDisplay::paint (juce::Graphics& g) {
-    auto r=getLocalBounds().toFloat().reduced(2.f);
-    g.setColour(juce::Colour(0xff0c0818)); g.fillRoundedRectangle(r,6.f);
-    g.setColour(juce::Colour(0xffff2d9b).withAlpha(0.4f)); g.drawRoundedRectangle(r,6.f,1.f);
-    auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
-    float cut=gval("filter_cutoff",1000.f); float reso=gval("filter_reso",0.3f);
-    float norm=juce::jlimit(0.f,1.f, std::log (juce::jmax(20.f,cut)/20.f) / std::log (1000.f));
-    juce::Path curve; auto plot=r.reduced(6.f,4.f);
-    for(int i=0;i<96;++i){
-        float t=(float)i/95.f; float x=plot.getX()+t*plot.getWidth();
-        float dist = t - norm;
-        float yNorm = 0.55f;
+    auto r = getLocalBounds().toFloat().reduced (2.f);
+    g.setColour (juce::Colour (0xff0c0818));
+    g.fillRoundedRectangle (r, 6.f);
+    g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.45f));
+    g.drawRoundedRectangle (r, 6.f, 1.2f);
+
+    auto gval = [&] (const char* id, float d) {
+        if (auto* p = apvts.getRawParameterValue (id)) return p->load();
+        return d;
+    };
+    // Map cutoff 20 Hz .. 20 kHz onto log X axis so knob motion is visible
+    const float cutHz = juce::jlimit (20.f, 20000.f, gval ("filter_cutoff", 1000.f));
+    const float reso  = juce::jlimit (0.f, 1.f, gval ("filter_reso", 0.3f));
+    const float logMin = std::log (20.f);
+    const float logMax = std::log (20000.f);
+    const float norm = juce::jlimit (0.f, 1.f, (std::log (cutHz) - logMin) / (logMax - logMin));
+
+    auto plot = r.reduced (6.f, 4.f);
+    juce::Path curve;
+    // Resonance Q drives both peak height and bandwidth (Serum-style response face)
+    const float qSharp = 8.f + reso * 90.f;   // higher reso = narrower peak
+    const float peakH  = 0.12f + reso * 0.72f; // taller peak when RES is up
+
+    for (int i = 0; i < 128; ++i)
+    {
+        const float t = (float) i / 127.f;
+        const float x = plot.getX() + t * plot.getWidth();
+        const float dist = t - norm;
+
+        // Passband floor + gentle rolloff past cutoff
+        float yNorm = 0.42f;
         if (dist > 0.f)
-            yNorm = 0.55f * std::exp (-dist * dist * (18.f + (1.f - reso) * 40.f));
+            yNorm = 0.42f * std::exp (-dist * dist * (12.f + (1.f - reso) * 28.f));
         else
-            yNorm = 0.55f + 0.08f * (1.f - std::exp (dist * 6.f));
-        float peak = reso * 0.55f * std::exp (-dist * dist * 220.f);
-        yNorm += peak;
-        float y = plot.getBottom() - juce::jlimit (0.05f, 0.95f, yNorm) * plot.getHeight();
-        if(i==0)curve.startNewSubPath(x,y); else curve.lineTo(x,y);
+            yNorm = 0.42f + 0.06f * (1.f - std::exp (dist * 5.f));
+
+        // Resonant peak centred on cutoff
+        yNorm += peakH * std::exp (-dist * dist * qSharp);
+
+        const float y = plot.getBottom() - juce::jlimit (0.04f, 0.96f, yNorm) * plot.getHeight();
+        if (i == 0) curve.startNewSubPath (x, y);
+        else        curve.lineTo (x, y);
     }
-    g.setColour(juce::Colour(0xffff2d9b)); g.strokePath(curve, juce::PathStrokeType(1.8f));
-    float mx = plot.getX() + norm * plot.getWidth();
-    g.setColour(juce::Colour(0xffffd700).withAlpha(0.5f));
+
+    g.setColour (juce::Colour (0xffff2d9b));
+    g.strokePath (curve, juce::PathStrokeType (2.0f));
+
+    // Cutoff marker + RES amount indicator
+    const float mx = plot.getX() + norm * plot.getWidth();
+    g.setColour (juce::Colour (0xffffd700).withAlpha (0.65f));
     g.drawVerticalLine ((int) mx, plot.getY(), plot.getBottom());
+    g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f + reso * 0.45f));
+    g.fillEllipse (mx - 3.f - reso * 4.f, plot.getY() + 4.f, 6.f + reso * 8.f, 6.f + reso * 4.f);
 }
 
 class LfoDisplay : public juce::Component, private juce::Timer {
