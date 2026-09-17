@@ -95,16 +95,16 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         const float panX = mx * 8.f;
         const float panY = my * 6.f;
         auto dest = juce::Rectangle<float> (-12.f + panX, -10.f + panY, W + 24.f, H + 20.f);
-        g.setOpacity (0.85f); // background art more visible
+        g.setOpacity (0.90f); // BG opacity 0.9 — art clearly visible
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
         // soft dark veil — UI readability over detailed art
         {
-            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.28f), W * 0.5f, H,
+            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.18f), W * 0.5f, H,
                                       juce::Colours::transparentBlack, W * 0.5f, H * 0.28f, false);
             g.setGradientFill (veil);
             g.fillAll();
-            g.setColour (juce::Colours::black.withAlpha (0.12f));
+            g.setColour (juce::Colours::black.withAlpha (0.06f));
             g.fillAll();
         }
     }
