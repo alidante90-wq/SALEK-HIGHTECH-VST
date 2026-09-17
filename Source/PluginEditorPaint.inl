@@ -197,7 +197,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     // ---- brand ----
     g.setColour (cyan);
     g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", 16, 4, 320, 24, juce::Justification::centredLeft);
+    g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
     g.setColour (gold.withAlpha (0.6f + pulse * 0.4f));
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("ISATIS", W - 100.f, H - 90.f, 90.f, 16.f, juce::Justification::centredRight);

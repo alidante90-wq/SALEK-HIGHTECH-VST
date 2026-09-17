@@ -214,6 +214,24 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
+    // Subtle hi-tech presence (crystal air) — gentle 6–10 kHz lift, sample-rate safe
+    {
+        static float hpL = 0.f, hpR = 0.f;
+        const float coeff = 0.08f; // ~high shelf-ish one-pole difference
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float L = buffer.getSample (0, i);
+            float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
+            hpL += coeff * ((L - hpL));
+            hpR += coeff * ((R - hpR));
+            float airL = (L - hpL) * 0.18f; // presence amount
+            float airR = (R - hpR) * 0.18f;
+            buffer.setSample (0, i, L + airL);
+            if (buffer.getNumChannels() > 1)
+                buffer.setSample (1, i, R + airR);
+        }
+    }
+
     float peak = 0.f;
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));

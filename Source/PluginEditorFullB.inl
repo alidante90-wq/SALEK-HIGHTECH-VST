@@ -109,10 +109,11 @@ void SalekHightechAudioProcessorEditor::resized()
                      std::vector<std::unique_ptr<Knob>>& all,
                      int start, int count, int cols)
     {
-        if (count <= 0 || area.getWidth() < 20 || area.getHeight() < 20 || cols < 1) return;
-        const int rows = (count + cols - 1) / cols;
-        const int cw = area.getWidth() / cols;
-        const int ch = area.getHeight() / juce::jmax (1, rows);
+        if (count <= 0 || cols < 1) return;
+        // Always lay out — never skip setBounds (skip caused stacked knobs at 0,0)
+        const int rows = juce::jmax (1, (count + cols - 1) / cols);
+        const int cw = juce::jmax (1, area.getWidth() / cols);
+        const int ch = juce::jmax (1, area.getHeight() / rows);
         for (int i = 0; i < count; ++i)
         {
             const int idx = start + i;
@@ -120,20 +121,28 @@ void SalekHightechAudioProcessorEditor::resized()
             auto* k = all[(size_t) idx].get();
             const int c = i % cols;
             const int r = i / cols;
-            auto cell = juce::Rectangle<int> (area.getX() + c * cw, area.getY() + r * ch, cw, ch).reduced (6);
-            if (cell.getHeight() < 28) continue;
-            k->name.setBounds (cell.removeFromBottom (13));
+            const int pad = (ch < 40 || cw < 50) ? 2 : 5;
+            auto cell = juce::Rectangle<int> (area.getX() + c * cw, area.getY() + r * ch, cw, ch).reduced (pad);
+            const int nameH = (ch < 36) ? 10 : 13;
+            k->name.setBounds (cell.removeFromBottom (nameH));
+            k->name.setVisible (true);
             k->s.setBounds (cell);
+            k->s.setVisible (true);
+            // Compact text box when tight
+            if (ch < 50)
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (28, cw - 8), 12);
+            else
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
         }
     };
 
     {
-        auto b = mainTab.getLocalBounds().reduced (4);
+        auto b = mainTab.getLocalBounds().reduced (2);
         // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 200;
+        const int presetW = presetCollapsed ? 28 : 180;
         presetTab.setBounds (b.removeFromLeft (presetW));
-        envTab.setBounds (b.removeFromBottom (128));
-        filterTab.setBounds (b.removeFromRight (248));
+        envTab.setBounds (b.removeFromBottom (120));
+        filterTab.setBounds (b.removeFromRight (220));
         oscTab.setBounds (b);
 
         {
@@ -176,35 +185,34 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         {
-            auto oa = oscTab.getLocalBounds().reduced (4);
-            // Top row: 3 shape monitors
-            auto monRow = oa.removeFromTop (78);
+            auto oa = oscTab.getLocalBounds().reduced (3);
+            // Monitors — compact so knobs always have room
+            auto monRow = oa.removeFromTop (juce::jlimit (48, 70, oa.getHeight() / 5));
             const int mw = monRow.getWidth() / 3;
-            if (oscMon1 != nullptr) oscMon1->setBounds (monRow.removeFromLeft (mw).reduced (3));
-            if (oscMon2 != nullptr) oscMon2->setBounds (monRow.removeFromLeft (mw).reduced (3));
-            if (oscMon3 != nullptr) oscMon3->setBounds (monRow.reduced (3));
-            // Shape selector combos under monitors
-            auto shRow = oa.removeFromTop (26);
+            if (oscMon1 != nullptr) oscMon1->setBounds (monRow.removeFromLeft (mw).reduced (2));
+            if (oscMon2 != nullptr) oscMon2->setBounds (monRow.removeFromLeft (mw).reduced (2));
+            if (oscMon3 != nullptr) oscMon3->setBounds (monRow.reduced (2));
+            auto shRow = oa.removeFromTop (22);
             const int sw = shRow.getWidth() / 3;
-            osc1ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (2));
-            osc2ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (2));
-            osc3ShapeBox.setBounds (shRow.reduced (2));
+            osc1ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (1));
+            osc2ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (1));
+            osc3ShapeBox.setBounds (shRow.reduced (1));
+            // 21 knobs: 3 rows of 6 (OSC1/2/3) + 1 row of 3 unison — force 6 cols
             place (oa, knobs, 0, 21, 6);
         }
 
         {
-            auto fr = filterTab.getLocalBounds().reduced (4);
+            auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (72).reduced (2));
-            filterMode.setBounds (fr.removeFromTop (26).reduced (2));
-            fr.removeFromTop (2);
+                filterDisplay->setBounds (fr.removeFromTop (juce::jlimit (50, 80, fr.getHeight() / 3)).reduced (2));
+            filterMode.setBounds (fr.removeFromTop (24).reduced (1));
             place (fr, knobs, 21, 4, 2);
         }
 
         {
-            auto er = envTab.getLocalBounds().reduced (4);
+            auto er = envTab.getLocalBounds().reduced (3);
             if (adsrDisplay != nullptr)
-                adsrDisplay->setBounds (er.removeFromTop (52).reduced (2));
+                adsrDisplay->setBounds (er.removeFromTop (juce::jlimit (36, 52, er.getHeight() / 3)).reduced (2));
             place (er, knobs, 25, 4, 4);
         }
     }
