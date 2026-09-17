@@ -10,6 +10,7 @@
 #include "FX/SimplePhaser.h"
 #include "FX/SimpleDistortion.h"
 #include "FX/MagicEngine.h"
+#include "Oscillators/GranularOscillator.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
 #include "Modulation/ModMatrix.h"
@@ -88,6 +89,7 @@ private:
     salek::SimplePhaser phaser;
     salek::SimpleDistortion distortion;
     salek::MagicEngine magic;
+    salek::GranularOscillator granular;
     salek::Arpeggiator arpeggiator;
     salek::StepSequencer stepSequencer;
     salek::ModMatrix modMatrix;
