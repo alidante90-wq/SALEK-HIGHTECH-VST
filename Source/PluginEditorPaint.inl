@@ -95,16 +95,16 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         const float panX = mx * 8.f;
         const float panY = my * 6.f;
         auto dest = juce::Rectangle<float> (-12.f + panX, -10.f + panY, W + 24.f, H + 20.f);
-        g.setOpacity (0.72f); // slightly more transparent so knobs stay readable
+        g.setOpacity (0.85f); // background art more visible
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
         // soft dark veil — UI readability over detailed art
         {
-            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.42f), W * 0.5f, H,
+            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.28f), W * 0.5f, H,
                                       juce::Colours::transparentBlack, W * 0.5f, H * 0.28f, false);
             g.setGradientFill (veil);
             g.fillAll();
-            g.setColour (juce::Colours::black.withAlpha (0.22f));
+            g.setColour (juce::Colours::black.withAlpha (0.12f));
             g.fillAll();
         }
     }
@@ -219,49 +219,22 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("ISATIS", W - 100.f, H - 90.f, 90.f, 16.f, juce::Justification::centredRight);
 
-    // ---- hero card with 3D edge light ----
-    auto left = juce::Rectangle<float> (8.f, 48.f, 210.f, 280.f);
+    // ---- left panel: only show branding card when preset sidebar is collapsed ----
+    if (presetCollapsed)
     {
-        // drop shadow
-        g.setColour (juce::Colours::black.withAlpha (0.45f));
-        g.fillRoundedRectangle (left.translated (4.f, 6.f), 12.f);
-        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.25f)); // soft overlay — character stays visible
-        g.fillRoundedRectangle (left, 12.f);
-        // edge light toward mouse
-        float edgeA = 0.4f + pulse * 0.3f + std::abs (mx) * 0.2f;
-        g.setColour (cyan.withAlpha (edgeA));
-        g.drawRoundedRectangle (left, 12.f, 1.8f);
-        g.setColour (magenta.withAlpha (0.15f));
-        g.drawRoundedRectangle (left.reduced (2.f), 10.f, 1.f);
-
-        if (heroImg.isValid())
-        {
-            auto imgArea = left.reduced (8.f, 8.f).withHeight (200.f);
-            float z = 1.02f; // almost static crop
-            auto src = heroImg.getBounds().toFloat();
-            float sw = src.getWidth() / z, sh = src.getHeight() / z;
-            float sx = (src.getWidth() - sw) * (0.5f + mx * 0.02f);
-            float sy = (src.getHeight() - sh) * (0.45f + my * 0.015f);
-            g.drawImage (heroImg,
-                         (int) imgArea.getX(), (int) imgArea.getY(), (int) imgArea.getWidth(), (int) imgArea.getHeight(),
-                         (int) sx, (int) sy, (int) sw, (int) sh);
-        }
-
+        auto left = juce::Rectangle<float> (8.f, 48.f, 28.f, 120.f);
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        g.fillRoundedRectangle (left.translated (2.f, 3.f), 8.f);
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.45f));
+        g.fillRoundedRectangle (left, 8.f);
+        g.setColour (cyan.withAlpha (0.5f));
+        g.drawRoundedRectangle (left, 8.f, 1.2f);
         g.setColour (magenta);
-        g.setFont (juce::FontOptions (14.0f, juce::Font::bold));
-        g.drawText (juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd9\x84\xda\xa9"),
-                    juce::Rectangle<float> (left.getX(), left.getY() + 206.f, left.getWidth(), 18.f),
-                    juce::Justification::centred);
-        g.setColour (cyan);
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        g.drawText ("SALEK", juce::Rectangle<float> (left.getX(), left.getY() + 222.f, left.getWidth(), 14.f),
-                    juce::Justification::centred);
-        g.setColour (gold.withAlpha (0.75f));
-        g.setFont (juce::FontOptions (9.0f));
-        g.drawText ("PERSIAN CYBER SONIC CORE",
-                    juce::Rectangle<float> (left.getX(), left.getY() + 238.f, left.getWidth(), 12.f),
-                    juce::Justification::centred);
+        g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+        g.drawText ("S", left, juce::Justification::centred);
     }
+    // when preset is open, no solid card — background art stays fully visible behind the list
+
 
         // Serum-like section frames on MAIN (osc / filter / env)
         if (tabs.getCurrentTabIndex() == 0)
