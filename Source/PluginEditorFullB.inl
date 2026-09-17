@@ -61,15 +61,12 @@ void SalekHightechAudioProcessorEditor::resized()
     }
     full.removeFromBottom (4);
 
-    // Collapsible left hero strip (default open = 222 px, collapsed = 36 px)
-    const int leftW = sideCollapsed ? 36 : 222;
-    full.removeFromLeft (leftW);
-    // Toggle sits under the hero image (or at left edge when collapsed)
-    sideToggle.setBounds (sideCollapsed ? 4 : 8, sideCollapsed ? 48 : 300, sideCollapsed ? 28 : 56, 22);
-    sideToggle.toFront (false);
+    // Hero art always visible — only presets collapse (see presetToggle)
+    full.removeFromLeft (222);
 
     auto header = full.removeFromTop (36);
-    themeBox.setBounds (header.removeFromRight (110).reduced (2));
+    langToggle.setBounds (header.removeFromRight (40).reduced (2));
+    themeBox.setBounds (header.removeFromRight (100).reduced (2));
     spectrum.setBounds (header.removeFromRight (90).reduced (2));
     scope.setBounds (header.removeFromRight (110).reduced (2));
     if (wtDisplay != nullptr)
@@ -104,25 +101,50 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto b = mainTab.getLocalBounds().reduced (4);
-        presetTab.setBounds (b.removeFromLeft (200));
+        // Collapsible PRESET column (not hero)
+        const int presetW = presetCollapsed ? 28 : 200;
+        presetTab.setBounds (b.removeFromLeft (presetW));
         envTab.setBounds (b.removeFromBottom (128));
         filterTab.setBounds (b.removeFromRight (248));
         oscTab.setBounds (b);
 
         {
-            auto pb = presetTab.getLocalBounds().reduced (3);
+            auto pb = presetTab.getLocalBounds().reduced (2);
             auto top = pb.removeFromTop (24);
-            prevPreset.setBounds (top.removeFromLeft (22).reduced (1));
-            nextPreset.setBounds (top.removeFromLeft (22).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (32).reduced (1));
-            savePresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
-            loadPresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
-            bankBtn.setBounds (top.removeFromLeft (40).reduced (1));
-            auto nameRow = pb.removeFromTop (20);
-            presetLabel.setBounds (nameRow.reduced (2, 0));
-            presetLabel.setJustificationType (juce::Justification::centredLeft);
-            presetLabel.setColour (juce::Label::textColourId, themeAccent);
-            presetList.setBounds (pb);
+            presetToggle.setBounds (top.removeFromLeft (24).reduced (1));
+            if (! presetCollapsed)
+            {
+                prevPreset.setBounds (top.removeFromLeft (22).reduced (1));
+                nextPreset.setBounds (top.removeFromLeft (22).reduced (1));
+                initBtn.setBounds (top.removeFromLeft (32).reduced (1));
+                savePresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
+                loadPresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
+                bankBtn.setBounds (top.removeFromLeft (40).reduced (1));
+                auto nameRow = pb.removeFromTop (20);
+                presetLabel.setBounds (nameRow.reduced (2, 0));
+                presetLabel.setJustificationType (juce::Justification::centredLeft);
+                presetLabel.setColour (juce::Label::textColourId, themeAccent);
+                presetList.setBounds (pb);
+                presetList.setVisible (true);
+                prevPreset.setVisible (true);
+                nextPreset.setVisible (true);
+                initBtn.setVisible (true);
+                savePresetBtn.setVisible (true);
+                loadPresetBtn.setVisible (true);
+                bankBtn.setVisible (true);
+                presetLabel.setVisible (true);
+            }
+            else
+            {
+                presetList.setVisible (false);
+                prevPreset.setVisible (false);
+                nextPreset.setVisible (false);
+                initBtn.setVisible (false);
+                savePresetBtn.setVisible (false);
+                loadPresetBtn.setVisible (false);
+                bankBtn.setVisible (false);
+                presetLabel.setVisible (false);
+            }
         }
 
         {
@@ -146,7 +168,8 @@ void SalekHightechAudioProcessorEditor::resized()
             auto fr = filterTab.getLocalBounds().reduced (4);
             if (filterDisplay != nullptr)
                 filterDisplay->setBounds (fr.removeFromTop (72).reduced (2));
-            fr.removeFromTop (4);
+            filterMode.setBounds (fr.removeFromTop (26).reduced (2));
+            fr.removeFromTop (2);
             place (fr, knobs, 21, 4, 2);
         }
 
@@ -322,6 +345,47 @@ void SalekHightechAudioProcessorEditor::cycleHero()
 
 void SalekHightechAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
 {
-    if (! sideCollapsed && e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
+    if (e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
         cycleHero();
+}
+
+void SalekHightechAudioProcessorEditor::applyUiLanguage()
+{
+    if (uiLangFa)
+    {
+        tabs.setTabName (0, juce::CharPointer_UTF8 ("\xd8\xa7\xd8\xb5\xd9\x84\xdb\x8c"));
+        tabs.setTabName (1, juce::CharPointer_UTF8 ("\xd9\x85\xd8\xaf\xd9\x88\xd9\x84"));
+        tabs.setTabName (2, juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x84\xd8\xa7\xd9\x81\xd8\xa7\xd9\x88"));
+        tabs.setTabName (3, juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x81\xda\xa9\xd8\xaa"));
+        tabs.setTabName (4, juce::CharPointer_UTF8 ("\xd9\x85\xd8\xac\xdb\x8c\xda\xa9"));
+        tabs.setTabName (5, juce::CharPointer_UTF8 ("\xd8\xb3\xda\xa9\xd9\x88\xd8\xa7\xd9\x86\xd8\xb3"));
+        magicLoopBtn.setButtonText (juce::CharPointer_UTF8 ("\xd9\x84\xd9\x88\xd9\xbe"));
+        magicGlitchBtn.setButtonText (juce::CharPointer_UTF8 ("\xda\xaf\xd9\x84\xdb\x8c\xda\x86"));
+        magicFlangeBtn.setButtonText (juce::CharPointer_UTF8 ("\xd9\x81\xd9\x84\xd9\x86\xd8\xac"));
+        magicPsychBtn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xdb\x8c"));
+        magicHold.setButtonText (juce::CharPointer_UTF8 ("\xd9\x86\xda\xaf\xd9\x87\xd8\xaf\xd8\xa7\xd8\xb1"));
+        arpOn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xa2\xd8\xb1\xd9\xbe"));
+        seqOn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xb3\xda\xa9\xd9\x88\xd8\xa7\xd9\x86\xd8\xb3"));
+        for (int i = 0; i < 8; ++i)
+            fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("\xd8\xa8\xd8\xa7\xdb\x8c\xd9\xbe\xd8\xb3"));
+    }
+    else
+    {
+        tabs.setTabName (0, "MAIN");
+        tabs.setTabName (1, "MOD");
+        tabs.setTabName (2, "LFO");
+        tabs.setTabName (3, "FX");
+        tabs.setTabName (4, "MAGIC");
+        tabs.setTabName (5, "SEQ");
+        magicLoopBtn.setButtonText ("LOOP");
+        magicGlitchBtn.setButtonText ("GLITCH");
+        magicFlangeBtn.setButtonText ("FLANGE");
+        magicPsychBtn.setButtonText ("PSY");
+        magicHold.setButtonText ("HOLD");
+        arpOn.setButtonText ("ARP");
+        seqOn.setButtonText ("SEQ");
+        for (int i = 0; i < 8; ++i)
+            fxBypass[i].setButtonText ("BYP");
+    }
+    repaint();
 }

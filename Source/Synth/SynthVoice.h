@@ -60,7 +60,7 @@ public:
     void setPm2to1(float v){pm2to1=v;} void setPm3to1(float v){pm3to1=v;} void setAm2to1(float v){am2to1=v;} void setRm2to1(float v){rm2to1=v;}
     void setFilterCutoff(float) {} void setFilterBaseCutoff(float hz){baseCutoff=hz; filter.setCutoff(hz);}
     void setFilterResonance(float r){filter.setResonance(r);} void setFilterDrive(float d){filter.setDrive(d);}
-    void setFilterMode(int m){ using M=StateVariableFilter::Mode; filter.setMode(m==1?M::HighPass:m==2?M::BandPass:m==3?M::Notch:M::LowPass); }
+    void setFilterMode(int m){ filter.setModeIndex (m); }
     void setFilterEnvAmt(float a){filterEnvAmt=a;}
     void setAmpAttack(float s){adsrParams.attack=juce::jmax(0.001f,s); adsr.setParameters(adsrParams);}
     void setAmpDecay(float s){adsrParams.decay=juce::jmax(0.001f,s); adsr.setParameters(adsrParams);}

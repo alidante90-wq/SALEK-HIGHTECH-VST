@@ -69,7 +69,7 @@
             mon->setLevel (0.4f);
             fxTab.addAndMakeVisible (mon);
 
-            fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("\xd8\xa8\xd8\xa7\xdb\x8c\xd9\xbe\xd8\xb3"));
+            fxBypass[i].setButtonText ("BYP");
             fxBypass[i].setClickingTogglesState (true);
             fxBypass[i].setColour (juce::ToggleButton::textColourId, monCols[i]);
             fxTab.addAndMakeVisible (fxBypass[i]);

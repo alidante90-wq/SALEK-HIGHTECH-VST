@@ -43,7 +43,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
         juce::NormalisableRange<float>(20.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
     F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
-    C("filter_mode","F Mode",{"LowPass","HighPass","BandPass","Notch"},0);
+    C("filter_mode","F Mode",{
+        "LP12","LP24","HP12","HP24","BP","Notch","Peak","AllPass",
+        "AcidLP","Ladder","Comb","Formant","BandRej","LoShelf","HiShelf","PhaserN"
+    },0);
     // Stronger low-end skew so short A/D/R (plucks, dubstep hits) are easy to dial
     Fs("amp_attack","Attack",0.0005f,4.0f,0.18f,0.005f);
     Fs("amp_decay","Decay",0.003f,6.0f,0.22f,0.12f);

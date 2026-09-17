@@ -38,12 +38,12 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     lfoDisplay = std::make_unique<LfoDisplay> (processor.getAPVTS());
     matrixPanel = std::make_unique<ModMatrixPanel> (processor.getModMatrix());
 
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd8\xa7\xd8\xb5\xd9\x84\xdb\x8c / MAIN"), juce::Colours::transparentBlack, &mainTab, false);
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd9\x85\xd8\xaf\xd9\x88\xd9\x84 / MOD"), juce::Colours::transparentBlack, &modTab, false);
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x84\xd8\xa7\xd9\x81\xd8\xa7\xd9\x88 / LFO"), juce::Colours::transparentBlack, &lfoTab, false);
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x81\xda\xa9\xd8\xaa / FX"), juce::Colours::transparentBlack, &fxTab, false);
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd9\x85\xd8\xac\xdb\x8c\xda\xa9 / MAGIC"), juce::Colours::transparentBlack, &magicTab, false);
-    tabs.addTab (juce::CharPointer_UTF8 ("\xd8\xb3\xda\xa9\xd9\x88\xd9\x86\xd8\xb3\xd8\xb1 / SEQ"), juce::Colours::transparentBlack, &seqTab, false);
+    tabs.addTab ("MAIN", juce::Colours::transparentBlack, &mainTab, false);
+    tabs.addTab ("MOD", juce::Colours::transparentBlack, &modTab, false);
+    tabs.addTab ("LFO", juce::Colours::transparentBlack, &lfoTab, false);
+    tabs.addTab ("FX", juce::Colours::transparentBlack, &fxTab, false);
+    tabs.addTab ("MAGIC", juce::Colours::transparentBlack, &magicTab, false);
+    tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
     tabs.setTabBarDepth (28);
     tabs.setOpaque (false);
@@ -85,6 +85,13 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (filterTab, "filter_reso", "RESO", M);
         addKnob (filterTab, "filter_drive", "F DRIVE", O);
         addKnob (filterTab, "filter_env", "F ENV", G);
+        // 16-mode filter bank
+        addCombo (filterTab, filterMode, "filter_mode", {
+            "LP12","LP24","HP12","HP24","BP","Notch","Peak","AllPass",
+            "AcidLP","Ladder","Comb","Formant","BandRej","LoShelf","HiShelf","PhaserN"
+        });
+        filterMode.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        filterMode.setColour (juce::ComboBox::textColourId, juce::Colour (0xff00e8ff));
 
         addKnob (envTab, "amp_attack", "ATTACK", C);
         addKnob (envTab, "amp_decay", "DECAY", M);
@@ -166,8 +173,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         seqTab.addAndMakeVisible (arpOn);
         seqTab.addAndMakeVisible (seqOn);
-        arpOn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xa2\xd8\xb1\xd9\xbe / ARP"));
-        seqOn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xb3\xda\xa9\xd9\x88\xd8\xa7\xd9\x86\xd8\xb3 / SEQ"));
+        arpOn.setButtonText ("ARP");
+        seqOn.setButtonText ("SEQ");
         btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "arp_on", arpOn));
         btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), "seq_on", seqOn));
         stepGrid = std::make_unique<StepGridComponent> (processor.getStepSequencer());
@@ -187,24 +194,38 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
 
-    // Collapsible left hero panel — frees horizontal space when closed
-    sideToggle.setButtonText ("<<");
-    sideToggle.setClickingTogglesState (true);
-    sideToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
-    sideToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2a1040));
-    sideToggle.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
-    sideToggle.setColour (juce::TextButton::textColourOnId, juce::Colour (0xffffd700));
-    sideToggle.onClick = [this]
+    // Collapse PRESET list only (hero stays visible)
+    presetToggle.setButtonText ("<<");
+    presetToggle.setClickingTogglesState (true);
+    presetToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
+    presetToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2a1040));
+    presetToggle.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+    presetToggle.setColour (juce::TextButton::textColourOnId, juce::Colour (0xffffd700));
+    presetToggle.setTooltip ("Collapse / expand preset list");
+    presetToggle.onClick = [this]
     {
-        sideCollapsed = sideToggle.getToggleState();
-        sideToggle.setButtonText (sideCollapsed ? ">>" : "<<");
+        presetCollapsed = presetToggle.getToggleState();
+        presetToggle.setButtonText (presetCollapsed ? ">>" : "<<");
         resized();
         repaint();
     };
-    addAndMakeVisible (sideToggle);
+    addAndMakeVisible (presetToggle);
+
+    // Bilingual UI: EN (default) <-> FA
+    langToggle.setButtonText ("EN");
+    langToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
+    langToggle.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
+    langToggle.setTooltip ("UI language EN / FA");
+    langToggle.onClick = [this]
+    {
+        uiLangFa = ! uiLangFa;
+        langToggle.setButtonText (uiLangFa ? "FA" : "EN");
+        applyUiLanguage();
+    };
+    addAndMakeVisible (langToggle);
 
     applyHeroFromTheme();
-
+    applyUiLanguage();
     rebuildPresetRows();
 }
 

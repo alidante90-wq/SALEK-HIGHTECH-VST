@@ -222,7 +222,9 @@ private:
     juce::OwnedArray<juce::Label> fxSectionLabels;
     juce::OwnedArray<FxMonitor> fxMonitors;
     juce::ToggleButton fxBypass[8];
-    juce::TextButton sideToggle { "<<" };
+    juce::TextButton presetToggle { "<<" }; // collapses preset list only
+    juce::TextButton langToggle { "EN" };   // EN <-> FA
+    bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
@@ -246,9 +248,10 @@ private:
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
     juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
     int heroIndex = 0;
-    bool sideCollapsed = false;
+    bool presetCollapsed = false;
     void applyHeroFromTheme();
     void cycleHero();
+    void applyUiLanguage();
     struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();

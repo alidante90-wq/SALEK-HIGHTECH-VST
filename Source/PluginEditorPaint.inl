@@ -89,8 +89,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("ISATIS", getWidth() - 100, getHeight() - 90, 90, 16, juce::Justification::centredRight);
 
-    // left hero panel (skipped when sideCollapsed to free space)
-    if (! sideCollapsed)
+    // left hero panel (always on — presets collapse separately)
     {
         auto left = juce::Rectangle<float> (8.0f, 46.0f, 210.0f, 250.0f);
         g.setColour (juce::Colour (0xff080414).withAlpha (0.96f));
@@ -127,10 +126,5 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colours::white.withAlpha (0.55f));
         g.setFont (juce::FontOptions (9.0f));
         g.drawText ("PERSIAN CYBER SONIC CORE", juce::Rectangle<float> (left.getX(), left.getY() + 226.0f, left.getWidth(), 14.0f), juce::Justification::centred);
-    }
-    else
-    {
-        g.setColour (cyan.withAlpha (0.35f + pulse * 0.2f));
-        g.fillRoundedRectangle (4.0f, 46.0f, 28.0f, 80.0f, 6.0f);
     }
 }

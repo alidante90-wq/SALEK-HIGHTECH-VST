@@ -43,8 +43,9 @@
 
         const int off = secs2[s].off;
         const int cnt = secs2[s].count;
-        const int cellW = juce::jmin (100, juce::jmax (56, row.getWidth() / juce::jmax (1, cnt)));
-        const int cellH = juce::jmin (row.getHeight() - 2, 56);
+        // Spread knobs across full remaining width (no empty right void)
+        const int cellW = juce::jmax (56, row.getWidth() / juce::jmax (1, cnt));
+        const int cellH = juce::jmin (row.getHeight() - 2, 72);
         for (int i = 0; i < cnt; ++i)
         {
             const int idx = fxStart + off + i;
@@ -52,9 +53,9 @@
             auto* k = knobs[(size_t) idx].get();
             auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
                                               row.getCentreY() - cellH / 2,
-                                              cellW, cellH).reduced (2, 1);
+                                              cellW, cellH).reduced (4, 1);
             if (cell.getHeight() < 20) continue;
-            k->name.setBounds (cell.removeFromBottom (11));
+            k->name.setBounds (cell.removeFromBottom (12));
             k->s.setBounds (cell);
         }
     }
