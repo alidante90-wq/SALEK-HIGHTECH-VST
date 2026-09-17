@@ -95,16 +95,16 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         const float panX = mx * 8.f;
         const float panY = my * 6.f;
         auto dest = juce::Rectangle<float> (-12.f + panX, -10.f + panY, W + 24.f, H + 20.f);
-        g.setOpacity (0.92f); // clear, readable art
+        g.setOpacity (0.72f); // slightly more transparent so knobs stay readable
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
-        // darken edges slightly so knobs stay readable
+        // soft dark veil — UI readability over detailed art
         {
-            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.35f), W * 0.5f, H,
-                                      juce::Colours::transparentBlack, W * 0.5f, H * 0.35f, false);
+            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.42f), W * 0.5f, H,
+                                      juce::Colours::transparentBlack, W * 0.5f, H * 0.28f, false);
             g.setGradientFill (veil);
             g.fillAll();
-            g.setColour (juce::Colours::black.withAlpha (0.18f));
+            g.setColour (juce::Colours::black.withAlpha (0.22f));
             g.fillAll();
         }
     }
