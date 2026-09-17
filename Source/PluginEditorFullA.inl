@@ -105,8 +105,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
         presetList.setModel (this);
         presetList.setRowHeight (24);
-        presetList.setColour (juce::ListBox::backgroundColourId, juce::Colour (0xff080414));
-        presetList.setColour (juce::ListBox::outlineColourId, juce::Colour (0xff1a1030));
+        presetList.setOpaque (false);
+        presetTab.setOpaque (false);
+        presetList.setColour (juce::ListBox::backgroundColourId, juce::Colour (0x66080414));
+        presetList.setColour (juce::ListBox::outlineColourId, juce::Colour (0xff00e8ff).withAlpha (0.35f));
         presetTab.addAndMakeVisible (presetList);
         presetTab.addAndMakeVisible (prevPreset);
         presetTab.addAndMakeVisible (nextPreset);
