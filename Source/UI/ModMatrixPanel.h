@@ -2,13 +2,13 @@
 #include <JuceHeader.h>
 #include "../Modulation/ModMatrix.h"
 
-/** Continuous-drag mod matrix (Serum-style): vertical drag amount -1..+1; double-click clears */
+/** Serum-inspired mod matrix: grid + selected route amount strip (horizontal fader) */
 class ModMatrixPanel : public juce::Component, private juce::Timer
 {
 public:
     explicit ModMatrixPanel (salek::ModMatrix& m) : matrix (m)
     {
-        startTimerHz (30);
+        startTimerHz (24);
         matrix.addRoute (salek::ModMatrix::Source::LFO1, salek::ModMatrix::Dest::FilterCutoff, 0.0f);
         matrix.addRoute (salek::ModMatrix::Source::LFO2, salek::ModMatrix::Dest::Osc1Table, 0.0f);
         matrix.addRoute (salek::ModMatrix::Source::LFO3, salek::ModMatrix::Dest::Osc1Warp, 0.0f);
@@ -17,14 +17,14 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat();
-        g.setColour (juce::Colour (0xff0a0614));
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.85f));
         g.fillRoundedRectangle (r, 8.0f);
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f));
         g.drawRoundedRectangle (r, 8.0f, 1.2f);
 
-        g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
         g.setColour (juce::Colour (0xffffd700));
-        g.drawText ("MOD MATRIX  ·  drag = amount  ·  dbl-click = clear",
+        g.drawText ("MOD MATRIX  ·  drag/wheel = amount  ·  dbl-click = clear",
                     r.removeFromTop (18).reduced (6, 0), juce::Justification::centredLeft);
 
         layoutGrid();
@@ -90,36 +90,112 @@ public:
                     g.drawText (juce::String (amt, 2), cell, juce::Justification::centred);
                 }
 
+                const bool isSel = (selSrc == s && selDst == d);
                 const bool isDrag = (dragSrc == s && dragDst == d);
-                g.setColour (isDrag ? juce::Colour (0xffffd700)
+                g.setColour (isDrag || isSel ? juce::Colour (0xffffd700)
                                     : (active ? juce::Colour (0xff00e8ff).withAlpha (0.55f)
                                               : juce::Colour (0xff2a2840)));
-                g.drawRoundedRectangle (cell, 3.0f, isDrag ? 1.6f : 0.8f);
+                g.drawRoundedRectangle (cell, 3.0f, (isDrag || isSel) ? 1.8f : 0.8f);
             }
         }
+
+        // ---- Serum-style amount strip ----
+        auto strip = amountStrip();
+        g.setColour (juce::Colour (0xff12101c));
+        g.fillRoundedRectangle (strip, 6.f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
+        g.drawRoundedRectangle (strip, 6.f, 1.f);
+
+        juce::String srcN = (selSrc >= 0) ? salek::ModMatrix::sourceName ((salek::ModMatrix::Source) selSrc) : "—";
+        juce::String dstN = (selDst >= 0) ? salek::ModMatrix::destName ((salek::ModMatrix::Dest) selDst) : "—";
+        float amt = selectedAmount();
+
+        g.setColour (juce::Colours::white.withAlpha (0.9f));
+        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+        g.drawText (srcN + "  →  " + dstN, strip.reduced (10, 4).removeFromTop (18), juce::Justification::centredLeft);
+
+        // horizontal bipolar fader track
+        auto track = strip.reduced (12.f, 8.f);
+        track.removeFromTop (20.f);
+        track = track.withHeight (14.f);
+        g.setColour (juce::Colour (0xff1a1830));
+        g.fillRoundedRectangle (track, 4.f);
+        float midX = track.getCentreX();
+        g.setColour (juce::Colour (0xff3a3850));
+        g.fillRect (midX - 1.f, track.getY(), 2.f, track.getHeight());
+
+        if (selSrc >= 0 && selDst >= 0)
+        {
+            float t = (amt + 1.f) * 0.5f; // 0..1
+            float kx = track.getX() + t * track.getWidth();
+            juce::Colour col = amt >= 0 ? juce::Colour (0xff00e8ff) : juce::Colour (0xffff2d9b);
+            if (amt >= 0)
+                g.setColour (col.withAlpha (0.5f));
+            else
+                g.setColour (col.withAlpha (0.5f));
+            if (amt >= 0)
+                g.fillRoundedRectangle ({ midX, track.getY(), kx - midX, track.getHeight() }, 3.f);
+            else
+                g.fillRoundedRectangle ({ kx, track.getY(), midX - kx, track.getHeight() }, 3.f);
+            g.setColour (juce::Colours::white);
+            g.fillEllipse (kx - 6.f, track.getCentreY() - 6.f, 12.f, 12.f);
+            g.setColour (col);
+            g.drawEllipse (kx - 6.f, track.getCentreY() - 6.f, 12.f, 12.f, 1.5f);
+        }
+
+        g.setColour (juce::Colour (0xffffd700));
+        g.setFont (juce::FontOptions (11.f, juce::Font::bold));
+        g.drawText (juce::String (amt, 2), strip.reduced (10, 4).removeFromRight (48), juce::Justification::centredRight);
     }
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        if (amountStrip().contains (e.position))
+        {
+            draggingStrip = true;
+            setAmountFromStripX (e.position.x);
+            repaint();
+            return;
+        }
         if (! hitCell (e.position, dragSrc, dragDst)) { dragSrc = dragDst = -1; return; }
+        selSrc = dragSrc; selDst = dragDst;
         setAmountFromY (e.position.y);
         repaint();
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
     {
+        if (draggingStrip) { setAmountFromStripX (e.position.x); repaint(); return; }
         if (dragSrc < 0 || dragDst < 0) return;
         setAmountFromY (e.position.y);
         repaint();
     }
 
-    void mouseUp (const juce::MouseEvent&) override { dragSrc = dragDst = -1; }
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        dragSrc = dragDst = -1;
+        draggingStrip = false;
+    }
 
     void mouseDoubleClick (const juce::MouseEvent& e) override
     {
         int s = -1, d = -1;
         if (! hitCell (e.position, s, d)) return;
         matrix.removeRoute ((salek::ModMatrix::Source) s, (salek::ModMatrix::Dest) d);
+        if (selSrc == s && selDst == d) { selSrc = selDst = -1; }
+        repaint();
+    }
+
+    void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override
+    {
+        int s = selSrc, d = selDst;
+        if (s < 0 || d < 0)
+            if (! hitCell (e.position, s, d)) return;
+        selSrc = s; selDst = d;
+        float amt = selectedAmount();
+        amt = juce::jlimit (-1.f, 1.f, amt + wheel.deltaY * 0.08f);
+        if (std::abs (amt) < 0.02f) amt = 0.f;
+        matrix.addRoute ((salek::ModMatrix::Source) s, (salek::ModMatrix::Dest) d, amt);
         repaint();
     }
 
@@ -128,7 +204,15 @@ public:
 private:
     salek::ModMatrix& matrix;
     int dragSrc = -1, dragDst = -1;
-    float gridLeft = 48.f, gridTop = 22.f, cellW = 28.f, cellH = 22.f;
+    int selSrc = -1, selDst = -1;
+    bool draggingStrip = false;
+    float gridLeft = 52.f, gridTop = 22.f, cellW = 28.f, cellH = 22.f;
+    float stripH = 52.f;
+
+    juce::Rectangle<float> amountStrip() const
+    {
+        return getLocalBounds().toFloat().reduced (6.f).removeFromBottom (stripH);
+    }
 
     void layoutGrid()
     {
@@ -136,10 +220,11 @@ private:
         const int nd = (int) salek::ModMatrix::Dest::NumDests;
         auto area = getLocalBounds().toFloat().reduced (4.f, 2.f);
         area.removeFromTop (18.f);
-        gridLeft = 48.f;
+        area.removeFromBottom (stripH + 4.f);
+        gridLeft = 52.f;
         gridTop = area.getY();
         cellW = juce::jmax (18.f, (area.getWidth() - gridLeft) / (float) nd);
-        cellH = juce::jmax (16.f, area.getHeight() / (float) (ns + 1));
+        cellH = juce::jmax (14.f, area.getHeight() / (float) (ns + 1));
     }
 
     juce::Rectangle<float> cellRect (int s, int d) const
@@ -165,6 +250,17 @@ private:
         return false;
     }
 
+    float selectedAmount() const
+    {
+        if (selSrc < 0 || selDst < 0) return 0.f;
+        for (auto& route : matrix.getRoutes())
+            if (route.active
+                && route.source == (salek::ModMatrix::Source) selSrc
+                && route.dest == (salek::ModMatrix::Dest) selDst)
+                return route.amount;
+        return 0.f;
+    }
+
     void setAmountFromY (float y)
     {
         if (dragSrc < 0 || dragDst < 0) return;
@@ -174,5 +270,17 @@ private:
         if (std::abs (amt) < 0.03f) amt = 0.0f;
         matrix.addRoute ((salek::ModMatrix::Source) dragSrc,
                          (salek::ModMatrix::Dest) dragDst, amt);
+    }
+
+    void setAmountFromStripX (float x)
+    {
+        if (selSrc < 0 || selDst < 0) return;
+        auto track = amountStrip().reduced (12.f, 8.f);
+        track.removeFromTop (20.f);
+        float t = (x - track.getX()) / juce::jmax (1.f, track.getWidth());
+        float amt = juce::jlimit (-1.f, 1.f, t * 2.f - 1.f);
+        if (std::abs (amt) < 0.03f) amt = 0.f;
+        matrix.addRoute ((salek::ModMatrix::Source) selSrc,
+                         (salek::ModMatrix::Dest) selDst, amt);
     }
 };

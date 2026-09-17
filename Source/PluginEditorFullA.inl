@@ -9,10 +9,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     addAndMakeVisible (keyboard);
     vblank = juce::VBlankAttachment (this, [this] (double) {
-        animPhase += 0.07f;
+        animPhase += 0.028f;
         repaint();
     });
-    startTimerHz (40); // smoother GIF-like theme
+    startTimerHz (24); // calmer motion
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
@@ -196,7 +196,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.addItem ("ACID", 2);
     themeBox.addItem ("NEON", 3);
     themeBox.addItem ("PATINA", 4);
-    themeBox.setSelectedId (4); // default soft pink/mint like reference
+    themeBox.setSelectedId (1); // default CYBER
     themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
 
@@ -215,7 +215,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         resized();
         repaint();
     };
-    addAndMakeVisible (presetToggle);
+    presetTab.addAndMakeVisible (presetToggle); // must be child of presetTab for correct coords
 
     // Bilingual UI: EN (default) <-> FA
     langToggle.setButtonText ("EN");
@@ -262,6 +262,8 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
+    k->s.setScrollWheelEnabled (true);
+    k->s.setMouseDragSensitivity (180);
     parent.addAndMakeVisible (k->s);
     atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
     k->name.setText (label, juce::dontSendNotification);

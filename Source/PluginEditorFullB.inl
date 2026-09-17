@@ -57,8 +57,15 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 4) resized();
-    animPhase += 0.06f;
-    // Animated GIF-like bg needs full editor paint; opaque tabs keep content stable
+    // BPM-synced animation when host provides tempo
+    float bpmScale = 1.f;
+    if (auto* ph = processor.getPlayHead())
+    {
+        if (auto pos = ph->getPosition())
+            if (pos->getBpm())
+                bpmScale = (float) (*pos->getBpm() / 120.0);
+    }
+    animPhase += 0.022f * juce::jlimit (0.5f, 1.8f, bpmScale);
     repaint();
 }
 
@@ -210,21 +217,27 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         {
-            auto er = envTab.getLocalBounds().reduced (3);
+            auto er = envTab.getLocalBounds().reduced (2);
+            // Compact ADSR curve on the left; large knobs on the right (cleaner)
             if (adsrDisplay != nullptr)
-                adsrDisplay->setBounds (er.removeFromTop (juce::jlimit (36, 52, er.getHeight() / 3)).reduced (2));
+            {
+                auto curve = er.removeFromLeft (juce::jmin (200, er.getWidth() / 3));
+                adsrDisplay->setBounds (curve.reduced (2));
+            }
             place (er, knobs, 25, 4, 4);
         }
     }
 
     {
-        auto r = modTab.getLocalBounds().reduced (6);
+        auto r = modTab.getLocalBounds().reduced (4);
+        // FM / PM / macros strip on the right (aligned labels)
+        auto right = r.removeFromRight (juce::jmin (280, r.getWidth() * 32 / 100));
+        auto fmArea = right.removeFromTop (right.getHeight() * 55 / 100);
+        place (fmArea, knobs, 29, 6, 3);
+        // Macros: single row with room for labels under knobs
+        place (right.reduced (2), knobs, 35, 4, 4);
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.removeFromLeft (juce::jmax (320, r.getWidth() * 55 / 100)).reduced (2));
-        auto right = r.reduced (4);
-        auto row1 = right.removeFromTop (right.getHeight() / 2);
-        place (row1, knobs, 29, 6, 3);
-        place (right, knobs, 35, 4, 4);
+            matrixPanel->setBounds (r.reduced (2));
     }
 
     {
