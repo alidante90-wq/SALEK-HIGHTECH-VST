@@ -24,42 +24,53 @@ public:
         double p = phase + double(phaseOffset) + double(pm);
         p -= std::floor(p);
 
-        // Phase warp — plastic / formant-ish character without alias mess
+        // Phase warp — higher quality PD + soft sync hybrid (less alias, more musical)
         if (warp > 1e-4f) {
             float pw = float(p);
-            float amount = 1.f + warp * 2.8f;
+            // dual-curve: soft PD at low, stronger formant at high
+            float amount = 1.f + warp * 3.4f;
             float warped = std::pow (juce::jmax (1.0e-6f, pw), amount);
-            // mild mirror for metallic edge at high warp
-            if (warp > 0.5f && warped > 0.5f)
-                warped = 0.5f + (warped - 0.5f) * (1.f - (warp - 0.5f) * 0.6f);
+            // soft mirror for metallic high-end without harsh steps
+            if (warp > 0.42f)
+            {
+                float mirrorAmt = (warp - 0.42f) * 1.4f;
+                if (warped > 0.5f)
+                    warped = 0.5f + (warped - 0.5f) * (1.f - mirrorAmt * 0.55f);
+                // mild 2x sync flavour at extreme
+                if (warp > 0.75f)
+                    warped = std::fmod (warped * (1.f + (warp - 0.75f) * 3.2f), 1.f);
+            }
             p = double (juce::jlimit (0.f, 0.99999f, warped));
         }
 
         float sample = wavetable->getSample (tablePos, float (p));
 
-        // Wavefold — crystal / metallic harmonics (softer asymptote)
+        // Wavefold — cleaner multi-stage fold (Serum-style glassy)
         if (fold > 1e-4f) {
-            float gain = 1.f + fold * 5.5f;
+            float gain = 1.f + fold * 6.2f;
             float x = sample * gain;
-            // sine-fold hybrid = glassy high-tech
-            float folded = std::sin (x * juce::MathConstants<float>::halfPi * (0.7f + fold * 0.9f));
+            // primary sine fold
+            float folded = std::sin (x * juce::MathConstants<float>::halfPi * (0.75f + fold * 0.85f));
+            // secondary hard fold for extra harmonics, limited iterations
             float hard = x;
-            for (int i = 0; i < 2; ++i) {
+            for (int i = 0; i < 3; ++i) {
                 if (hard > 1.f) hard = 2.f - hard;
                 else if (hard < -1.f) hard = -2.f - hard;
                 else break;
             }
-            sample = folded * (0.55f + fold * 0.25f) + hard * (0.45f - fold * 0.25f);
-            sample /= (1.f + fold * 0.8f);
+            // blend with soft knee so low fold stays clean
+            float mix = fold * fold; // quadratic for smoother onset
+            sample = folded * (0.6f + mix * 0.2f) + hard * (0.4f - mix * 0.2f);
+            sample /= (1.f + fold * 0.75f);
         }
 
-        // Drive — transparent tube → plastic saturation
+        // Drive — transparent tube → plastic saturation with better headroom
         if (drive > 1e-4f) {
-            float g = 1.f + drive * 5.5f;
-            // asymmetric for subtle even harmonics (metal body)
+            float g = 1.f + drive * 5.8f;
             float y = sample * g;
-            y = std::tanh (y * (1.f + drive * 0.3f)) - 0.08f * drive * y * y;
-            sample = y / (0.85f + 0.15f * std::tanh (g));
+            // soft-clip + mild even harmonics
+            y = std::tanh (y * (1.f + drive * 0.28f)) - 0.07f * drive * y * y;
+            sample = y / (0.88f + 0.12f * std::tanh (g));
         }
 
         // tiny DC block for clarity at high resonance chains
