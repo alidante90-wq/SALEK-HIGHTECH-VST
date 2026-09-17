@@ -94,7 +94,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         float panX = 35.f * std::sin (t * 0.18f) + mx * 24.f;
         float panY = 20.f * std::cos (t * 0.14f) + my * 18.f;
         auto dest = juce::Rectangle<float> (-40.f + panX, -30.f + panY, W * breathe + 80.f, H * breathe + 60.f);
-        g.setOpacity (0.14f + pulse * 0.08f);
+        g.setOpacity (0.28f + pulse * 0.12f); // stronger cyber wash
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
         if (themeId == 4)
@@ -109,7 +109,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     {
         juce::Path ribbon;
         float yBase = H * (0.18f + r * 0.18f) + my * (10.f + r * 2.f);
-        float amp = 28.f + r * 12.f + pulse * 20.f;
+        float amp = 34.f + r * 14.f + pulse * 28.f;
         float phase = t * (0.55f + r * 0.12f) + r * 1.4f;
         bool first = true;
         for (float x = 0; x <= W; x += 10.f)
@@ -188,7 +188,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             else petals.lineTo (x, y);
         }
         petals.closeSubPath();
-        g.setColour (magenta.withAlpha (0.18f));
+        g.setColour (magenta.withAlpha (0.32f));
         g.strokePath (petals, juce::PathStrokeType (1.4f));
         g.setColour (cyan.withAlpha (0.25f));
         g.fillEllipse (cx - 5.f, cy - 5.f, 10.f, 10.f);
@@ -208,7 +208,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         // drop shadow
         g.setColour (juce::Colours::black.withAlpha (0.45f));
         g.fillRoundedRectangle (left.translated (4.f, 6.f), 12.f);
-        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.72f));
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.35f)); // hero card less opaque
         g.fillRoundedRectangle (left, 12.f);
         // edge light toward mouse
         float edgeA = 0.4f + pulse * 0.3f + std::abs (mx) * 0.2f;
@@ -245,4 +245,34 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
                     juce::Rectangle<float> (left.getX(), left.getY() + 238.f, left.getWidth(), 12.f),
                     juce::Justification::centred);
     }
+
+        // Serum-like section frames on MAIN (osc / filter / env)
+        if (tabs.getCurrentTabIndex() == 0)
+        {
+            auto frame = [] (juce::Graphics& g, juce::Component& c, juce::Colour col, const char* title)
+            {
+                if (! c.isVisible() || c.getWidth() < 8) return;
+                auto b = c.getBounds().toFloat();
+                // convert to editor coords
+                auto topLeft = c.getParentComponent()->getLocalBounds(); // wrong
+                juce::ignoreUnused (topLeft);
+            };
+            juce::ignoreUnused (frame);
+            auto drawFrame = [&] (juce::Component& c, juce::Colour col, const juce::String& title)
+            {
+                if (c.getWidth() < 10) return;
+                auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (2.f);
+                g.setColour (juce::Colour (0xff0a0614).withAlpha (0.22f));
+                g.fillRoundedRectangle (r, 10.f);
+                g.setColour (col.withAlpha (0.45f + pulse * 0.15f));
+                g.drawRoundedRectangle (r, 10.f, 1.4f);
+                g.setColour (col.withAlpha (0.85f));
+                g.setFont (juce::FontOptions (10.f, juce::Font::bold));
+                g.drawText (title, r.removeFromTop (14).reduced (8, 0), juce::Justification::centredLeft);
+            };
+            drawFrame (oscTab, cyan, "OSCILLATORS");
+            drawFrame (filterTab, magenta, "FILTER");
+            drawFrame (envTab, gold, "AMP ENV");
+        }
+
 }

@@ -114,13 +114,17 @@ void SalekHightechAudioProcessorEditor::resized()
 
     auto place = [] (juce::Rectangle<int> area,
                      std::vector<std::unique_ptr<Knob>>& all,
-                     int start, int count, int cols)
+                     int start, int count, int cols,
+                     int maxCellH = 0)
     {
         if (count <= 0 || cols < 1) return;
-        // Always lay out — never skip setBounds (skip caused stacked knobs at 0,0)
         const int rows = juce::jmax (1, (count + cols - 1) / cols);
         const int cw = juce::jmax (1, area.getWidth() / cols);
-        const int ch = juce::jmax (1, area.getHeight() / rows);
+        int ch = juce::jmax (1, area.getHeight() / rows);
+        if (maxCellH > 0) ch = juce::jmin (ch, maxCellH);
+        // vertical centre the grid when maxCellH shrinks rows
+        const int usedH = ch * rows;
+        const int y0 = area.getY() + juce::jmax (0, (area.getHeight() - usedH) / 2);
         for (int i = 0; i < count; ++i)
         {
             const int idx = start + i;
@@ -128,15 +132,15 @@ void SalekHightechAudioProcessorEditor::resized()
             auto* k = all[(size_t) idx].get();
             const int c = i % cols;
             const int r = i / cols;
-            const int pad = (ch < 40 || cw < 50) ? 2 : 5;
-            auto cell = juce::Rectangle<int> (area.getX() + c * cw, area.getY() + r * ch, cw, ch).reduced (pad);
-            const int nameH = (ch < 36) ? 10 : 13;
+            const int pad = (ch < 40 || cw < 50) ? 2 : 4;
+            auto cell = juce::Rectangle<int> (area.getX() + c * cw, y0 + r * ch, cw, ch).reduced (pad);
+            const int nameH = (ch < 40) ? 11 : 14;
             k->name.setBounds (cell.removeFromBottom (nameH));
+            k->name.setJustificationType (juce::Justification::centred);
             k->name.setVisible (true);
             k->s.setBounds (cell);
             k->s.setVisible (true);
-            // Compact text box when tight
-            if (ch < 50)
+            if (ch < 55)
                 k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (28, cw - 8), 12);
             else
                 k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
@@ -233,9 +237,9 @@ void SalekHightechAudioProcessorEditor::resized()
         // FM / PM / macros strip on the right (aligned labels)
         auto right = r.removeFromRight (juce::jmin (280, r.getWidth() * 32 / 100));
         auto fmArea = right.removeFromTop (right.getHeight() * 55 / 100);
-        place (fmArea, knobs, 29, 6, 3);
+        place (fmArea, knobs, 29, 6, 3, 100);
         // Macros: single row with room for labels under knobs
-        place (right.reduced (2), knobs, 35, 4, 4);
+        place (right.reduced (2), knobs, 35, 4, 4, 96); // macros: compact so labels sit under knobs
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (r.reduced (2));
     }
