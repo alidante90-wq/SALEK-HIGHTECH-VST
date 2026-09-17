@@ -79,19 +79,29 @@ public:
 
     float process (float x) noexcept
     {
-        // Pre-drive (stronger for Acid / Ladder)
+        // Pre-drive (stronger / more saturated for Acid & Ladder)
         float preDrive = drive;
-        if (mode == Mode::AcidLP || mode == Mode::LadderSoft)
-            preDrive = juce::jmin (1.f, drive + 0.25f);
+        if (mode == Mode::AcidLP)
+            preDrive = juce::jmin (1.f, drive + 0.35f + resonance * 0.2f);
+        else if (mode == Mode::LadderSoft)
+            preDrive = juce::jmin (1.f, drive + 0.22f);
 
         if (preDrive > 1.0e-4f)
         {
-            const float g = 1.0f + preDrive * 5.0f;
-            x = std::tanh (x * g) * (1.0f / std::tanh (g * 0.65f + 0.35f));
+            const float g = 1.0f + preDrive * 5.5f;
+            x = std::tanh (x * g) * (1.0f / std::tanh (g * 0.6f + 0.4f));
         }
 
         if (mode == Mode::Comb)
             return processComb (x);
+
+        // Acid: inject nonlinear resonance feedback into input for classic squelch
+        if (mode == Mode::AcidLP && resonance > 0.15f)
+        {
+            float fb = v2last * (resonance * resonance * 1.15f);
+            fb = std::tanh (fb * 1.4f);
+            x += fb * 0.55f;
+        }
 
         // Primary SVF tick
         float y = tickSvf (x, ic1eq, ic2eq, a1, a2, a3, k);
@@ -99,14 +109,29 @@ public:
         switch (mode)
         {
             case Mode::LowPass12:
-            case Mode::AcidLP:
                 y = v2last; break;
+            case Mode::AcidLP:
+            {
+                // 12dB core + soft diode-like soft clip on resonance peak
+                y = v2last;
+                float sat = 1.f + resonance * 1.6f + drive * 0.8f;
+                y = std::tanh (y * sat) / std::tanh (sat * 0.7f + 0.3f);
+                break;
+            }
             case Mode::LowPass24:
             case Mode::LadderSoft:
             {
-                // cascade second stage at slightly higher cutoff
+                // cascade second stage — Ladder uses asymmetric blend for 24dB-ish slope
                 float y2 = tickSvf (v2last, ic1b, ic2b, a1b, a2b, a3b, k);
-                y = (mode == Mode::LadderSoft) ? (v2last * 0.35f + y2 * 0.65f) : y2;
+                if (mode == Mode::LadderSoft)
+                {
+                    y = v2last * 0.28f + y2 * 0.72f;
+                    // soft ladder saturation
+                    float sat = 1.f + resonance * 0.9f + drive * 0.5f;
+                    y = std::tanh (y * sat) * (1.f / (0.85f + 0.15f * sat));
+                }
+                else
+                    y = y2;
                 break;
             }
             case Mode::HighPass12:
