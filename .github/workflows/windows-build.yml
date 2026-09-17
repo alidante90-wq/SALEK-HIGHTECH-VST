@@ -18,7 +18,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: JUCE
-          key: juce-8.0.4-v3
+          key: juce-8.0.4-v4
 
       - name: Clone JUCE
         if: steps.cache-juce.outputs.cache-hit != 'true'
@@ -42,7 +42,7 @@ jobs:
           $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "SALEK HIGHTECH.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $vst3) { $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1 }
           $exe = Get-ChildItem -Path build -Recurse -Filter "SALEK HIGHTECH.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1 }
+          if (-not $exe) { $exe = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch "cmake|ninja|juce|CMake" } | Select-Object -First 1 }
           if ($vst3) { Copy-Item -Recurse $vst3.FullName "artifact/SALEK HIGHTECH.vst3" }
           if ($exe) { Copy-Item $exe.FullName "artifact/SALEK HIGHTECH.exe" }
           Get-ChildItem -Recurse artifact

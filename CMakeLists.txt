@@ -33,7 +33,6 @@ juce_add_plugin(SALEK_HIGHTECH
 
 juce_generate_juce_header(SALEK_HIGHTECH)
 
-# Embed brand images so VST always has art
 juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/face.png"
     "Source/Assets/lian.png"
@@ -57,6 +56,7 @@ target_sources(SALEK_HIGHTECH PRIVATE
     Source/Synth/SynthSound.h
     Source/Oscillators/WavetableOscillator.cpp
     Source/Oscillators/WavetableOscillator.h
+    Source/Oscillators/GranularOscillator.h
     Source/Wavetables/WavetableData.cpp
     Source/Wavetables/WavetableData.h
     Source/Filters/StateVariableFilter.h
@@ -71,6 +71,8 @@ target_sources(SALEK_HIGHTECH PRIVATE
     Source/UI/ModMatrixPanel.h
 )
 
+target_include_directories(SALEK_HIGHTECH PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
+
 target_compile_definitions(SALEK_HIGHTECH PUBLIC
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
@@ -84,5 +86,5 @@ target_link_libraries(SALEK_HIGHTECH
 )
 
 if (MSVC)
-    target_compile_options(SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj)
+    target_compile_options(SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj /utf-8)
 endif()

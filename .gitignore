@@ -1,4 +1,5 @@
 build/
+build-v2/
 .cache/
 .vscode/
 .idea/
@@ -6,9 +7,25 @@ build/
 CMakeUserPresets.json
 JUCE/
 *.o
+*.obj
 *.a
 *.so
 *.exe
 *.vst3
 *.zip
 .DS_Store
+
+# Never commit in-source CMake / JUCE build trees
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CMakeScripts/
+build.ninja
+.ninja_deps
+.ninja_log
+JUCEConfig.cmake
+JUCEConfigVersion.cmake
+JUCEExportConfig.cmake
+modules/
+tools/
+compile_commands.json
