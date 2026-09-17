@@ -157,6 +157,10 @@ public:
             wetL = mid + side;
             wetR = mid - side;
 
+            // Blend early + body; slight wet boost so mix knob is more audible
+            const float wetBoost = 1.15f;
+            wetL = (wetL + early * earlyG) * wetBoost;
+            wetR = (wetR + early * earlyG * 0.92f) * wetBoost;
             buffer.setSample (0, i, inL * (1.f - mix) + wetL * mix);
             if (ch > 1) buffer.setSample (1, i, inR * (1.f - mix) + wetR * mix);
         }
