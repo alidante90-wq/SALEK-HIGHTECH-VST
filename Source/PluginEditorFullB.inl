@@ -4,33 +4,61 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
 {
     if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
     const auto& pr = presetRows.getReference (row);
+
+    // ===== Category header (Pigments / Acid-V style) =====
     if (pr.isHeader)
     {
-        g.fillAll (juce::Colour (0xff12081c));
-        g.setColour (themeAccent);
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        g.setColour (juce::Colour (0xff0e0618));
+        g.fillRect (0, 0, width, height);
+        g.setColour (juce::Colour (0xff1a0a28));
+        g.fillRect (0, 0, 4, height); // left accent strip
+
         const bool folded = collapsedCats.contains (pr.category);
-        juce::String mark = folded ? "[+] " : "[-] ";
-        g.drawText (mark + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
-        g.setColour (themeAccent2.withAlpha (0.5f));
-        g.drawLine (4.0f, (float) height - 1.0f, (float) width - 4.0f, (float) height - 1.0f, 1.0f);
+        g.setColour (themeAccent.withAlpha (0.95f));
+        g.setFont (juce::FontOptions (11.5f, juce::Font::bold));
+        juce::String mark = folded ? juce::CharPointer_UTF8 ("\u25B8  ") : juce::CharPointer_UTF8 ("\u25BE  ");
+        g.drawText (mark + pr.label, 10, 0, width - 14, height, juce::Justification::centredLeft);
+
+        g.setColour (themeAccent.withAlpha (0.35f));
+        g.drawLine (8.0f, (float) height - 1.0f, (float) width - 6.0f, (float) height - 1.0f, 1.0f);
         return;
     }
-    if (selected) g.fillAll (juce::Colour (0xff3a0066));
-    else g.fillAll (themePanelBg);
-    juce::Colour tc = selected ? themeAccent : juce::Colour (0xffd0c0e0);
+
+    // ===== Preset row =====
+    if (selected)
+    {
+        g.setColour (juce::Colour (0xff2a0848));
+        g.fillRect (0, 0, width, height);
+        g.setColour (themeAccent);
+        g.fillRect (0, 1, 3, height - 2);
+        g.setColour (themeAccent.withAlpha (0.25f));
+        g.drawRect (0, 0, width, height, 1);
+    }
+    else
+    {
+        g.setColour (themePanelBg);
+        g.fillRect (0, 0, width, height);
+        if ((row & 1) == 0)
+        {
+            g.setColour (juce::Colour (0xff12081c).withAlpha (0.45f));
+            g.fillRect (0, 0, width, height);
+        }
+    }
+
+    juce::Colour tc = selected ? juce::Colour (0xffffffff) : juce::Colour (0xffd0c0e0);
     auto fullName = processor.getProgramName (pr.programIndex);
-    if (fullName.startsWith ("Acid")) tc = selected ? tc : juce::Colour (0xffffcc44);
-    if (fullName.startsWith ("Bass")) tc = selected ? tc : juce::Colour (0xff66ff99);
-    if (fullName.startsWith ("Lead")) tc = selected ? tc : juce::Colour (0xff00f0ff);
-    if (fullName.startsWith ("Kick")) tc = selected ? tc : juce::Colour (0xffffab40);
-    if (fullName.startsWith ("FM"))   tc = selected ? tc : juce::Colour (0xffff66cc);
-    if (fullName.startsWith ("Retro"))tc = selected ? tc : juce::Colour (0xffa0a0ff);
+    if (fullName.startsWith ("Acid"))  tc = selected ? tc : juce::Colour (0xffffcc44);
+    if (fullName.startsWith ("Bass"))  tc = selected ? tc : juce::Colour (0xff66ff99);
+    if (fullName.startsWith ("Lead"))  tc = selected ? tc : juce::Colour (0xff00f0ff);
+    if (fullName.startsWith ("Kick"))  tc = selected ? tc : juce::Colour (0xffffab40);
+    if (fullName.startsWith ("FM"))    tc = selected ? tc : juce::Colour (0xffff66cc);
+    if (fullName.startsWith ("Retro")) tc = selected ? tc : juce::Colour (0xffa0a0ff);
     if (fullName.startsWith ("SALEK")) tc = selected ? tc : juce::Colour (0xffffd700);
-    if (fullName.startsWith ("USER")) tc = selected ? tc : juce::Colour (0xffffaa00);
+    if (fullName.startsWith ("USER"))  tc = selected ? tc : juce::Colour (0xffffaa00);
+
     g.setColour (tc);
-    g.setFont (juce::FontOptions (12.5f));
-    g.drawText ("   " + pr.label, 8, 0, width - 12, height, juce::Justification::centredLeft);
+    g.setFont (juce::FontOptions (selected ? 13.0f : 12.2f, selected ? juce::Font::bold : juce::Font::plain));
+    g.drawText (pr.label, 14, 0, width - 20, height, juce::Justification::centredLeft);
 }
 
 void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce::MouseEvent&)
