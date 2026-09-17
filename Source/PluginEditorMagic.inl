@@ -31,11 +31,11 @@
     styleBtn (magicFlangeBtn, juce::Colour (0xff39ff14));
     styleBtn (magicPsychBtn, juce::Colour (0xffffd700));
     styleBtn (magicHold, juce::Colour (0xffffaa00));
-    magicLoopBtn.setButtonText ("LOOP");
-    magicGlitchBtn.setButtonText ("GLITCH");
-    magicFlangeBtn.setButtonText ("FLANGE+VERB");
-    magicPsychBtn.setButtonText ("PSYCHEDELIC");
-    magicHold.setButtonText ("HOLD");
+    magicLoopBtn.setButtonText (juce::CharPointer_UTF8 ("\xd9\x84\xd9\x88\xd9\xbe / LOOP"));
+    magicGlitchBtn.setButtonText (juce::CharPointer_UTF8 ("\xda\xaf\xd9\x84\xdb\x8c\xda\x86 / GLITCH"));
+    magicFlangeBtn.setButtonText (juce::CharPointer_UTF8 ("\xd9\x81\xd9\x84\xd9\x86\xd8\xac / FLANGE"));
+    magicPsychBtn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xdb\x8c / PSY"));
+    magicHold.setButtonText (juce::CharPointer_UTF8 ("\xd9\x86\xda\xaf\xd9\x87\xd8\xaf\xd8\xa7\xd8\xb1 / HOLD"));
     magicLoopBtn.setToggleState (true, juce::dontSendNotification);
     magicTab.addAndMakeVisible (magicLoopBtn);
     magicTab.addAndMakeVisible (magicGlitchBtn);
@@ -80,7 +80,10 @@
     magicPsychBtn.onClick  = [setMode] { setMode (3, juce::Colour (0xffffd700), "PSYCHEDELIC"); };
 
     magicHint.setText (
-        "HOLD = latch FX on (no cut on release)  |  Drag XY to morph  |  Modes are exclusive",
+        juce::CharPointer_UTF8 (
+            "HOLD=\xd9\xab\xd8\xa7\xd8\xa8\xd8\xaa \xd8\xa8\xd8\xaf\xd9\x88\xd9\x86 \xd9\x82\xd8\xb7\xd8\xb9  |  "
+            "XY=\xd9\x85\xd9\x88\xd8\xb1\xd9\x81  |  "
+            "Modes exclusive / \xd9\x85\xd9\x88\xd8\xaf\xd9\x87\xd8\xa7 \xd8\xa7\xd9\x86\xd8\xad\xd8\xb5\xd8\xa7\xd8\xb1\xdb\x8c"),
         juce::dontSendNotification);
     magicHint.setJustificationType (juce::Justification::centred);
     magicHint.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));

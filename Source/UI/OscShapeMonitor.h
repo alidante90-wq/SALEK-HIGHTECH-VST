@@ -67,6 +67,14 @@ public:
         float sx = plot.getX() + scan * plot.getWidth();
         g.setColour (accent.withAlpha (0.25f));
         g.drawVerticalLine ((int) sx, plot.getY(), plot.getBottom());
+
+        // Extra readouts: Table / Warp / Fold
+        g.setFont (juce::FontOptions (8.5f, juce::Font::bold));
+        g.setColour (accent.withAlpha (0.85f));
+        auto info = juce::String::formatted ("T:%.0f  W:%.0f  F:%.0f",
+            table * 100.f, warp * 100.f, fold * 100.f);
+        g.drawText (info, getLocalBounds().removeFromBottom (12).reduced (4, 0),
+                    juce::Justification::centredLeft);
     }
 
     void timerCallback() override { anim += 0.1f; repaint(); }

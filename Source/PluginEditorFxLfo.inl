@@ -62,7 +62,12 @@ private:
     juce::Colour accent { 0xff00e8ff };
 };
 
-/** Editable LFO shape — Shift=linear interpolate neighbors, Alt=smooth nearby */
+/** Editable LFO shape (Serum-style modifiers)
+ *  Drag = set point
+ *  Shift = linear ramp from last anchor to current
+ *  Alt  = smooth nearby points
+ *  Ctrl = freehand stroke (paint across indices while dragging)
+ */
 class LfoShapeEditor : public juce::Component
 {
 public:
@@ -74,7 +79,10 @@ public:
             points[i] = std::sin (t * juce::MathConstants<float>::twoPi);
         }
     }
+
     void setLfo (salek::LFO* l) { lfo = l; if (lfo) syncFromLfo(); }
+    salek::LFO* getLfo() const noexcept { return lfo; }
+
     void syncFromLfo()
     {
         if (! lfo) return;
@@ -82,6 +90,39 @@ public:
             points[i] = lfo->getCustomPoint (i);
         repaint();
     }
+
+    /** Copy current table into another LFO instance */
+    void applyTo (salek::LFO& dest)
+    {
+        for (int i = 0; i < 16; ++i)
+            dest.setCustomPoint (i, points[i]);
+    }
+
+    /** Snapshot points into a reusable bank slot (0..2) */
+    void saveSlot (int slot)
+    {
+        if (slot < 0 || slot > 2) return;
+        for (int i = 0; i < 16; ++i)
+            bank[(size_t) slot][(size_t) i] = points[i];
+        bankValid[(size_t) slot] = true;
+    }
+
+    void loadSlot (int slot)
+    {
+        if (slot < 0 || slot > 2 || ! bankValid[(size_t) slot]) return;
+        for (int i = 0; i < 16; ++i)
+        {
+            points[i] = bank[(size_t) slot][(size_t) i];
+            if (lfo) lfo->setCustomPoint (i, points[i]);
+        }
+        repaint();
+    }
+
+    bool slotValid (int slot) const
+    {
+        return slot >= 0 && slot <= 2 && bankValid[(size_t) slot];
+    }
+
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (2.f);
@@ -90,7 +131,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
         g.drawRoundedRectangle (r, 8.f, 1.2f);
 
-        auto plot = r.reduced (10.f, 14.f);
+        auto plot = r.reduced (10.f, 16.f);
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.08f));
         g.drawHorizontalLine ((int) plot.getCentreY(), plot.getX(), plot.getRight());
         for (int i = 1; i < 4; ++i)
@@ -119,51 +160,100 @@ public:
             g.fillEllipse (x - 2.f, y - 2.f, 4.f, 4.f);
         }
 
-        g.setColour (juce::Colour (0xffffd700).withAlpha (0.85f));
-        g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("CUSTOM SHAPE  |  drag  |  Shift=linear  |  Alt=smooth",
-                    getLocalBounds().removeFromTop (14).reduced (8, 0),
-                    juce::Justification::centredLeft);
+        g.setColour (juce::Colour (0xffffd700).withAlpha (0.9f));
+        g.setFont (juce::FontOptions (9.5f, juce::Font::bold));
+        // EN + FA hint
+        g.drawText (juce::CharPointer_UTF8 (
+            "DRAW | Shift=\xd8\xae\xd8\xb7\xdb\x8c  Alt=\xd9\x85\xd9\x84\xdb\x8c\xd9\x85  Ctrl=\xd8\xa2\xd8\xb2\xd8\xa7\xd8\xaf  |  drag points"),
+            getLocalBounds().removeFromTop (14).reduced (6, 0),
+            juce::Justification::centredLeft);
     }
-    void mouseDown (const juce::MouseEvent& e) override { dragAt (e); }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        lastIdx = -1;
+        dragAt (e);
+    }
+
     void mouseDrag (const juce::MouseEvent& e) override { dragAt (e); }
+
 private:
     salek::LFO* lfo = nullptr;
     float points[16] {};
+    float bank[3][16] {};
+    bool bankValid[3] { false, false, false };
+    int lastIdx = -1;
+
+    void writePoint (int i, float v)
+    {
+        points[i] = v;
+        if (lfo) lfo->setCustomPoint (i, v);
+    }
+
     void dragAt (const juce::MouseEvent& e)
     {
-        auto plot = getLocalBounds().toFloat().reduced (12.f, 16.f);
-        if (plot.getWidth() < 1) return;
-        int idx = juce::jlimit (0, 15, (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * 15.f));
-        float v = juce::jlimit (-1.f, 1.f, (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
-        points[idx] = v;
+        auto plot = getLocalBounds().toFloat().reduced (12.f, 18.f);
+        if (plot.getWidth() < 1.f) return;
 
-        if (e.mods.isShiftDown())
+        int idx = juce::jlimit (0, 15,
+            (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * 15.f));
+        float v = juce::jlimit (-1.f, 1.f,
+            (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
+
+        if (e.mods.isCtrlDown() || e.mods.isCommandDown())
         {
-            // linear ramp from previous anchor to this point
-            int left = juce::jmax (0, idx - 1);
-            for (int i = left; i <= idx; ++i)
+            // Freehand: interpolate across all indices between last and current
+            if (lastIdx < 0)
             {
-                float t = (idx == left) ? 1.f : (float) (i - left) / (float) (idx - left);
-                points[i] = points[left] * (1.f - t) + v * t;
-                if (lfo) lfo->setCustomPoint (i, points[i]);
+                writePoint (idx, v);
             }
+            else
+            {
+                int a = juce::jmin (lastIdx, idx);
+                int b = juce::jmax (lastIdx, idx);
+                float va = points[lastIdx];
+                for (int i = a; i <= b; ++i)
+                {
+                    float t = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
+                    // if moving right, blend from last value toward v
+                    float pv = (lastIdx <= idx)
+                        ? va * (1.f - t) + v * t
+                        : v * (1.f - t) + va * t;
+                    writePoint (i, pv);
+                }
+            }
+            lastIdx = idx;
+        }
+        else if (e.mods.isShiftDown())
+        {
+            // Linear ramp from previous anchor
+            int anchor = (lastIdx >= 0) ? lastIdx : juce::jmax (0, idx - 1);
+            int a = juce::jmin (anchor, idx);
+            int b = juce::jmax (anchor, idx);
+            float va = points[anchor];
+            for (int i = a; i <= b; ++i)
+            {
+                float t = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
+                writePoint (i, va * (1.f - t) + v * t);
+            }
+            lastIdx = idx;
         }
         else if (e.mods.isAltDown())
         {
-            // soft smooth neighbors
+            // Soft smooth neighborhood
             for (int d = -2; d <= 2; ++d)
             {
                 int j = idx + d;
                 if (j < 0 || j > 15) continue;
-                float w = 1.f - std::abs (d) * 0.35f;
-                points[j] = points[j] * (1.f - w * 0.5f) + v * (w * 0.5f);
-                if (lfo) lfo->setCustomPoint (j, points[j]);
+                float w = 1.f - std::abs ((float) d) * 0.35f;
+                writePoint (j, points[j] * (1.f - w * 0.55f) + v * (w * 0.55f));
             }
+            lastIdx = idx;
         }
         else
         {
-            if (lfo) lfo->setCustomPoint (idx, v);
+            writePoint (idx, v);
+            lastIdx = idx;
         }
         repaint();
     }

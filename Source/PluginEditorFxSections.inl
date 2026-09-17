@@ -37,7 +37,10 @@
         distModeBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
         distModeBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffff6b00));
 
-        const char* secs[] = { "CHORUS", "DELAY", "REVERB", "MASTER", "COMP", "EQ", "PHASER", "DISTORT" };
+        juce::String secs[] = {
+            "CHORUS", "DELAY", "REVERB", "MASTER",
+            "COMP", "EQ", "PHASER", "DIST"
+        };
         const FxMonitor::Kind kinds[] = {
             FxMonitor::Chorus, FxMonitor::Delay, FxMonitor::Reverb, FxMonitor::Master,
             FxMonitor::Comp, FxMonitor::EQ, FxMonitor::Phaser, FxMonitor::Dist
@@ -66,7 +69,7 @@
             mon->setLevel (0.4f);
             fxTab.addAndMakeVisible (mon);
 
-            fxBypass[i].setButtonText ("BYP");
+            fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("\xd8\xa8\xd8\xa7\xdb\x8c\xd9\xbe\xd8\xb3"));
             fxBypass[i].setClickingTogglesState (true);
             fxBypass[i].setColour (juce::ToggleButton::textColourId, monCols[i]);
             fxTab.addAndMakeVisible (fxBypass[i]);

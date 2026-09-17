@@ -125,7 +125,22 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setBounds (pb);
         }
 
-        place (oscTab.getLocalBounds().reduced (4), knobs, 0, 21, 6);
+        {
+            auto oa = oscTab.getLocalBounds().reduced (4);
+            // Top row: 3 shape monitors
+            auto monRow = oa.removeFromTop (78);
+            const int mw = monRow.getWidth() / 3;
+            if (oscMon1 != nullptr) oscMon1->setBounds (monRow.removeFromLeft (mw).reduced (3));
+            if (oscMon2 != nullptr) oscMon2->setBounds (monRow.removeFromLeft (mw).reduced (3));
+            if (oscMon3 != nullptr) oscMon3->setBounds (monRow.reduced (3));
+            // Shape selector combos under monitors
+            auto shRow = oa.removeFromTop (26);
+            const int sw = shRow.getWidth() / 3;
+            osc1ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (2));
+            osc2ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (2));
+            osc3ShapeBox.setBounds (shRow.reduced (2));
+            place (oa, knobs, 0, 21, 6);
+        }
 
         {
             auto fr = filterTab.getLocalBounds().reduced (4);
@@ -154,24 +169,41 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        auto r = lfoTab.getLocalBounds().reduced (8);
+        auto r = lfoTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (r.removeFromTop (80).reduced (2));
-        auto presetRow = r.removeFromTop (28);
-        const int bw = presetRow.getWidth() / 6;
-        lfoPresetSine.setBounds  (presetRow.removeFromLeft (bw).reduced (2));
-        lfoPresetTri.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
-        lfoPresetSaw.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
-        lfoPresetSqr.setBounds   (presetRow.removeFromLeft (bw).reduced (2));
-        lfoPresetPulse.setBounds (presetRow.removeFromLeft (bw).reduced (2));
-        lfoPresetCustom.setBounds(presetRow.reduced (2));
-        auto waveRow = r.removeFromTop (28);
-        lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (3));
-        lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (3));
-        lfo3WaveBox.setBounds (waveRow.reduced (3));
-        auto knobArea = r.removeFromBottom (110);
+            lfoDisplay->setBounds (r.removeFromTop (70).reduced (2));
+
+        auto presetRow = r.removeFromTop (26);
+        const int bw = presetRow.getWidth() / 12;
+        juce::TextButton* presets[] = {
+            &lfoPresetSine, &lfoPresetTri, &lfoPresetSaw, &lfoPresetSqr,
+            &lfoPresetPulse, &lfoPresetExp, &lfoPresetLog, &lfoPresetBell,
+            &lfoPresetWob, &lfoPresetChaos, &lfoPresetGate, &lfoPresetCustom
+        };
+        for (auto* b : presets)
+            b->setBounds (presetRow.removeFromLeft (bw).reduced (1));
+
+        auto waveRow = r.removeFromTop (26);
+        lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (2));
+        lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));
+        lfo3WaveBox.setBounds (waveRow.reduced (2));
+
+        // Copy shape to LFO1/2/3 + SAVE/LOAD slots A/B/C
+        auto copyRow = r.removeFromTop (24);
+        const int cw = copyRow.getWidth() / 9;
+        lfoCopyTo1.setBounds (copyRow.removeFromLeft (cw).reduced (1));
+        lfoCopyTo2.setBounds (copyRow.removeFromLeft (cw).reduced (1));
+        lfoCopyTo3.setBounds (copyRow.removeFromLeft (cw).reduced (1));
+        lfoSaveA.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
+        lfoLoadA.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
+        lfoSaveB.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
+        lfoLoadB.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
+        lfoSaveC.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
+        lfoLoadC.setBounds   (copyRow.reduced (1));
+
+        auto knobArea = r.removeFromBottom (100);
         place (knobArea, knobs, 39, 6, 6);
-        lfoShapeEditor.setBounds (r.reduced (4));
+        lfoShapeEditor.setBounds (r.reduced (3));
     }
 
     #include "PluginEditorFullB_FxLayout.inl"

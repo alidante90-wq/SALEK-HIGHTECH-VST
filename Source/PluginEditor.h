@@ -229,6 +229,12 @@ private:
                      lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" },
                      lfoPresetExp { "EXP" }, lfoPresetLog { "LOG" }, lfoPresetBell { "BELL" },
                      lfoPresetWob { "WOB" }, lfoPresetChaos { "CHAOS" }, lfoPresetGate { "GATE" };
+    // Copy custom shape across LFOs + 3 reusable slots
+    juce::TextButton lfoCopyTo1 { "->L1" }, lfoCopyTo2 { "->L2" }, lfoCopyTo3 { "->L3" },
+                     lfoSaveA { "SAVE A" }, lfoLoadA { "LOAD A" },
+                     lfoSaveB { "SAVE B" }, lfoLoadB { "LOAD B" },
+                     lfoSaveC { "SAVE C" }, lfoLoadC { "LOAD C" };
+    juce::ComboBox osc1ShapeBox, osc2ShapeBox, osc3ShapeBox;
     int lfoShapeTarget = 0;
     std::unique_ptr<MagicPad> magicPad;
     juce::TextButton magicLoopBtn, magicGlitchBtn, magicFlangeBtn, magicPsychBtn;
