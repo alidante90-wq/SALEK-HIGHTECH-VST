@@ -30,9 +30,10 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         magenta = lerpCol (juce::Colour (0xffff2d9b), juce::Colour (0xffff80c0), 1.f - morph);
         gold = juce::Colour (0xffff66aa); purple = juce::Colour (0xffff80c0); lime = juce::Colour (0xffb8ff40);
     } else {
-        cyan = lerpCol (juce::Colour (0xff00e8ff), juce::Colour (0xff7c4dff), morph);
-        magenta = lerpCol (juce::Colour (0xffff2d9b), juce::Colour (0xffffd700), morph);
-        gold = juce::Colour (0xffffd700); purple = juce::Colour (0xffb44dff); lime = juce::Colour (0xff39ff14);
+        // Mockup cyber: hot pink + electric cyan (SALEK reference art)
+        cyan = lerpCol (juce::Colour (0xff00f0ff), juce::Colour (0xff7cf0ff), morph);
+        magenta = lerpCol (juce::Colour (0xffff2ec8), juce::Colour (0xffff66e0), morph);
+        gold = juce::Colour (0xffffd700); purple = juce::Colour (0xffc44dff); lime = juce::Colour (0xff39ff14);
     }
 
     // Light source follows mouse (3D lighting key)
@@ -45,7 +46,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         if (themeId == 4)      { c0 = juce::Colour (0xff1a0c18); c1 = juce::Colour (0xff3a1830); }
         else if (themeId == 2) { c0 = juce::Colour (0xff040a02); c1 = juce::Colour (0xff1a2e08); }
         else if (themeId == 3) { c0 = juce::Colour (0xff0c0210); c1 = juce::Colour (0xff2a0838); }
-        else                   { c0 = juce::Colour (0xff03010e); c1 = juce::Colour (0xff12062a); }
+        else                   { c0 = juce::Colour (0xff0a0218); c1 = juce::Colour (0xff2a0a3a); } // deep cyber night
         float gx = lx * 0.3f + W * 0.3f, gy = ly * 0.3f + H * 0.2f;
         juce::Colour mid = c1.interpolatedWith (purple.darker (0.2f), morph * 0.35f + pulse * 0.15f);
         juce::ColourGradient bg (c0, gx - W * 0.3f, gy - H * 0.3f, mid, gx + W * 0.5f, gy + H * 0.5f, true);
@@ -94,10 +95,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         float panX = 35.f * std::sin (t * 0.18f) + mx * 24.f;
         float panY = 20.f * std::cos (t * 0.14f) + my * 18.f;
         auto dest = juce::Rectangle<float> (-40.f + panX, -30.f + panY, W * breathe + 80.f, H * breathe + 60.f);
-        // Hero image: clear & vivid (was too transparent at 0.28)
-        g.setOpacity (0.62f + pulse * 0.18f);
+        // Hero: vivid, left-weighted like mockup character panel
+        g.setOpacity (0.78f + pulse * 0.12f);
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
+        // soft pink wash from left (character glow)
+        {
+            juce::ColourGradient hg (magenta.withAlpha (0.12f + pulse * 0.06f), 0.f, H * 0.4f,
+                                    juce::Colours::transparentBlack, W * 0.45f, H * 0.4f, false);
+            g.setGradientFill (hg);
+            g.fillAll();
+        }
         if (themeId == 4)
         {
             g.setColour (magenta.withAlpha (0.07f));
@@ -198,7 +206,19 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     // ---- brand ----
     g.setColour (cyan);
     g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-    g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
+    // ---- cyber city horizon glow (mockup) ----
+    {
+        juce::ColourGradient horizon (magenta.withAlpha (0.18f + pulse * 0.08f), W * 0.5f, H * 0.72f,
+                                     juce::Colours::transparentBlack, W * 0.5f, H * 0.45f, false);
+        g.setGradientFill (horizon);
+        g.fillRect (0.f, H * 0.45f, W, H * 0.4f);
+        juce::ColourGradient cyanHorizon (cyan.withAlpha (0.08f), W * 0.7f, H * 0.85f,
+                                         juce::Colours::transparentBlack, W * 0.7f, H * 0.55f, false);
+        g.setGradientFill (cyanHorizon);
+        g.fillRect (0.f, H * 0.55f, W, H * 0.35f);
+    }
+
+        g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
     g.setColour (gold.withAlpha (0.6f + pulse * 0.4f));
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("ISATIS", W - 100.f, H - 90.f, 90.f, 16.f, juce::Justification::centredRight);
@@ -209,7 +229,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         // drop shadow
         g.setColour (juce::Colours::black.withAlpha (0.45f));
         g.fillRoundedRectangle (left.translated (4.f, 6.f), 12.f);
-        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.72f)); // clearer hero card
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.25f)); // soft overlay — character stays visible
         g.fillRoundedRectangle (left, 12.f);
         // edge light toward mouse
         float edgeA = 0.4f + pulse * 0.3f + std::abs (mx) * 0.2f;
