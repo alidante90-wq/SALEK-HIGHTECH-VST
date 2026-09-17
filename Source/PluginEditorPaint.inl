@@ -94,7 +94,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         float panX = 35.f * std::sin (t * 0.18f) + mx * 24.f;
         float panY = 20.f * std::cos (t * 0.14f) + my * 18.f;
         auto dest = juce::Rectangle<float> (-40.f + panX, -30.f + panY, W * breathe + 80.f, H * breathe + 60.f);
-        g.setOpacity (0.28f + pulse * 0.12f); // stronger cyber wash
+        // Hero image: clear & vivid (was too transparent at 0.28)
+        g.setOpacity (0.62f + pulse * 0.18f);
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
         if (themeId == 4)
@@ -208,7 +209,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         // drop shadow
         g.setColour (juce::Colours::black.withAlpha (0.45f));
         g.fillRoundedRectangle (left.translated (4.f, 6.f), 12.f);
-        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.35f)); // hero card less opaque
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.72f)); // clearer hero card
         g.fillRoundedRectangle (left, 12.f);
         // edge light toward mouse
         float edgeA = 0.4f + pulse * 0.3f + std::abs (mx) * 0.2f;
