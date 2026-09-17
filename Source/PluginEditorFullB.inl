@@ -275,17 +275,20 @@ void SalekHightechAudioProcessorEditor::resized()
     #include "PluginEditorFullB_FxLayout.inl"
 
     {
-        auto r = magicTab.getLocalBounds().reduced (10);
-        auto top = r.removeFromTop (32);
-        const int bw = top.getWidth() / 5;
-        magicLoopBtn.setBounds (top.removeFromLeft (bw).reduced (2));
-        magicGlitchBtn.setBounds (top.removeFromLeft (bw).reduced (2));
-        magicFlangeBtn.setBounds (top.removeFromLeft (bw).reduced (2));
-        magicPsychBtn.setBounds (top.removeFromLeft (bw).reduced (2));
-        magicHold.setBounds (top.reduced (2));
-        magicHint.setBounds (r.removeFromBottom (22));
+        auto r = magicTab.getLocalBounds().reduced (6);
+        auto rail = r.removeFromRight (150);
+        magicHint.setBounds (rail.removeFromBottom (36).reduced (2));
+        const int bh = juce::jmax (28, rail.getHeight() / 5);
+        magicLoopBtn.setBounds (rail.removeFromTop (bh).reduced (3));
+        magicGlitchBtn.setBounds (rail.removeFromTop (bh).reduced (3));
+        magicFlangeBtn.setBounds (rail.removeFromTop (bh).reduced (3));
+        magicPsychBtn.setBounds (rail.removeFromTop (bh).reduced (3));
+        magicHold.setBounds (rail.reduced (3));
         if (magicPad != nullptr)
-            magicPad->setBounds (r.reduced (6));
+        {
+            magicPad->setBounds (r.reduced (4));
+            magicPad->setAudioPeak (processor.getOutputPeak());
+        }
     }
 
     {

@@ -31,7 +31,7 @@
     styleBtn (magicFlangeBtn, juce::Colour (0xff39ff14));
     styleBtn (magicPsychBtn, juce::Colour (0xffffd700));
     styleBtn (magicHold, juce::Colour (0xffffaa00));
-    magicLoopBtn.setButtonText ("LOOP");
+    magicLoopBtn.setButtonText ("  LOOP");
     magicGlitchBtn.setButtonText ("GLITCH");
     magicFlangeBtn.setButtonText ("FLANGE");
     magicPsychBtn.setButtonText ("PSY");
@@ -79,12 +79,7 @@
     magicFlangeBtn.onClick = [setMode] { setMode (2, juce::Colour (0xff39ff14), "FLANGE+VERB"); };
     magicPsychBtn.onClick  = [setMode] { setMode (3, juce::Colour (0xffffd700), "PSYCHEDELIC"); };
 
-    magicHint.setText (
-        juce::CharPointer_UTF8 (
-            "HOLD=\xd9\xab\xd8\xa7\xd8\xa8\xd8\xaa \xd8\xa8\xd8\xaf\xd9\x88\xd9\x86 \xd9\x82\xd8\xb7\xd8\xb9  |  "
-            "XY=\xd9\x85\xd9\x88\xd8\xb1\xd9\x81  |  "
-            "Modes exclusive / \xd9\x85\xd9\x88\xd8\xaf\xd9\x87\xd8\xa7 \xd8\xa7\xd9\x86\xd8\xad\xd8\xb5\xd8\xa7\xd8\xb1\xdb\x8c"),
-        juce::dontSendNotification);
+    magicHint.setText ("HOLD = latch  |  drag terrain = morph", juce::dontSendNotification);
     magicHint.setJustificationType (juce::Justification::centred);
     magicHint.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
     magicHint.setFont (juce::FontOptions (11.5f));

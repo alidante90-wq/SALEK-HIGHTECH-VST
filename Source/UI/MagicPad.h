@@ -1,13 +1,15 @@
 #pragma once
 #include <JuceHeader.h>
+#include <vector>
+#include <cmath>
 
-/** Hexagonal Kaossilator-style XY pad — cursor clamped inside hex */
+/** CURRENT-style circular terrain XY pad — 3D-ish heightfield + dual orbital cursors */
 class MagicPad : public juce::Component, private juce::Timer
 {
 public:
     std::function<void(float,float,bool)> onChange; // x,y,active
 
-    MagicPad() { startTimerHz (45); }
+    MagicPad() { startTimerHz (40); }
 
     void setPosition (float nx, float ny, bool act)
     {
@@ -18,83 +20,159 @@ public:
     }
     void setModeColour (juce::Colour c) { accent = c; repaint(); }
     void setModeName (const juce::String& n) { modeName = n; repaint(); }
+    void setAudioPeak (float p) noexcept { peak = juce::jlimit (0.f, 1.f, p); }
 
     void paint (juce::Graphics& g) override
     {
-        auto r = getLocalBounds().toFloat().reduced (4.f);
-        g.setColour (juce::Colour (0xff06030e));
-        g.fillRoundedRectangle (r, 14.f);
-        g.setColour (accent.withAlpha (0.35f));
-        g.drawRoundedRectangle (r, 14.f, 1.5f);
+        auto bounds = getLocalBounds().toFloat().reduced (2.f);
+        // dark glass
+        g.setColour (juce::Colour (0xff0a0c14).withAlpha (0.55f));
+        g.fillRoundedRectangle (bounds, 16.f);
 
-        auto hex = makeHex (hexArea());
+        auto circle = getCircleArea();
+        const float cx = circle.getCentreX();
+        const float cy = circle.getCentreY();
+        const float R  = circle.getWidth() * 0.5f;
 
-        if (touching)
+        // outer glow ring
+        g.setColour (accent.withAlpha (0.12f + peak * 0.15f));
+        g.drawEllipse (circle.expanded (8.f), 3.f);
+        g.setColour (accent.withAlpha (0.45f));
+        g.drawEllipse (circle, 2.2f);
+
+        // clip to circle for terrain
+        juce::Path clip;
+        clip.addEllipse (circle);
+        g.saveState();
+        g.reduceClipRegion (clip);
+
+        // procedural terrain (CURRENT-style height strips)
+        const int cols = 48;
+        const int rows = 36;
+        for (int row = 0; row < rows; ++row)
         {
-            g.setColour (accent.withAlpha (0.06f + 0.04f * std::sin (anim * 3.f)));
-            g.fillPath (hex);
-        }
-        else
-        {
-            g.setColour (accent.withAlpha (0.05f));
-            g.fillPath (hex);
-        }
-
-        g.setColour (accent.withAlpha (0.65f));
-        g.strokePath (hex, juce::PathStrokeType (2.4f));
-
-        auto c = hex.getBounds().getCentre();
-        float rad = hexRadius (hexArea());
-        for (int ring = 1; ring <= 3; ++ring)
-        {
-            float rr = rad * (float) ring / 3.f;
-            g.setColour (accent.withAlpha (0.08f));
-            g.drawEllipse (c.x - rr, c.y - rr, rr * 2.f, rr * 2.f, 1.f);
-        }
-
-        g.setColour (accent.withAlpha (0.14f));
-        for (int i = 0; i < 6; ++i)
-        {
-            float a = (float) i / 6.f * juce::MathConstants<float>::twoPi
-                      - juce::MathConstants<float>::halfPi;
-            g.drawLine (c.x, c.y, c.x + std::cos (a) * rad, c.y + std::sin (a) * rad, 1.f);
-        }
-
-        for (size_t i = 0; i < trail.size(); ++i)
-        {
-            float a = (float) (i + 1) / (float) juce::jmax ((size_t) 1, trail.size());
-            g.setColour (accent.withAlpha (0.12f * a));
-            auto p = toScreen (trail[i]);
-            float s = 3.f + 4.f * a;
-            g.fillEllipse (p.x - s, p.y - s, s * 2.f, s * 2.f);
+            const float v = (float) row / (float) (rows - 1); // 0 top .. 1 bottom
+            juce::Path strip;
+            bool first = true;
+            for (int col = 0; col <= cols; ++col)
+            {
+                const float u = (float) col / (float) cols;
+                // height field: multi-octave noise + XY morph + audio pulse
+                float h = terrain (u, v, x, y, anim, peak);
+                // project to circle with perspective tilt
+                float px = circle.getX() + u * circle.getWidth();
+                float baseY = circle.getY() + v * circle.getHeight();
+                float py = baseY - h * R * 0.42f;
+                // only draw inside circle roughly
+                float dx = px - cx, dy = py - cy;
+                if (dx * dx + dy * dy > R * R * 1.05f)
+                    continue;
+                if (first) { strip.startNewSubPath (px, py); first = false; }
+                else strip.lineTo (px, py);
+            }
+            if (! first)
+            {
+                // depth colour: cyan → purple
+                auto col = accent.interpolatedWith (juce::Colour (0xffb44dff), v);
+                col = col.interpolatedWith (juce::Colour (0xff00e8ff), 0.3f + 0.4f * (1.f - v));
+                g.setColour (col.withAlpha (0.25f + 0.35f * (1.f - v) + peak * 0.2f));
+                g.strokePath (strip, juce::PathStrokeType (1.4f));
+            }
         }
 
-        // cursor always inside hex
-        auto pt = toScreen ({ x, y });
-        if (touching)
+        // secondary denser mesh for “crystal” detail near cursor
         {
-            g.setColour (accent.withAlpha (0.28f));
-            g.fillEllipse (pt.x - 22.f, pt.y - 22.f, 44.f, 44.f);
+            const float focusU = x, focusV = 1.f - y;
+            for (int i = 0; i < 18; ++i)
+            {
+                float ang = anim * 0.4f + (float) i / 18.f * juce::MathConstants<float>::twoPi;
+                float rad = R * (0.15f + 0.55f * ((float) i / 18.f));
+                float px = cx + std::cos (ang) * rad * (0.6f + 0.4f * focusU);
+                float py = cy + std::sin (ang) * rad * (0.6f + 0.4f * focusV);
+                float h = terrain (focusU, focusV, x, y, anim + i, peak);
+                py -= h * 12.f;
+                g.setColour (juce::Colours::white.withAlpha (0.08f + peak * 0.1f));
+                g.fillEllipse (px - 1.5f, py - 1.5f, 3.f, 3.f);
+            }
         }
-        g.setColour (juce::Colours::white.withAlpha (0.95f));
-        g.fillEllipse (pt.x - 7.f, pt.y - 7.f, 14.f, 14.f);
+
+        g.restoreState();
+
+        // orbital rings (parameter rings like CURRENT)
+        for (int ring = 1; ring <= 2; ++ring)
+        {
+            float rr = R * (0.35f + ring * 0.22f);
+            g.setColour (juce::Colours::white.withAlpha (0.12f + (touching ? 0.08f : 0.f)));
+            g.drawEllipse (cx - rr, cy - rr, rr * 2.f, rr * 2.f, 1.2f);
+        }
+
+        // dual cursors mapped to X/Y on rings
+        auto drawCursor = [&] (float ang, float rad, float size)
+        {
+            float px = cx + std::cos (ang) * rad;
+            float py = cy + std::sin (ang) * rad;
+            g.setColour (juce::Colours::white.withAlpha (0.2f));
+            g.drawEllipse (px - size * 1.6f, py - size * 1.6f, size * 3.2f, size * 3.2f, 1.5f);
+            g.setColour (juce::Colours::white.withAlpha (0.9f));
+            g.fillEllipse (px - size * 0.45f, py - size * 0.45f, size * 0.9f, size * 0.9f);
+            g.setColour (accent.withAlpha (0.7f));
+            g.drawEllipse (px - size, py - size, size * 2.f, size * 2.f, 2.f);
+        };
+        // X → angle on outer ring, Y → angle on inner ring
+        float angX = x * juce::MathConstants<float>::twoPi - juce::MathConstants<float>::halfPi;
+        float angY = y * juce::MathConstants<float>::twoPi - juce::MathConstants<float>::halfPi;
+        drawCursor (angX, R * 0.57f, 14.f);
+        drawCursor (angY, R * 0.35f, 11.f);
+
+        // free drag cursor (main XY)
+        {
+            float px = circle.getX() + x * circle.getWidth();
+            float py = circle.getY() + (1.f - y) * circle.getHeight();
+            // clamp to circle
+            float dx = px - cx, dy = py - cy;
+            float d = std::sqrt (dx * dx + dy * dy);
+            if (d > R * 0.92f && d > 1.f)
+            {
+                px = cx + dx / d * R * 0.92f;
+                py = cy + dy / d * R * 0.92f;
+            }
+            if (touching)
+            {
+                g.setColour (accent.withAlpha (0.2f));
+                g.fillEllipse (px - 26.f, py - 26.f, 52.f, 52.f);
+            }
+            g.setColour (juce::Colours::white);
+            g.fillEllipse (px - 6.f, py - 6.f, 12.f, 12.f);
+            g.setColour (accent);
+            g.drawEllipse (px - 10.f, py - 10.f, 20.f, 20.f, 2.f);
+        }
+
+        // left labels like CURRENT (Morph / Reso style)
+        g.setColour (juce::Colours::white.withAlpha (0.85f));
+        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+        auto left = bounds.removeFromLeft (bounds.getWidth() * 0.22f).reduced (8.f, 20.f);
+        g.drawText ("Morph", left.removeFromTop (18), juce::Justification::centredLeft);
+        g.setColour (accent.withAlpha (0.9f));
+        g.setFont (juce::FontOptions (11.f));
+        g.drawText (juce::String ((int) std::round (x * 100.f)) + "%", left.removeFromTop (16), juce::Justification::centredLeft);
+        left.removeFromTop (12);
+        g.setColour (juce::Colours::white.withAlpha (0.85f));
+        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+        g.drawText ("Depth", left.removeFromTop (18), juce::Justification::centredLeft);
+        g.setColour (accent.withAlpha (0.9f));
+        g.setFont (juce::FontOptions (11.f));
+        g.drawText (juce::String ((int) std::round (y * 100.f)) + "%", left.removeFromTop (16), juce::Justification::centredLeft);
+
+        // title
         g.setColour (accent);
-        g.drawEllipse (pt.x - 11.f, pt.y - 11.f, 22.f, 22.f, 2.2f);
+        g.setFont (juce::FontOptions (14.f, juce::Font::bold));
+        g.drawText ("MAGIC  |  " + modeName,
+                    getLocalBounds().removeFromTop (22).reduced (12, 0),
+                    juce::Justification::centredLeft);
 
-        g.setColour (accent);
-        g.setFont (juce::FontOptions (15.f, juce::Font::bold));
-        g.drawText ("MAGIC | " + modeName, r.removeFromTop (24).reduced (10, 0),
-                    juce::Justification::centredLeft, false);
-
-        g.setColour (accent.withAlpha (0.85f));
-        g.setFont (juce::FontOptions (11.f, juce::Font::bold));
-        g.drawText ("X " + juce::String (x, 2) + "   Y " + juce::String (y, 2),
-                    getLocalBounds().removeFromBottom (40).removeFromTop (16).reduced (14, 0),
-                    juce::Justification::centredRight);
-
-        g.setColour (juce::Colours::white.withAlpha (0.4f));
+        g.setColour (juce::Colours::white.withAlpha (0.35f));
         g.setFont (juce::FontOptions (10.f));
-        g.drawText (touching ? "ACTIVE  |  drag to morph" : "touch inside hex  |  release = bypass",
+        g.drawText (touching ? "ACTIVE — drag terrain" : "click & drag  ·  HOLD to latch",
                     getLocalBounds().removeFromBottom (18).reduced (10, 0),
                     juce::Justification::centred);
     }
@@ -110,109 +188,46 @@ public:
 
     void timerCallback() override
     {
-        anim += 0.07f;
-        if (touching)
-        {
-            trail.push_back ({ x, y });
-            if (trail.size() > 28) trail.erase (trail.begin());
-        }
-        else if (! trail.empty())
-            trail.erase (trail.begin());
+        anim += 0.045f;
         repaint();
     }
 
 private:
-    float x = 0.5f, y = 0.5f, anim = 0.f;
+    float x = 0.5f, y = 0.5f, anim = 0.f, peak = 0.f;
     bool touching = false;
-    juce::Colour accent { 0xffff00dd };
+    juce::Colour accent { 0xff00e8ff };
     juce::String modeName { "LOOP" };
-    std::vector<juce::Point<float>> trail;
 
-    juce::Rectangle<float> hexArea() const
+    juce::Rectangle<float> getCircleArea() const
     {
-        return getLocalBounds().toFloat().reduced (28.f, 36.f);
+        auto r = getLocalBounds().toFloat().reduced (18.f);
+        // leave side gutters for labels
+        r.removeFromLeft (r.getWidth() * 0.18f);
+        r.removeFromRight (r.getWidth() * 0.08f);
+        float s = juce::jmin (r.getWidth(), r.getHeight()) * 0.92f;
+        return { r.getCentreX() - s * 0.5f, r.getCentreY() - s * 0.5f, s, s };
     }
 
-    float hexRadius (juce::Rectangle<float> r) const
+    static float terrain (float u, float v, float mx, float my, float t, float pk) noexcept
     {
-        return juce::jmin (r.getWidth(), r.getHeight()) * 0.48f;
+        // layered “spectrum mountain”
+        float n1 = std::sin ((u * 9.f + mx * 4.f) + t * 0.7f) * std::cos ((v * 7.f - my * 3.f) + t * 0.5f);
+        float n2 = std::sin ((u * 17.f - t) * (0.8f + mx)) * 0.45f;
+        float n3 = std::sin ((v * 13.f + u * 5.f + t * 1.2f)) * 0.3f;
+        float ridge = 1.f - std::abs (std::sin ((u + v + mx) * 6.f + t * 0.3f));
+        float h = 0.35f * n1 + 0.25f * n2 + 0.2f * n3 + 0.25f * ridge;
+        h *= 0.55f + 0.45f * my + pk * 0.35f;
+        return juce::jlimit (-0.2f, 1.2f, h * 0.5f + 0.35f);
     }
 
-    juce::Path makeHex (juce::Rectangle<float> r) const
+    void updateFromPos (juce::Point<float> p, bool act)
     {
-        juce::Path p;
-        auto c = r.getCentre();
-        float rad = hexRadius (r);
-        for (int i = 0; i < 6; ++i)
-        {
-            float a = (float) i / 6.f * juce::MathConstants<float>::twoPi
-                      - juce::MathConstants<float>::halfPi;
-            float px = c.x + std::cos (a) * rad;
-            float py = c.y + std::sin (a) * rad;
-            if (i == 0) p.startNewSubPath (px, py); else p.lineTo (px, py);
-        }
-        p.closeSubPath();
-        return p;
-    }
-
-    /** Map normalised XY (0..1) to screen; uses inscribed square of hex for uniform mapping */
-    juce::Point<float> toScreen (juce::Point<float> norm) const
-    {
-        auto area = hexArea();
-        auto c = area.getCentre();
-        float rad = hexRadius (area);
-        // use flat-to-flat inscribed square (hex width = sqrt(3)*rad for pointy-top? 
-        // Our hex is pointy-top: horizontal extent = rad * sqrt(3), vertical = 2*rad
-        // Simpler: map through centre using radius * 0.85 so corners stay inside
-        const float usable = rad * 0.82f;
-        float px = c.x + (norm.x * 2.f - 1.f) * usable;
-        float py = c.y - (norm.y * 2.f - 1.f) * usable; // y up
-        return { px, py };
-    }
-
-    /** Clamp a screen point into the hex, return normalised 0..1 */
-    void screenToNormClamped (juce::Point<float> pos, float& nx, float& ny) const
-    {
-        auto area = hexArea();
-        auto c = area.getCentre();
-        float rad = hexRadius (area);
-        const float usable = rad * 0.82f;
-
-        float dx = pos.x - c.x;
-        float dy = c.y - pos.y; // y up
-
-        // clamp to circle first (conservative inside hex)
-        float len = std::sqrt (dx * dx + dy * dy);
-        if (len > usable && len > 1e-6f)
-        {
-            dx *= usable / len;
-            dy *= usable / len;
-        }
-
-        // also reject points outside actual hex path
-        auto hex = makeHex (area);
-        juce::Point<float> candidate { c.x + dx, c.y - dy };
-        if (! hex.contains (candidate))
-        {
-            // pull toward centre until inside
-            for (int i = 0; i < 8; ++i)
-            {
-                dx *= 0.85f;
-                dy *= 0.85f;
-                candidate = { c.x + dx, c.y - dy };
-                if (hex.contains (candidate)) break;
-            }
-        }
-
-        nx = juce::jlimit (0.f, 1.f, 0.5f + 0.5f * (dx / usable));
-        ny = juce::jlimit (0.f, 1.f, 0.5f + 0.5f * (dy / usable));
-    }
-
-    void updateFromPos (juce::Point<float> pos, bool act)
-    {
-        float nx, ny;
-        screenToNormClamped (pos, nx, ny);
-        x = nx; y = ny; touching = act;
+        auto c = getCircleArea();
+        float nx = (p.x - c.getX()) / juce::jmax (1.f, c.getWidth());
+        float ny = 1.f - (p.y - c.getY()) / juce::jmax (1.f, c.getHeight());
+        x = juce::jlimit (0.f, 1.f, nx);
+        y = juce::jlimit (0.f, 1.f, ny);
+        touching = act;
         if (onChange) onChange (x, y, act);
         repaint();
     }
