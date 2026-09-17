@@ -57,10 +57,9 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 4) resized();
-    animPhase += 0.04f;
-    // Only refresh non-tab chrome (title/hero) — full repaint was blanking tabs in some DAWs
-    repaint (0, 0, getWidth(), 46);
-    repaint (0, 46, 230, getHeight() - 46 - 72);
+    animPhase += 0.05f;
+    // Animated GIF-like bg needs full editor paint; opaque tabs keep content stable
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::resized()
