@@ -57,7 +57,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 4) resized();
-    animPhase += 0.05f;
+    animPhase += 0.06f;
     // Animated GIF-like bg needs full editor paint; opaque tabs keep content stable
     repaint();
 }

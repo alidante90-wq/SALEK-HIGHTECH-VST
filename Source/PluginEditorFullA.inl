@@ -9,10 +9,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     addAndMakeVisible (keyboard);
     vblank = juce::VBlankAttachment (this, [this] (double) {
-        animPhase += 0.085f;
+        animPhase += 0.07f;
         repaint();
     });
-    startTimerHz (30);
+    startTimerHz (40); // smoother GIF-like theme
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
