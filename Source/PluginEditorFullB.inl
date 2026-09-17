@@ -400,48 +400,48 @@ void SalekHightechAudioProcessorEditor::resized()
 void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
 {
     const int id = themeBox.getSelectedId();
-    if (! lianImg.isValid()) lianImg = SalekAssets::loadLian();
+    // 2 official backgrounds from concept art
+    if (! lianImg.isValid()) lianImg = SalekAssets::loadBgIsatis();  // BG1 man+cat
+    if (! cyanImg.isValid()) cyanImg = SalekAssets::loadBgSalek();   // BG2 girl red city
     if (! faceImg.isValid()) faceImg = SalekAssets::loadFace();
-    if (! cyanImg.isValid()) cyanImg = SalekAssets::loadCyanGirl();
 
     juce::Colour accent, accent2, panelBg, labelBg, labelTx;
-    if (id == 2)
+    if (id == 2) // ACID
     {
-        heroImg = faceImg.isValid() ? faceImg : (lianImg.isValid() ? lianImg : logoImg);
-        heroIndex = 1;
+        heroImg = lianImg.isValid() ? lianImg : cyanImg;
+        heroIndex = 0;
         accent  = juce::Colour (0xffc0ff00);
         accent2 = juce::Colour (0xffff6b00);
         panelBg = juce::Colour (0xff0a1204);
         labelBg = juce::Colour (0xff1a2a08);
         labelTx = juce::Colour (0xffc0ff00);
     }
-    else if (id == 3)
+    else if (id == 3) // NEON → BG2 girl
     {
-        heroImg = cyanImg.isValid() ? cyanImg : (faceImg.isValid() ? faceImg : lianImg);
-        heroIndex = 2;
+        heroImg = cyanImg.isValid() ? cyanImg : lianImg;
+        heroIndex = 1;
         accent  = juce::Colour (0xffff2d9b);
-        accent2 = juce::Colour (0xff7c4dff);
+        accent2 = juce::Colour (0xff00e8ff);
         panelBg = juce::Colour (0xff12061a);
         labelBg = juce::Colour (0xff2a0a30);
         labelTx = juce::Colour (0xffff66cc);
     }
-    else if (id == 4)
+    else if (id == 4) // PATINA → BG2
     {
-        // PATINA — soft mint + hot pink (reference aesthetic)
-        heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
-        heroIndex = 0;
-        accent  = juce::Colour (0xffff2d9b);   // hot pink
-        accent2 = juce::Colour (0xff39ff14);  // lime
-        panelBg = juce::Colour (0xff1a0f24);  // deep mauve (readable UI)
+        heroImg = cyanImg.isValid() ? cyanImg : lianImg;
+        heroIndex = 1;
+        accent  = juce::Colour (0xffff2d9b);
+        accent2 = juce::Colour (0xff39ff14);
+        panelBg = juce::Colour (0xff1a0f24);
         labelBg = juce::Colour (0xff2a1838);
         labelTx = juce::Colour (0xffff66aa);
     }
-    else
+    else // CYBER → BG1 ISATIS
     {
-        heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
+        heroImg = lianImg.isValid() ? lianImg : cyanImg;
         heroIndex = 0;
         accent  = juce::Colour (0xff00e8ff);
-        accent2 = juce::Colour (0xffffd700);
+        accent2 = juce::Colour (0xffff2ec8);
         panelBg = juce::Colour (0xff0a0614);
         labelBg = juce::Colour (0xff1a0a30);
         labelTx = juce::Colour (0xff00e8ff);
@@ -480,17 +480,14 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
 
 void SalekHightechAudioProcessorEditor::cycleHero()
 {
-    juce::Image imgs[4] = { lianImg, faceImg, cyanImg, logoImg };
-    for (int n = 0; n < 4; ++n)
-    {
-        heroIndex = (heroIndex + 1) % 4;
-        if (imgs[heroIndex].isValid())
-        {
-            heroImg = imgs[heroIndex];
-            repaint();
-            return;
-        }
-    }
+    // Toggle only the 2 official backgrounds
+    juce::Image imgs[2] = { lianImg, cyanImg };
+    heroIndex = (heroIndex + 1) % 2;
+    if (imgs[heroIndex].isValid())
+        heroImg = imgs[heroIndex];
+    else if (imgs[1 - heroIndex].isValid())
+        heroImg = imgs[1 - heroIndex];
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
