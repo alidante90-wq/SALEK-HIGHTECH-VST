@@ -234,12 +234,35 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto r = modTab.getLocalBounds().reduced (4);
-        // FM / PM / macros strip on the right (aligned labels)
-        auto right = r.removeFromRight (juce::jmin (280, r.getWidth() * 32 / 100));
-        auto fmArea = right.removeFromTop (right.getHeight() * 55 / 100);
-        place (fmArea, knobs, 29, 6, 3, 100);
-        // Macros: single row with room for labels under knobs
-        place (right.reduced (2), knobs, 35, 4, 4, 96); // macros: compact so labels sit under knobs
+        // Right rail: FM block (top) + MACRO block (bottom) — fixed cell heights
+        auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
+        auto macroBand = right.removeFromBottom (110); // fixed height: knob+label glued
+        auto fmArea = right.reduced (2, 4);
+
+        // FM/PM/RM/AM: 2x3 grid, max cell 92px
+        place (fmArea, knobs, 29, 6, 3, 92);
+
+        // MACROS: explicit layout so name is always glued under rotary (no floating labels)
+        {
+            const int start = 35;
+            const int n = 4;
+            const int cw = juce::jmax (1, macroBand.getWidth() / n);
+            for (int i = 0; i < n; ++i)
+            {
+                if (start + i >= (int) knobs.size()) break;
+                auto* k = knobs[(size_t) (start + i)].get();
+                auto cell = juce::Rectangle<int> (macroBand.getX() + i * cw, macroBand.getY(),
+                                                  cw, macroBand.getHeight()).reduced (3, 2);
+                k->name.setBounds (cell.removeFromBottom (16));
+                k->name.setJustificationType (juce::Justification::centred);
+                k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+                k->name.setVisible (true);
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cw - 10), 12);
+                k->s.setBounds (cell);
+                k->s.setVisible (true);
+            }
+        }
+
         if (matrixPanel != nullptr)
             matrixPanel->setBounds (r.reduced (2));
     }
