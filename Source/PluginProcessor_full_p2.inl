@@ -72,6 +72,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
+    compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
@@ -127,46 +128,33 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
    
 // Bassify: low-shelf-ish boost + soft grit (dubstep noise colour)
     const float bassify = apvts.getRawParameterValue("bassify")->load();
-        if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
+    if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
-        static float lpL = 0.f, lpR = 0.f;
-        const float coeff = 0.08f + bassify * 0.12f;
-        const float grit = bassify * 0.35f;
+        // Multi-stage sub enhancer: deep LP + soft even harmonics + mono-sum for weight
+        static float lp1L = 0.f, lp1R = 0.f, lp2L = 0.f, lp2R = 0.f;
+        const float a1 = 0.04f + bassify * 0.06f;   // ~80-120 Hz
+        const float a2 = 0.12f + bassify * 0.10f;   // tighter body
+        const float amount = bassify;
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
-            lpL += coeff * (L - lpL);
-            lpR += coeff * (R - lpR);
-            float subL = lpL * (1.f + bassify * 1.8f);
-            float subR = lpR * (1.f + bassify * 1.8f);
-            // subtle even-order grit
-            subL = subL + grit * subL * subL * (subL >= 0.f ? 1.f : -1.f);
-            subR = subR + grit * subR * subR * (subR >= 0.f ? 1.f : -1.f);
-            buffer.setSample (0, i, L * (1.f - bassify * 0.3f) + subL * bassify * 0.55f);
+            lp1L += a1 * (L - lp1L); lp1R += a1 * (R - lp1R);
+            lp2L += a2 * (lp1L - lp2L); lp2R += a2 * (lp1R - lp2R);
+            float sub = 0.5f * (lp2L + lp2R); // mono sub
+            // soft even grit
+            float grit = amount * 0.4f;
+            sub = sub + grit * sub * sub * (sub >= 0.f ? 1.f : -1.f);
+            sub = std::tanh (sub * (1.2f + amount * 1.6f));
+            float dryKeep = 1.f - amount * 0.25f;
+            float wet = sub * amount * 0.85f;
+            buffer.setSample (0, i, L * dryKeep + wet);
             if (buffer.getNumChannels() > 1)
-                buffer.setSample (1, i, R * (1.f - bassify * 0.3f) + subR * bassify * 0.55f);
+                buffer.setSample (1, i, R * dryKeep + wet);
         }
     }
 
-    float drive = apvts.getRawParameterValue("master_drive")->load();
-    if (drive > 1e-4f)
-    {
-        float dg = 1.f + drive * 3.5f;
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-        {
-            auto* d = buffer.getWritePointer(ch);
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                float x = d[i] * dg;
-                x = std::tanh (x);
-                x = x - 0.15f * x * x * x;
-                d[i] = x;
-            }
-        }
-    }
-
-       if (! bypassed ("chorus_bypass"))  chorus.process (buffer);
+    if (! bypassed ("chorus_bypass"))  chorus.process (buffer);
     if (! bypassed ("phaser_bypass"))  phaser.process (buffer);
     if (! bypassed ("dist_bypass"))    distortion.process (buffer);
     if (! bypassed ("eq_bypass"))      eq.process (buffer);
@@ -186,6 +174,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             if (auto* p = apvts.getRawParameterValue ("granular_pos"))     granular.setPosition (p->load());
             if (auto* p = apvts.getRawParameterValue ("granular_pitch"))   granular.setPitch (p->load());
             if (auto* p = apvts.getRawParameterValue ("granular_freeze"))  granular.setFreeze (p->load() > 0.5f);
+            if (auto* p = apvts.getRawParameterValue ("granular_spray"))   granular.setSpray (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_pitchspray")) granular.setPitchSpray (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_feedback")) granular.setFeedback (p->load());
             granular.process (buffer);
         }
     }
