@@ -318,6 +318,17 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         labelBg = juce::Colour (0xff2a0a30);
         labelTx = juce::Colour (0xffff66cc);
     }
+    else if (id == 4)
+    {
+        // PATINA — soft mint + hot pink (reference aesthetic)
+        heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);
+        heroIndex = 0;
+        accent  = juce::Colour (0xffff2d9b);   // hot pink
+        accent2 = juce::Colour (0xff39ff14);  // lime
+        panelBg = juce::Colour (0xff1a0f24);  // deep mauve (readable UI)
+        labelBg = juce::Colour (0xff2a1838);
+        labelTx = juce::Colour (0xffff66aa);
+    }
     else
     {
         heroImg = lianImg.isValid() ? lianImg : (faceImg.isValid() ? faceImg : logoImg);

@@ -170,7 +170,7 @@ public:
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = line  |  Alt = soft",
+        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = move 7 pts  |  Alt = soft",
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -207,13 +207,15 @@ private:
 
         if (e.mods.isShiftDown())
         {
-            int anchor = (lastIdx >= 0) ? lastIdx : juce::jmax (0, idx - 1);
-            int a = juce::jmin (anchor, idx), b = juce::jmax (anchor, idx);
-            float va = points[anchor];
-            for (int i = a; i <= b; ++i)
+            // Shift = move a cluster of 7 points (idx-3..idx+3) up/down together
+            float snap[N];
+            for (int i = 0; i < N; ++i) snap[i] = points[i];
+            const float delta = v - snap[idx];
+            for (int d = -3; d <= 3; ++d)
             {
-                float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                writePoint (i, va * (1.f - tt) + v * tt);
+                int j = idx + d;
+                if (j < 0 || j >= N) continue;
+                writePoint (j, snap[j] + delta);
             }
         }
         else if (e.mods.isAltDown())

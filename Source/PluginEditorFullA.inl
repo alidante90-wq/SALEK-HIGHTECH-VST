@@ -195,7 +195,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.addItem ("CYBER", 1);
     themeBox.addItem ("ACID", 2);
     themeBox.addItem ("NEON", 3);
-    themeBox.setSelectedId (1);
+    themeBox.addItem ("PATINA", 4);
+    themeBox.setSelectedId (4); // default soft pink/mint like reference
     themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
 

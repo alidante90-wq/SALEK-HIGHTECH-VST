@@ -16,6 +16,12 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         gold    = juce::Colour (0xffff66ff);
         purple  = juce::Colour (0xffaa00ff);
         lime    = juce::Colour (0xffff2d9b);
+    } else if (themeId == 4) { // PATINA — mint + pink (reference)
+        cyan    = juce::Colour (0xff7ef9e0);   // mint
+        magenta = juce::Colour (0xffff2d9b);  // hot pink
+        gold    = juce::Colour (0xffff66aa);  // soft pink gold
+        purple  = juce::Colour (0xffff80c0);  // pink purple
+        lime    = juce::Colour (0xffb8ff40);  // lime
     } else { // CYBER — cyan / magenta default
         cyan    = juce::Colour (0xff00e8ff);
         magenta = juce::Colour (0xffff2d9b);
@@ -37,6 +43,9 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         } else if (themeId == 3) { // NEON
             c0 = juce::Colour (0xff0c0210);
             c1 = juce::Colour (0xff2a0838);
+        } else if (themeId == 4) { // PATINA — soft pink/mauve wash
+            c0 = juce::Colour (0xff1a0c18);
+            c1 = juce::Colour (0xff3a1830);
         } else { // CYBER
             c0 = juce::Colour (0xff03010e);
             c1 = juce::Colour (0xff12062a);
