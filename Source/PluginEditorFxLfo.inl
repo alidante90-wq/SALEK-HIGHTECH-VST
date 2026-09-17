@@ -10,6 +10,13 @@ public:
     void setKind (Kind k) { kind = k; }
     void setLevel (float v) { level = juce::jlimit (0.f, 1.f, v); }
     void setAccent (juce::Colour c) { accent = c; }
+    /** OTT-style 3-band GR (0..1 each) */
+    void setBandGR (float lo, float mid, float hi)
+    {
+        bandGR[0] = juce::jlimit (0.f, 1.f, lo);
+        bandGR[1] = juce::jlimit (0.f, 1.f, mid);
+        bandGR[2] = juce::jlimit (0.f, 1.f, hi);
+    }
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -18,10 +25,41 @@ public:
         g.setColour (accent.withAlpha (0.45f));
         g.drawRoundedRectangle (r, 5.f, 1.f);
 
+        auto plot = r.reduced (4.f, 3.f);
+
+        if (kind == Comp)
+        {
+            // OTT / Serum multi-band GR meters: 3 vertical bars (L/M/H)
+            const float gap = 3.f;
+            const float bw = (plot.getWidth() - gap * 2.f) / 3.f;
+            juce::Colour cols[3] = {
+                juce::Colour (0xff00e8ff), juce::Colour (0xffffd700), juce::Colour (0xffff2d9b)
+            };
+            const char* labs[3] = { "L", "M", "H" };
+            for (int b = 0; b < 3; ++b)
+            {
+                float gr = bandGR[(size_t) b];
+                // smooth display
+                dispGR[(size_t) b] += 0.2f * (gr - dispGR[(size_t) b]);
+                float h = dispGR[(size_t) b] * (plot.getHeight() - 12.f);
+                auto bar = juce::Rectangle<float> (
+                    plot.getX() + b * (bw + gap), plot.getBottom() - 10.f - h, bw, h);
+                g.setColour (cols[b].withAlpha (0.85f));
+                g.fillRoundedRectangle (bar, 2.f);
+                g.setColour (cols[b].withAlpha (0.25f));
+                g.fillRoundedRectangle (
+                    juce::Rectangle<float> (bar.getX(), plot.getY(), bw, plot.getHeight() - 10.f), 2.f);
+                g.setFont (juce::FontOptions (8.f, juce::Font::bold));
+                g.setColour (cols[b]);
+                g.drawText (labs[b], (int) bar.getX(), (int) plot.getBottom() - 10, (int) bw, 10,
+                            juce::Justification::centred);
+            }
+            return;
+        }
+
         const float t = phase;
         juce::Path path;
         const int N = 32;
-        auto plot = r.reduced (4.f, 3.f);
         for (int i = 0; i < N; ++i)
         {
             float x = (float) i / (N - 1);
@@ -34,7 +72,7 @@ public:
                 case Reverb:  y = (std::sin (x * 20.f + t * 2.f) * 0.15f
                                   + std::sin (x * 7.f + t) * 0.2f) * (0.3f + level); break;
                 case Master:  y = juce::jlimit (-0.45f, 0.45f, level * 0.5f * std::sin (x * 8.f + t)); break;
-                case Comp:    y = std::tanh (std::sin (x * 5.f + t) * (0.5f + level)) * 0.35f; break;
+                case Comp:    break;
                 case EQ:      y = std::sin (x * 4.f + t) * 0.2f
                                   + std::sin (x * 14.f + t * 1.5f) * 0.15f * level; break;
                 case Phaser:  y = std::sin (x * 8.f + t * 2.f + std::sin (t) * 2.f) * 0.35f * (0.3f + level); break;
@@ -59,6 +97,7 @@ public:
 private:
     Kind kind = Chorus;
     float phase = 0.f, level = 0.35f;
+    float bandGR[3] {}, dispGR[3] {};
     juce::Colour accent { 0xff00e8ff };
 };
 
@@ -170,7 +209,7 @@ public:
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = move 7 pts  |  Alt = soft",
+        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = move 2 pts  |  Alt = soft",
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -207,11 +246,11 @@ private:
 
         if (e.mods.isShiftDown())
         {
-            // Shift = move a cluster of 7 points (idx-3..idx+3) up/down together
+            // Shift = move only ±1 neighbour (max 2 points total) up/down together
             float snap[N];
             for (int i = 0; i < N; ++i) snap[i] = points[i];
             const float delta = v - snap[idx];
-            for (int d = -3; d <= 3; ++d)
+            for (int d = -1; d <= 1; ++d)
             {
                 int j = idx + d;
                 if (j < 0 || j >= N) continue;
