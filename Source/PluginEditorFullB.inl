@@ -5,47 +5,51 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
     const auto& pr = presetRows.getReference (row);
 
-    // ===== Category header (Pigments / Acid-V style) =====
+    // ===== Category header (mockup cyber) =====
     if (pr.isHeader)
     {
-        g.setColour (juce::Colour (0xff0e0618));
+        g.setColour (juce::Colour (0xff0c0418));
         g.fillRect (0, 0, width, height);
-        g.setColour (juce::Colour (0xff1a0a28));
-        g.fillRect (0, 0, 4, height); // left accent strip
+        g.setColour (juce::Colour (0xffff2ec8).withAlpha (0.75f));
+        g.fillRect (0, 0, 3, height);
 
         const bool folded = collapsedCats.contains (pr.category);
-        g.setColour (themeAccent.withAlpha (0.95f));
+        g.setColour (juce::Colour (0xffff66e0));
         g.setFont (juce::FontOptions (11.5f, juce::Font::bold));
         juce::String mark = folded ? juce::CharPointer_UTF8 ("\u25B8  ") : juce::CharPointer_UTF8 ("\u25BE  ");
         g.drawText (mark + pr.label, 10, 0, width - 14, height, juce::Justification::centredLeft);
 
-        g.setColour (themeAccent.withAlpha (0.35f));
+        g.setColour (juce::Colour (0xffff2ec8).withAlpha (0.25f));
         g.drawLine (8.0f, (float) height - 1.0f, (float) width - 6.0f, (float) height - 1.0f, 1.0f);
         return;
     }
 
-    // ===== Preset row =====
+    // ===== Preset row (mockup: cyan selected bar) =====
     if (selected)
     {
-        g.setColour (juce::Colour (0xff2a0848));
+        // bright cyan selection like reference art
+        g.setColour (juce::Colour (0xff0a2848));
         g.fillRect (0, 0, width, height);
-        g.setColour (themeAccent);
-        g.fillRect (0, 1, 3, height - 2);
-        g.setColour (themeAccent.withAlpha (0.25f));
+        g.setColour (juce::Colour (0xff00e8ff));
+        g.fillRect (0, 0, 4, height);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f));
         g.drawRect (0, 0, width, height, 1);
+        // soft inner glow
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.12f));
+        g.fillRect (4, 1, width - 5, height - 2);
     }
     else
     {
-        g.setColour (themePanelBg);
+        g.setColour (juce::Colour (0xff0a0614));
         g.fillRect (0, 0, width, height);
         if ((row & 1) == 0)
         {
-            g.setColour (juce::Colour (0xff12081c).withAlpha (0.45f));
+            g.setColour (juce::Colour (0xff12081c).withAlpha (0.55f));
             g.fillRect (0, 0, width, height);
         }
     }
 
-    juce::Colour tc = selected ? juce::Colour (0xffffffff) : juce::Colour (0xffd0c0e0);
+    juce::Colour tc = selected ? juce::Colour (0xff00f0ff) : juce::Colour (0xffc8c0e8);
     auto fullName = processor.getProgramName (pr.programIndex);
     if (fullName.startsWith ("Acid"))  tc = selected ? tc : juce::Colour (0xffffcc44);
     if (fullName.startsWith ("Bass"))  tc = selected ? tc : juce::Colour (0xff66ff99);
@@ -199,7 +203,7 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto b = mainTab.getLocalBounds().reduced (2);
         // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 180;
+        const int presetW = presetCollapsed ? 28 : 248;
         presetTab.setBounds (b.removeFromLeft (presetW));
         envTab.setBounds (b.removeFromBottom (120));
         filterTab.setBounds (b.removeFromRight (220));
