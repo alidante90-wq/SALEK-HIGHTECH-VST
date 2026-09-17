@@ -15,19 +15,23 @@ public:
     SynthVoice() {
         osc1.setWavetable(&sharedWavetable); osc2.setWavetable(&sharedWavetable); osc3.setWavetable(&sharedWavetable);
         osc1.setLevel(0.7f); osc2.setLevel(0.5f); osc3.setLevel(0.4f); osc3Octave = -1;
-        for (int u = 0; u < maxUnison; ++u) { uniOsc[u].setWavetable(&sharedWavetable); uniOsc[u].setLevel(0.7f); }
+        for (int u = 0; u < maxUnison; ++u) {
+            uniOsc1[u].setWavetable(&sharedWavetable); uniOsc1[u].setLevel(0.7f);
+            uniOsc2[u].setWavetable(&sharedWavetable); uniOsc2[u].setLevel(0.5f);
+            uniOsc3[u].setWavetable(&sharedWavetable); uniOsc3[u].setLevel(0.4f);
+        }
     }
     bool canPlaySound(juce::SynthesiserSound* s) override { return dynamic_cast<SynthSound*>(s) != nullptr; }
     void prepareToPlay(double sr, int) {
         currentSampleRate = sr; osc1.prepare(sr); osc2.prepare(sr); osc3.prepare(sr);
-        for (int u = 0; u < maxUnison; ++u) uniOsc[u].prepare(sr);
+        for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].prepare(sr); uniOsc2[u].prepare(sr); uniOsc3[u].prepare(sr); }
         filter.prepare(sr); lfo.prepare(sr); adsr.setSampleRate(sr); adsr.setParameters(adsrParams);
         cutoffSmoother.reset(baseCutoff); cutoffSmoother.setTimeMs(5.f, sr);
     }
     void startNote(int note, float vel, juce::SynthesiserSound*, int) override {
         currentMidiNote = note; currentVelocity = vel; isNoteOn = true;
         osc1.reset(); osc2.reset(); osc3.reset();
-        for (int u = 0; u < maxUnison; ++u) uniOsc[u].reset();
+        for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].reset(); uniOsc2[u].reset(); uniOsc3[u].reset(); }
         updateFrequencies(); adsr.noteOn();
     }
     void stopNote(float, bool allowTailOff) override {
@@ -38,20 +42,20 @@ public:
     void controllerMoved(int, int) override {}
     void renderNextBlock(juce::AudioBuffer<float>& out, int start, int num) override;
 
-    void setOsc1TablePos(float v){osc1.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc[u].setTablePosition(v);}
-    void setOsc2TablePos(float v){osc2.setTablePosition(v);} void setOsc3TablePos(float v){osc3.setTablePosition(v);}
-    void setOsc1Level(float v){osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc[u].setLevel(v);}
-    void setOsc2Level(float v){osc2.setLevel(v);} void setOsc3Level(float v){osc3.setLevel(v);}
+    void setOsc1TablePos(float v){osc1.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setTablePosition(v);}
+    void setOsc2TablePos(float v){osc2.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setTablePosition(v);} void setOsc3TablePos(float v){osc3.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setTablePosition(v);}
+    void setOsc1Level(float v){osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setLevel(v);}
+    void setOsc2Level(float v){osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v);} void setOsc3Level(float v){osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v);}
     void setOsc1Octave(int v){osc1Octave=v; updateFrequencies();} void setOsc2Octave(int v){osc2Octave=v; updateFrequencies();} void setOsc3Octave(int v){osc3Octave=v; updateFrequencies();}
     void setOsc1Semi(int v){osc1Semi=v; updateFrequencies();} void setOsc2Semi(int v){osc2Semi=v; updateFrequencies();} void setOsc3Semi(int v){osc3Semi=v; updateFrequencies();}
     void setOsc1Fine(float v){osc1Fine=v; updateFrequencies();} void setOsc2Fine(float v){osc2Fine=v; updateFrequencies();} void setOsc3Fine(float v){osc3Fine=v; updateFrequencies();}
     void setOsc1Detune(float v){osc1.setDetuneCents(v);} void setOsc2Detune(float v){osc2.setDetuneCents(v);} void setOsc3Detune(float v){osc3.setDetuneCents(v);}
-    void setOsc1Warp(float v){osc1.setWarp(v); for(int u=0;u<maxUnison;++u)uniOsc[u].setWarp(v);}
-    void setOsc2Warp(float v){osc2.setWarp(v);} void setOsc3Warp(float v){osc3.setWarp(v);}
-    void setOsc1Fold(float v){osc1.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc[u].setFold(v);}
-    void setOsc2Fold(float v){osc2.setFold(v);} void setOsc3Fold(float v){osc3.setFold(v);}
-    void setOsc1Drive(float v){osc1.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc[u].setDrive(v);}
-    void setOsc2Drive(float v){osc2.setDrive(v);} void setOsc3Drive(float v){osc3.setDrive(v);}
+    void setOsc1Warp(float v){osc1.setWarp(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setWarp(v);}
+    void setOsc2Warp(float v){osc2.setWarp(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setWarp(v);} void setOsc3Warp(float v){osc3.setWarp(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setWarp(v);}
+    void setOsc1Fold(float v){osc1.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setFold(v);}
+    void setOsc2Fold(float v){osc2.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setFold(v);} void setOsc3Fold(float v){osc3.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setFold(v);}
+    void setOsc1Drive(float v){osc1.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setDrive(v);}
+    void setOsc2Drive(float v){osc2.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setDrive(v);} void setOsc3Drive(float v){osc3.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setDrive(v);}
     void setOsc1Phase(float v){osc1.setPhaseOffset(v);} void setOsc2Phase(float v){osc2.setPhaseOffset(v);} void setOsc3Phase(float v){osc3.setPhaseOffset(v);}
     void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v);}
     void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c);}
@@ -82,7 +86,7 @@ private:
     }
     static constexpr int maxUnison = 7;
     WavetableOscillator osc1, osc2, osc3;
-    WavetableOscillator uniOsc[maxUnison];
+    WavetableOscillator uniOsc1[maxUnison], uniOsc2[maxUnison], uniOsc3[maxUnison];
     int unisonVoices = 1;
     float unisonDetune = 12.f, unisonSpread = 0.7f;
     Wavetable sharedWavetable;
