@@ -15,16 +15,34 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
+
+        // 3D panel + outer glow (Serum-inspired)
+        g.setColour (juce::Colours::black.withAlpha (0.55f));
+        g.fillRoundedRectangle (r.translated (2.f, 3.f), 7.f);
         g.setColour (juce::Colour (0xff0a0614));
-        g.fillRoundedRectangle (r, 6.f);
-        g.setColour (accent.withAlpha (0.45f));
-        g.drawRoundedRectangle (r, 6.f, 1.1f);
+        g.fillRoundedRectangle (r, 7.f);
+
+        // double-frame
+        g.setColour (accent.withAlpha (0.55f));
+        g.drawRoundedRectangle (r, 7.f, 1.6f);
+        g.setColour (accent.withAlpha (0.18f));
+        g.drawRoundedRectangle (r.reduced (2.5f), 5.5f, 1.0f);
 
         g.setColour (accent);
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText (title, r.removeFromTop (14).reduced (4, 0), juce::Justification::centredLeft);
+        g.drawText (title, r.removeFromTop (15).reduced (5, 0), juce::Justification::centredLeft);
 
-        auto plot = r.reduced (6.f, 4.f);
+        auto plot = r.reduced (7.f, 5.f).withTrimmedBottom (12.f);
+
+        // subtle grid
+        g.setColour (accent.withAlpha (0.08f));
+        for (int i = 1; i < 4; ++i)
+        {
+            float x = plot.getX() + plot.getWidth() * (float) i / 4.f;
+            g.drawVerticalLine ((int) x, plot.getY(), plot.getBottom());
+        }
+        g.drawHorizontalLine ((int) plot.getCentreY(), plot.getX(), plot.getRight());
+
         float table = 0.f, warp = 0.f, fold = 0.f;
         if (apvts != nullptr)
         {
@@ -40,40 +58,41 @@ public:
             fold  = gval (fid[osc], 0.f);
         }
 
-        juce::Path wave;
-        const int N = 64;
+        juce::Path wave, fill;
+        const int N = 96;
         for (int i = 0; i < N; ++i)
         {
             float t = (float) i / (float) (N - 1);
-            // base: morphing harmonic series from table position
             float harm = 1.f + table * 5.f;
-            float y = std::sin (t * juce::MathConstants<float>::twoPi * harm);
-            // warp: phase distortion
-            float tw = t + warp * 0.35f * std::sin (t * juce::MathConstants<float>::twoPi);
-            y = std::sin (tw * juce::MathConstants<float>::twoPi * harm);
-            // fold
+            float tw = t + warp * 0.38f * std::sin (t * juce::MathConstants<float>::twoPi);
+            float y = std::sin (tw * juce::MathConstants<float>::twoPi * harm);
             if (fold > 0.01f)
-                y = std::sin (y * juce::MathConstants<float>::pi * (1.f + fold * 2.f));
-            y *= 0.85f;
+                y = std::sin (y * juce::MathConstants<float>::pi * (1.f + fold * 2.2f));
+            y *= 0.88f;
             float px = plot.getX() + t * plot.getWidth();
-            float py = plot.getCentreY() - y * plot.getHeight() * 0.42f;
-            if (i == 0) wave.startNewSubPath (px, py); else wave.lineTo (px, py);
+            float py = plot.getCentreY() - y * plot.getHeight() * 0.44f;
+            if (i == 0) { wave.startNewSubPath (px, py); fill.startNewSubPath (px, plot.getBottom()); fill.lineTo (px, py); }
+            else { wave.lineTo (px, py); fill.lineTo (px, py); }
         }
-        g.setColour (accent.withAlpha (0.9f));
-        g.strokePath (wave, juce::PathStrokeType (1.5f));
+        fill.lineTo (plot.getRight(), plot.getBottom());
+        fill.closeSubPath();
 
-        // subtle phase motion line
-        float scan = std::fmod (anim * 0.15f, 1.f);
+        g.setColour (accent.withAlpha (0.12f));
+        g.fillPath (fill);
+
+        g.setColour (accent.withAlpha (0.95f));
+        g.strokePath (wave, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        float scan = std::fmod (anim * 0.18f, 1.f);
         float sx = plot.getX() + scan * plot.getWidth();
-        g.setColour (accent.withAlpha (0.25f));
+        g.setColour (accent.withAlpha (0.35f));
         g.drawVerticalLine ((int) sx, plot.getY(), plot.getBottom());
 
-        // Extra readouts: Table / Warp / Fold
         g.setFont (juce::FontOptions (8.5f, juce::Font::bold));
-        g.setColour (accent.withAlpha (0.85f));
+        g.setColour (accent.withAlpha (0.9f));
         auto info = juce::String::formatted ("T:%.0f  W:%.0f  F:%.0f",
             table * 100.f, warp * 100.f, fold * 100.f);
-        g.drawText (info, getLocalBounds().removeFromBottom (12).reduced (4, 0),
+        g.drawText (info, getLocalBounds().removeFromBottom (13).reduced (5, 0),
                     juce::Justification::centredLeft);
     }
 
