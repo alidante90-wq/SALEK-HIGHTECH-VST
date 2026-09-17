@@ -17,9 +17,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogo();
     faceImg   = SalekAssets::loadFace();
-    lianImg   = SalekAssets::loadLian();
-    cyanImg   = SalekAssets::loadCyanGirl();
-    heroImg   = SalekAssets::loadLian();
+    lianImg   = SalekAssets::loadBgIsatis();   // BG v1 — ISATIS (man + cat)
+    cyanImg   = SalekAssets::loadBgSalek();    // BG v2 — SALEK girl red city
+    heroImg   = SalekAssets::loadBgIsatis();
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);
