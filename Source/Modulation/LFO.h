@@ -6,9 +6,9 @@ namespace salek {
 class LFO {
 public:
     enum class Wave { Sine, Triangle, Saw, Square, SAndH, Custom };
-    static constexpr int TableSize = 16;
+    static constexpr int TableSize = 32; // smoother custom shapes (Serum-like)
 
-    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; }
+    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
     void reset() noexcept { phase=0; lastSH=0; }
     void setRate(float hz) noexcept { rate=juce::jlimit(0.01f,40.f,hz); phaseInc=double(rate)/sr; }
     void setWave(Wave w) noexcept { wave=w; }
@@ -103,8 +103,6 @@ public:
 private:
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0;
     Wave wave=Wave::Sine;
-    std::array<float, TableSize> customTable {{
-        0,0.4f,0.8f,1,0.8f,0.4f,0,-0.4f,-0.8f,-1,-0.8f,-0.4f,0,0.3f,0.6f,0.9f
-    }};
+    std::array<float, TableSize> customTable {};
 };
 }

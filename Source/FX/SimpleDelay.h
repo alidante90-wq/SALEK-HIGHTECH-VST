@@ -5,27 +5,37 @@ namespace salek {
 class SimpleDelay {
 public:
     void prepare(double sampleRate, int maxBlock) {
-        sr=sampleRate; buffer.assign(size_t(sampleRate*2+maxBlock)*2, 0.f); writePos=0;
+        sr = sampleRate > 0 ? sampleRate : 44100.0;
+        const int maxS = (int) (sr * 2.0) + maxBlock + 8;
+        buffer.assign ((size_t) maxS * 2, 0.f);
+        writePos = 0;
     }
-    void setTimeMs(float ms) noexcept { delaySamples=juce::jlimit(1.f,float(sr*1.8),ms*0.001f*float(sr)); }
-    void setFeedback(float fb) noexcept { feedback=juce::jlimit(0.f,0.95f,fb); }
-    void setMix(float m) noexcept { mix=juce::jlimit(0.f,1.f,m); }
+    void setTimeMs(float ms) noexcept { delaySamples = juce::jlimit(1.f, float(sr * 1.8), ms * 0.001f * float(sr)); }
+    void setFeedback(float fb) noexcept { feedback = juce::jlimit(0.f, 0.95f, fb); }
+    void setMix(float m) noexcept { mix = juce::jlimit(0.f, 1.f, m); }
     void process(juce::AudioBuffer<float>& buf) noexcept {
-        if(mix<1e-4f) return;
-        int n=buf.getNumSamples(), ch=buf.getNumChannels(), bs=int(buffer.size()/2);
-        for(int i=0;i<n;++i){
-            for(int c=0;c<juce::jmin(2,ch);++c){
-                float* d=buf.getWritePointer(c);
-                int rp=(writePos-int(delaySamples)+bs)%bs;
-                float delayed=buffer[size_t(rp*2+c)], in=d[i];
-                d[i]=in*(1-mix)+delayed*mix;
-                buffer[size_t(writePos*2+c)]=in+delayed*feedback;
+        if (mix < 1e-4f) return;
+        int n = buf.getNumSamples(), ch = buf.getNumChannels();
+        int bs = (int) buffer.size() / 2;
+        if (bs < 4) return;
+        for (int i = 0; i < n; ++i) {
+            for (int c = 0; c < juce::jmin(2, ch); ++c) {
+                float* d = buf.getWritePointer(c);
+                // slight stereo offset on R
+                float ds = delaySamples * (c == 1 ? 1.07f : 1.f);
+                int rp = (writePos - (int) ds + bs * 4) % bs;
+                float delayed = buffer[(size_t)(rp * 2 + c)];
+                float in = d[i];
+                d[i] = in * (1.f - mix) + delayed * mix;
+                buffer[(size_t)(writePos * 2 + c)] = in + delayed * feedback;
             }
-            writePos=(writePos+1)%bs;
+            writePos = (writePos + 1) % bs;
         }
     }
 private:
-    double sr=44100; std::vector<float> buffer; int writePos=0;
-    float delaySamples=300, feedback=0.3f, mix=0;
+    double sr = 44100;
+    std::vector<float> buffer;
+    int writePos = 0;
+    float delaySamples = 300, feedback = 0.3f, mix = 0;
 };
 }

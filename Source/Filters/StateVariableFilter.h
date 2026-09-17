@@ -29,7 +29,15 @@ public:
         BandReject,
         LowShelf,
         HighShelf,
-        PhaserNotch   // moving-ish dual notch character
+        PhaserNotch,  // 15
+        DiodeLP,       // 16 soft diode ladder colour
+        SallenKey,     // 17
+        Vocal,         // 18 formant-ish stronger
+        RingMod,       // 19 AM with cutoff as carrier-ish
+        BandPassQ,     // 20 narrow BP
+        LpHpParallel,  // 21
+        NotchDeep,     // 22
+        WideShelf      // 23
     };
 
     void prepare (double sampleRate)
@@ -61,7 +69,7 @@ public:
     void setMode (Mode m) noexcept { mode = m; }
     void setModeIndex (int m) noexcept
     {
-        mode = static_cast<Mode> (juce::jlimit (0, 15, m));
+        mode = static_cast<Mode> (juce::jlimit (0, 23, m));
     }
 
     void setDrive (float d) noexcept
@@ -143,6 +151,35 @@ public:
                 break;
             case Mode::PhaserNotch:
                 y = x - k * v1last - 0.35f * v2last;
+                break;
+            case Mode::DiodeLP:
+                y = v2last;
+                y = y / (1.f + std::abs (y) * (0.3f + resonance * 0.8f));
+                break;
+            case Mode::SallenKey:
+                y = v2last * 0.7f + v1last * 0.3f;
+                break;
+            case Mode::Vocal:
+            {
+                float p1 = v1last;
+                (void) tickSvf (x, ic1b, ic2b, a1b, a2b, a3b, k);
+                y = (p1 * 0.6f + v1lastb * 0.8f) * (0.5f + resonance * 0.5f);
+                break;
+            }
+            case Mode::RingMod:
+                y = x * (0.5f + 0.5f * std::sin (v1last * 6.f + resonance));
+                break;
+            case Mode::BandPassQ:
+                y = v1last * (1.f + resonance * 1.5f);
+                break;
+            case Mode::LpHpParallel:
+                y = 0.5f * v2last + 0.5f * (x - k * v1last - v2last);
+                break;
+            case Mode::NotchDeep:
+                y = x - k * v1last * (1.2f + resonance);
+                break;
+            case Mode::WideShelf:
+                y = x * 0.4f + v2last * (0.6f + resonance * 0.3f);
                 break;
             default:
                 y = v2last; break;

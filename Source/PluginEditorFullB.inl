@@ -56,9 +56,11 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
-    if (++ticks < 8) resized();
+    if (++ticks < 4) resized();
     animPhase += 0.04f;
-    repaint();
+    // Only refresh non-tab chrome (title/hero) — full repaint was blanking tabs in some DAWs
+    repaint (0, 0, getWidth(), 46);
+    repaint (0, 46, 230, getHeight() - 46 - 72);
 }
 
 void SalekHightechAudioProcessorEditor::resized()
@@ -220,10 +222,12 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         auto r = lfoTab.getLocalBounds().reduced (6);
+        // Top: live LFO scopes
         if (lfoDisplay != nullptr)
-            lfoDisplay->setBounds (r.removeFromTop (70).reduced (2));
+            lfoDisplay->setBounds (r.removeFromTop (56).reduced (1));
 
-        auto presetRow = r.removeFromTop (26);
+        // Shape bank row
+        auto presetRow = r.removeFromTop (24);
         const int bw = presetRow.getWidth() / 12;
         juce::TextButton* presets[] = {
             &lfoPresetSine, &lfoPresetTri, &lfoPresetSaw, &lfoPresetSqr,
@@ -233,13 +237,13 @@ void SalekHightechAudioProcessorEditor::resized()
         for (auto* b : presets)
             b->setBounds (presetRow.removeFromLeft (bw).reduced (1));
 
-        auto waveRow = r.removeFromTop (26);
+        // Wave select + copy/slots
+        auto waveRow = r.removeFromTop (24);
         lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (2));
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));
         lfo3WaveBox.setBounds (waveRow.reduced (2));
 
-        // Copy shape to LFO1/2/3 + SAVE/LOAD slots A/B/C
-        auto copyRow = r.removeFromTop (24);
+        auto copyRow = r.removeFromTop (22);
         const int cw = copyRow.getWidth() / 9;
         lfoCopyTo1.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoCopyTo2.setBounds (copyRow.removeFromLeft (cw).reduced (1));
@@ -251,9 +255,10 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoSaveC.setBounds   (copyRow.removeFromLeft (cw).reduced (1));
         lfoLoadC.setBounds   (copyRow.reduced (1));
 
-        auto knobArea = r.removeFromBottom (100);
+        // Knobs at bottom, BIG shape editor takes remaining (Serum 2 style)
+        auto knobArea = r.removeFromBottom (88);
         place (knobArea, knobs, 39, 6, 6);
-        lfoShapeEditor.setBounds (r.reduced (3));
+        lfoShapeEditor.setBounds (r.reduced (2));
     }
 
     #include "PluginEditorFullB_FxLayout.inl"

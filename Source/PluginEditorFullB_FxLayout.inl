@@ -1,103 +1,105 @@
-// FX rows: mode combos sit ON their effect row (not top bar)
-// MASTER gain/drive moved to header — Bassify stays as its own row
+// Clean FX layout: 2 columns x 4 modules (Serum-style chain readability)
 {
-    auto area = fxTab.getLocalBounds().reduced (4);
-
-    // Row order: Chorus, Delay, Reverb(+mode), Bassify, Comp, EQ, Phaser, Dist(+mode)
-    struct Sec { int off; int count; const char* name; };
-    // knobs start at fxStart — master drive/gain still at off 9,10 but we skip showing them here
-    const Sec secs2[] = {
-        {0,3},   // chorus
-        {3,3},   // delay
-        {6,3},   // reverb
-        {11,1},  // bassify only (index 45+11 = bassify knob) — wait: 9 drive, 10 gain, 11 bassify
-        {12,3},  // comp
-        {15,3},  // eq
-        {18,3},  // phaser
-        {21,3}   // dist
-    };
-    const int numSec = 8;
+    auto area = fxTab.getLocalBounds().reduced (6);
     const int fxStart = 45;
-    const int labelW = 64;
-    const int monW   = 52;
-    const int bypW   = 32;
-    const int modeW  = 110;
-    const int rowH   = juce::jmax (44, area.getHeight() / numSec);
 
-    // Hide top mode boxes from floating top (we place them per-row)
-    // reverbModeBox / distModeBox still used below
+    // Module defs: label index, knob offset from fxStart, knob count, optional mode box
+    struct Mod {
+        int labelIdx;
+        int off;
+        int count;
+        int modeKind; // 0 none, 1 reverb, 2 dist
+    };
+    // Chorus Delay | Reverb Bassify
+    // Comp EQ | Phaser Dist
+    const Mod mods[8] = {
+        { 0,  0, 3, 0 }, // CHORUS
+        { 1,  3, 3, 0 }, // DELAY
+        { 2,  6, 3, 1 }, // REVERB + mode
+        { 3, 11, 1, 0 }, // BASSIFY (skip drive/gain 9,10)
+        { 4, 12, 3, 0 }, // COMP
+        { 5, 15, 3, 0 }, // EQ
+        { 6, 18, 3, 0 }, // PHASER
+        { 7, 21, 3, 2 }  // DIST + mode
+    };
 
-    for (int s = 0; s < numSec; ++s)
+    const int cols = 2, rows = 4;
+    const int cellW = area.getWidth() / cols;
+    const int cellH = area.getHeight() / rows;
+
+    for (int m = 0; m < 8; ++m)
     {
-        auto row = area.removeFromTop (rowH).reduced (1, 0);
+        const int col = m % cols;
+        const int row = m / cols;
+        auto cell = juce::Rectangle<int> (
+            area.getX() + col * cellW,
+            area.getY() + row * cellH,
+            cellW, cellH).reduced (4);
 
-        if (s < fxSectionLabels.size())
+        // header strip: label + bypass + optional mode
+        auto head = cell.removeFromTop (22);
+        if (mods[m].labelIdx < fxSectionLabels.size())
         {
-            auto head = row.removeFromLeft (labelW);
-            fxSectionLabels[s]->setBounds (head.withSizeKeepingCentre (labelW - 4, 16));
-            fxSectionLabels[s]->setVisible (true);
-            // Rename MASTER label slot to BASSIFY
-            if (s == 3)
-                fxSectionLabels[s]->setText ("BASSIFY", juce::dontSendNotification);
+            auto* lab = fxSectionLabels[mods[m].labelIdx];
+            if (mods[m].labelIdx == 3)
+                lab->setText ("BASSIFY", juce::dontSendNotification);
+            lab->setBounds (head.removeFromLeft (72));
+            lab->setVisible (true);
         }
-        if (s < fxMonitors.size())
+        fxBypass[mods[m].labelIdx].setBounds (head.removeFromLeft (36).reduced (2, 2));
+        fxBypass[mods[m].labelIdx].setVisible (true);
+
+        if (mods[m].modeKind == 1)
         {
-            auto monArea = row.removeFromLeft (monW).reduced (1);
-            fxMonitors[s]->setBounds (monArea);
-            const int k0 = fxStart + secs2[s].off;
+            reverbModeBox.setBounds (head.removeFromLeft (100).reduced (2, 1));
+            reverbModeBox.setVisible (true);
+        }
+        else if (mods[m].modeKind == 2)
+        {
+            distModeBox.setBounds (head.removeFromLeft (100).reduced (2, 1));
+            distModeBox.setVisible (true);
+        }
+
+        // mini monitor
+        if (mods[m].labelIdx < fxMonitors.size())
+        {
+            auto mon = cell.removeFromLeft (48).reduced (2);
+            fxMonitors[mods[m].labelIdx]->setBounds (mon);
+            fxMonitors[mods[m].labelIdx]->setVisible (true);
+            const int k0 = fxStart + mods[m].off;
             if (k0 < (int) knobs.size())
             {
                 float nv = (float) knobs[(size_t) k0]->s.getValue();
                 float lv = juce::jlimit (0.f, 1.f, std::abs (nv) > 2.f ? std::abs (nv) / 20.f : std::abs (nv));
-                fxMonitors[s]->setLevel (lv);
+                fxMonitors[mods[m].labelIdx]->setLevel (lv);
             }
         }
 
-        fxBypass[s].setBounds (row.removeFromLeft (bypW).reduced (2, 6));
-
-        // Mode combo beside REVERB (s==2) and DIST (s==7)
-        if (s == 2)
-        {
-            reverbModeBox.setBounds (row.removeFromLeft (modeW).reduced (2, 4));
-            reverbModeBox.setVisible (true);
-        }
-        else if (s == 7)
-        {
-            distModeBox.setBounds (row.removeFromLeft (modeW).reduced (2, 4));
-            distModeBox.setVisible (true);
-        }
-
-        const int off = secs2[s].off;
-        const int cnt = secs2[s].count;
-        const int cellW = juce::jmax (56, row.getWidth() / juce::jmax (1, cnt));
-        const int cellH = juce::jmin (row.getHeight() - 2, 68);
+        // knobs fill rest
+        const int cnt = mods[m].count;
+        const int kw = juce::jmax (50, cell.getWidth() / juce::jmax (1, cnt));
         for (int i = 0; i < cnt; ++i)
         {
-            const int idx = fxStart + off + i;
+            const int idx = fxStart + mods[m].off + i;
             if (idx < 0 || idx >= (int) knobs.size()) break;
             auto* k = knobs[(size_t) idx].get();
-            auto cell = juce::Rectangle<int> (row.getX() + i * cellW,
-                                              row.getCentreY() - cellH / 2,
-                                              cellW, cellH).reduced (3, 1);
-            if (cell.getHeight() < 20) continue;
-            k->name.setBounds (cell.removeFromBottom (12));
-            k->s.setBounds (cell);
+            auto kc = juce::Rectangle<int> (cell.getX() + i * kw, cell.getY(), kw, cell.getHeight()).reduced (3);
+            k->name.setBounds (kc.removeFromBottom (12));
+            k->s.setBounds (kc);
             k->s.setVisible (true);
             k->name.setVisible (true);
         }
     }
-    for (int s = numSec; s < fxSectionLabels.size(); ++s)
-        fxSectionLabels[s]->setVisible (false);
 
-    // Hide master_drive + master_gain knobs from FX tab (shown in header)
+    // hide master drive/gain from FX (live in header)
     if (fxStart + 9 < (int) knobs.size())
     {
-        knobs[(size_t) (fxStart + 9)]->s.setVisible (false);
-        knobs[(size_t) (fxStart + 9)]->name.setVisible (false);
+        knobs[(size_t)(fxStart + 9)]->s.setVisible (false);
+        knobs[(size_t)(fxStart + 9)]->name.setVisible (false);
     }
     if (fxStart + 10 < (int) knobs.size())
     {
-        knobs[(size_t) (fxStart + 10)]->s.setVisible (false);
-        knobs[(size_t) (fxStart + 10)]->name.setVisible (false);
+        knobs[(size_t)(fxStart + 10)]->s.setVisible (false);
+        knobs[(size_t)(fxStart + 10)]->name.setVisible (false);
     }
 }

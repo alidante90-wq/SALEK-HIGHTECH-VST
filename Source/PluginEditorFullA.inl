@@ -46,11 +46,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
     tabs.setTabBarDepth (28);
-    tabs.setOpaque (false);
+    tabs.setOpaque (true);
     tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colour (0xff0a0614));
     tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0xff1a1030));
+    // Opaque content prevents black voids after long sessions in some hosts
     for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &magicTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
-        panel->setOpaque (false);
+    {
+        panel->setOpaque (true);
+        panel->setColour (juce::ResizableWindow::backgroundColourId, juce::Colour (0xff0a0614));
+    }
 
     {
         mainTab.addAndMakeVisible (oscTab);
@@ -88,7 +92,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         // 16-mode filter bank
         addCombo (filterTab, filterMode, "filter_mode", {
             "LP12","LP24","HP12","HP24","BP","Notch","Peak","AllPass",
-            "AcidLP","Ladder","Comb","Formant","BandRej","LoShelf","HiShelf","PhaserN"
+            "AcidLP","Ladder","Comb","Formant","BandRej","LoShelf","HiShelf","PhaserN",
+            "DiodeLP","Sallen","Vocal","RingMod","BP-Q","LP+HP","Notch2","Wide"
         });
         filterMode.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
         filterMode.setColour (juce::ComboBox::textColourId, juce::Colour (0xff00e8ff));
