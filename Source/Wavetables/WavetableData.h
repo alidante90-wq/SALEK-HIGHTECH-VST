@@ -16,12 +16,22 @@ struct WavetableFrame
 
     float getSample (float phase) const noexcept
     {
+        // Catmull-Rom cubic — cleaner high-end than linear (hi-tech / crystal clarity)
         const float pos = phase * static_cast<float> (tableSize);
-        const int i0 = static_cast<int> (pos) & tableMask;
-        const int i1 = (i0 + 1) & tableMask;
-        const float frac = pos - static_cast<float> (static_cast<int> (pos));
-        return samples[static_cast<size_t> (i0)] * (1.0f - frac)
-             + samples[static_cast<size_t> (i1)] * frac;
+        const int i1 = static_cast<int> (pos) & tableMask;
+        const int i0 = (i1 - 1) & tableMask;
+        const int i2 = (i1 + 1) & tableMask;
+        const int i3 = (i1 + 2) & tableMask;
+        const float frac = pos - std::floor (pos);
+        const float y0 = samples[static_cast<size_t> (i0)];
+        const float y1 = samples[static_cast<size_t> (i1)];
+        const float y2 = samples[static_cast<size_t> (i2)];
+        const float y3 = samples[static_cast<size_t> (i3)];
+        const float a0 = -0.5f * y0 + 1.5f * y1 - 1.5f * y2 + 0.5f * y3;
+        const float a1 = y0 - 2.5f * y1 + 2.0f * y2 - 0.5f * y3;
+        const float a2 = -0.5f * y0 + 0.5f * y2;
+        const float a3 = y1;
+        return ((a0 * frac + a1) * frac + a2) * frac + a3;
     }
 
     void normalize() noexcept

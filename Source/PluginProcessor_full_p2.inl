@@ -191,8 +191,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     magic.process (buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
-    buffer.applyGain(gain * 0.95f);
+    // Transparent hi-tech gain staging (slight headroom for crystal peaks)
+    buffer.applyGain (gain * 0.92f);
 
+    // Soft transparent limiter — preserves high-end clarity (no hard brickwall)
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
         auto* d = buffer.getWritePointer (ch);
@@ -200,12 +202,15 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         for (int i = 0; i < n; ++i)
         {
             float x = d[i];
+            // two-stage: gentle tanh body + air-band friendly ceiling
+            x = std::tanh (x * 1.05f);
             const float ax = std::abs (x);
-            if (ax > 0.9f)
+            if (ax > 0.88f)
             {
                 const float s = (x >= 0.0f) ? 1.0f : -1.0f;
-                d[i] = s * (0.9f + 0.1f * std::tanh ((ax - 0.9f) * 8.0f));
+                x = s * (0.88f + 0.12f * std::tanh ((ax - 0.88f) * 6.0f));
             }
+            d[i] = x;
         }
     }
 
