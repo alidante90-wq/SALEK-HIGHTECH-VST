@@ -192,6 +192,8 @@ private:
     std::unique_ptr<StepGridComponent> stepGrid;
     juce::OwnedArray<juce::Label> fxSectionLabels;
     juce::OwnedArray<FxMonitor> fxMonitors;
+    juce::ToggleButton fxBypass[8];
+    juce::TextButton sideToggle { "<<" };
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
