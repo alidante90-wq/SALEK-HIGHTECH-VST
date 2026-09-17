@@ -147,21 +147,52 @@ public:
             g.drawEllipse (px - 10.f, py - 10.f, 20.f, 20.f, 2.f);
         }
 
-        // left labels like CURRENT (Morph / Reso style)
-        g.setColour (juce::Colours::white.withAlpha (0.85f));
-        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
-        auto left = bounds.removeFromLeft (bounds.getWidth() * 0.22f).reduced (8.f, 20.f);
-        g.drawText ("Morph", left.removeFromTop (18), juce::Justification::centredLeft);
-        g.setColour (accent.withAlpha (0.9f));
-        g.setFont (juce::FontOptions (11.f));
-        g.drawText (juce::String ((int) std::round (x * 100.f)) + "%", left.removeFromTop (16), juce::Justification::centredLeft);
-        left.removeFromTop (12);
-        g.setColour (juce::Colours::white.withAlpha (0.85f));
-        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
-        g.drawText ("Depth", left.removeFromTop (18), juce::Justification::centredLeft);
-        g.setColour (accent.withAlpha (0.9f));
-        g.setFont (juce::FontOptions (11.f));
-        g.drawText (juce::String ((int) std::round (y * 100.f)) + "%", left.removeFromTop (16), juce::Justification::centredLeft);
+        // CURRENT-style labels + connector lines to orbital cursors
+        {
+            float angX = x * juce::MathConstants<float>::twoPi - juce::MathConstants<float>::halfPi;
+            float angY = y * juce::MathConstants<float>::twoPi - juce::MathConstants<float>::halfPi;
+            float ox = cx + std::cos (angX) * (R * 0.57f);
+            float oy = cy + std::sin (angX) * (R * 0.57f);
+            float ix = cx + std::cos (angY) * (R * 0.35f);
+            float iy = cy + std::sin (angY) * (R * 0.35f);
+
+            float labelX = bounds.getX() + 14.f;
+            float morphY = bounds.getY() + bounds.getHeight() * 0.28f;
+            float depthY = bounds.getY() + bounds.getHeight() * 0.48f;
+
+            // connector lines
+            g.setColour (accent.withAlpha (0.45f));
+            g.drawLine (labelX + 70.f, morphY + 8.f, ox, oy, 1.2f);
+            g.setColour (juce::Colour (0xffb44dff).withAlpha (0.45f));
+            g.drawLine (labelX + 70.f, depthY + 8.f, ix, iy, 1.2f);
+            // dots at ends
+            g.setColour (accent.withAlpha (0.8f));
+            g.fillEllipse (ox - 3.f, oy - 3.f, 6.f, 6.f);
+            g.setColour (juce::Colour (0xffb44dff).withAlpha (0.8f));
+            g.fillEllipse (ix - 3.f, iy - 3.f, 6.f, 6.f);
+
+            g.setColour (juce::Colours::white.withAlpha (0.9f));
+            g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+            g.drawText ("Morph", labelX, morphY, 70.f, 16.f, juce::Justification::centredLeft);
+            g.setColour (accent);
+            g.setFont (juce::FontOptions (11.f));
+            g.drawText (juce::String ((int) std::round (x * 100.f)) + "%", labelX, morphY + 16.f, 70.f, 14.f, juce::Justification::centredLeft);
+
+            g.setColour (juce::Colours::white.withAlpha (0.9f));
+            g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+            g.drawText ("Depth", labelX, depthY, 70.f, 16.f, juce::Justification::centredLeft);
+            g.setColour (juce::Colour (0xffb44dff));
+            g.setFont (juce::FontOptions (11.f));
+            g.drawText (juce::String ((int) std::round (y * 100.f)) + "%", labelX, depthY + 16.f, 70.f, 14.f, juce::Justification::centredLeft);
+
+            // Mode / Delay-style secondary readouts
+            float botY = bounds.getY() + bounds.getHeight() * 0.68f;
+            g.setColour (juce::Colours::white.withAlpha (0.7f));
+            g.setFont (juce::FontOptions (11.f, juce::Font::bold));
+            g.drawText ("Mode", labelX, botY, 70.f, 14.f, juce::Justification::centredLeft);
+            g.setColour (accent.withAlpha (0.85f));
+            g.drawText (modeName, labelX, botY + 14.f, 90.f, 14.f, juce::Justification::centredLeft);
+        }
 
         // title
         g.setColour (accent);

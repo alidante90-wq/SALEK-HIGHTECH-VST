@@ -66,6 +66,8 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
+    // damping: smaller rooms darker less; large size = less damp (brighter air)
+    reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
     phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));

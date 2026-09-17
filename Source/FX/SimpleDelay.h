@@ -9,6 +9,7 @@ public:
         const int maxS = (int) (sr * 2.0) + maxBlock + 8;
         buffer.assign ((size_t) maxS * 2, 0.f);
         writePos = 0;
+        lpL = lpR = 0.f;
     }
     void setTimeMs(float ms) noexcept { delaySamples = juce::jlimit(1.f, float(sr * 1.8), ms * 0.001f * float(sr)); }
     void setFeedback(float fb) noexcept { feedback = juce::jlimit(0.f, 0.95f, fb); }
@@ -18,13 +19,17 @@ public:
         int n = buf.getNumSamples(), ch = buf.getNumChannels();
         int bs = (int) buffer.size() / 2;
         if (bs < 4) return;
+        // tone on feedback: longer times darker
+        const float tone = juce::jlimit (0.2f, 0.85f, 0.75f - delaySamples / float (sr) * 0.25f);
         for (int i = 0; i < n; ++i) {
             for (int c = 0; c < juce::jmin(2, ch); ++c) {
                 float* d = buf.getWritePointer(c);
-                // slight stereo offset on R
                 float ds = delaySamples * (c == 1 ? 1.07f : 1.f);
                 int rp = (writePos - (int) ds + bs * 4) % bs;
                 float delayed = buffer[(size_t)(rp * 2 + c)];
+                // smooth feedback path
+                if (c == 0) { lpL += tone * (delayed - lpL); delayed = lpL; }
+                else        { lpR += tone * (delayed - lpR); delayed = lpR; }
                 float in = d[i];
                 d[i] = in * (1.f - mix) + delayed * mix;
                 buffer[(size_t)(writePos * 2 + c)] = in + delayed * feedback;
@@ -37,5 +42,6 @@ private:
     std::vector<float> buffer;
     int writePos = 0;
     float delaySamples = 300, feedback = 0.3f, mix = 0;
+    float lpL = 0.f, lpR = 0.f;
 };
 }
