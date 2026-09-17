@@ -47,6 +47,10 @@
             juce::Colour (0xffffd700), juce::Colour (0xff66ccff), juce::Colour (0xffff66aa),
             juce::Colour (0xffff2d9b), juce::Colour (0xffff6b00)
         };
+        const char* bypassIds[] = {
+            "chorus_bypass","delay_bypass","reverb_bypass","bassify_bypass",
+            "comp_bypass","eq_bypass","phaser_bypass","dist_bypass"
+        };
         for (int i = 0; i < 8; ++i)
         {
             auto* lab = fxSectionLabels.add (new juce::Label());
@@ -61,4 +65,11 @@
             mon->setAccent (monCols[i]);
             mon->setLevel (0.4f);
             fxTab.addAndMakeVisible (mon);
+
+            fxBypass[i].setButtonText ("BYP");
+            fxBypass[i].setClickingTogglesState (true);
+            fxBypass[i].setColour (juce::ToggleButton::textColourId, monCols[i]);
+            fxTab.addAndMakeVisible (fxBypass[i]);
+            btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+                processor.getAPVTS(), bypassIds[i], fxBypass[i]));
         }
