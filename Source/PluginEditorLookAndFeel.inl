@@ -11,6 +11,8 @@ public:
         setColour(juce::TabbedComponent::outlineColourId, juce::Colour(0xff1a1030));
         setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xff2a1840));
         setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff00e8ff));
+        setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colour(0xffffffff));
+        setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xffa090c0));
         setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff0a0614));
         setColour(juce::ListBox::outlineColourId, juce::Colour(0xff1a1030));
         setColour(juce::ComboBox::outlineColourId, juce::Colour(0xffff00aa));
