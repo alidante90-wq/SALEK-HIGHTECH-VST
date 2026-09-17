@@ -94,6 +94,27 @@ void SalekHightechAudioProcessorEditor::timerCallback()
                 bpmScale = (float) (*pos->getBpm() / 120.0);
     }
     animPhase += 0.022f * juce::jlimit (0.5f, 1.8f, bpmScale);
+
+    // Live FX monitor levels + multi-band GR (OTT style)
+    auto g = [&](const char* id, float d=0.f) -> float {
+        if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
+        return d;
+    };
+    if (fxMonitors.size() >= 8)
+    {
+        fxMonitors[0]->setLevel (g ("chorus_mix"));
+        fxMonitors[1]->setLevel (g ("delay_mix"));
+        fxMonitors[2]->setLevel (g ("reverb_mix"));
+        fxMonitors[3]->setLevel (g ("bassify"));
+        fxMonitors[4]->setLevel (g ("comp_mix"));
+        fxMonitors[4]->setBandGR (
+            processor.getCompressor().getBandGR (0),
+            processor.getCompressor().getBandGR (1),
+            processor.getCompressor().getBandGR (2));
+        fxMonitors[5]->setLevel (juce::jmax (std::abs (g ("eq_low")), std::abs (g ("eq_mid")), std::abs (g ("eq_high"))) / 12.f);
+        fxMonitors[6]->setLevel (g ("phaser_mix"));
+        fxMonitors[7]->setLevel (g ("dist_mix"));
+    }
     repaint();
 }
 
