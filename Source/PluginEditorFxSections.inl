@@ -13,6 +13,14 @@
         addKnob (fxTab, "comp_threshold", "C THR", O);
         addKnob (fxTab, "comp_ratio", "C RATIO", M);
         addKnob (fxTab, "comp_mix", "C MIX", C);
+        addKnob (fxTab, "comp_depth", "C DEPTH", V);
+        addKnob (fxTab, "granular_mix", "GRAN", O);
+        addKnob (fxTab, "granular_density", "G DENS", C);
+        addKnob (fxTab, "granular_size", "G SIZE", M);
+        addKnob (fxTab, "granular_pos", "G POS", G);
+        addKnob (fxTab, "granular_pitch", "G PITCH", V);
+        addKnob (fxTab, "granular_spray", "G SPRAY", O);
+        addKnob (fxTab, "granular_feedback", "G FB", M);
         addKnob (fxTab, "eq_low", "EQ LOW", G);
         addKnob (fxTab, "eq_mid", "EQ MID", O);
         addKnob (fxTab, "eq_high", "EQ HI", M);
