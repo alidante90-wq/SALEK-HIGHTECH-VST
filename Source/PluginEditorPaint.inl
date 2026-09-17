@@ -88,27 +88,23 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         (void) rot;
     }
 
-    // ---- soft hero wash ----
+    // ---- background art (2 versions) — almost static, subtle mouse parallax only ----
     if (heroImg.isValid())
     {
-        float breathe = 1.f + 0.04f * std::sin (t * 0.6f);
-        float panX = 35.f * std::sin (t * 0.18f) + mx * 24.f;
-        float panY = 20.f * std::cos (t * 0.14f) + my * 18.f;
-        auto dest = juce::Rectangle<float> (-40.f + panX, -30.f + panY, W * breathe + 80.f, H * breathe + 60.f);
-        // Hero: vivid, left-weighted like mockup character panel
-        g.setOpacity (0.78f + pulse * 0.12f);
+        // very small pan with mouse only (no auto animation)
+        const float panX = mx * 8.f;
+        const float panY = my * 6.f;
+        auto dest = juce::Rectangle<float> (-12.f + panX, -10.f + panY, W + 24.f, H + 20.f);
+        g.setOpacity (0.92f); // clear, readable art
         g.drawImage (heroImg, dest, juce::RectanglePlacement::fillDestination);
         g.setOpacity (1.f);
-        // soft pink wash from left (character glow)
+        // darken edges slightly so knobs stay readable
         {
-            juce::ColourGradient hg (magenta.withAlpha (0.12f + pulse * 0.06f), 0.f, H * 0.4f,
-                                    juce::Colours::transparentBlack, W * 0.45f, H * 0.4f, false);
-            g.setGradientFill (hg);
+            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.35f), W * 0.5f, H,
+                                      juce::Colours::transparentBlack, W * 0.5f, H * 0.35f, false);
+            g.setGradientFill (veil);
             g.fillAll();
-        }
-        if (themeId == 4)
-        {
-            g.setColour (magenta.withAlpha (0.07f));
+            g.setColour (juce::Colours::black.withAlpha (0.18f));
             g.fillAll();
         }
     }
@@ -241,11 +237,11 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         if (heroImg.isValid())
         {
             auto imgArea = left.reduced (8.f, 8.f).withHeight (200.f);
-            float z = 1.f + 0.035f * std::sin (t * 0.5f);
+            float z = 1.02f; // almost static crop
             auto src = heroImg.getBounds().toFloat();
             float sw = src.getWidth() / z, sh = src.getHeight() / z;
-            float sx = (src.getWidth() - sw) * (0.5f + 0.1f * std::sin (t * 0.25f) + mx * 0.04f);
-            float sy = (src.getHeight() - sh) * (0.5f + 0.08f * std::cos (t * 0.2f) + my * 0.03f);
+            float sx = (src.getWidth() - sw) * (0.5f + mx * 0.02f);
+            float sy = (src.getHeight() - sh) * (0.45f + my * 0.015f);
             g.drawImage (heroImg,
                          (int) imgArea.getX(), (int) imgArea.getY(), (int) imgArea.getWidth(), (int) imgArea.getHeight(),
                          (int) sx, (int) sy, (int) sw, (int) sh);
