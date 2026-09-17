@@ -59,12 +59,7 @@
 
         // Persian + English wave names
         auto waveItems = juce::StringArray {
-            juce::CharPointer_UTF8 ("\xd8\xb3\xdb\x8c\xd9\x86\xd9\x88\xd8\xb3 / Sine"),
-            juce::CharPointer_UTF8 ("\xd9\x85\xd8\xab\xd9\x84\xd8\xab / Tri"),
-            juce::CharPointer_UTF8 ("\xd8\xa7\xd8\xb1\xd9\x87 / Saw"),
-            juce::CharPointer_UTF8 ("\xd9\x85\xd8\xb1\xd8\xa8\xd8\xb9 / Sqr"),
-            "S&H",
-            juce::CharPointer_UTF8 ("\xda\xa9\xd8\xa7\xd8\xb3\xd8\xaa\xd9\x88\xd9\x85 / Custom")
+            "Sine", "Triangle", "Saw", "Square", "S&H", "Custom"
         };
         lfo1WaveBox.addItemList (waveItems, 1);
         lfo2WaveBox.addItemList (waveItems, 1);

@@ -82,31 +82,73 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
     // Map cutoff 20 Hz .. 20 kHz onto log X axis so knob motion is visible
     const float cutHz = juce::jlimit (20.f, 20000.f, gval ("filter_cutoff", 1000.f));
     const float reso  = juce::jlimit (0.f, 1.f, gval ("filter_reso", 0.3f));
+    const int fmode = (int) gval ("filter_mode", 0.f);
     const float logMin = std::log (20.f);
     const float logMax = std::log (20000.f);
     const float norm = juce::jlimit (0.f, 1.f, (std::log (cutHz) - logMin) / (logMax - logMin));
 
     auto plot = r.reduced (6.f, 4.f);
     juce::Path curve;
-    // Resonance Q drives both peak height and bandwidth (Serum-style response face)
-    const float qSharp = 8.f + reso * 90.f;   // higher reso = narrower peak
-    const float peakH  = 0.12f + reso * 0.72f; // taller peak when RES is up
+    const float qSharp = 8.f + reso * 90.f;
+    const float peakH  = 0.12f + reso * 0.72f;
+    // 0 LP12 1 LP24 2 HP12 3 HP24 4 BP 5 Notch 6 Peak 7 AllPass
+    // 8 Acid 9 Ladder 10 Comb 11 Formant 12 BandRej 13 LoShelf 14 HiShelf 15 PhaserN
 
     for (int i = 0; i < 128; ++i)
     {
         const float t = (float) i / 127.f;
         const float x = plot.getX() + t * plot.getWidth();
         const float dist = t - norm;
-
-        // Passband floor + gentle rolloff past cutoff
         float yNorm = 0.42f;
-        if (dist > 0.f)
-            yNorm = 0.42f * std::exp (-dist * dist * (12.f + (1.f - reso) * 28.f));
-        else
-            yNorm = 0.42f + 0.06f * (1.f - std::exp (dist * 5.f));
 
-        // Resonant peak centred on cutoff
-        yNorm += peakH * std::exp (-dist * dist * qSharp);
+        auto lp = [&]() {
+            float y = 0.42f;
+            if (dist > 0.f) y = 0.42f * std::exp (-dist * dist * (12.f + (1.f - reso) * 28.f));
+            else y = 0.42f + 0.06f * (1.f - std::exp (dist * 5.f));
+            y += peakH * std::exp (-dist * dist * qSharp);
+            return y;
+        };
+        auto hp = [&]() {
+            float y = 0.15f;
+            if (dist < 0.f) y = 0.15f * std::exp (-dist * dist * (12.f + (1.f - reso) * 28.f));
+            else y = 0.55f - 0.05f * std::exp (-dist * 4.f);
+            y += peakH * 0.7f * std::exp (-dist * dist * qSharp);
+            return y;
+        };
+        auto bp = [&]() {
+            return 0.12f + peakH * std::exp (-dist * dist * (qSharp * 0.7f));
+        };
+        auto notch = [&]() {
+            float y = 0.5f - peakH * std::exp (-dist * dist * qSharp);
+            return juce::jmax (0.05f, y);
+        };
+
+        switch (fmode)
+        {
+            case 2: case 3: yNorm = hp(); break;
+            case 4: yNorm = bp(); break;
+            case 5: case 12: case 15: yNorm = notch(); break;
+            case 6: yNorm = 0.35f + peakH * std::exp (-dist * dist * qSharp); break;
+            case 10: // comb ripples
+                yNorm = 0.35f + 0.25f * std::sin (t * 40.f) * (0.4f + reso)
+                      + peakH * 0.4f * std::exp (-dist * dist * 30.f);
+                break;
+            case 11: // formant dual peak
+                yNorm = 0.2f + peakH * 0.7f * std::exp (-dist * dist * qSharp)
+                      + peakH * 0.45f * std::exp (-(dist - 0.12f) * (dist - 0.12f) * qSharp);
+                break;
+            case 13: // lo shelf
+                yNorm = (t < norm) ? (0.55f + reso * 0.2f) : 0.35f;
+                break;
+            case 14: // hi shelf
+                yNorm = (t > norm) ? (0.55f + reso * 0.2f) : 0.35f;
+                break;
+            case 1: case 9: case 8: // steeper LP
+                yNorm = lp();
+                if (dist > 0.f) yNorm *= std::exp (-dist * 2.5f);
+                break;
+            default: yNorm = lp(); break;
+        }
 
         const float y = plot.getBottom() - juce::jlimit (0.04f, 0.96f, yNorm) * plot.getHeight();
         if (i == 0) curve.startNewSubPath (x, y);
@@ -252,7 +294,8 @@ private:
     void applyHeroFromTheme();
     void cycleHero();
     void applyUiLanguage();
-    struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; };
+    struct PresetRow { bool isHeader = false; juce::String label; int programIndex = -1; juce::String category; };
+    juce::StringArray collapsedCats; // category names that are folded
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);

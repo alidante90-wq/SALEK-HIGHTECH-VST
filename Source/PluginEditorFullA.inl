@@ -227,6 +227,20 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     applyHeroFromTheme();
     applyUiLanguage();
     rebuildPresetRows();
+    // Start with categories folded — click [+] to expand (Serum/Vital style browser)
+    {
+        juce::StringArray cats;
+        const int n = processor.getNumPrograms();
+        for (int i = 0; i < n; ++i)
+        {
+            auto name = processor.getProgramName (i);
+            auto cat = name.upToFirstOccurrenceOf ("/", false, false);
+            if (cat == name) cat = "OTHER";
+            if (! cats.contains (cat)) cats.add (cat);
+        }
+        collapsedCats = cats;
+        rebuildPresetRows();
+    }
 }
 
 SalekHightechAudioProcessorEditor::~SalekHightechAudioProcessorEditor()
@@ -275,14 +289,18 @@ void SalekHightechAudioProcessorEditor::rebuildPresetRows()
         if (cat == name) cat = "OTHER";
         if (cat != lastCat)
         {
-            PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1;
+            PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1; h.category = cat;
             presetRows.add (h);
             lastCat = cat;
         }
+        // Skip presets in collapsed categories
+        if (collapsedCats.contains (cat))
+            continue;
         PresetRow r; r.isHeader = false;
         r.label = name.fromFirstOccurrenceOf ("/", false, false);
         if (r.label.isEmpty()) r.label = name;
         r.programIndex = i;
+        r.category = cat;
         presetRows.add (r);
     }
     presetList.updateContent();

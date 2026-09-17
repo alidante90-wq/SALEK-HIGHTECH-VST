@@ -163,8 +163,7 @@ public:
         g.setColour (juce::Colour (0xffffd700).withAlpha (0.9f));
         g.setFont (juce::FontOptions (9.5f, juce::Font::bold));
         // EN + FA hint
-        g.drawText (juce::CharPointer_UTF8 (
-            "DRAW | Shift=\xd8\xae\xd8\xb7\xdb\x8c  Alt=\xd9\x85\xd9\x84\xdb\x8c\xd9\x85  Ctrl=\xd8\xa2\xd8\xb2\xd8\xa7\xd8\xaf  |  drag points"),
+        g.drawText ("DRAW freehand | Shift=line | Alt=smooth | drag to paint",
             getLocalBounds().removeFromTop (14).reduced (6, 0),
             juce::Justification::centredLeft);
     }
@@ -252,7 +251,24 @@ private:
         }
         else
         {
-            writePoint (idx, v);
+            // Default = freehand paint (Serum/Vital style) across indices
+            if (lastIdx < 0)
+            {
+                writePoint (idx, v);
+            }
+            else
+            {
+                int a = juce::jmin (lastIdx, idx);
+                int b = juce::jmax (lastIdx, idx);
+                float va = points[lastIdx];
+                for (int i = a; i <= b; ++i)
+                {
+                    float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
+                    float pv = (lastIdx <= idx) ? va * (1.f - tt) + v * tt
+                                                : v * (1.f - tt) + va * tt;
+                    writePoint (i, pv);
+                }
+            }
             lastIdx = idx;
         }
         repaint();

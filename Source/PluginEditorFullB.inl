@@ -9,7 +9,9 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
         g.fillAll (juce::Colour (0xff12081c));
         g.setColour (themeAccent);
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        g.drawText ("  " + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
+        const bool folded = collapsedCats.contains (pr.category);
+        juce::String mark = folded ? "[+] " : "[-] ";
+        g.drawText (mark + pr.label, 6, 0, width - 10, height, juce::Justification::centredLeft);
         g.setColour (themeAccent2.withAlpha (0.5f));
         g.drawLine (4.0f, (float) height - 1.0f, (float) width - 4.0f, (float) height - 1.0f, 1.0f);
         return;
@@ -34,8 +36,17 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
 void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce::MouseEvent&)
 {
     if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
-    const auto& pr = presetRows.getReference (row);
-    if (pr.isHeader || pr.programIndex < 0) return;
+    const auto pr = presetRows.getReference (row); // copy
+    if (pr.isHeader)
+    {
+        if (collapsedCats.contains (pr.category))
+            collapsedCats.removeString (pr.category);
+        else
+            collapsedCats.add (pr.category);
+        rebuildPresetRows();
+        return;
+    }
+    if (pr.programIndex < 0) return;
     processor.setCurrentProgram (pr.programIndex);
     presetLabel.setText (processor.getProgramName (pr.programIndex), juce::dontSendNotification);
 }
@@ -64,13 +75,29 @@ void SalekHightechAudioProcessorEditor::resized()
     // Hero art always visible — only presets collapse (see presetToggle)
     full.removeFromLeft (222);
 
-    auto header = full.removeFromTop (36);
-    langToggle.setBounds (header.removeFromRight (40).reduced (2));
-    themeBox.setBounds (header.removeFromRight (100).reduced (2));
-    spectrum.setBounds (header.removeFromRight (90).reduced (2));
-    scope.setBounds (header.removeFromRight (110).reduced (2));
+    auto header = full.removeFromTop (40);
+    langToggle.setBounds (header.removeFromRight (36).reduced (2));
+    themeBox.setBounds (header.removeFromRight (90).reduced (2));
+    // Master gain + drive at top of VST (removed from FX tab)
+    if (knobs.size() > 55)
+    {
+        auto* gainK = knobs[55].get(); // master_gain
+        auto* drvK  = knobs[54].get(); // master_drive
+        auto gArea = header.removeFromRight (70).reduced (2);
+        gainK->name.setBounds (gArea.removeFromBottom (12));
+        gainK->s.setBounds (gArea);
+        gainK->s.setVisible (true); gainK->name.setVisible (true);
+        auto dArea = header.removeFromRight (70).reduced (2);
+        drvK->name.setBounds (dArea.removeFromBottom (12));
+        drvK->s.setBounds (dArea);
+        drvK->s.setVisible (true); drvK->name.setVisible (true);
+        gainK->name.setText ("GAIN", juce::dontSendNotification);
+        drvK->name.setText ("DRIVE", juce::dontSendNotification);
+    }
+    spectrum.setBounds (header.removeFromRight (80).reduced (2));
+    scope.setBounds (header.removeFromRight (100).reduced (2));
     if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (160).reduced (2));
+        wtDisplay->setBounds (header.removeFromRight (140).reduced (2));
 
     full.removeFromTop (2);
     tabs.setBounds (full);
