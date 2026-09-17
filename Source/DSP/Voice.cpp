@@ -30,9 +30,10 @@ void SalekVoice::prepare (double sampleRate, int /*samplesPerBlock*/)
     lfo3.prepare (sampleRate);
     lfo4.prepare (sampleRate);
 
-    // Default unison detunes
+    // Musical unison detune spread (cents → ratio) for better width & less beating
+    static const float centsTable[maxUnison] = { -18.f, -7.f, 0.f, 7.f, 18.f };
     for (int i = 0; i < maxUnison; ++i)
-        unisonDetune[i] = (i - maxUnison / 2) * 0.07f;
+        unisonDetune[i] = std::pow (2.0f, centsTable[i] / 1200.0f) - 1.0f;
 
     isPrepared = true;
 }
