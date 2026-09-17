@@ -117,9 +117,15 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     midi.swapWith (routed);
     synthEngine.processBlock(buffer, midi);
 
-    // Bassify: low-shelf-ish boost + soft grit (dubstep noise colour)
+    auto bypassed = [&](const char* id) -> bool {
+        if (auto* p = apvts.getRawParameterValue (id))
+            return p->load() > 0.5f;
+        return false;
+    };
+   
+// Bassify: low-shelf-ish boost + soft grit (dubstep noise colour)
     const float bassify = apvts.getRawParameterValue("bassify")->load();
-    if (bassify > 1e-4f)
+        if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
         static float lpL = 0.f, lpR = 0.f;
         const float coeff = 0.08f + bassify * 0.12f;
@@ -158,15 +164,31 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-    chorus.process(buffer);
-    phaser.process(buffer);
-    distortion.process(buffer);
-    eq.process(buffer);
-    compressor.process(buffer);
-    delay.process(buffer);
-    reverb.process(buffer);
-    spatial.process(buffer);
-    magic.process(buffer);
+       if (! bypassed ("chorus_bypass"))  chorus.process (buffer);
+    if (! bypassed ("phaser_bypass"))  phaser.process (buffer);
+    if (! bypassed ("dist_bypass"))    distortion.process (buffer);
+    if (! bypassed ("eq_bypass"))      eq.process (buffer);
+    if (! bypassed ("comp_bypass"))    compressor.process (buffer);
+    if (! bypassed ("delay_bypass"))   delay.process (buffer);
+    if (! bypassed ("reverb_bypass"))  reverb.process (buffer);
+    spatial.process (buffer);
+
+    if (auto* gm = apvts.getRawParameterValue ("granular_mix"))
+    {
+        const float gMix = gm->load();
+        if (gMix > 1e-4f)
+        {
+            granular.setMix (gMix);
+            if (auto* p = apvts.getRawParameterValue ("granular_density")) granular.setDensity (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_size"))    granular.setGrainSize (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_pos"))     granular.setPosition (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_pitch"))   granular.setPitch (p->load());
+            if (auto* p = apvts.getRawParameterValue ("granular_freeze"))  granular.setFreeze (p->load() > 0.5f);
+            granular.process (buffer);
+        }
+    }
+
+    magic.process (buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
     buffer.applyGain(gain * 0.95f);
