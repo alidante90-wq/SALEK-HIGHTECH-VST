@@ -68,6 +68,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
     F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,0);
+    F("comp_depth","Comp Depth",0,1,0.55f); F("comp_attack","Comp Attack",0.5f,50,8); F("comp_release","Comp Release",10,300,80);
     F("eq_low","EQ Low",-12,12,0); F("eq_mid","EQ Mid",-12,12,0); F("eq_high","EQ High",-12,12,0);
     F("spatial_azim","Spatial Azim",-180,180,0); F("spatial_dist","Spatial Dist",0,1,0);
     F("spatial_size","Spatial Size",0,1,0.5f); F("spatial_elev","Spatial Elev",-90,90,0);
@@ -90,6 +91,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("granular_pos","Gran Pos",0,1,0.5f);
     F("granular_pitch","Gran Pitch",0.25f,4,1);
     B("granular_freeze","Gran Freeze",false);
+    F("granular_spray","Gran Spray",0,1,0.25f); F("granular_pitchspray","Gran PitchSpray",0,1,0.15f);
+    F("granular_feedback","Gran Feedback",0,0.95f,0.2f);
     C("scale_mode","Scale",{"Equal 12-TET","Shur","Segah","Homayun","Mahur","Free Koron"},0);
     F("koron_cents","Koron Cents",-50,50,0);
     F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
