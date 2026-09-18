@@ -98,6 +98,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
     B("magic_on","Magic On",false);
     C("magic_mode","Magic Mode",{"Loop","Glitch","FlangeVerb","Psychedelic"},0);
+    // Voice / filter extras
+    F("glide","Glide",0,1,0);
+    C("voice_mode","Voice Mode",{"Poly","Mono","Legato"},0);
+    I("poly_voices","Voices",1,16,8);
+    F("noise_level","Noise",0,1,0);
+    F("sub_level","Sub",0,1,0);
+    C("filter_route","Filter Route",{"All","OSC1","OSC2","OSC3","1+2","1+3","2+3"},0);
     return { p.begin(), p.end() };
 }
 
