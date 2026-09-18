@@ -24,7 +24,7 @@ public:
 
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
         g.setColour (juce::Colour (0xffffd700));
-        g.drawText ("MOD MATRIX  ·  drag/wheel = amount  ·  dbl-click = clear",
+        g.drawText ("MOD MATRIX  |  drag/wheel = amount  |  dbl-click = clear",
                     r.removeFromTop (18).reduced (6, 0), juce::Justification::centredLeft);
 
         layoutGrid();
@@ -106,15 +106,15 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
         g.drawRoundedRectangle (strip, 6.f, 1.f);
 
-        juce::String srcN = (selSrc >= 0) ? salek::ModMatrix::sourceName ((salek::ModMatrix::Source) selSrc) : "—";
-        juce::String dstN = (selDst >= 0) ? salek::ModMatrix::destName ((salek::ModMatrix::Dest) selDst) : "—";
+        // Pure ASCII to avoid Windows font mojibake
+        juce::String srcN = (selSrc >= 0) ? salek::ModMatrix::sourceName ((salek::ModMatrix::Source) selSrc) : "-";
+        juce::String dstN = (selDst >= 0) ? salek::ModMatrix::destName ((salek::ModMatrix::Dest) selDst) : "-";
         float amt = selectedAmount();
 
         g.setColour (juce::Colours::white.withAlpha (0.9f));
         g.setFont (juce::FontOptions (12.f, juce::Font::bold));
-        g.drawText (srcN + "  →  " + dstN, strip.reduced (10, 4).removeFromTop (18), juce::Justification::centredLeft);
+        g.drawText (srcN + "  ->  " + dstN, strip.reduced (10, 4).removeFromTop (18), juce::Justification::centredLeft);
 
-        // horizontal bipolar fader track
         auto track = strip.reduced (12.f, 8.f);
         track.removeFromTop (20.f);
         track = track.withHeight (14.f);
@@ -126,13 +126,10 @@ public:
 
         if (selSrc >= 0 && selDst >= 0)
         {
-            float t = (amt + 1.f) * 0.5f; // 0..1
+            float t = (amt + 1.f) * 0.5f;
             float kx = track.getX() + t * track.getWidth();
             juce::Colour col = amt >= 0 ? juce::Colour (0xff00e8ff) : juce::Colour (0xffff2d9b);
-            if (amt >= 0)
-                g.setColour (col.withAlpha (0.5f));
-            else
-                g.setColour (col.withAlpha (0.5f));
+            g.setColour (col.withAlpha (0.5f));
             if (amt >= 0)
                 g.fillRoundedRectangle ({ midX, track.getY(), kx - midX, track.getHeight() }, 3.f);
             else
