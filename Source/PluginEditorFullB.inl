@@ -114,6 +114,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
             processor.getCompressor().getBandGR (1),
             processor.getCompressor().getBandGR (2));
         fxMonitors[5]->setLevel (juce::jmax (std::abs (g ("eq_low")), std::abs (g ("eq_mid")), std::abs (g ("eq_high"))) / 12.f);
+        fxMonitors[5]->setEqBands (g ("eq_low") / 12.f, g ("eq_mid") / 12.f, g ("eq_high") / 12.f);
         fxMonitors[6]->setLevel (g ("phaser_mix"));
         fxMonitors[7]->setLevel (g ("dist_mix"));
     }
@@ -201,10 +202,14 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto b = mainTab.getLocalBounds().reduced (2);
         // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 250;
-        // Flush left like reference screenshots
-        presetTab.setBounds (b.removeFromLeft (presetW));
-        presetTab.toFront (false);
+        const int presetW = presetCollapsed ? 28 : 230;
+        // Left, but only top half height (not full stretched)
+        {
+            auto leftCol = b.removeFromLeft (presetW);
+            const int halfH = leftCol.getHeight() / 2;
+            presetTab.setBounds (leftCol.removeFromTop (halfH));
+            presetTab.toFront (false);
+        }
         envTab.setBounds (b.removeFromBottom (120));
         filterTab.setBounds (b.removeFromRight (220));
         oscTab.setBounds (b);
