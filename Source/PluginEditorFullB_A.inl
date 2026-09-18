@@ -127,7 +127,15 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         fxMonitors[2]->setLevel (g ("reverb_mix"));
         fxMonitors[3]->setLevel (g ("bassify"));
         fxMonitors[4]->setLevel (g ("comp_mix"));
-        fxMonitors[4]->setThresholdNorm (juce::jmap (g ("comp_threshold", -12.f), -40.f, 0.f, 0.f, 1.f));
+        fxMonitors[4]->bindCompressor (&processor.getCompressor());
+        {
+            auto& c = processor.getCompressor();
+            auto toN = [] (float db) { return juce::jmap (db, -40.f, 0.f, 0.f, 1.f); };
+            fxMonitors[4]->setBandThresholdNorms (
+                toN (c.getBandThresholdDb (0)),
+                toN (c.getBandThresholdDb (1)),
+                toN (c.getBandThresholdDb (2)));
+        }
         fxMonitors[4]->setBandGR (
             processor.getCompressor().getBandGR (0),
             processor.getCompressor().getBandGR (1),
