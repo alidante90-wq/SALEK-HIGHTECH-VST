@@ -100,7 +100,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.setOpacity (1.f);
         // soft dark veil — UI readability over detailed art
         {
-            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.18f), W * 0.5f, H,
+            juce::ColourGradient veil (juce::Colours::black.withAlpha (0.32f), W * 0.5f, H,
                                       juce::Colours::transparentBlack, W * 0.5f, H * 0.28f, false);
             g.setGradientFill (veil);
             g.fillAll();
@@ -214,7 +214,21 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0.f, H * 0.55f, W, H * 0.35f);
     }
 
-            // ---- GITI BY SALEK logo (bottom-left, always visible) ----
+            
+    // cyber outer frame + corner glow (heavier 3D)
+    {
+        g.setColour (cyan.withAlpha (0.25f + pulse * 0.1f));
+        g.drawRoundedRectangle (4.f, 4.f, W - 8.f, H - 8.f, 10.f, 1.5f);
+        g.setColour (magenta.withAlpha (0.18f));
+        g.drawRoundedRectangle (7.f, 7.f, W - 14.f, H - 14.f, 8.f, 1.f);
+        // top specular bar
+        juce::ColourGradient topLite (cyan.withAlpha (0.12f), W * 0.5f, 0.f,
+                                     juce::Colours::transparentBlack, W * 0.5f, 40.f, false);
+        g.setGradientFill (topLite);
+        g.fillRect (0.f, 0.f, W, 40.f);
+    }
+
+// ---- GITI BY SALEK logo (bottom-left, always visible) ----
     if (logoImg.isValid())
     {
         const float lw = 140.f, lh = 56.f;
