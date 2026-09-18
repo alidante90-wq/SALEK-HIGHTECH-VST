@@ -24,7 +24,35 @@ public:
         eqBand[1] = juce::jlimit (-1.f, 1.f, mid);
         eqBand[2] = juce::jlimit (-1.f, 1.f, hi);
     }
-    void setThresholdNorm (float t) { thrNorm = juce::jlimit (0.f, 1.f, t); }
+    void setThresholdNorm (float t) { if (! draggingThr) thrNorm = juce::jlimit (0.f, 1.f, t); }
+    void bindThresholdParam (juce::RangedAudioParameter* p) { thrParam = p; }
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        if (kind != Comp || thrParam == nullptr) return;
+        auto plot = getLocalBounds().toFloat().reduced (5.f, 4.f);
+        float ty = plot.getBottom() - 10.f - thrNorm * (plot.getHeight() - 12.f);
+        if (std::abs (e.position.y - ty) < 12.f)
+        {
+            draggingThr = true;
+            thrParam->beginChangeGesture();
+        }
+    }
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (! draggingThr || thrParam == nullptr) return;
+        auto plot = getLocalBounds().toFloat().reduced (5.f, 4.f);
+        float h = juce::jmax (1.f, plot.getHeight() - 12.f);
+        thrNorm = juce::jlimit (0.f, 1.f, (plot.getBottom() - 10.f - e.position.y) / h);
+        const float db = juce::jmap (thrNorm, 0.f, 1.f, -40.f, 0.f);
+        thrParam->setValueNotifyingHost (thrParam->convertTo0to1 (db));
+        repaint();
+    }
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        if (draggingThr && thrParam != nullptr)
+            thrParam->endChangeGesture();
+        draggingThr = false;
+    }
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -60,13 +88,19 @@ public:
                 g.drawText (labs[b], (int) bar.getX(), (int) plot.getBottom() - 10, (int) bw, 10,
                             juce::Justification::centred);
             }
-            // Threshold guide line (from C THR param)
+            // Draggable threshold line
             {
                 float ty = plot.getBottom() - 10.f - thrNorm * (plot.getHeight() - 12.f);
-                g.setColour (juce::Colours::white.withAlpha (0.55f));
+                g.setColour (juce::Colour (0xffffffff).withAlpha (draggingThr ? 0.95f : 0.65f));
                 g.drawHorizontalLine ((int) ty, plot.getX(), plot.getRight());
-                g.setFont (juce::FontOptions (7.f));
-                g.drawText ("THR", plot.getX(), (int) ty - 10, 24, 10, juce::Justification::centredLeft);
+                // grab handle
+                g.setColour (juce::Colour (0xffffd700).withAlpha (draggingThr ? 1.f : 0.85f));
+                g.fillRoundedRectangle (plot.getRight() - 10.f, ty - 4.f, 8.f, 8.f, 2.f);
+                g.setFont (juce::FontOptions (7.f, juce::Font::bold));
+                g.setColour (juce::Colours::white);
+                const float db = juce::jmap (thrNorm, 0.f, 1.f, -40.f, 0.f);
+                g.drawText (juce::String (db, 1) + "dB", (int) plot.getX(), (int) ty - 12, 40, 10,
+                            juce::Justification::centredLeft);
             }
             return;
         }
@@ -143,6 +177,8 @@ private:
     Kind kind = Chorus;
     float phase = 0.f, level = 0.35f;
     float bandGR[3] {}, dispGR[3] {}, eqBand[3] {}, thrNorm { 0.5f };
+    bool draggingThr = false;
+    juce::RangedAudioParameter* thrParam = nullptr;
     juce::Colour accent { 0xff00e8ff };
 };
 
