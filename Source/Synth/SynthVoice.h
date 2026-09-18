@@ -57,9 +57,12 @@ public:
     void setOsc1Drive(float v){osc1.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setDrive(v);}
     void setOsc2Drive(float v){osc2.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setDrive(v);} void setOsc3Drive(float v){osc3.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setDrive(v);}
     void setOsc1Phase(float v){osc1.setPhaseOffset(v);} void setOsc2Phase(float v){osc2.setPhaseOffset(v);} void setOsc3Phase(float v){osc3.setPhaseOffset(v);}
-    void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v);}
-    void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c);}
-    void setUnisonSpread(float s){unisonSpread=juce::jlimit(0.f,1.f,s);}
+    void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v); uniVoices1=uniVoices2=uniVoices3=unisonVoices;}
+    void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c); uniDet1=uniDet2=uniDet3=unisonDetune;}
+    void setUnisonSpread(float s){unisonSpread=juce::jlimit(0.f,1.f,s); uniSpr1=uniSpr2=uniSpr3=unisonSpread;}
+    void setOsc1Unison(int v,float d,float s){uniVoices1=juce::jlimit(1,maxUnison,v); uniDet1=d; uniSpr1=s;}
+    void setOsc2Unison(int v,float d,float s){uniVoices2=juce::jlimit(1,maxUnison,v); uniDet2=d; uniSpr2=s;}
+    void setOsc3Unison(int v,float d,float s){uniVoices3=juce::jlimit(1,maxUnison,v); uniDet3=d; uniSpr3=s;}
     void setFm2to1(float v){fm2to1=v;} void setFm3to1(float v){fm3to1=v;} void setFm3to2(float v){fm3to2=v;}
     void setPm2to1(float v){pm2to1=v;} void setPm3to1(float v){pm3to1=v;} void setAm2to1(float v){am2to1=v;} void setRm2to1(float v){rm2to1=v;}
     void setFilterCutoff(float) {} void setFilterBaseCutoff(float hz){baseCutoff=hz; filter.setCutoff(hz);}
@@ -93,6 +96,9 @@ private:
     WavetableOscillator uniOsc1[maxUnison], uniOsc2[maxUnison], uniOsc3[maxUnison];
     int unisonVoices = 1;
     float unisonDetune = 12.f, unisonSpread = 0.7f;
+    int uniVoices1=1, uniVoices2=1, uniVoices3=1;
+    float uniDet1=12.f, uniDet2=12.f, uniDet3=12.f;
+    float uniSpr1=0.7f, uniSpr2=0.7f, uniSpr3=0.7f;
     Wavetable sharedWavetable;
     StateVariableFilter filter;
     LFO lfo;
