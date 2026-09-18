@@ -182,5 +182,17 @@ inline juce::Image loadBgSalek()
     return img.isValid() ? img : loadCyanGirl();
 }
 
+inline juce::Image loadLogoGiti()
+{
+#if SALEK_HAS_BINARY_DATA
+    auto img = fromBinaryName ("logo_giti_png");
+    if (img.isValid()) return img;
+#else
+    juce::Image img;
+#endif
+    img = fromDisk ({ "logo_giti.png", "LOGO.png" });
+    return img;
+}
+
 inline juce::Image loadHero() { return loadBgIsatis(); }
 }
