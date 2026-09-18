@@ -97,6 +97,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         });
         filterMode.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
         filterMode.setColour (juce::ComboBox::textColourId, juce::Colour (0xff00e8ff));
+        addCombo (filterTab, filterRouteBox, "filter_route", {
+            "All","OSC1","OSC2","OSC3","1+2","1+3","2+3"
+        });
+        filterRouteBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        filterRouteBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffff66cc));
+        addCombo (envTab, voiceModeBox, "voice_mode", { "Poly", "Mono", "Legato" });
+        voiceModeBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a30));
+        voiceModeBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xff00e8ff));
 
         addKnob (envTab, "amp_attack", "ATTACK", C);
         addKnob (envTab, "amp_decay", "DECAY", M);
@@ -192,6 +200,11 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
+        // Extra voice colour — registered last so indices of FX/MOD stay stable
+        addKnob (envTab, "glide", "GLIDE", C);
+        addKnob (envTab, "poly_voices", "VOICES", M);
+        addKnob (envTab, "noise_level", "NOISE", O);
+        addKnob (envTab, "sub_level", "SUB", G);
     }
 
     themeBox.addItem ("CYBER", 1);
