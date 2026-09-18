@@ -126,6 +126,33 @@ void SalekHightechAudioProcessorEditor::resized()
 {
     auto full = getLocalBounds();
 
+    auto place = [this] (juce::Rectangle<int> area, auto& arr, int start, int count, int cols, int maxCell = 0)
+    {
+        if (count <= 0 || cols <= 0) return;
+        const int rows = (count + cols - 1) / cols;
+        const int cw = juce::jmax (1, area.getWidth() / cols);
+        const int rh = juce::jmax (1, area.getHeight() / rows);
+        for (int i = 0; i < count; ++i)
+        {
+            const int idx = start + i;
+            if (idx < 0 || idx >= (int) arr.size()) break;
+            auto* k = arr[(size_t) idx].get();
+            const int c = i % cols, r = i / cols;
+            auto cell = juce::Rectangle<int> (area.getX() + c * cw, area.getY() + r * rh, cw, rh).reduced (2);
+            if (maxCell > 0 && cell.getWidth() > maxCell)
+            {
+                const int pad = (cell.getWidth() - maxCell) / 2;
+                cell = cell.withTrimmedLeft (pad).withTrimmedRight (pad);
+            }
+            k->name.setBounds (cell.removeFromBottom (14));
+            k->name.setJustificationType (juce::Justification::centred);
+            k->name.setVisible (true);
+            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cell.getWidth() - 8), 12);
+            k->s.setBounds (cell);
+            k->s.setVisible (true);
+        }
+    };
+
     {
         auto kb = full.removeFromBottom (68).reduced (2, 1);
         keyboard.setKeyWidth ((float) juce::jmax (10, kb.getWidth() / 52));
@@ -156,14 +183,24 @@ void SalekHightechAudioProcessorEditor::resized()
             presetList.setOpaque (false);
             presetTab.setOpaque (false);
             presetList.setVisible (true);
-            for (auto* c : { &prevPreset, &nextPreset, &initBtn, &savePresetBtn, &loadPresetBtn, &bankBtn, &presetLabel })
-                c->setVisible (true);
+            prevPreset.setVisible (true);
+            nextPreset.setVisible (true);
+            initBtn.setVisible (true);
+            savePresetBtn.setVisible (true);
+            loadPresetBtn.setVisible (true);
+            bankBtn.setVisible (true);
+            presetLabel.setVisible (true);
         }
         else
         {
             presetList.setVisible (false);
-            for (auto* c : { &prevPreset, &nextPreset, &initBtn, &savePresetBtn, &loadPresetBtn, &bankBtn, &presetLabel })
-                c->setVisible (false);
+            prevPreset.setVisible (false);
+            nextPreset.setVisible (false);
+            initBtn.setVisible (false);
+            savePresetBtn.setVisible (false);
+            loadPresetBtn.setVisible (false);
+            bankBtn.setVisible (false);
+            presetLabel.setVisible (false);
         }
     }
 
