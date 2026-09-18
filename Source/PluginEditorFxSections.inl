@@ -1,4 +1,4 @@
-// FX section labels + monitors + bypass toggles (Serum-style rows)
+// FX section labels + monitors + bypass + KNOBS (must exist or FX page is empty)
 {
     const char* names[] = {
         "CHORUS", "DELAY", "REVERB", "BASSIFY",
@@ -45,7 +45,46 @@
             processor.getAPVTS(), bypassIds[i], fxBypass[i]));
     }
 
-    // Dist / Reverb mode boxes already created elsewhere — ensure visible on FX
+    // ===== CREATE FX KNOBS (indices start at 58 after LFO 52-57) =====
+    {
+        const auto C = juce::Colour (0xff00e8ff);
+        const auto M = juce::Colour (0xffff2d9b);
+        const auto O = juce::Colour (0xff39ff14);
+        const auto V = juce::Colour (0xffc0ff00);
+        const auto G = juce::Colour (0xff7c4dff);
+        // 58-60 CHORUS
+        addKnob (fxTab, "chorus_mix", "CHORUS", O);
+        addKnob (fxTab, "chorus_rate", "C RATE", C);
+        addKnob (fxTab, "chorus_depth", "C DEPTH", M);
+        // 61-63 DELAY
+        addKnob (fxTab, "delay_mix", "DELAY", O);
+        addKnob (fxTab, "delay_time", "D TIME", C);
+        addKnob (fxTab, "delay_fb", "D FB", M);
+        // 64-66 REVERB
+        addKnob (fxTab, "reverb_mix", "REVERB", O);
+        addKnob (fxTab, "reverb_size", "R SIZE", C);
+        addKnob (fxTab, "reverb_decay", "R DECAY", M);
+        // 67 BASSIFY
+        addKnob (fxTab, "bassify", "BASSIFY", V);
+        // 68-71 COMP
+        addKnob (fxTab, "comp_threshold", "C THR", O);
+        addKnob (fxTab, "comp_ratio", "C RATIO", M);
+        addKnob (fxTab, "comp_mix", "C MIX", C);
+        addKnob (fxTab, "comp_depth", "C DEPTH", G);
+        // 72-74 EQ
+        addKnob (fxTab, "eq_low", "EQ LOW", G);
+        addKnob (fxTab, "eq_mid", "EQ MID", O);
+        addKnob (fxTab, "eq_high", "EQ HI", M);
+        // 75-77 PHASER
+        addKnob (fxTab, "phaser_mix", "PHASER", O);
+        addKnob (fxTab, "phaser_rate", "P RATE", C);
+        addKnob (fxTab, "phaser_depth", "P DEPTH", M);
+        // 78-80 DIST
+        addKnob (fxTab, "dist_mix", "DIST", O);
+        addKnob (fxTab, "dist_drive", "DRIVE", M);
+        addKnob (fxTab, "dist_crush", "CRUSH", C);
+    }
+
     fxTab.addAndMakeVisible (distModeBox);
     fxTab.addAndMakeVisible (reverbModeBox);
 }
