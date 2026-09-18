@@ -13,7 +13,6 @@ public:
     void prepare (double sampleRate, int /*block*/)
     {
         sr = sampleRate > 0.0 ? sampleRate : 44100.0;
-        // crossover ~ 200 Hz and 2.5 kHz
         setCrossover (200.f, 2500.f);
         for (auto& e : env) e = 0.f;
         for (auto& g : grSmooth) g = 1.f;
@@ -25,10 +24,8 @@ public:
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
     void setAttackMs (float ms) noexcept { attackMs = juce::jmax (0.1f, ms); updateCoeffs(); }
     void setReleaseMs (float ms) noexcept { releaseMs = juce::jmax (1.f, ms); updateCoeffs(); }
-    /** Depth 0..1 controls upward + downward intensity (OTT-style) */
     void setDepth (float d) noexcept { depth = juce::jlimit (0.f, 1.f, d); }
 
-    /** Per-band gain reduction 0..1 (for meters) */
     float getBandGR (int band) const noexcept
     {
         band = juce::jlimit (0, 2, band);
@@ -48,24 +45,21 @@ public:
 
         updateCoeffs();
 
-        const float thresh = juce::Decibels::decibelsToGain (thresholdDb);
-        const float invRatio = 1.f / ratio;
-        // upward amount scales with depth
-        const float upAmt = depth * 0.55f;
-        const float downAmt = 0.35f + depth * 0.65f;
+        // Per-band threshold offsets so LO/MID/HI behave differently
+        const float thrOffDb[3] = { -6.f, 0.f, +4.f };
+        const float ratioMul[3] = { 1.25f, 1.f, 0.85f };
+        const float invRatioBase = 1.f / ratio;
+        const float upAmt = depth * 0.7f;
+        const float downAmt = 0.4f + depth * 0.7f;
 
         for (int i = 0; i < n; ++i)
         {
             float L = buffer.getSample (0, i);
             float R = chs > 1 ? buffer.getSample (1, i) : L;
-            float mono = 0.5f * (L + R);
 
-            // --- 3-band split (cascaded one-pole) ---
-            // Low
             lp1L += aLo * (L - lp1L); lp1R += aLo * (R - lp1R);
             float lowL = lp1L, lowR = lp1R;
             float midHiL = L - lowL, midHiR = R - lowR;
-            // Mid / High split on residual
             lp2L += aHi * (midHiL - lp2L); lp2R += aHi * (midHiR - lp2R);
             float midL = lp2L, midR = lp2R;
             float highL = midHiL - midL, highR = midHiR - midR;
@@ -79,36 +73,35 @@ public:
                 float xL = bandsL[b], xR = bandsR[b];
                 float level = 0.5f * (std::abs (xL) + std::abs (xR));
 
-                // envelope follower
                 float coeff = (level > env[(size_t) b]) ? atkCoeff : relCoeff;
                 env[(size_t) b] += coeff * (level - env[(size_t) b]);
                 float e = juce::jmax (1.0e-6f, env[(size_t) b]);
 
-                // downward compression above threshold
+                const float thresh = juce::Decibels::decibelsToGain (
+                    juce::jlimit (-60.f, 0.f, thresholdDb + thrOffDb[b]));
+                const float invRatio = invRatioBase / ratioMul[b];
+
                 float grDown = 1.f;
                 if (e > thresh)
                 {
                     float over = e / thresh;
                     float compressed = std::pow (over, invRatio - 1.f);
-                    grDown = juce::jlimit (0.05f, 1.f, compressed);
+                    grDown = juce::jlimit (0.04f, 1.f, compressed);
                     grDown = 1.f - (1.f - grDown) * downAmt;
                 }
 
-                // upward expansion below threshold (OTT character)
                 float grUp = 1.f;
                 if (e < thresh && upAmt > 1e-4f)
                 {
                     float under = e / thresh;
-                    // gentle lift of quiet material
-                    grUp = 1.f + (1.f - under) * upAmt * 1.4f;
-                    grUp = juce::jmin (grUp, 2.5f);
+                    grUp = 1.f + (1.f - under) * upAmt * 1.6f;
+                    grUp = juce::jmin (grUp, 3.0f);
                 }
 
                 float gr = grDown * grUp;
                 grSmooth[(size_t) b] += 0.15f * (gr - grSmooth[(size_t) b]);
                 float g = grSmooth[(size_t) b];
 
-                // meter: amount of reduction (downward only)
                 float red = juce::jlimit (0.f, 1.f, 1.f - juce::jmin (1.f, grDown));
                 grMeter[(size_t) b] += 0.08f * (red - grMeter[(size_t) b]);
 
@@ -116,7 +109,6 @@ public:
                 outR += xR * g;
             }
 
-            // soft makeup + mix
             const float makeup = 1.f + depth * 0.25f;
             outL *= makeup; outR *= makeup;
             buffer.setSample (0, i, L * (1.f - mix) + outL * mix);
