@@ -224,19 +224,30 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     themeBox.setSelectedId (1); // default CYBER
     themeBox.onChange = [this] { applyHeroFromTheme(); repaint(); };
     addAndMakeVisible (themeBox);
+    bgSwapBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
+    bgSwapBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
+    bgSwapBtn.setTooltip ("Swap background image");
+    bgSwapBtn.onClick = [this]
+    {
+        // toggle between CYBER (1) and NEON (3) → different BGs
+        themeBox.setSelectedId (themeBox.getSelectedId() == 1 ? 3 : 1, juce::sendNotification);
+    };
+    addAndMakeVisible (bgSwapBtn);
 
     // Collapse PRESET list only (hero stays visible)
-    presetToggle.setButtonText ("<<");
+    presetToggle.setButtonText (juce::CharPointer_UTF8 ("â")); // ◀
     presetToggle.setClickingTogglesState (true);
-    presetToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
-    presetToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2a1040));
+    presetToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
+    presetToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff3a1060));
     presetToggle.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
     presetToggle.setColour (juce::TextButton::textColourOnId, juce::Colour (0xffffd700));
-    presetToggle.setTooltip ("Collapse / expand preset list");
+    presetToggle.setTooltip ("Collapse / expand presets");
     presetToggle.onClick = [this]
     {
         presetCollapsed = presetToggle.getToggleState();
-        presetToggle.setButtonText (presetCollapsed ? ">>" : "<<");
+        presetToggle.setButtonText (presetCollapsed
+            ? juce::CharPointer_UTF8 ("â¶")   // ▶
+            : juce::CharPointer_UTF8 ("â")); // ◀
         resized();
         repaint();
     };
