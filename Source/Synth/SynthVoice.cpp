@@ -98,27 +98,58 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         s1L *= invN; s1R *= invN;
         (void) osc1.processSample (pmCarrier, am);
 
-        float sampleL = s1L, sampleR = s1R;
+        // Per-osc levels before filter route
+        float o1L = s1L, o1R = s1R;
+        float o2L = s2L, o2R = s2R;
+        float o3L = s3L, o3R = s3R;
         if (rm2to1 > 1.0e-4f)
         {
-            sampleL = s1L * (1.0f - rm2to1) + (s1L * s2Mono) * rm2to1;
-            sampleR = s1R * (1.0f - rm2to1) + (s1R * s2Mono) * rm2to1;
+            o1L = s1L * (1.0f - rm2to1) + (s1L * s2Mono) * rm2to1;
+            o1R = s1R * (1.0f - rm2to1) + (s1R * s2Mono) * rm2to1;
         }
-        // blend OSC2/OSC3 stereo images
-        sampleL += s2L * 0.22f + s3L * 0.18f;
-        sampleR += s2R * 0.22f + s3R * 0.18f;
+        // Sub oscillator (square-ish at -1 oct)
+        float subL = 0.f, subR = 0.f;
+        if (subLevel > 1.0e-4f)
+        {
+            const float subHz = noteToHz (currentMidiNote, -1, 0, 0);
+            subPhase += subHz / (float) getSampleRate();
+            if (subPhase >= 1.f) subPhase -= 1.f;
+            const float sq = subPhase < 0.5f ? 1.f : -1.f;
+            subL = subR = sq * subLevel * 0.35f;
+        }
+        // Noise
+        float nL = 0.f, nR = 0.f;
+        if (noiseLevel > 1.0e-4f)
+        {
+            const float n = (noiseRng.nextFloat() * 2.f - 1.f) * noiseLevel * 0.25f;
+            nL = nR = n;
+        }
+
+        // Filter route: which oscs go through filter
+        const bool f1 = (filterRoute == 0 || filterRoute == 1 || filterRoute == 4 || filterRoute == 5);
+        const bool f2 = (filterRoute == 0 || filterRoute == 2 || filterRoute == 4 || filterRoute == 6);
+        const bool f3 = (filterRoute == 0 || filterRoute == 3 || filterRoute == 5 || filterRoute == 6);
+        float thruL = 0.f, thruR = 0.f, dryL = 0.f, dryR = 0.f;
+        if (f1) { thruL += o1L; thruR += o1R; } else { dryL += o1L; dryR += o1R; }
+        if (f2) { thruL += o2L * 0.22f; thruR += o2R * 0.22f; } else { dryL += o2L * 0.22f; dryR += o2R * 0.22f; }
+        if (f3) { thruL += o3L * 0.18f; thruR += o3R * 0.18f; } else { dryL += o3L * 0.18f; dryR += o3R * 0.18f; }
+        // sub + noise always filtered when route=All, else dry
+        if (filterRoute == 0) { thruL += subL + nL; thruR += subR + nR; }
+        else { dryL += subL + nL; dryR += subR + nR; }
 
         const float env = adsr.getNextSample();
         const float lfoVal = lfo.process();
         const float modCutoff = baseCutoff * std::pow (2.0f, (env * filterEnvAmt + lfoVal) * 3.0f - 1.5f);
         cutoffSmoother.setTarget (modCutoff);
         filter.setCutoff (cutoffSmoother.getNext());
-        float mid = filter.process (0.5f * (sampleL + sampleR));
-        float side = 0.5f * (sampleL - sampleR) * 1.15f;
+        float mid = filter.process (0.5f * (thruL + thruR));
+        float side = 0.5f * (thruL - thruR) * 1.15f;
         mid = std::tanh (mid * 1.25f);
+        float sampleL = mid + side + dryL;
+        float sampleR = mid - side + dryR;
         const float g = env * currentVelocity * 0.42f;
-        sampleL = (mid + side) * g;
-        sampleR = (mid - side) * g;
+        sampleL *= g;
+        sampleR *= g;
 
         left[i] += sampleL;
         if (right != nullptr)
