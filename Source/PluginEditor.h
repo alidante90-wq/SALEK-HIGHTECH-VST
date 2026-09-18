@@ -267,6 +267,7 @@ private:
     juce::OwnedArray<FxMonitor> fxMonitors;
     juce::ToggleButton fxBypass[8];
     juce::TextButton presetToggle { "<<" }; // collapses preset list only
+    juce::TextButton bgSwapBtn { "BG" }; // swap background art
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
