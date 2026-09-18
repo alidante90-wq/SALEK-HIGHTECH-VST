@@ -42,8 +42,11 @@ public:
         auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
 
-        g.setColour(fill.withAlpha(0.22f));
-        g.fillEllipse(cx - radius - 4.f, cy - radius - 4.f, (radius + 4.f) * 2.f, (radius + 4.f) * 2.f);
+        // Glow/shine grows with knob value (closed = dim, open = bright)
+        const float glow = juce::jlimit (0.f, 1.f, sliderPos);
+        g.setColour(fill.withAlpha (0.08f + glow * 0.42f));
+        g.fillEllipse(cx - radius - 4.f - glow * 3.f, cy - radius - 4.f - glow * 3.f,
+                       (radius + 4.f + glow * 3.f) * 2.f, (radius + 4.f + glow * 3.f) * 2.f);
 
         g.setColour(juce::Colours::black.withAlpha(0.5f));
         g.fillEllipse(cx - radius + 2.f, cy - radius + 3.f, radius * 2.f, radius * 2.f);
@@ -62,24 +65,24 @@ public:
             float on = (t <= sliderPos + 0.02f) ? 1.0f : 0.0f;
             float lx = cx + std::cos(a - juce::MathConstants<float>::halfPi) * (radius + 5.5f);
             float ly = cy + std::sin(a - juce::MathConstants<float>::halfPi) * (radius + 5.5f);
-            g.setColour(on > 0.5f ? fill.withAlpha(0.95f) : juce::Colour(0xff1a1028));
+            g.setColour(on > 0.5f ? fill.withAlpha(0.55f + glow * 0.45f) : juce::Colour(0xff1a1028));
             g.fillEllipse(lx - 2.0f, ly - 2.0f, 4.0f, 4.0f);
             if (on > 0.5f)
             {
-                g.setColour(fill.withAlpha(0.35f));
-                g.fillEllipse(lx - 3.5f, ly - 3.5f, 7.0f, 7.0f);
+                g.setColour(fill.withAlpha(0.15f + glow * 0.45f));
+                g.fillEllipse(lx - 3.5f - glow * 1.5f, ly - 3.5f - glow * 1.5f, 7.0f + glow * 3.f, 7.0f + glow * 3.f);
             }
         }
 
-        g.setColour(fill.withAlpha(0.7f));
-        g.drawEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.6f);
+        g.setColour(fill.withAlpha(0.35f + glow * 0.55f));
+        g.drawEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.4f + glow * 1.2f);
 
         juce::Path arc;
         arc.addCentredArc(cx, cy, radius * 0.72f, radius * 0.72f, 0.f, rotaryStartAngle, angle, true);
-        g.setColour(fill.withAlpha(0.3f));
-        g.strokePath(arc, juce::PathStrokeType(5.5f));
-        g.setColour(fill);
-        g.strokePath(arc, juce::PathStrokeType(2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour(fill.withAlpha(0.15f + glow * 0.35f));
+        g.strokePath(arc, juce::PathStrokeType(4.5f + glow * 3.f));
+        g.setColour(fill.withAlpha(0.65f + glow * 0.35f));
+        g.strokePath(arc, juce::PathStrokeType(2.0f + glow * 1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
         juce::Path pointer;
         auto pointerLength = radius * 0.72f;
