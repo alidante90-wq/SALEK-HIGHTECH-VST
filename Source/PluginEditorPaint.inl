@@ -214,7 +214,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0.f, H * 0.55f, W, H * 0.35f);
     }
 
-        g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
+            // ---- GITI BY SALEK logo (bottom-left, always visible) ----
+    if (logoImg.isValid())
+    {
+        const float lw = 140.f, lh = 56.f;
+        auto logoArea = juce::Rectangle<float> (10.f, H - lh - 28.f, lw, lh);
+        g.setOpacity (0.92f);
+        g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
+        g.setOpacity (1.f);
+    }
+
+    g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
     g.setColour (gold.withAlpha (0.6f + pulse * 0.4f));
     g.setFont (juce::FontOptions (11.0f));
     g.drawText ("ISATIS", W - 100.f, H - 90.f, 90.f, 16.f, juce::Justification::centredRight);
