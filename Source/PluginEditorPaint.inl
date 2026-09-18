@@ -228,20 +228,29 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0.f, 0.f, W, 40.f);
     }
 
-// ---- GITI BY SALEK logo (bottom-left, always visible) ----
+// ---- GITI BY SALEK logo (TOP-LEFT, large) ----
     if (logoImg.isValid())
     {
-        const float lw = 140.f, lh = 56.f;
-        auto logoArea = juce::Rectangle<float> (10.f, H - lh - 28.f, lw, lh);
-        g.setOpacity (0.92f);
+        const float lw = 200.f, lh = 80.f;
+        auto logoArea = juce::Rectangle<float> (12.f, 6.f, lw, lh);
+        // soft glow under logo
+        g.setColour (cyan.withAlpha (0.12f + pulse * 0.08f));
+        g.fillEllipse (logoArea.expanded (8.f).withHeight (logoArea.getHeight() * 0.6f));
+        g.setOpacity (0.98f);
         g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
         g.setOpacity (1.f);
     }
+    else
+    {
+        g.setColour (cyan);
+        g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+        g.drawText ("SALEK HIGHTECH", 16, 8, 280, 28, juce::Justification::centredLeft);
+    }
 
-    g.drawText ("SALEK HIGHTECH", 20, 4, 340, 24, juce::Justification::centredLeft);
-    g.setColour (gold.withAlpha (0.6f + pulse * 0.4f));
-    g.setFont (juce::FontOptions (11.0f));
-    g.drawText ("ISATIS", W - 100.f, H - 90.f, 90.f, 16.f, juce::Justification::centredRight);
+    // BG name badge (top-right of keyboard area is cluttered — keep subtle top)
+    g.setColour (gold.withAlpha (0.55f + pulse * 0.25f));
+    g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    g.drawText (heroUsesBg2 ? "BG: SALEK" : "BG: ISATIS", W - 110.f, 8.f, 100.f, 16.f, juce::Justification::centredRight);
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
     if (presetCollapsed)
