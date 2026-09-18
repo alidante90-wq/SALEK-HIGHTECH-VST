@@ -78,13 +78,6 @@ inline juce::Image anyEmbedded()
         auto img = fromBinaryName (n);
         if (img.isValid()) return img;
     }
-    for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
-    {
-        int sz = 0;
-        const char* data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], sz);
-        auto img = fromMemory (data, sz);
-        if (img.isValid()) return img;
-    }
     return {};
 }
 #else
@@ -110,12 +103,10 @@ inline juce::Image loadToronowla()
 #if SALEK_HAS_BINARY_DATA
     auto img = fromBinaryName ("wp5627062_jpg");
     if (img.isValid()) return img;
-    img = fromBinaryName ("b4ef89321df2b8f2c7bd314d352b8f42_jpg");
-    if (img.isValid()) return img;
 #else
     juce::Image img;
 #endif
-    img = fromDisk ({ "wp5627062.jpg", "toronowla.png", "b4ef89321df2b8f2c7bd314d352b8f42.jpg" });
+    img = fromDisk ({ "wp5627062.jpg", "toronowla.png" });
     return img.isValid() ? img : loadLogo();
 }
 
@@ -148,8 +139,6 @@ inline juce::Image loadCyanGirl()
 #if SALEK_HAS_BINARY_DATA
     auto img = fromBinaryName ("purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhqfullview_jpg");
     if (img.isValid()) return img;
-    img = fromBinaryName ("OIP_webp");
-    if (img.isValid()) return img;
 #else
     juce::Image img;
 #endif
@@ -169,7 +158,6 @@ inline juce::Image loadBgIsatis()
     return img.isValid() ? img : loadToronowla();
 }
 
-/** BG version 2 — anime girl / red cyber city */
 inline juce::Image loadBgSalek()
 {
 #if SALEK_HAS_BINARY_DATA
@@ -192,6 +180,31 @@ inline juce::Image loadLogoGiti()
 #endif
     img = fromDisk ({ "logo_giti.png", "LOGO.png" });
     return img;
+}
+
+/** New character portraits (user-supplied PNGs in Source/Assets) */
+inline juce::Image loadCharPurple()  { return fromDisk ({ "char_purple_latex.png", "char_purple.png" }); }
+inline juce::Image loadCharCatgirl() { return fromDisk ({ "char_catgirl.png" }); }
+inline juce::Image loadCharFox()     { return fromDisk ({ "char_foxgirl.png", "char_fox.png" }); }
+inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png", "char_cyber.png" }); }
+inline juce::Image loadCharGun()     { return fromDisk ({ "char_gun.png" }); }
+inline juce::Image loadCharApron()   { return fromDisk ({ "char_apron.png" }); }
+inline juce::Image loadCharWhite()   { return fromDisk ({ "char_white_suit.png", "char_white.png" }); }
+
+/** Side portrait for MAIN left / MOD / MAGIC — cycles available chars */
+inline juce::Image loadCharPortrait (int index = 0)
+{
+    juce::Image imgs[] = {
+        loadCharCyber(), loadCharPurple(), loadCharCatgirl(), loadCharFox(),
+        loadCharGun(), loadCharApron(), loadCharWhite(), loadCyanGirl(), loadFace()
+    };
+    const int n = (int) (sizeof (imgs) / sizeof (imgs[0]));
+    for (int k = 0; k < n; ++k)
+    {
+        auto& im = imgs[(index + k) % n];
+        if (im.isValid()) return im;
+    }
+    return loadFace();
 }
 
 inline juce::Image loadHero() { return loadBgIsatis(); }
