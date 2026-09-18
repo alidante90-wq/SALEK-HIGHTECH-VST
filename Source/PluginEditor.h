@@ -230,6 +230,7 @@ public:
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
     void mouseDown (const juce::MouseEvent&) override;
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;
@@ -255,6 +256,7 @@ private:
     juce::ComboBox themeBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
+    juce::ComboBox filterRouteBox, voiceModeBox;
     juce::ComboBox distModeBox, reverbModeBox;
     juce::ToggleButton arpOn { "ARP ON" }, seqOn { "SEQ ON" };
     juce::TextButton prevPreset { "<" }, nextPreset { ">" }, initBtn { "INIT" }, savePresetBtn { "SAVE" }, loadPresetBtn { "LOAD" }, bankBtn { "BANK" };
