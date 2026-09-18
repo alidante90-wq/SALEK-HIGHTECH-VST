@@ -19,6 +19,21 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setUnison((int)g("unison_voices"));
     synthEngine.setUnisonDetune(g("unison_detune"));
     synthEngine.setUnisonSpread(g("unison_spread"));
+    // Per-osc unison (falls back to global if left at default 1)
+    {
+        auto u1 = (int) g("osc1_unison"); auto u2 = (int) g("osc2_unison"); auto u3 = (int) g("osc3_unison");
+        auto ug = (int) g("unison_voices");
+        if (u1 <= 1) u1 = ug; if (u2 <= 1) u2 = ug; if (u3 <= 1) u3 = ug;
+        auto d1 = g("osc1_udet"); auto d2 = g("osc2_udet"); auto d3 = g("osc3_udet");
+        auto dg = g("unison_detune");
+        if (d1 < 0.01f) d1 = dg; if (d2 < 0.01f) d2 = dg; if (d3 < 0.01f) d3 = dg;
+        auto s1 = g("osc1_uspread"); auto s2 = g("osc2_uspread"); auto s3 = g("osc3_uspread");
+        auto sg = g("unison_spread");
+        if (s1 < 0.01f) s1 = sg; if (s2 < 0.01f) s2 = sg; if (s3 < 0.01f) s3 = sg;
+        synthEngine.setOsc1Unison(u1,d1,s1);
+        synthEngine.setOsc2Unison(u2,d2,s2);
+        synthEngine.setOsc3Unison(u3,d3,s3);
+    }
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
     float cut = g("filter_cutoff");
