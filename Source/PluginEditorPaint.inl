@@ -250,7 +250,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     // BG name badge (top-right of keyboard area is cluttered — keep subtle top)
     g.setColour (gold.withAlpha (0.55f + pulse * 0.25f));
     g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-    g.drawText (heroUsesBg2 ? "BG: SALEK" : "BG: ISATIS", W - 110.f, 8.f, 100.f, 16.f, juce::Justification::centredRight);
+    g.drawText (themeId <= 1 ? "BG: ISATIS" : "BG: SALEK", W - 110.f, 8.f, 100.f, 16.f, juce::Justification::centredRight);
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
     if (presetCollapsed)
