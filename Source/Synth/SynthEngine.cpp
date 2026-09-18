@@ -70,6 +70,10 @@ void SynthEngine::setFilterResonance (float v) { forEachVoice ([&] (SynthVoice& 
 void SynthEngine::setFilterDrive (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterDrive (v); }); }
 void SynthEngine::setFilterMode (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterMode (v); }); }
 void SynthEngine::setFilterEnvAmt (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterEnvAmt (v); }); }
+void SynthEngine::setNoiseLevel (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setNoiseLevel (v); }); }
+void SynthEngine::setSubLevel (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setSubLevel (v); }); }
+void SynthEngine::setFilterRoute (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFilterRoute (v); }); }
+void SynthEngine::setGlide (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setGlide (v); }); }
 void SynthEngine::setAmpAttack (float v)  { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpAttack (v); }); }
 void SynthEngine::setAmpDecay (float v)   { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpDecay (v); }); }
 void SynthEngine::setAmpSustain (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setAmpSustain (v); }); }
