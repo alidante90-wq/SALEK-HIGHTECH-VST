@@ -61,7 +61,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         mainTab.addAndMakeVisible (oscTab);
         mainTab.addAndMakeVisible (filterTab);
         mainTab.addAndMakeVisible (envTab);
-        mainTab.addAndMakeVisible (presetTab);
+        // presetTab is global left column — parent is editor (not mainTab)
+        addAndMakeVisible (presetTab);
         if (filterDisplay != nullptr) filterTab.addAndMakeVisible (*filterDisplay);
         if (adsrDisplay != nullptr) envTab.addAndMakeVisible (*adsrDisplay);
 
@@ -80,9 +81,16 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (oscTab, "osc3_level", "LVL", C); addKnob (oscTab, "osc3_table", "TABLE", M);
         addKnob (oscTab, "osc3_warp", "WARP", O); addKnob (oscTab, "osc3_fold", "FOLD", M);
         addKnob (oscTab, "osc3_drive", "DRIVE", O); addKnob (oscTab, "osc3_octave", "OCT", V);
-        addKnob (oscTab, "unison_voices", "UNISON", C);
-        addKnob (oscTab, "unison_detune", "U DET", M);
-        addKnob (oscTab, "unison_spread", "SPREAD", O);
+        // Per-osc unison row (each column gets its own UNI / DET / SPR)
+        addKnob (oscTab, "osc1_unison", "UNI", C);
+        addKnob (oscTab, "osc1_udet", "DET", M);
+        addKnob (oscTab, "osc1_uspread", "SPR", O);
+        addKnob (oscTab, "osc2_unison", "UNI", C);
+        addKnob (oscTab, "osc2_udet", "DET", M);
+        addKnob (oscTab, "osc2_uspread", "SPR", O);
+        addKnob (oscTab, "osc3_unison", "UNI", C);
+        addKnob (oscTab, "osc3_udet", "DET", M);
+        addKnob (oscTab, "osc3_uspread", "SPR", O);
 
         #include "PluginEditorOscMonitors.inl"
 
