@@ -42,6 +42,7 @@ juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/OIP.webp"
     "Source/Assets/bg_isatis.jpg"
     "Source/Assets/bg_salek.jpg"
+    "Source/Assets/logo_giti.png"
 )
 
 target_sources(SALEK_HIGHTECH PRIVATE
