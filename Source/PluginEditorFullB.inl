@@ -201,8 +201,10 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         auto b = mainTab.getLocalBounds().reduced (2);
         // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 260;
+        const int presetW = presetCollapsed ? 28 : 250;
+        // Flush left like reference screenshots
         presetTab.setBounds (b.removeFromLeft (presetW));
+        presetTab.toFront (false);
         envTab.setBounds (b.removeFromBottom (120));
         filterTab.setBounds (b.removeFromRight (220));
         oscTab.setBounds (b);
@@ -269,19 +271,27 @@ void SalekHightechAudioProcessorEditor::resized()
             auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
                 filterDisplay->setBounds (fr.removeFromTop (juce::jlimit (50, 80, fr.getHeight() / 3)).reduced (2));
-            filterMode.setBounds (fr.removeFromTop (24).reduced (1));
+            auto modeRow = fr.removeFromTop (24);
+            filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
+            filterRouteBox.setBounds (modeRow.reduced (1));
             place (fr, knobs, 21, 4, 2);
         }
 
         {
             auto er = envTab.getLocalBounds().reduced (2);
-            // Compact ADSR curve on the left; large knobs on the right (cleaner)
+            // ADSR curve + ADSR knobs LEFT; glide/voices/noise/sub + voice mode RIGHT
             if (adsrDisplay != nullptr)
             {
-                auto curve = er.removeFromLeft (juce::jmin (200, er.getWidth() / 3));
+                auto curve = er.removeFromLeft (juce::jmin (160, er.getWidth() / 4));
                 adsrDisplay->setBounds (curve.reduced (2));
             }
-            place (er, knobs, 25, 4, 4);
+            auto adsrKnobs = er.removeFromLeft (juce::jmin (280, er.getWidth() / 2));
+            place (adsrKnobs, knobs, 25, 4, 4);
+            voiceModeBox.setBounds (er.removeFromTop (22).reduced (1));
+            // last 4 knobs: glide, voices, noise, sub (registered at end)
+            const int extraStart = (int) knobs.size() - 4;
+            if (extraStart >= 0)
+                place (er, knobs, extraStart, 4, 4);
         }
     }
 
@@ -494,6 +504,37 @@ void SalekHightechAudioProcessorEditor::mouseDown (const juce::MouseEvent& e)
 {
     if (e.x >= 8 && e.x <= 222 && e.y >= 46 && e.y <= 210)
         cycleHero();
+}
+
+void SalekHightechAudioProcessorEditor::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
+{
+    // Mouse-wheel over any ComboBox changes selection (filter mode, shapes, themes…)
+    auto tryWheel = [&] (juce::ComboBox& box) -> bool
+    {
+        if (! box.isVisible() || ! box.getBounds().contains (e.getEventRelativeTo (&box).getPosition()))
+            return false;
+        const int n = box.getNumItems();
+        if (n <= 0) return false;
+        int idx = box.getSelectedItemIndex();
+        if (idx < 0) idx = 0;
+        idx += (wheel.deltaY > 0.0f ? -1 : 1);
+        idx = juce::jlimit (0, n - 1, idx);
+        box.setSelectedItemIndex (idx, juce::sendNotificationSync);
+        return true;
+    };
+    if (tryWheel (filterMode)) return;
+    if (tryWheel (filterRouteBox)) return;
+    if (tryWheel (voiceModeBox)) return;
+    if (tryWheel (osc1ShapeBox)) return;
+    if (tryWheel (osc2ShapeBox)) return;
+    if (tryWheel (osc3ShapeBox)) return;
+    if (tryWheel (themeBox)) return;
+    if (tryWheel (lfo1WaveBox)) return;
+    if (tryWheel (lfo2WaveBox)) return;
+    if (tryWheel (lfo3WaveBox)) return;
+    if (tryWheel (distModeBox)) return;
+    if (tryWheel (reverbModeBox)) return;
+    juce::Component::mouseWheelMove (e, wheel);
 }
 
 void SalekHightechAudioProcessorEditor::applyUiLanguage()
