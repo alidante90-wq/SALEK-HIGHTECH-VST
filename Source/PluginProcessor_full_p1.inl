@@ -36,6 +36,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("osc1_fine","OSC1 Fine",-100,100,0); F("osc2_fine","OSC2 Fine",-100,100,0); F("osc3_fine","OSC3 Fine",-100,100,0);
     F("osc1_detune","OSC1 Detune",-50,50,0); F("osc2_detune","OSC2 Detune",-50,50,0); F("osc3_detune","OSC3 Detune",-50,50,0);
     I("unison_voices","Unison",1,7,1); F("unison_detune","Uni Detune",0,50,12); F("unison_spread","Uni Spread",0,1,0.7f);
+    I("osc1_unison","OSC1 Unison",1,7,1); F("osc1_udet","OSC1 UDet",0,50,12); F("osc1_uspread","OSC1 USpr",0,1,0.7f);
+    I("osc2_unison","OSC2 Unison",1,7,1); F("osc2_udet","OSC2 UDet",0,50,12); F("osc2_uspread","OSC2 USpr",0,1,0.7f);
+    I("osc3_unison","OSC3 Unison",1,7,1); F("osc3_udet","OSC3 UDet",0,50,12); F("osc3_uspread","OSC3 USpr",0,1,0.7f);
     F("fm_2to1","FM 2to1",0,1,0); F("fm_3to1","FM 3to1",0,1,0); F("fm_3to2","FM 3to2",0,1,0);
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
     p.push_back (std::make_unique<juce::AudioParameterFloat>(
