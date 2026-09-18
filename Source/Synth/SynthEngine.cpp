@@ -90,8 +90,8 @@ void SynthEngine::setUnisonSpread (float v) { forEachVoice ([&] (SynthVoice& voi
 void SynthEngine::setScaleMode (int m) { forEachVoice ([&] (SynthVoice& voice) { voice.setScaleMode (m); }); }
 void SynthEngine::setKoronCents (float c) { forEachVoice ([&] (SynthVoice& voice) { voice.setKoronCents (c); }); }
 
-} // namespace salek
-
 void SynthEngine::setOsc1Unison (int v, float d, float s) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Unison (v, d, s); }); }
 void SynthEngine::setOsc2Unison (int v, float d, float s) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Unison (v, d, s); }); }
 void SynthEngine::setOsc3Unison (int v, float d, float s) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Unison (v, d, s); }); }
+
+} // namespace salek
