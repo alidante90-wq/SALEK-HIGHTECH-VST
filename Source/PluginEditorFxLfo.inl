@@ -24,6 +24,7 @@ public:
         eqBand[1] = juce::jlimit (-1.f, 1.f, mid);
         eqBand[2] = juce::jlimit (-1.f, 1.f, hi);
     }
+    void setThresholdNorm (float t) { thrNorm = juce::jlimit (0.f, 1.f, t); }
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -58,6 +59,14 @@ public:
                 g.setColour (cols[b]);
                 g.drawText (labs[b], (int) bar.getX(), (int) plot.getBottom() - 10, (int) bw, 10,
                             juce::Justification::centred);
+            }
+            // Threshold guide line (from C THR param)
+            {
+                float ty = plot.getBottom() - 10.f - thrNorm * (plot.getHeight() - 12.f);
+                g.setColour (juce::Colours::white.withAlpha (0.55f));
+                g.drawHorizontalLine ((int) ty, plot.getX(), plot.getRight());
+                g.setFont (juce::FontOptions (7.f));
+                g.drawText ("THR", plot.getX(), (int) ty - 10, 24, 10, juce::Justification::centredLeft);
             }
             return;
         }
@@ -133,7 +142,7 @@ public:
 private:
     Kind kind = Chorus;
     float phase = 0.f, level = 0.35f;
-    float bandGR[3] {}, dispGR[3] {}, eqBand[3] {};
+    float bandGR[3] {}, dispGR[3] {}, eqBand[3] {}, thrNorm { 0.5f };
     juce::Colour accent { 0xff00e8ff };
 };
 
@@ -245,7 +254,7 @@ public:
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = move 2 pts  |  Alt = soft",
+        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = single point  |  Alt = soft",
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -282,16 +291,8 @@ private:
 
         if (e.mods.isShiftDown())
         {
-            // Shift = move only ±1 neighbour (max 2 points total) up/down together
-            float snap[N];
-            for (int i = 0; i < N; ++i) snap[i] = points[i];
-            const float delta = v - snap[idx];
-            for (int d = -1; d <= 1; ++d)
-            {
-                int j = idx + d;
-                if (j < 0 || j >= N) continue;
-                writePoint (j, snap[j] + delta);
-            }
+            // Shift = move ONLY the point under cursor (no neighbours → no kinks)
+            writePoint (idx, v);
         }
         else if (e.mods.isAltDown())
         {
