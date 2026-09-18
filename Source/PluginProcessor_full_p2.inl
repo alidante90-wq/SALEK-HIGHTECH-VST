@@ -133,7 +133,21 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         arpeggiator.setRateDivisor ((int) apvts.getRawParameterValue("arp_rate")->load());
         arpeggiator.setOctaves ((int) apvts.getRawParameterValue("arp_octaves")->load());
-        arpeggiator.process(buffer.getNumSamples(), routed);
+        // Feed held notes into arp (was missing — arp never received noteOn)
+        juce::MidiBuffer arpIn;
+        for (const auto metadata : routed)
+        {
+            const auto msg = metadata.getMessage();
+            if (msg.isNoteOn())
+                arpeggiator.noteOn (msg.getNoteNumber(), msg.getFloatVelocity());
+            else if (msg.isNoteOff())
+                arpeggiator.noteOff (msg.getNoteNumber());
+            else
+                arpIn.addEvent (msg, metadata.samplePosition);
+        }
+        routed.clear();
+        routed.addEvents (arpIn, 0, buffer.getNumSamples(), 0);
+        arpeggiator.process (buffer.getNumSamples(), routed);
     }
 
     midi.swapWith (routed);
