@@ -75,6 +75,9 @@
             mon->setKind (kinds[i]);
             mon->setAccent (monCols[i]);
             mon->setLevel (0.4f);
+            if (kinds[i] == FxMonitor::Comp)
+                if (auto* p = dynamic_cast<juce::RangedAudioParameter*> (processor.getAPVTS().getParameter ("comp_threshold")))
+                    mon->bindThresholdParam (p);
             fxTab.addAndMakeVisible (mon);
 
             fxBypass[i].setButtonText ("BYP");
