@@ -395,13 +395,15 @@ void SalekHightechAudioProcessorEditor::resized()
     }
 
     {
-        // FX now 24 knobs (45..68), SEQ starts at 69
-        auto bounds = seqTab.getLocalBounds().reduced (8);
-        auto top = bounds.removeFromTop (52);
-        arpOn.setBounds (top.removeFromLeft (100).reduced (4));
-        seqOn.setBounds (top.removeFromLeft (100).reduced (4));
-        place (top.removeFromRight (360).reduced (4), knobs, 69, 3, 3);
-        bounds.removeFromTop (8);
+        // SEQ: ARP/SEQ toggles + rate knobs (indices: last 7 = 3 seq + 4 env extras)
+        auto bounds = seqTab.getLocalBounds().reduced (6);
+        auto top = bounds.removeFromTop (88);
+        auto toggles = top.removeFromLeft (120);
+        arpOn.setBounds (toggles.removeFromTop (36).reduced (2));
+        seqOn.setBounds (toggles.removeFromTop (36).reduced (2));
+        const int seqKnobStart = juce::jmax (0, (int) knobs.size() - 7);
+        place (top.reduced (4), knobs, seqKnobStart, 3, 3);
+        bounds.removeFromTop (4);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
     }
