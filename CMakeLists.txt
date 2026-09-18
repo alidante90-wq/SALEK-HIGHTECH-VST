@@ -33,13 +33,8 @@ juce_add_plugin(SALEK_HIGHTECH
 
 juce_generate_juce_header(SALEK_HIGHTECH)
 
+# Slim binary assets — only active UI backgrounds + logo (faster generate / smaller binary)
 juce_add_binary_data(SalekBinaryAssets SOURCES
-    "Source/Assets/face.png"
-    "Source/Assets/lian.png"
-    "Source/Assets/wp5627062.jpg"
-    "Source/Assets/b4ef89321df2b8f2c7bd314d352b8f42.jpg"
-    "Source/Assets/purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg"
-    "Source/Assets/OIP.webp"
     "Source/Assets/bg_isatis.jpg"
     "Source/Assets/bg_salek.jpg"
     "Source/Assets/logo_giti.png"
