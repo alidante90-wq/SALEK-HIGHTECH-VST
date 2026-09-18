@@ -29,6 +29,10 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setFilterResonance(juce::jlimit(0.f,1.f, g("filter_reso")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterReso)*0.5f));
     synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(g("filter_env"));
     synthEngine.setFilterMode((int)g("filter_mode"));
+    synthEngine.setFilterRoute((int)g("filter_route"));
+    synthEngine.setNoiseLevel(g("noise_level"));
+    synthEngine.setSubLevel(g("sub_level"));
+    synthEngine.setGlide(g("glide"));
     synthEngine.setAmpAttack(g("amp_attack")); synthEngine.setAmpDecay(g("amp_decay"));
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
