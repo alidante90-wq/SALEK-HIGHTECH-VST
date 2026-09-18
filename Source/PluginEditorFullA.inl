@@ -15,7 +15,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     startTimerHz (24); // calmer motion
 
     setLookAndFeel (&lnf);
-    logoImg   = SalekAssets::loadLogo();
+    logoImg   = SalekAssets::loadLogoGiti();
+    if (! logoImg.isValid()) logoImg = SalekAssets::loadLogo();
     faceImg   = SalekAssets::loadFace();
     lianImg   = SalekAssets::loadBgIsatis();   // BG v1 — ISATIS (man + cat)
     cyanImg   = SalekAssets::loadBgSalek();    // BG v2 — SALEK girl red city
@@ -303,29 +304,45 @@ void SalekHightechAudioProcessorEditor::addCombo (juce::Component& parent, juce:
 
 void SalekHightechAudioProcessorEditor::rebuildPresetRows()
 {
+    // Group by unique category (no duplicate headers)
     presetRows.clear();
-    juce::String lastCat;
+    juce::StringArray cats;
     const int n = processor.getNumPrograms();
     for (int i = 0; i < n; ++i)
     {
         auto name = processor.getProgramName (i);
         auto cat = name.upToFirstOccurrenceOf ("/", false, false);
-        if (cat == name) cat = "OTHER";
-        if (cat != lastCat)
-        {
-            PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1; h.category = cat;
-            presetRows.add (h);
-            lastCat = cat;
-        }
-        // Skip presets in collapsed categories
+        if (cat == name || cat.isEmpty()) cat = "OTHER";
+        if (! cats.contains (cat, false))
+            cats.add (cat);
+    }
+    // Prefer order matching mockup
+    const juce::StringArray preferred { "OTHER","KICK","BASS","ACID","LEAD","FM","PAD","RETRO","FX","SQUEEK","KEYS","PLUCK","ARP","SALEK","AMBIENT","USER" };
+    juce::StringArray ordered;
+    for (auto& p : preferred)
+        if (cats.contains (p, false)) ordered.add (p);
+    for (auto& c : cats)
+        if (! ordered.contains (c, false)) ordered.add (c);
+
+    for (auto& cat : ordered)
+    {
+        PresetRow h; h.isHeader = true; h.label = cat.toUpperCase(); h.programIndex = -1; h.category = cat;
+        presetRows.add (h);
         if (collapsedCats.contains (cat))
             continue;
-        PresetRow r; r.isHeader = false;
-        r.label = name.fromFirstOccurrenceOf ("/", false, false);
-        if (r.label.isEmpty()) r.label = name;
-        r.programIndex = i;
-        r.category = cat;
-        presetRows.add (r);
+        for (int i = 0; i < n; ++i)
+        {
+            auto name = processor.getProgramName (i);
+            auto c = name.upToFirstOccurrenceOf ("/", false, false);
+            if (c == name || c.isEmpty()) c = "OTHER";
+            if (c != cat) continue;
+            PresetRow r; r.isHeader = false;
+            r.label = name.fromFirstOccurrenceOf ("/", false, false);
+            if (r.label.isEmpty()) r.label = name;
+            r.programIndex = i;
+            r.category = cat;
+            presetRows.add (r);
+        }
     }
     presetList.updateContent();
     presetList.repaint();
