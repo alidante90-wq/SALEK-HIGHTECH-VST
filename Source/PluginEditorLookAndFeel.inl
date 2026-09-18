@@ -35,87 +35,63 @@ public:
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
         float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override
     {
-        auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)width, (float)height).reduced(2.0f);
-        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.42f;
+        auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)width, (float)height).reduced(3.0f);
+        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.40f;
         auto cx = bounds.getCentreX();
-        auto cy = bounds.getCentreY() - 2.0f;
+        auto cy = bounds.getCentreY() - 1.0f;
         auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
+        const float v = juce::jlimit (0.f, 1.f, sliderPos);
 
-        // Glow/shine grows with knob value (closed = dim, open = bright)
-        const float glow = juce::jlimit (0.f, 1.f, sliderPos);
-        g.setColour(fill.withAlpha (0.08f + glow * 0.42f));
-        g.fillEllipse(cx - radius - 4.f - glow * 3.f, cy - radius - 4.f - glow * 3.f,
-                       (radius + 4.f + glow * 3.f) * 2.f, (radius + 4.f + glow * 3.f) * 2.f);
+        // Soft body (no expanding shadow)
+        g.setColour (juce::Colours::black.withAlpha (0.45f));
+        g.fillEllipse (cx - radius + 1.5f, cy - radius + 2.5f, radius * 2.f, radius * 2.f);
+        juce::ColourGradient body (
+            juce::Colour (0xff2a1a40), cx, cy - radius,
+            juce::Colour (0xff0c0618), cx, cy + radius, false);
+        g.setGradientFill (body);
+        g.fillEllipse (cx - radius, cy - radius, radius * 2.f, radius * 2.f);
 
-        g.setColour(juce::Colours::black.withAlpha(0.5f));
-        g.fillEllipse(cx - radius + 2.f, cy - radius + 3.f, radius * 2.f, radius * 2.f);
+        // Thin rim
+        g.setColour (fill.withAlpha (0.25f + v * 0.35f));
+        g.drawEllipse (cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.4f);
 
-        juce::ColourGradient body(
-            juce::Colour(0xff2e2048), cx, cy - radius,
-            juce::Colour(0xff0a0614), cx, cy + radius, false);
-        g.setGradientFill(body);
-        g.fillEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f);
+        // Value arc — clean neon, thickness grows slightly with value
+        juce::Path arc;
+        arc.addCentredArc (cx, cy, radius * 0.78f, radius * 0.78f, 0.f, rotaryStartAngle, angle, true);
+        g.setColour (fill.withAlpha (0.2f + v * 0.25f));
+        g.strokePath (arc, juce::PathStrokeType (3.2f + v * 1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour (fill.brighter (0.15f * v));
+        g.strokePath (arc, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        const int numLeds = 12;
+        // LED ticks (only along arc, no blob glow)
+        const int numLeds = 11;
         for (int i = 0; i < numLeds; ++i)
         {
             float t = (float) i / (float) (numLeds - 1);
             float a = rotaryStartAngle + t * (rotaryEndAngle - rotaryStartAngle);
-            float on = (t <= sliderPos + 0.02f) ? 1.0f : 0.0f;
-            float lx = cx + std::cos(a - juce::MathConstants<float>::halfPi) * (radius + 5.5f);
-            float ly = cy + std::sin(a - juce::MathConstants<float>::halfPi) * (radius + 5.5f);
-            g.setColour(on > 0.5f ? fill.withAlpha(0.55f + glow * 0.45f) : juce::Colour(0xff1a1028));
-            g.fillEllipse(lx - 2.0f, ly - 2.0f, 4.0f, 4.0f);
-            if (on > 0.5f)
-            {
-                g.setColour(fill.withAlpha(0.15f + glow * 0.45f));
-                g.fillEllipse(lx - 3.5f - glow * 1.5f, ly - 3.5f - glow * 1.5f, 7.0f + glow * 3.f, 7.0f + glow * 3.f);
-            }
+            bool on = t <= sliderPos + 0.02f;
+            float lx = cx + std::cos (a - juce::MathConstants<float>::halfPi) * (radius + 4.5f);
+            float ly = cy + std::sin (a - juce::MathConstants<float>::halfPi) * (radius + 4.5f);
+            g.setColour (on ? fill.withAlpha (0.5f + v * 0.5f) : juce::Colour (0xff181028));
+            g.fillEllipse (lx - 1.6f, ly - 1.6f, 3.2f, 3.2f);
         }
 
-        g.setColour(fill.withAlpha(0.35f + glow * 0.55f));
-        g.drawEllipse(cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.4f + glow * 1.2f);
+        // Pointer
+        juce::Path needle;
+        needle.addRectangle (-1.2f, -radius * 0.72f, 2.4f, radius * 0.42f);
+        g.setColour (fill.brighter (0.3f));
+        g.fillPath (needle, juce::AffineTransform::rotation (angle).translated (cx, cy));
+        g.setColour (juce::Colours::white.withAlpha (0.85f));
+        g.fillEllipse (cx - 3.f, cy - 3.f, 6.f, 6.f);
+        g.setColour (fill.withAlpha (0.9f));
+        g.fillEllipse (cx - 1.8f, cy - 1.8f, 3.6f, 3.6f);
 
-        juce::Path arc;
-        arc.addCentredArc(cx, cy, radius * 0.72f, radius * 0.72f, 0.f, rotaryStartAngle, angle, true);
-        g.setColour(fill.withAlpha(0.15f + glow * 0.35f));
-        g.strokePath(arc, juce::PathStrokeType(4.5f + glow * 3.f));
-        g.setColour(fill.withAlpha(0.65f + glow * 0.35f));
-        g.strokePath(arc, juce::PathStrokeType(2.0f + glow * 1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-        juce::Path pointer;
-        auto pointerLength = radius * 0.72f;
-        pointer.addRectangle(-1.5f, -pointerLength, 3.0f, pointerLength * 0.85f);
-        g.setColour(juce::Colours::white.withAlpha(0.95f));
-        g.fillPath(pointer, juce::AffineTransform::rotation(angle).translated(cx, cy));
-
-        g.setColour(fill.withAlpha(0.9f));
-        g.fillEllipse(cx - 3.5f, cy - 3.5f, 7.f, 7.f);
-        g.setColour(juce::Colour(0xff0a0614));
-        g.fillEllipse(cx - 2.0f, cy - 2.0f, 4.f, 4.f);
-
-        float barY = cy + radius + 6.0f;
-        float barW = radius * 1.85f;
-        float barH = 5.5f;
-        float barX = cx - barW * 0.5f;
-        g.setColour(juce::Colour(0xff0a0614));
-        g.fillRoundedRectangle(barX - 1.0f, barY - 1.0f, barW + 2.0f, barH + 2.0f, 2.5f);
-        const int segs = 8;
-        float gap = 1.2f;
-        float segW = (barW - gap * (segs - 1)) / (float) segs;
-        for (int i = 0; i < segs; ++i)
-        {
-            float t0 = (float) i / (float) segs;
-            bool on = sliderPos > t0 + 0.02f;
-            float sx = barX + i * (segW + gap);
-            g.setColour(on ? fill.withAlpha(0.95f) : juce::Colour(0xff1a1028));
-            g.fillRoundedRectangle(sx, barY, segW, barH, 1.2f);
-            if (on)
-            {
-                g.setColour(fill.withAlpha(0.35f));
-                g.fillRoundedRectangle(sx - 0.5f, barY - 0.5f, segW + 1.0f, barH + 1.0f, 1.5f);
-            }
-        }
+        // Bottom value bar
+        auto bar = bounds.removeFromBottom (4.0f).reduced (6.0f, 0.0f);
+        g.setColour (juce::Colour (0xff1a1028));
+        g.fillRoundedRectangle (bar, 1.5f);
+        g.setColour (fill.withAlpha (0.85f));
+        g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * v), 1.5f);
     }
 };
