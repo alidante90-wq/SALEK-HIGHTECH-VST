@@ -43,18 +43,25 @@ public:
         auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
         const float v = juce::jlimit (0.f, 1.f, sliderPos);
 
-        // Soft body (no expanding shadow)
-        g.setColour (juce::Colours::black.withAlpha (0.45f));
-        g.fillEllipse (cx - radius + 1.5f, cy - radius + 2.5f, radius * 2.f, radius * 2.f);
+        // Deep 3D body + drop shadow
+        g.setColour (juce::Colours::black.withAlpha (0.55f));
+        g.fillEllipse (cx - radius + 2.f, cy - radius + 3.5f, radius * 2.f, radius * 2.f);
         juce::ColourGradient body (
-            juce::Colour (0xff2a1a40), cx, cy - radius,
-            juce::Colour (0xff0c0618), cx, cy + radius, false);
+            juce::Colour (0xff3a2858), cx - radius * 0.3f, cy - radius,
+            juce::Colour (0xff080410), cx + radius * 0.2f, cy + radius, false);
         g.setGradientFill (body);
         g.fillEllipse (cx - radius, cy - radius, radius * 2.f, radius * 2.f);
-
-        // Thin rim
-        g.setColour (fill.withAlpha (0.25f + v * 0.35f));
-        g.drawEllipse (cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.4f);
+        // Specular highlight (3D glass)
+        juce::ColourGradient spec (
+            juce::Colours::white.withAlpha (0.22f), cx - radius * 0.35f, cy - radius * 0.55f,
+            juce::Colours::transparentWhite, cx, cy + radius * 0.1f, true);
+        g.setGradientFill (spec);
+        g.fillEllipse (cx - radius * 0.85f, cy - radius * 0.85f, radius * 1.3f, radius * 0.9f);
+        // Neon rim
+        g.setColour (fill.withAlpha (0.3f + v * 0.45f));
+        g.drawEllipse (cx - radius, cy - radius, radius * 2.f, radius * 2.f, 1.6f);
+        g.setColour (fill.brighter (0.4f).withAlpha (0.15f + v * 0.25f));
+        g.drawEllipse (cx - radius - 1.5f, cy - radius - 1.5f, radius * 2.f + 3.f, radius * 2.f + 3.f, 1.f);
 
         // Value arc — clean neon, thickness grows slightly with value
         juce::Path arc;
