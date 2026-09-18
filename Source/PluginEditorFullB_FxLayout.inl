@@ -63,7 +63,9 @@
         // mini monitor
         if (mods[m].labelIdx < fxMonitors.size())
         {
-            auto mon = cell.removeFromLeft (48).reduced (2);
+            // COMP + EQ get wider advanced meters
+            const int monW = (mods[m].labelIdx == 4 || mods[m].labelIdx == 5) ? 72 : 48;
+            auto mon = cell.removeFromLeft (monW).reduced (2);
             fxMonitors[mods[m].labelIdx]->setBounds (mon);
             fxMonitors[mods[m].labelIdx]->setVisible (true);
             const int k0 = fxStart + mods[m].off;
