@@ -17,6 +17,13 @@ public:
         bandGR[1] = juce::jlimit (0.f, 1.f, mid);
         bandGR[2] = juce::jlimit (0.f, 1.f, hi);
     }
+    /** EQ shelf amounts -1..+1 mapped from ±12 dB */
+    void setEqBands (float lo, float mid, float hi)
+    {
+        eqBand[0] = juce::jlimit (-1.f, 1.f, lo);
+        eqBand[1] = juce::jlimit (-1.f, 1.f, mid);
+        eqBand[2] = juce::jlimit (-1.f, 1.f, hi);
+    }
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -29,7 +36,7 @@ public:
 
         if (kind == Comp)
         {
-            // OTT / Serum multi-band GR meters: 3 vertical bars (L/M/H)
+            // OTT multi-band GR — 3 bars L/M/H
             const float gap = 3.f;
             const float bw = (plot.getWidth() - gap * 2.f) / 3.f;
             juce::Colour cols[3] = {
@@ -38,20 +45,49 @@ public:
             const char* labs[3] = { "L", "M", "H" };
             for (int b = 0; b < 3; ++b)
             {
-                float gr = bandGR[(size_t) b];
-                // smooth display
-                dispGR[(size_t) b] += 0.2f * (gr - dispGR[(size_t) b]);
+                dispGR[(size_t) b] += 0.25f * (bandGR[(size_t) b] - dispGR[(size_t) b]);
                 float h = dispGR[(size_t) b] * (plot.getHeight() - 12.f);
                 auto bar = juce::Rectangle<float> (
                     plot.getX() + b * (bw + gap), plot.getBottom() - 10.f - h, bw, h);
-                g.setColour (cols[b].withAlpha (0.85f));
-                g.fillRoundedRectangle (bar, 2.f);
-                g.setColour (cols[b].withAlpha (0.25f));
+                g.setColour (cols[b].withAlpha (0.2f));
                 g.fillRoundedRectangle (
                     juce::Rectangle<float> (bar.getX(), plot.getY(), bw, plot.getHeight() - 10.f), 2.f);
+                g.setColour (cols[b].withAlpha (0.9f));
+                g.fillRoundedRectangle (bar, 2.f);
                 g.setFont (juce::FontOptions (8.f, juce::Font::bold));
                 g.setColour (cols[b]);
                 g.drawText (labs[b], (int) bar.getX(), (int) plot.getBottom() - 10, (int) bw, 10,
+                            juce::Justification::centred);
+            }
+            return;
+        }
+
+        if (kind == EQ)
+        {
+            // 3-band EQ: bipolar bars from centre (cut/boost)
+            const float gap = 3.f;
+            const float bw = (plot.getWidth() - gap * 2.f) / 3.f;
+            const float midY = plot.getCentreY();
+            const float maxH = plot.getHeight() * 0.42f;
+            juce::Colour cols[3] = {
+                juce::Colour (0xff00e8ff), juce::Colour (0xff39ff14), juce::Colour (0xffff2d9b)
+            };
+            const char* labs[3] = { "LO", "MID", "HI" };
+            g.setColour (juce::Colours::white.withAlpha (0.15f));
+            g.drawHorizontalLine ((int) midY, plot.getX(), plot.getRight());
+            for (int b = 0; b < 3; ++b)
+            {
+                float v = eqBand[(size_t) b];
+                float h = std::abs (v) * maxH;
+                float x = plot.getX() + b * (bw + gap);
+                auto bar = v >= 0.f
+                    ? juce::Rectangle<float> (x, midY - h, bw, h)
+                    : juce::Rectangle<float> (x, midY, bw, h);
+                g.setColour (cols[b].withAlpha (0.85f));
+                g.fillRoundedRectangle (bar, 2.f);
+                g.setFont (juce::FontOptions (8.f, juce::Font::bold));
+                g.setColour (cols[b]);
+                g.drawText (labs[b], (int) x, (int) plot.getBottom() - 10, (int) bw, 10,
                             juce::Justification::centred);
             }
             return;
@@ -97,7 +133,7 @@ public:
 private:
     Kind kind = Chorus;
     float phase = 0.f, level = 0.35f;
-    float bandGR[3] {}, dispGR[3] {};
+    float bandGR[3] {}, dispGR[3] {}, eqBand[3] {};
     juce::Colour accent { 0xff00e8ff };
 };
 
