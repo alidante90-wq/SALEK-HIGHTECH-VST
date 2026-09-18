@@ -197,6 +197,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto C = juce::Colour (0xff00e8ff);
         const auto M = juce::Colour (0xffff2d9b);
         const auto O = juce::Colour (0xff39ff14);
+        const auto G = juce::Colour (0xff7c4dff);
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
