@@ -29,6 +29,9 @@ public:
     void setFilterCutoff (float v); void setFilterResonance (float v);
     void setFilterDrive (float v); void setFilterMode (int v); void setFilterEnvAmt (float v);
     void setNoiseLevel (float v); void setSubLevel (float v); void setFilterRoute (int v); void setGlide (float v);
+    void setOsc1Unison (int v, float d, float s);
+    void setOsc2Unison (int v, float d, float s);
+    void setOsc3Unison (int v, float d, float s);
 
     void setAmpAttack (float v); void setAmpDecay (float v);
     void setAmpSustain (float v); void setAmpRelease (float v);
