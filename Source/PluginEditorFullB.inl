@@ -5,22 +5,48 @@ void SalekHightechAudioProcessorEditor::paintListBoxItem (int row, juce::Graphic
     if (! juce::isPositiveAndBelow (row, presetRows.size())) return;
     const auto& pr = presetRows.getReference (row);
 
-    // ===== Category header (mockup cyber) =====
+    // ===== Category header with icon badge =====
     if (pr.isHeader)
     {
-        g.setColour (juce::Colour (0xcc0c0418)); // translucent header
-        g.fillRect (0, 0, width, height);
-        g.setColour (juce::Colour (0xffff2ec8).withAlpha (0.75f));
-        g.fillRect (0, 0, 3, height);
+        auto cat = pr.category.toUpperCase();
+        juce::Colour catCol (0xffff2ec8);
+        juce::String icon = "◆";
+        if (cat.contains ("BASS"))      { catCol = juce::Colour (0xff66ff99); icon = "B"; }
+        else if (cat.contains ("KICK")) { catCol = juce::Colour (0xffffab40); icon = "K"; }
+        else if (cat.contains ("LEAD")) { catCol = juce::Colour (0xff00e8ff); icon = "L"; }
+        else if (cat.contains ("PAD"))  { catCol = juce::Colour (0xffb388ff); icon = "P"; }
+        else if (cat.contains ("ACID")) { catCol = juce::Colour (0xffffcc44); icon = "A"; }
+        else if (cat.contains ("FM"))   { catCol = juce::Colour (0xffff66cc); icon = "F"; }
+        else if (cat.contains ("FX"))   { catCol = juce::Colour (0xffff5252); icon = "X"; }
+        else if (cat.contains ("ARP"))  { catCol = juce::Colour (0xff69f0ae); icon = "↻"; }
+        else if (cat.contains ("SALEK") || cat.contains ("GITI")) { catCol = juce::Colour (0xffffd700); icon = "★"; }
+        else if (cat.contains ("USER")) { catCol = juce::Colour (0xffffaa00); icon = "U"; }
+        else if (cat.contains ("RETRO")){ catCol = juce::Colour (0xffa0a0ff); icon = "R"; }
+        else if (cat.contains ("OTHER")){ catCol = juce::Colour (0xff90a4ae); icon = "·"; }
+
+        g.setColour (juce::Colour (0xdd0a0618));
+        g.fillRoundedRectangle (1.f, 1.f, (float) width - 2.f, (float) height - 2.f, 6.f);
+        g.setColour (catCol.withAlpha (0.55f));
+        g.drawRoundedRectangle (1.5f, 1.5f, (float) width - 3.f, (float) height - 3.f, 6.f, 1.2f);
+
+        // circular icon badge
+        auto badge = juce::Rectangle<float> (6.f, (float) height * 0.15f, (float) height * 0.7f, (float) height * 0.7f);
+        g.setColour (catCol.withAlpha (0.25f));
+        g.fillEllipse (badge);
+        g.setColour (catCol);
+        g.drawEllipse (badge, 1.2f);
+        g.setFont (juce::FontOptions (badge.getHeight() * 0.55f, juce::Font::bold));
+        g.drawText (icon, badge.toNearestInt(), juce::Justification::centred);
 
         const bool folded = collapsedCats.contains (pr.category);
-        g.setColour (juce::Colour (0xffff66e0));
+        g.setColour (catCol.brighter (0.2f));
         g.setFont (juce::FontOptions (11.5f, juce::Font::bold));
-        juce::String mark = folded ? juce::CharPointer_UTF8 ("\u25B8  ") : juce::CharPointer_UTF8 ("\u25BE  ");
-        g.drawText (mark + pr.label, 10, 0, width - 14, height, juce::Justification::centredLeft);
-
-        g.setColour (juce::Colour (0xffff2ec8).withAlpha (0.25f));
-        g.drawLine (8.0f, (float) height - 1.0f, (float) width - 6.0f, (float) height - 1.0f, 1.0f);
+        juce::String mark = folded ? juce::String (juce::CharPointer_UTF8 ("\xe2\x96\xb8 "))
+                                   : juce::String (juce::CharPointer_UTF8 ("\xe2\x96\xbe "));
+        // use simple ASCII for MSVC reliability
+        mark = folded ? "> " : "v ";
+        g.drawText (mark + pr.label, (int) badge.getRight() + 6, 0, width - (int) badge.getRight() - 10, height,
+                    juce::Justification::centredLeft);
         return;
     }
 
@@ -164,12 +190,13 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         const int presetW = presetCollapsed ? 28 : 210;
         auto leftStrip = full.removeFromLeft (presetW);
-        const int maxH = juce::jmax (180, (int) (leftStrip.getHeight() * 0.52f));
-        presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + 8, leftStrip.getWidth(), maxH);
+        const int logoPad = 88; // room for large top logo
+        const int maxH = juce::jmax (160, (int) ((leftStrip.getHeight() - logoPad) * 0.55f));
+        presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), maxH);
         presetTab.toFront (false);
         auto pb = presetTab.getLocalBounds().reduced (2);
         auto top = pb.removeFromTop (22);
-        presetToggle.setBounds (top.removeFromLeft (24).reduced (1));
+        presetToggle.setBounds (top.removeFromLeft (28).reduced (1, 0));
         if (! presetCollapsed)
         {
             prevPreset.setBounds (top.removeFromLeft (20).reduced (1));
@@ -208,6 +235,7 @@ void SalekHightechAudioProcessorEditor::resized()
     auto header = full.removeFromTop (40);
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
+    bgSwapBtn.setBounds (header.removeFromRight (40).reduced (2));
     if (knobs.size() > 0)
     {
         // master gain / drive if present in header elsewhere — skip
