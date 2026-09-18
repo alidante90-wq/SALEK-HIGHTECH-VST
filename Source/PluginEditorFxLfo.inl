@@ -1,5 +1,6 @@
 #pragma once
 #include "Modulation/LFO.h"
+#include "FX/SimpleCompressor.h"
 
 /** Mini live monitor for each FX section row */
 class FxMonitor : public juce::Component, private juce::Timer
@@ -22,41 +23,54 @@ public:
         eqBand[1] = juce::jlimit (-1.f, 1.f, mid);
         eqBand[2] = juce::jlimit (-1.f, 1.f, hi);
     }
-    void setThresholdNorm (float t) { if (! draggingThr) thrNorm = juce::jlimit (0.f, 1.f, t); }
+    void setThresholdNorm (float t)
+    {
+        if (draggingBand < 0)
+            thrNorm[0] = thrNorm[1] = thrNorm[2] = juce::jlimit (0.f, 1.f, t);
+    }
+    void setBandThresholdNorms (float lo, float mid, float hi)
+    {
+        if (draggingBand < 0)
+        {
+            thrNorm[0] = juce::jlimit (0.f, 1.f, lo);
+            thrNorm[1] = juce::jlimit (0.f, 1.f, mid);
+            thrNorm[2] = juce::jlimit (0.f, 1.f, hi);
+        }
+    }
     void bindThresholdParam (juce::RangedAudioParameter* p) { thrParam = p; }
+    void bindCompressor (salek::SimpleCompressor* c) { comp = c; }
+
     void mouseDown (const juce::MouseEvent& e) override
     {
-        if (kind != Comp || thrParam == nullptr) return;
+        if (kind != Comp) return;
         auto plot = getLocalBounds().toFloat().reduced (5.f, 4.f);
-        // hit any of the 3 band threshold ticks
         const float rowH = (plot.getHeight() - 4.f) / 3.f;
         for (int b = 0; b < 3; ++b)
         {
             auto row = juce::Rectangle<float> (plot.getX(), plot.getY() + b * rowH, plot.getWidth(), rowH);
-            float tx = row.getX() + thrNorm * row.getWidth();
-            if (std::abs (e.position.x - tx) < 10.f && row.contains (e.position))
-            {
-                draggingThr = true;
-                thrParam->beginChangeGesture();
-                return;
-            }
+            if (! row.contains (e.position)) continue;
+            float tx = row.getX() + thrNorm[b] * row.getWidth();
+            // whole row is draggable for that band threshold
+            draggingBand = b;
+            if (thrParam != nullptr) thrParam->beginChangeGesture();
+            setBandFromX (e.position.x, plot);
+            return;
         }
     }
     void mouseDrag (const juce::MouseEvent& e) override
     {
-        if (! draggingThr || thrParam == nullptr) return;
+        if (draggingBand < 0) return;
         auto plot = getLocalBounds().toFloat().reduced (5.f, 4.f);
-        thrNorm = juce::jlimit (0.f, 1.f, (e.position.x - plot.getX()) / juce::jmax (1.f, plot.getWidth()));
-        const float db = juce::jmap (thrNorm, 0.f, 1.f, -40.f, 0.f);
-        thrParam->setValueNotifyingHost (thrParam->convertTo0to1 (db));
+        setBandFromX (e.position.x, plot);
         repaint();
     }
     void mouseUp (const juce::MouseEvent&) override
     {
-        if (draggingThr && thrParam != nullptr)
+        if (draggingBand >= 0 && thrParam != nullptr)
             thrParam->endChangeGesture();
-        draggingThr = false;
+        draggingBand = -1;
     }
+
     void paint (juce::Graphics& g) override
     {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -79,24 +93,33 @@ public:
                 dispGR[(size_t) b] += 0.25f * (bandGR[(size_t) b] - dispGR[(size_t) b]);
                 auto row = juce::Rectangle<float> (
                     plot.getX(), plot.getY() + b * rowH, plot.getWidth(), rowH).reduced (1.f, 2.f);
-                g.setColour (cols[b].withAlpha (0.12f));
+
+                // track
+                g.setColour (cols[b].withAlpha (0.14f));
                 g.fillRoundedRectangle (row, 2.f);
+
+                // GR fill from right
                 float grW = dispGR[(size_t) b] * row.getWidth();
-                g.setColour (cols[b].withAlpha (0.85f));
+                g.setColour (cols[b].withAlpha (0.9f));
                 g.fillRoundedRectangle (
                     juce::Rectangle<float> (row.getRight() - grW, row.getY(), grW, row.getHeight()), 2.f);
-                float tx = row.getX() + thrNorm * row.getWidth();
-                g.setColour (juce::Colours::white.withAlpha (draggingThr ? 0.95f : 0.7f));
+
+                // independent threshold line for THIS band
+                float tx = row.getX() + thrNorm[b] * row.getWidth();
+                const bool hot = (draggingBand == b);
+                g.setColour (juce::Colours::white.withAlpha (hot ? 1.f : 0.85f));
                 g.drawVerticalLine ((int) tx, row.getY(), row.getBottom());
+                g.setColour (cols[b]);
+                g.fillEllipse (tx - 3.5f, row.getCentreY() - 3.5f, 7.f, 7.f);
+
+                // label + dB
                 g.setFont (juce::FontOptions (8.f, juce::Font::bold));
                 g.setColour (cols[b]);
-                g.drawText (labs[b], row.toNearestInt().removeFromLeft (22), juce::Justification::centredLeft);
+                const float db = juce::jmap (thrNorm[b], 0.f, 1.f, -40.f, 0.f);
+                g.drawText (juce::String (labs[b]) + " " + juce::String (db, 0),
+                            row.toNearestInt().removeFromLeft (48),
+                            juce::Justification::centredLeft);
             }
-            g.setFont (juce::FontOptions (7.f, juce::Font::bold));
-            g.setColour (juce::Colours::white);
-            const float db = juce::jmap (thrNorm, 0.f, 1.f, -40.f, 0.f);
-            g.drawText (juce::String (db, 1) + "dB", plot.toNearestInt().removeFromBottom (10),
-                        juce::Justification::centredRight);
             return;
         }
 
@@ -167,12 +190,28 @@ public:
         g.fillRect (plot.getRight() - 4.f, plot.getBottom() - bh, 3.f, bh);
     }
     void timerCallback() override { phase += 0.08f + level * 0.1f; repaint(); }
+
 private:
+    void setBandFromX (float x, juce::Rectangle<float> plot)
+    {
+        if (draggingBand < 0 || draggingBand > 2) return;
+        thrNorm[draggingBand] = juce::jlimit (0.f, 1.f,
+            (x - plot.getX()) / juce::jmax (1.f, plot.getWidth()));
+        const float db = juce::jmap (thrNorm[draggingBand], 0.f, 1.f, -40.f, 0.f);
+        if (comp != nullptr)
+            comp->setBandThresholdDb (draggingBand, db);
+        // also nudge main threshold param to mid band for host automation
+        if (thrParam != nullptr && draggingBand == 1)
+            thrParam->setValueNotifyingHost (thrParam->convertTo0to1 (db));
+    }
+
     Kind kind = Chorus;
     float phase = 0.f, level = 0.35f;
-    float bandGR[3] {}, dispGR[3] {}, eqBand[3] {}, thrNorm { 0.5f };
-    bool draggingThr = false;
+    float bandGR[3] {}, dispGR[3] {}, eqBand[3] {};
+    float thrNorm[3] { 0.45f, 0.55f, 0.65f };
+    int draggingBand = -1;
     juce::RangedAudioParameter* thrParam = nullptr;
+    salek::SimpleCompressor* comp = nullptr;
     juce::Colour accent { 0xff00e8ff };
 };
 
@@ -242,11 +281,6 @@ public:
             float x = plot.getX() + plot.getWidth() * (float) i / 8.f;
             g.drawVerticalLine ((int) x, plot.getY(), plot.getBottom());
         }
-        for (int i = 1; i < 4; ++i)
-        {
-            float y = plot.getY() + plot.getHeight() * (float) i / 4.f;
-            g.drawHorizontalLine ((int) y, plot.getX(), plot.getRight());
-        }
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.2f));
         g.drawHorizontalLine ((int) plot.getCentreY(), plot.getX(), plot.getRight());
 
@@ -265,20 +299,9 @@ public:
         g.setColour (juce::Colour (0xff00e8ff));
         g.strokePath (wave, juce::PathStrokeType (2.2f));
 
-        if (lfo != nullptr)
-        {
-            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.55f));
-            for (int i = 0; i < N; i += 4)
-            {
-                float x = plot.getX() + (float) i / (float) (N - 1) * plot.getWidth();
-                float y = plot.getCentreY() - points[i] * plot.getHeight() * 0.45f;
-                g.fillEllipse (x - 2.5f, y - 2.5f, 5.f, 5.f);
-            }
-        }
-
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = single point  |  Alt = soft",
+        g.drawText ("LFO SHAPE  |  drag = paint",
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -312,33 +335,16 @@ private:
             (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * (float) (N - 1)));
         float v = juce::jlimit (-1.f, 1.f,
             (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
-
-        if (e.mods.isShiftDown())
-            writePoint (idx, v);
-        else if (e.mods.isAltDown())
-        {
-            for (int d = -3; d <= 3; ++d)
-            {
-                int j = idx + d;
-                if (j < 0 || j >= N) continue;
-                float w = 1.f - std::abs ((float) d) / 4.f;
-                writePoint (j, points[j] * (1.f - w * 0.6f) + v * (w * 0.6f));
-            }
-        }
+        if (lastIdx < 0) writePoint (idx, v);
         else
         {
-            if (lastIdx < 0) writePoint (idx, v);
-            else
+            int a = juce::jmin (lastIdx, idx), b = juce::jmax (lastIdx, idx);
+            float va = points[lastIdx];
+            for (int i = a; i <= b; ++i)
             {
-                int a = juce::jmin (lastIdx, idx), b = juce::jmax (lastIdx, idx);
-                float va = points[lastIdx];
-                for (int i = a; i <= b; ++i)
-                {
-                    float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                    float pv = (lastIdx <= idx) ? va * (1.f - tt) + v * tt
-                                                : v * (1.f - tt) + va * tt;
-                    writePoint (i, pv);
-                }
+                float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
+                float pv = (lastIdx <= idx) ? va * (1.f - tt) + v * tt : v * (1.f - tt) + va * tt;
+                writePoint (i, pv);
             }
         }
         lastIdx = idx;
