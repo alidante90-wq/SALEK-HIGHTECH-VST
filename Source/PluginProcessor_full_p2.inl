@@ -19,20 +19,20 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setUnison((int)g("unison_voices"));
     synthEngine.setUnisonDetune(g("unison_detune"));
     synthEngine.setUnisonSpread(g("unison_spread"));
-    // Per-osc unison (falls back to global if left at default 1)
+    // Per-osc unison — always honour UNI/DET/SPR knobs (1..7)
     {
-        auto u1 = (int) g("osc1_unison"); auto u2 = (int) g("osc2_unison"); auto u3 = (int) g("osc3_unison");
-        auto ug = (int) g("unison_voices");
-        if (u1 <= 1) u1 = ug; if (u2 <= 1) u2 = ug; if (u3 <= 1) u3 = ug;
-        auto d1 = g("osc1_udet"); auto d2 = g("osc2_udet"); auto d3 = g("osc3_udet");
-        auto dg = g("unison_detune");
-        if (d1 < 0.01f) d1 = dg; if (d2 < 0.01f) d2 = dg; if (d3 < 0.01f) d3 = dg;
-        auto s1 = g("osc1_uspread"); auto s2 = g("osc2_uspread"); auto s3 = g("osc3_uspread");
-        auto sg = g("unison_spread");
-        if (s1 < 0.01f) s1 = sg; if (s2 < 0.01f) s2 = sg; if (s3 < 0.01f) s3 = sg;
-        synthEngine.setOsc1Unison(u1,d1,s1);
-        synthEngine.setOsc2Unison(u2,d2,s2);
-        synthEngine.setOsc3Unison(u3,d3,s3);
+        const int u1 = juce::jlimit (1, 7, (int) std::lround (g("osc1_unison")));
+        const int u2 = juce::jlimit (1, 7, (int) std::lround (g("osc2_unison")));
+        const int u3 = juce::jlimit (1, 7, (int) std::lround (g("osc3_unison")));
+        const float d1 = juce::jmax (0.f, g("osc1_udet"));
+        const float d2 = juce::jmax (0.f, g("osc2_udet"));
+        const float d3 = juce::jmax (0.f, g("osc3_udet"));
+        const float s1 = juce::jlimit (0.f, 1.f, g("osc1_uspread"));
+        const float s2 = juce::jlimit (0.f, 1.f, g("osc2_uspread"));
+        const float s3 = juce::jlimit (0.f, 1.f, g("osc3_uspread"));
+        synthEngine.setOsc1Unison (u1, d1, s1);
+        synthEngine.setOsc2Unison (u2, d2, s2);
+        synthEngine.setOsc3Unison (u3, d3, s3);
     }
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
@@ -85,7 +85,6 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
-    // damping: smaller rooms darker less; large size = less damp (brighter air)
     reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
     phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
@@ -133,7 +132,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         arpeggiator.setRateDivisor ((int) apvts.getRawParameterValue("arp_rate")->load());
         arpeggiator.setOctaves ((int) apvts.getRawParameterValue("arp_octaves")->load());
-        // Feed held notes into arp (was missing — arp never received noteOn)
         juce::MidiBuffer arpIn;
         for (const auto metadata : routed)
         {
@@ -159,14 +157,12 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         return false;
     };
    
-// Bassify: low-shelf-ish boost + soft grit (dubstep noise colour)
     const float bassify = apvts.getRawParameterValue("bassify")->load();
     if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
-        // Multi-stage sub enhancer: deep LP + soft even harmonics + mono-sum for weight
         static float lp1L = 0.f, lp1R = 0.f, lp2L = 0.f, lp2R = 0.f;
-        const float a1 = 0.04f + bassify * 0.06f;   // ~80-120 Hz
-        const float a2 = 0.12f + bassify * 0.10f;   // tighter body
+        const float a1 = 0.04f + bassify * 0.06f;
+        const float a2 = 0.12f + bassify * 0.10f;
         const float amount = bassify;
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
@@ -174,8 +170,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
             lp1L += a1 * (L - lp1L); lp1R += a1 * (R - lp1R);
             lp2L += a2 * (lp1L - lp2L); lp2R += a2 * (lp1R - lp2R);
-            float sub = 0.5f * (lp2L + lp2R); // mono sub
-            // soft even grit
+            float sub = 0.5f * (lp2L + lp2R);
             float grit = amount * 0.4f;
             sub = sub + grit * sub * sub * (sub >= 0.f ? 1.f : -1.f);
             sub = std::tanh (sub * (1.2f + amount * 1.6f));
@@ -217,10 +212,8 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     magic.process (buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
-    // Transparent hi-tech gain staging (slight headroom for crystal peaks)
     buffer.applyGain (gain * 0.92f);
 
-    // Soft transparent limiter — preserves high-end clarity (no hard brickwall)
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
         auto* d = buffer.getWritePointer (ch);
@@ -228,7 +221,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         for (int i = 0; i < n; ++i)
         {
             float x = d[i];
-            // two-stage: gentle tanh body + air-band friendly ceiling
             x = std::tanh (x * 1.05f);
             const float ax = std::abs (x);
             if (ax > 0.88f)
@@ -240,17 +232,16 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-    // Subtle hi-tech presence (crystal air) — gentle 6–10 kHz lift, sample-rate safe
     {
         static float hpL = 0.f, hpR = 0.f;
-        const float coeff = 0.08f; // ~high shelf-ish one-pole difference
+        const float coeff = 0.08f;
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
             hpL += coeff * ((L - hpL));
             hpR += coeff * ((R - hpR));
-            float airL = (L - hpL) * 0.18f; // presence amount
+            float airL = (L - hpL) * 0.18f;
             float airR = (R - hpR) * 0.18f;
             buffer.setSample (0, i, L + airL);
             if (buffer.getNumChannels() > 1)
