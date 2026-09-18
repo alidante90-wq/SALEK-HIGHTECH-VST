@@ -109,6 +109,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         fxMonitors[2]->setLevel (g ("reverb_mix"));
         fxMonitors[3]->setLevel (g ("bassify"));
         fxMonitors[4]->setLevel (g ("comp_mix"));
+        fxMonitors[4]->setThresholdNorm (juce::jmap (g ("comp_threshold", -12.f), -40.f, 0.f, 0.f, 1.f));
         fxMonitors[4]->setBandGR (
             processor.getCompressor().getBandGR (0),
             processor.getCompressor().getBandGR (1),
@@ -132,144 +133,80 @@ void SalekHightechAudioProcessorEditor::resized()
     }
     full.removeFromBottom (4);
 
-    // Hero art always visible — only presets collapse (see presetToggle)
-    full.removeFromLeft (222);
+    // Far-left PRESET column (over background art) — not stretched full height
+    {
+        const int presetW = presetCollapsed ? 28 : 210;
+        auto leftStrip = full.removeFromLeft (presetW);
+        const int maxH = juce::jmax (180, (int) (leftStrip.getHeight() * 0.52f));
+        presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + 8, leftStrip.getWidth(), maxH);
+        presetTab.toFront (false);
+        auto pb = presetTab.getLocalBounds().reduced (2);
+        auto top = pb.removeFromTop (22);
+        presetToggle.setBounds (top.removeFromLeft (24).reduced (1));
+        if (! presetCollapsed)
+        {
+            prevPreset.setBounds (top.removeFromLeft (20).reduced (1));
+            nextPreset.setBounds (top.removeFromLeft (20).reduced (1));
+            initBtn.setBounds (top.removeFromLeft (28).reduced (1));
+            savePresetBtn.setBounds (top.removeFromLeft (30).reduced (1));
+            loadPresetBtn.setBounds (top.removeFromLeft (30).reduced (1));
+            bankBtn.setBounds (top.removeFromLeft (34).reduced (1));
+            presetLabel.setBounds (pb.removeFromTop (18).reduced (2, 0));
+            presetList.setBounds (pb);
+            presetList.setOpaque (false);
+            presetTab.setOpaque (false);
+            presetList.setVisible (true);
+            for (auto* c : { &prevPreset, &nextPreset, &initBtn, &savePresetBtn, &loadPresetBtn, &bankBtn, &presetLabel })
+                c->setVisible (true);
+        }
+        else
+        {
+            presetList.setVisible (false);
+            for (auto* c : { &prevPreset, &nextPreset, &initBtn, &savePresetBtn, &loadPresetBtn, &bankBtn, &presetLabel })
+                c->setVisible (false);
+        }
+    }
 
+    // Header
     auto header = full.removeFromTop (40);
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
-    // Master gain + drive at top of VST (removed from FX tab)
-    if (knobs.size() > 55)
+    if (knobs.size() > 0)
     {
-        auto* gainK = knobs[55].get(); // master_gain
-        auto* drvK  = knobs[54].get(); // master_drive
-        auto gArea = header.removeFromRight (70).reduced (2);
-        gainK->name.setBounds (gArea.removeFromBottom (12));
-        gainK->s.setBounds (gArea);
-        gainK->s.setVisible (true); gainK->name.setVisible (true);
-        auto dArea = header.removeFromRight (70).reduced (2);
-        drvK->name.setBounds (dArea.removeFromBottom (12));
-        drvK->s.setBounds (dArea);
-        drvK->s.setVisible (true); drvK->name.setVisible (true);
-        gainK->name.setText ("GAIN", juce::dontSendNotification);
-        drvK->name.setText ("DRIVE", juce::dontSendNotification);
+        // master gain / drive if present in header elsewhere — skip
     }
     spectrum.setBounds (header.removeFromRight (80).reduced (2));
     scope.setBounds (header.removeFromRight (100).reduced (2));
     if (wtDisplay != nullptr)
         wtDisplay->setBounds (header.removeFromRight (140).reduced (2));
 
-    full.removeFromTop (2);
     tabs.setBounds (full);
     tabs.toFront (false);
-    keyboard.toFront (false);
 
-    auto place = [] (juce::Rectangle<int> area,
-                     std::vector<std::unique_ptr<Knob>>& all,
-                     int start, int count, int cols,
-                     int maxCellH = 0)
-    {
-        if (count <= 0 || cols < 1) return;
-        const int rows = juce::jmax (1, (count + cols - 1) / cols);
-        const int cw = juce::jmax (1, area.getWidth() / cols);
-        int ch = juce::jmax (1, area.getHeight() / rows);
-        if (maxCellH > 0) ch = juce::jmin (ch, maxCellH);
-        // vertical centre the grid when maxCellH shrinks rows
-        const int usedH = ch * rows;
-        const int y0 = area.getY() + juce::jmax (0, (area.getHeight() - usedH) / 2);
-        for (int i = 0; i < count; ++i)
-        {
-            const int idx = start + i;
-            if (idx < 0 || idx >= (int) all.size()) break;
-            auto* k = all[(size_t) idx].get();
-            const int c = i % cols;
-            const int r = i / cols;
-            const int pad = (ch < 40 || cw < 50) ? 2 : 4;
-            auto cell = juce::Rectangle<int> (area.getX() + c * cw, y0 + r * ch, cw, ch).reduced (pad);
-            const int nameH = (ch < 40) ? 11 : 14;
-            k->name.setBounds (cell.removeFromBottom (nameH));
-            k->name.setJustificationType (juce::Justification::centred);
-            k->name.setVisible (true);
-            k->s.setBounds (cell);
-            k->s.setVisible (true);
-            if (ch < 55)
-                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (28, cw - 8), 12);
-            else
-                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
-        }
-    };
-
+    // MAIN tab: osc columns | filter | env
     {
         auto b = mainTab.getLocalBounds().reduced (2);
-        // Collapsible PRESET column (not hero)
-        const int presetW = presetCollapsed ? 28 : 230;
-        // Left, but only top half height (not full stretched)
-        {
-            auto leftCol = b.removeFromLeft (presetW);
-            const int halfH = leftCol.getHeight() / 2;
-            presetTab.setBounds (leftCol.removeFromTop (halfH));
-            presetTab.toFront (false);
-        }
         envTab.setBounds (b.removeFromBottom (120));
         filterTab.setBounds (b.removeFromRight (220));
         oscTab.setBounds (b);
 
         {
-            auto pb = presetTab.getLocalBounds().reduced (2);
-            auto top = pb.removeFromTop (24);
-            presetToggle.setBounds (top.removeFromLeft (24).reduced (1));
-            if (! presetCollapsed)
+            // 3 columns: monitor + shape + params + unison
+            auto oa = oscTab.getLocalBounds().reduced (2);
+            const int colW = oa.getWidth() / 3;
+            juce::Component* mons[3] = { oscMon1.get(), oscMon2.get(), oscMon3.get() };
+            juce::ComboBox* shapes[3] = { &osc1ShapeBox, &osc2ShapeBox, &osc3ShapeBox };
+            for (int c = 0; c < 3; ++c)
             {
-                prevPreset.setBounds (top.removeFromLeft (22).reduced (1));
-                nextPreset.setBounds (top.removeFromLeft (22).reduced (1));
-                initBtn.setBounds (top.removeFromLeft (32).reduced (1));
-                savePresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
-                loadPresetBtn.setBounds (top.removeFromLeft (36).reduced (1));
-                bankBtn.setBounds (top.removeFromLeft (40).reduced (1));
-                auto nameRow = pb.removeFromTop (20);
-                presetLabel.setBounds (nameRow.reduced (2, 0));
-                presetLabel.setJustificationType (juce::Justification::centredLeft);
-                presetLabel.setColour (juce::Label::textColourId, themeAccent);
-                presetList.setBounds (pb);
-                presetList.setOpaque (false);
-                presetTab.setOpaque (false);
-                presetList.setVisible (true);
-                prevPreset.setVisible (true);
-                nextPreset.setVisible (true);
-                initBtn.setVisible (true);
-                savePresetBtn.setVisible (true);
-                loadPresetBtn.setVisible (true);
-                bankBtn.setVisible (true);
-                presetLabel.setVisible (true);
+                auto col = juce::Rectangle<int> (oa.getX() + c * colW, oa.getY(), colW, oa.getHeight()).reduced (3, 2);
+                auto monH = juce::jlimit (40, 64, col.getHeight() / 6);
+                if (mons[c] != nullptr)
+                    mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
+                shapes[c]->setBounds (col.removeFromTop (20).reduced (1));
+                auto paramArea = col.removeFromTop (juce::jmax (80, col.getHeight() * 2 / 3));
+                place (paramArea, knobs, c * 6, 6, 2);
+                place (col, knobs, 18 + c * 3, 3, 3);
             }
-            else
-            {
-                presetList.setVisible (false);
-                prevPreset.setVisible (false);
-                nextPreset.setVisible (false);
-                initBtn.setVisible (false);
-                savePresetBtn.setVisible (false);
-                loadPresetBtn.setVisible (false);
-                bankBtn.setVisible (false);
-                presetLabel.setVisible (false);
-            }
-        }
-
-        {
-            auto oa = oscTab.getLocalBounds().reduced (3);
-            // Monitors — compact so knobs always have room
-            auto monRow = oa.removeFromTop (juce::jlimit (48, 70, oa.getHeight() / 5));
-            const int mw = monRow.getWidth() / 3;
-            if (oscMon1 != nullptr) oscMon1->setBounds (monRow.removeFromLeft (mw).reduced (2));
-            if (oscMon2 != nullptr) oscMon2->setBounds (monRow.removeFromLeft (mw).reduced (2));
-            if (oscMon3 != nullptr) oscMon3->setBounds (monRow.reduced (2));
-            auto shRow = oa.removeFromTop (22);
-            const int sw = shRow.getWidth() / 3;
-            osc1ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (1));
-            osc2ShapeBox.setBounds (shRow.removeFromLeft (sw).reduced (1));
-            osc3ShapeBox.setBounds (shRow.reduced (1));
-            // 21 knobs: 3 rows of 6 (OSC1/2/3) + 1 row of 3 unison — force 6 cols
-            place (oa, knobs, 0, 21, 6);
         }
 
         {
@@ -279,21 +216,19 @@ void SalekHightechAudioProcessorEditor::resized()
             auto modeRow = fr.removeFromTop (24);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
-            place (fr, knobs, 21, 4, 2);
+            place (fr, knobs, 27, 4, 2);
         }
 
         {
             auto er = envTab.getLocalBounds().reduced (2);
-            // ADSR curve + ADSR knobs LEFT; glide/voices/noise/sub + voice mode RIGHT
             if (adsrDisplay != nullptr)
             {
                 auto curve = er.removeFromLeft (juce::jmin (160, er.getWidth() / 4));
                 adsrDisplay->setBounds (curve.reduced (2));
             }
             auto adsrKnobs = er.removeFromLeft (juce::jmin (280, er.getWidth() / 2));
-            place (adsrKnobs, knobs, 25, 4, 4);
+            place (adsrKnobs, knobs, 31, 4, 4);
             voiceModeBox.setBounds (er.removeFromTop (22).reduced (1));
-            // last 4 knobs: glide, voices, noise, sub (registered at end)
             const int extraStart = (int) knobs.size() - 4;
             if (extraStart >= 0)
                 place (er, knobs, extraStart, 4, 4);
@@ -308,11 +243,11 @@ void SalekHightechAudioProcessorEditor::resized()
         auto fmArea = right.reduced (2, 4);
 
         // FM/PM/RM/AM: 2x3 grid, max cell 92px
-        place (fmArea, knobs, 29, 6, 3, 92);
+        place (fmArea, knobs, 35, 6, 3, 92);
 
         // MACROS: explicit layout so name is always glued under rotary (no floating labels)
         {
-            const int start = 35;
+            const int start = 41;
             const int n = 4;
             const int cw = juce::jmax (1, macroBand.getWidth() / n);
             for (int i = 0; i < n; ++i)
@@ -376,7 +311,7 @@ void SalekHightechAudioProcessorEditor::resized()
 
         // Knobs at bottom, BIG shape editor takes remaining (Serum 2 style)
         auto knobArea = r.removeFromBottom (88);
-        place (knobArea, knobs, 39, 6, 6);
+        place (knobArea, knobs, 45, 6, 6);
         lfoShapeEditor.setBounds (r.reduced (2));
     }
 
