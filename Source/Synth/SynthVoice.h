@@ -66,6 +66,10 @@ public:
     void setFilterResonance(float r){filter.setResonance(r);} void setFilterDrive(float d){filter.setDrive(d);}
     void setFilterMode(int m){ filter.setModeIndex (m); }
     void setFilterEnvAmt(float a){filterEnvAmt=a;}
+    void setNoiseLevel(float v){noiseLevel=juce::jlimit(0.f,1.f,v);}
+    void setSubLevel(float v){subLevel=juce::jlimit(0.f,1.f,v);}
+    void setFilterRoute(int r){filterRoute=juce::jlimit(0,6,r);}
+    void setGlide(float v){glideAmt=juce::jlimit(0.f,1.f,v);}
     void setAmpAttack(float s){adsrParams.attack=juce::jmax(0.001f,s); adsr.setParameters(adsrParams);}
     void setAmpDecay(float s){adsrParams.decay=juce::jmax(0.001f,s); adsr.setParameters(adsrParams);}
     void setAmpSustain(float s){adsrParams.sustain=juce::jlimit(0.f,1.f,s); adsr.setParameters(adsrParams);}
@@ -104,6 +108,10 @@ private:
     float osc1Fine=0, osc2Fine=0, osc3Fine=0;
     float fm2to1=0, fm3to1=0, fm3to2=0, pm2to1=0, pm3to1=0, am2to1=0, rm2to1=0;
     float filterEnvAmt=0.5f, baseCutoff=8000;
+    float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;
+    int filterRoute=0; // 0=All,1=O1,2=O2,3=O3,4=1+2,5=1+3,6=2+3
+    juce::Random noiseRng;
+    float subPhase=0.f;
     juce::ADSR adsr;
     juce::ADSR::Parameters adsrParams{0.01f, 0.1f, 0.8f, 0.2f};
     bool isNoteOn = false;
