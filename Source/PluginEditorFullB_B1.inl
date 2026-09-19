@@ -97,12 +97,13 @@ void SalekHightechAudioProcessorEditor::resized()
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
-            const int colW = oa.getWidth() / 3;
+            const int gap = 10; // green separators between oscillators
+            const int colW = (oa.getWidth() - gap * 2) / 3;
             juce::Component* mons[3] = { oscMon1.get(), oscMon2.get(), oscMon3.get() };
             juce::ComboBox* shapes[3] = { &osc1ShapeBox, &osc2ShapeBox, &osc3ShapeBox };
             for (int c = 0; c < 3; ++c)
             {
-                auto col = juce::Rectangle<int> (oa.getX() + c * colW, oa.getY(), colW, oa.getHeight()).reduced (4, 2);
+                auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, oa.getHeight()).reduced (2, 2);
                 // vertical separator between oscillators
                 if (c > 0)
                 {
@@ -135,10 +136,10 @@ void SalekHightechAudioProcessorEditor::resized()
                 auto curve = er.removeFromLeft (juce::jmin (150, er.getWidth() / 4));
                 adsrDisplay->setBounds (curve.reduced (2));
             }
-            auto adsrKnobs = er.removeFromLeft (juce::jmin (260, er.getWidth() / 2));
+            auto adsrKnobs = er.removeFromLeft (juce::jmin (240, er.getWidth() * 2 / 5));
             place (adsrKnobs, knobs, 31, 4, 4); // attack decay sustain release
             voiceModeBox.setBounds (er.removeFromTop (20).reduced (1));
-            // FIXED indices: glide=38 voices=39 noise=40 sub=41 (not knobs.size()-4!)
+            // glide voices noise sub — by param id if available
             place (er, knobs, 38, 4, 4);
         }
     }
