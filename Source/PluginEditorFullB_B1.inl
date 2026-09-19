@@ -123,11 +123,11 @@ void SalekHightechAudioProcessorEditor::resized()
         };
 
         auto b = mainTab.getLocalBounds().reduced (2);
-        envTab.setBounds (b.removeFromBottom (100));
+        // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
+        envTab.setBounds (b.removeFromBottom (130));
         filterTab.setBounds (b.removeFromRight (180));
         auto oscFull = b;
-        // OSC needs most of the vertical space so knobs stay readable
-        oscTab.setBounds (oscFull.removeFromTop (juce::jmax (280, oscFull.getHeight() * 75 / 100)));
+        oscTab.setBounds (oscFull); // full remaining height for OSC columns
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
@@ -177,37 +177,42 @@ void SalekHightechAudioProcessorEditor::resized()
         }
         {
             auto fr = filterTab.getLocalBounds().reduced (3);
-            auto top = fr.removeFromTop (juce::jmax (140, fr.getHeight() * 55 / 100));
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (top.removeFromTop (juce::jlimit (44, 70, top.getHeight() / 3)).reduced (2));
-            auto modeRow = top.removeFromTop (22);
+                filterDisplay->setBounds (fr.removeFromTop (56).reduced (2));
+            auto modeRow = fr.removeFromTop (22);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
-            auto r1 = top.removeFromTop (top.getHeight() / 2);
-            placeId (r1.removeFromLeft (r1.getWidth() / 2).reduced (2), "filter_cutoff");
-            placeId (r1.reduced (2), "filter_reso");
-            placeId (top.removeFromLeft (top.getWidth() / 2).reduced (2), "filter_drive");
-            placeId (top.reduced (2), "filter_env");
+            // 2x2 grid: CUTOFF RESO / F DRIVE F ENV
+            auto r1 = fr.removeFromTop (fr.getHeight() / 2);
+            placeId (r1.removeFromLeft (r1.getWidth() / 2).reduced (4), "filter_cutoff");
+            placeId (r1.reduced (4), "filter_reso");
+            placeId (fr.removeFromLeft (fr.getWidth() / 2).reduced (4), "filter_drive");
+            placeId (fr.reduced (4), "filter_env");
         }
         {
-            auto er = envTab.getLocalBounds().reduced (2);
+            auto er = envTab.getLocalBounds().reduced (4);
+            // ADSR curve
             if (adsrDisplay != nullptr)
             {
-                auto curve = er.removeFromLeft (juce::jmin (150, er.getWidth() / 4));
+                auto curve = er.removeFromLeft (120);
                 adsrDisplay->setBounds (curve.reduced (2));
             }
-            auto adsrKnobs = er.removeFromLeft (juce::jmin (240, er.getWidth() * 2 / 5));
-            const int aw = adsrKnobs.getWidth() / 4;
-            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_attack");
-            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_decay");
-            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_sustain");
-            placeId (adsrKnobs.reduced (2), "amp_release");
-            voiceModeBox.setBounds (er.removeFromTop (20).reduced (1));
-            const int ew = er.getWidth() / 4;
-            placeId (er.removeFromLeft (ew).reduced (2), "glide");
-            placeId (er.removeFromLeft (ew).reduced (2), "poly_voices");
-            placeId (er.removeFromLeft (ew).reduced (2), "noise_level");
-            placeId (er.reduced (2), "sub_level");
+            // ATTACK DECAY SUSTAIN RELEASE — fixed wide cells so they never disappear
+            auto adsrKnobs = er.removeFromLeft (320);
+            {
+                const int aw = adsrKnobs.getWidth() / 4;
+                placeId (juce::Rectangle<int> (adsrKnobs.getX(), adsrKnobs.getY(), aw, adsrKnobs.getHeight()).reduced (4, 2), "amp_attack");
+                placeId (juce::Rectangle<int> (adsrKnobs.getX() + aw, adsrKnobs.getY(), aw, adsrKnobs.getHeight()).reduced (4, 2), "amp_decay");
+                placeId (juce::Rectangle<int> (adsrKnobs.getX() + aw * 2, adsrKnobs.getY(), aw, adsrKnobs.getHeight()).reduced (4, 2), "amp_sustain");
+                placeId (juce::Rectangle<int> (adsrKnobs.getX() + aw * 3, adsrKnobs.getY(), aw, adsrKnobs.getHeight()).reduced (4, 2), "amp_release");
+            }
+            // Mono + glide / voices / noise / sub on the right
+            voiceModeBox.setBounds (er.removeFromTop (22).removeFromLeft (120).reduced (1));
+            const int ew = juce::jmax (1, er.getWidth() / 4);
+            placeId (er.removeFromLeft (ew).reduced (3, 2), "glide");
+            placeId (er.removeFromLeft (ew).reduced (3, 2), "poly_voices");
+            placeId (er.removeFromLeft (ew).reduced (3, 2), "noise_level");
+            placeId (er.reduced (3, 2), "sub_level");
         }
     }
 

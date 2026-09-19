@@ -172,6 +172,18 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             drawFrame (oscTab, cyan, "OSCILLATORS");
             drawFrame (filterTab, magenta, "FILTER");
             drawFrame (envTab, gold, "AMP ENV");
+            // Vertical separators between OSC1 | OSC2 | OSC3 (user red lines)
+            {
+                auto orc = getLocalArea (&oscTab, oscTab.getLocalBounds()).toFloat();
+                const float gap = 12.f;
+                const float colW = (orc.getWidth() - gap * 2.f) / 3.f;
+                g.setColour (cyan.withAlpha (0.55f));
+                for (int s = 1; s <= 2; ++s)
+                {
+                    const float x = orc.getX() + s * (colW + gap) - gap * 0.5f;
+                    g.drawLine (x, orc.getY() + 8.f, x, orc.getBottom() - 8.f, 1.6f);
+                }
+            }
         }
 
 }
