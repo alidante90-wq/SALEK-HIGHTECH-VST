@@ -315,7 +315,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->paramId = id;
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
-    k->s.setNumDecimalPlacesToDisplay (2);   // short numbers (fixes "هزار رقمی")
+    k->s.setNumDecimalPlacesToDisplay (1);   // short numbers (fixes "هزار رقمی")
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
     k->s.setScrollWheelEnabled (true);
     k->s.setMouseDragSensitivity (180);
