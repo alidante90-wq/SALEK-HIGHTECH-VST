@@ -268,7 +268,9 @@ private:
     juce::ToggleButton fxBypass[8];
     juce::TextButton presetToggle { "<<" }; // collapses preset list only
     juce::TextButton bgSwapBtn { "BG" }; // swap background art
+    juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
     juce::TextButton langToggle { "EN" };   // EN <-> FA
+    int charPortraitIdx = 0;
     bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;

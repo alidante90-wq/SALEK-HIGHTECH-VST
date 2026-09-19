@@ -183,7 +183,7 @@ inline juce::Image loadLogoGiti()
 }
 
 /** New character portraits (user-supplied PNGs in Source/Assets) */
-inline juce::Image loadCharPurple()  { return fromDisk ({ "char_purple_latex.png", "char_purple.png" }); }
+inline juce::Image loadCharPurple()  { return fromDisk ({ "char_purple_latex.png.png", "char_purple_latex.png", "char_purple.png" }); }
 inline juce::Image loadCharCatgirl() { return fromDisk ({ "char_catgirl.png" }); }
 inline juce::Image loadCharFox()     { return fromDisk ({ "char_foxgirl.png", "char_fox.png" }); }
 inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png", "char_cyber.png" }); }

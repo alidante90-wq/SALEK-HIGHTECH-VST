@@ -76,6 +76,7 @@ void SalekHightechAudioProcessorEditor::resized()
     auto header = full.removeFromTop (40);
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
+    charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
     bgSwapBtn.setBounds (header.removeFromRight (40).reduced (2));
     spectrum.setBounds (header.removeFromRight (80).reduced (2));
     scope.setBounds (header.removeFromRight (100).reduced (2));

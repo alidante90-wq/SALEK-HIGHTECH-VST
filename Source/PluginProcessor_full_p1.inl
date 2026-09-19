@@ -72,6 +72,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
     F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,0);
     F("comp_depth","Comp Depth",0,1,0.55f); F("comp_attack","Comp Attack",0.5f,50,8); F("comp_release","Comp Release",10,300,80);
+    F("comp_thr_lo","Comp Thr LO",-60,0,-18); F("comp_thr_mid","Comp Thr MID",-60,0,-12); F("comp_thr_hi","Comp Thr HI",-60,0,-8);
     F("eq_low","EQ Low",-12,12,0); F("eq_mid","EQ Mid",-12,12,0); F("eq_high","EQ High",-12,12,0);
     F("spatial_azim","Spatial Azim",-180,180,0); F("spatial_dist","Spatial Dist",0,1,0);
     F("spatial_size","Spatial Size",0,1,0.5f); F("spatial_elev","Spatial Elev",-90,90,0);

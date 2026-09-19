@@ -226,13 +226,23 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (themeBox);
     bgSwapBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
     bgSwapBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
-    bgSwapBtn.setTooltip ("Swap background image");
+    bgSwapBtn.setTooltip ("Swap background (ISATIS man+cat / SALEK 2 girls)");
     bgSwapBtn.onClick = [this]
     {
         // toggle between CYBER (1) and NEON (3) → different BGs
         themeBox.setSelectedId (themeBox.getSelectedId() == 1 ? 3 : 1, juce::sendNotification);
     };
     addAndMakeVisible (bgSwapBtn);
+
+    charCycleBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
+    charCycleBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
+    charCycleBtn.setTooltip ("Cycle character PNG overlay (fill empty space)");
+    charCycleBtn.onClick = [this]
+    {
+        charPortraitIdx = (charPortraitIdx + 1) % 9;
+        repaint();
+    };
+    addAndMakeVisible (charCycleBtn);
 
     // Collapse PRESET list only (hero stays visible)
     presetToggle.setButtonText (juce::CharPointer_UTF8 ("â")); // ◀
@@ -298,9 +308,17 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->paramId = id;
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
+    k->s.setNumDecimalPlacesToDisplay (2);   // short numbers (fixes "هزار رقمی")
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
     k->s.setScrollWheelEnabled (true);
     k->s.setMouseDragSensitivity (180);
+    // Cleaner value text: max 2 decimals, integers without .00
+    k->s.textFromValueFunction = [] (double v)
+    {
+        if (std::abs (v - std::round (v)) < 1e-4)
+            return juce::String ((int) std::round (v));
+        return juce::String (v, 2);
+    };
     parent.addAndMakeVisible (k->s);
     atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
     k->name.setText (label, juce::dontSendNotification);

@@ -66,12 +66,15 @@
         addKnob (fxTab, "reverb_decay", "R DECAY", M);
         // 67 BASSIFY
         addKnob (fxTab, "bassify", "BASSIFY", V);
-        // 68-71 COMP
+        // 68-71 COMP (global) + independent LO/MID/HI thresholds
         addKnob (fxTab, "comp_threshold", "C THR", O);
         addKnob (fxTab, "comp_ratio", "C RATIO", M);
         addKnob (fxTab, "comp_mix", "C MIX", C);
         addKnob (fxTab, "comp_depth", "C DEPTH", G);
-        // 72-74 EQ
+        addKnob (fxTab, "comp_thr_lo", "LO THR", C);
+        addKnob (fxTab, "comp_thr_mid", "MID THR", M);
+        addKnob (fxTab, "comp_thr_hi", "HI THR", O);
+        // EQ
         addKnob (fxTab, "eq_low", "EQ LOW", G);
         addKnob (fxTab, "eq_mid", "EQ MID", O);
         addKnob (fxTab, "eq_high", "EQ HI", M);

@@ -26,6 +26,7 @@
         "reverb_mix","reverb_size","reverb_decay",
         "bassify",
         "comp_threshold","comp_ratio","comp_mix","comp_depth",
+        "comp_thr_lo","comp_thr_mid","comp_thr_hi",
         "eq_low","eq_mid","eq_high",
         "phaser_mix","phaser_rate","phaser_depth",
         "dist_mix","dist_drive","dist_crush"
@@ -48,7 +49,7 @@
         { 1, { "delay_mix",  "delay_time",  "delay_fb",     nullptr }, 3, 0 },
         { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr }, 3, 1 },
         { 3, { "bassify",    nullptr,       nullptr,        nullptr }, 1, 0 },
-        { 4, { "comp_threshold","comp_ratio","comp_mix","comp_depth" }, 4, 0 },
+        { 4, { "comp_thr_lo","comp_thr_mid","comp_thr_hi","comp_ratio" }, 4, 0 },
         { 5, { "eq_low", "eq_mid", "eq_high", nullptr }, 3, 0 },
         { 6, { "phaser_mix", "phaser_rate", "phaser_depth", nullptr }, 3, 0 },
         { 7, { "dist_mix", "dist_drive", "dist_crush", nullptr }, 3, 2 }

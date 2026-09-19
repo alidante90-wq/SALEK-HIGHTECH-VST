@@ -110,23 +110,30 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // one character PNG in empty zone (NOT background) — MAIN only
+    // Character PNG overlays in empty zones (NOT the background) — MAIN tab
+    // Left = yellow/purple mark area, Right = secondary fill. Cycle with CHAR button.
     if (tabs.getCurrentTabIndex() == 0)
     {
-        static juce::Image sideChar;
-        static bool tried = false;
-        if (! tried)
-        {
-            tried = true;
-            sideChar = SalekAssets::loadCharPortrait (0);
-        }
+        auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
         if (sideChar.isValid())
         {
-            const float cw = juce::jmin (180.f, W * 0.18f);
-            const float ch = cw * 1.35f;
-            auto dest = juce::Rectangle<float> (W - cw - 16.f, H - ch - 90.f, cw, ch);
-            g.setOpacity (0.55f);
-            g.drawImage (sideChar, dest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            // LEFT empty zone (user yellow/purple marks)
+            const float cwL = juce::jmin (200.f, W * 0.20f);
+            const float chL = cwL * 1.40f;
+            auto leftDest = juce::Rectangle<float> (18.f, H - chL - 100.f, cwL, chL);
+            g.setOpacity (0.70f);
+            g.drawImage (sideChar, leftDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+
+            // RIGHT secondary (next character in bank)
+            auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+            if (sideChar2.isValid())
+            {
+                const float cwR = juce::jmin (160.f, W * 0.16f);
+                const float chR = cwR * 1.35f;
+                auto rightDest = juce::Rectangle<float> (W - cwR - 16.f, H - chR - 90.f, cwR, chR);
+                g.setOpacity (0.50f);
+                g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            }
             g.setOpacity (1.f);
         }
     }
@@ -294,24 +301,25 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
                     panelX, panelY + panelH - 16.f, panelW, 14.f, juce::Justification::centred);
     }
 
-    // ---- GITI BY SALEK logo — TOP CENTER, always on top, large ----
+    // ---- GITI BY SALEK HIGHTECH logo — TOP-LEFT, largest, always on top of every layer ----
+    // (yellow mark #1 in user screenshot)
     if (logoImg.isValid())
     {
-        const float lw = juce::jmin (280.f, W * 0.28f);
-        const float lh = 64.f;
-        auto logoArea = juce::Rectangle<float> ((W - lw) * 0.5f, 2.f, lw, lh);
-        g.setColour (juce::Colours::black.withAlpha (0.45f));
-        g.fillRoundedRectangle (logoArea.expanded (6.f, 2.f), 8.f);
-        g.setColour (cyan.withAlpha (0.2f + pulse * 0.1f));
-        g.drawRoundedRectangle (logoArea.expanded (6.f, 2.f), 8.f, 1.2f);
+        const float lw = juce::jmin (340.f, W * 0.32f);
+        const float lh = 78.f;
+        auto logoArea = juce::Rectangle<float> (6.f, 2.f, lw, lh);
+        g.setColour (juce::Colours::black.withAlpha (0.55f));
+        g.fillRoundedRectangle (logoArea.expanded (8.f, 4.f), 10.f);
+        g.setColour (cyan.withAlpha (0.25f + pulse * 0.15f));
+        g.drawRoundedRectangle (logoArea.expanded (8.f, 4.f), 10.f, 1.6f);
         g.setOpacity (1.f);
         g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
     }
     else
     {
         g.setColour (cyan);
-        g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
-        g.drawText ("GITI BY SALEK HIGHTECH", 0, 8, (int) W, 28, juce::Justification::centred);
+        g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
+        g.drawText ("GITI BY SALEK HIGHTECH", 8, 6, 360, 32, juce::Justification::centredLeft);
     }
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
