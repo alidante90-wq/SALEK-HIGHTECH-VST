@@ -275,14 +275,28 @@ public:
         g.drawRoundedRectangle (r, 8.f, 1.4f);
 
         auto plot = r.reduced (8.f, 18.f);
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.07f));
-        for (int i = 1; i < 8; ++i)
+        // Vital-style grid (16 x 8)
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.10f));
+        for (int i = 1; i < 16; ++i)
         {
-            float x = plot.getX() + plot.getWidth() * (float) i / 8.f;
+            float x = plot.getX() + plot.getWidth() * (float) i / 16.f;
             g.drawVerticalLine ((int) x, plot.getY(), plot.getBottom());
         }
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.2f));
+        for (int j = 1; j < 8; ++j)
+        {
+            float y = plot.getY() + plot.getHeight() * (float) j / 8.f;
+            g.drawHorizontalLine ((int) y, plot.getX(), plot.getRight());
+        }
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.28f));
         g.drawHorizontalLine ((int) plot.getCentreY(), plot.getX(), plot.getRight());
+        // vertex dots every 2 samples
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.55f));
+        for (int i = 0; i < N; i += 2)
+        {
+            float x = plot.getX() + (float) i / (float) (N - 1) * plot.getWidth();
+            float y = plot.getCentreY() - points[i] * plot.getHeight() * 0.45f;
+            g.fillEllipse (x - 2.5f, y - 2.5f, 5.f, 5.f);
+        }
 
         juce::Path fill, wave;
         for (int i = 0; i < N; ++i)
@@ -333,8 +347,18 @@ private:
         if (plot.getWidth() < 1.f) return;
         int idx = juce::jlimit (0, N - 1,
             (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * (float) (N - 1)));
+        // Shift = snap to 16-step X grid + 8-level Y (Vital-like)
+        if (e.mods.isShiftDown())
+        {
+            const float step = (float) (N - 1) / 16.f;
+            idx = juce::jlimit (0, N - 1, (int) std::round ((float) idx / step) * (int) step);
+        }
         float v = juce::jlimit (-1.f, 1.f,
             (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
+        if (e.mods.isShiftDown())
+        {
+            v = std::round (v * 4.f) / 4.f; // 8 levels -1..1
+        }
         if (lastIdx < 0) writePoint (idx, v);
         else
         {
