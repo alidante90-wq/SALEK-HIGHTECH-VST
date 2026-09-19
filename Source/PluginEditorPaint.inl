@@ -110,32 +110,31 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // Character PNGs cover the SALEK watermark circles (bottom-left + bottom-right)
-    // Cycle with CHAR button. Always visible on MAIN / MOD.
+    // Cover SALEK watermark discs baked into BG (always, every tab)
     {
-        const int tab = tabs.getCurrentTabIndex();
-        if (tab == 0 || tab == 1)
+        auto coverCircle = [&] (float cx, float cy, float r)
         {
-            auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
-            auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
-            // Cover bottom-LEFT SALEK circle
-            if (sideChar.isValid())
-            {
-                const float cwL = 210.f, chL = 280.f;
-                auto leftDest = juce::Rectangle<float> (8.f, H - chL - 72.f, cwL, chL);
-                g.setOpacity (0.92f);
-                g.drawImage (sideChar, leftDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-            }
-            // Cover bottom-RIGHT SALEK circle
-            if (sideChar2.isValid())
-            {
-                const float cwR = 190.f, chR = 260.f;
-                auto rightDest = juce::Rectangle<float> (W - cwR - 8.f, H - chR - 72.f, cwR, chR);
-                g.setOpacity (0.88f);
-                g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-            }
-            g.setOpacity (1.f);
+            g.setColour (juce::Colour (0xff080414).withAlpha (0.95f));
+            g.fillEllipse (cx - r, cy - r, r * 2.f, r * 2.f);
+        };
+        coverCircle (95.f, H - 95.f, 80.f);
+        coverCircle (W - 95.f, H - 95.f, 80.f);
+
+        auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
+        auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+        if (sideChar.isValid())
+        {
+            g.setOpacity (0.95f);
+            g.drawImage (sideChar, juce::Rectangle<float> (8.f, H - 290.f, 200.f, 260.f),
+                         juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
         }
+        if (sideChar2.isValid())
+        {
+            g.setOpacity (0.90f);
+            g.drawImage (sideChar2, juce::Rectangle<float> (W - 200.f, H - 280.f, 190.f, 250.f),
+                         juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        }
+        g.setOpacity (1.f);
     }
 
     // ---- plasma ribbons (optimized: 4 not 6) ----

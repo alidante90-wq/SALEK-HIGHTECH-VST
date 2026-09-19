@@ -16,6 +16,14 @@
         if (k == nullptr) return;
         auto nameArea = box.removeFromBottom (14);
         k->name.setBounds (nameArea);
+        k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, box.getWidth() - 8), 12);
+        k->s.setNumDecimalPlacesToDisplay (2);
+        k->s.textFromValueFunction = [] (double v)
+        {
+            if (std::abs (v - std::round (v)) < 1e-3)
+                return juce::String ((int) std::round (v));
+            return juce::String (v, 2);
+        };
         k->s.setBounds (box);
         k->s.setVisible (true);
         k->name.setVisible (true);

@@ -93,40 +93,89 @@ void SalekHightechAudioProcessorEditor::resized()
     tabs.setBounds (full);
     tabs.toFront (false);
 
-    // MAIN — OSC top half + separators, filter top-right, env bottom with real glide knobs
+    // MAIN — place ALL knobs by PARAMETER ID (never by fragile array index)
     {
+        auto byId = [this] (const char* id) -> Knob*
+        {
+            for (auto& k : knobs)
+                if (k != nullptr && k->paramId == id)
+                    return k.get();
+            return nullptr;
+        };
+        auto placeId = [&] (juce::Rectangle<int> box, const char* id)
+        {
+            if (auto* k = byId (id))
+            {
+                k->name.setBounds (box.removeFromBottom (14));
+                k->name.setJustificationType (juce::Justification::centred);
+                k->name.setVisible (true);
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, box.getWidth() - 8), 12);
+                k->s.setNumDecimalPlacesToDisplay (2);
+                k->s.textFromValueFunction = [] (double v)
+                {
+                    if (std::abs (v - std::round (v)) < 1e-3)
+                        return juce::String ((int) std::round (v));
+                    return juce::String (v, 2);
+                };
+                k->s.setBounds (box);
+                k->s.setVisible (true);
+            }
+        };
+
         auto b = mainTab.getLocalBounds().reduced (2);
         envTab.setBounds (b.removeFromBottom (110));
         filterTab.setBounds (b.removeFromRight (200));
-        // OSC uses only UPPER half — lower half left empty (user workspace)
         auto oscFull = b;
         oscTab.setBounds (oscFull.removeFromTop (oscFull.getHeight() / 2));
-        // (oscFull remainder is empty by design)
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
-            const int gap = 10; // green separators between oscillators
+            const int gap = 12;
             const int colW = (oa.getWidth() - gap * 2) / 3;
             juce::Component* mons[3] = { oscMon1.get(), oscMon2.get(), oscMon3.get() };
             juce::ComboBox* shapes[3] = { &osc1ShapeBox, &osc2ShapeBox, &osc3ShapeBox };
+            const char* idsLvl[3]   = { "osc1_level", "osc2_level", "osc3_level" };
+            const char* idsTbl[3]   = { "osc1_table", "osc2_table", "osc3_table" };
+            const char* idsWarp[3]  = { "osc1_warp", "osc2_warp", "osc3_warp" };
+            const char* idsFold[3]  = { "osc1_fold", "osc2_fold", "osc3_fold" };
+            const char* idsDrive[3] = { "osc1_drive", "osc2_drive", "osc3_drive" };
+            const char* idsOct[3]   = { "osc1_octave", "osc2_octave", "osc3_octave" };
+            const char* idsUni[3]   = { "osc1_unison", "osc2_unison", "osc3_unison" };
+            const char* idsDet[3]   = { "osc1_udet", "osc2_udet", "osc3_udet" };
+            const char* idsSpr[3]   = { "osc1_uspread", "osc2_uspread", "osc3_uspread" };
+            const char* idsPh[3]    = { "osc1_phase", "osc2_phase", "osc3_phase" };
+            const char* idsRnd[3]   = { "osc1_rand", "osc2_rand", "osc3_rand" };
+
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, oa.getHeight()).reduced (2, 2);
-                // vertical separator between oscillators
-                if (c > 0)
-                {
-                    // drawn in paint; keep a small gap via reduced above
-                }
                 auto monH = juce::jlimit (36, 56, col.getHeight() / 5);
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
                 shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
-                auto paramArea = col.removeFromTop (juce::jmax (70, col.getHeight() * 2 / 3));
-                place (paramArea, knobs, c * 6, 6, 2);
-                place (col, knobs, 18 + c * 3, 3, 3);
+
+                // 3 rows x 2: LVL/TABLE, WARP/FOLD, DRIVE/OCT
+                auto row1 = col.removeFromTop (col.getHeight() / 4);
+                placeId (row1.removeFromLeft (row1.getWidth() / 2).reduced (2), idsLvl[c]);
+                placeId (row1.reduced (2), idsTbl[c]);
+                auto row2 = col.removeFromTop (col.getHeight() / 3);
+                placeId (row2.removeFromLeft (row2.getWidth() / 2).reduced (2), idsWarp[c]);
+                placeId (row2.reduced (2), idsFold[c]);
+                auto row3 = col.removeFromTop (col.getHeight() / 2);
+                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (2), idsDrive[c]);
+                placeId (row3.reduced (2), idsOct[c]);
+                // bottom: UNI DET SPR | PHASE RAND
+                auto bot = col;
+                auto uniRow = bot.removeFromTop (bot.getHeight() / 2);
+                const int uw = uniRow.getWidth() / 3;
+                placeId (uniRow.removeFromLeft (uw).reduced (1), idsUni[c]);
+                placeId (uniRow.removeFromLeft (uw).reduced (1), idsDet[c]);
+                placeId (uniRow.reduced (1), idsSpr[c]);
+                auto pr = bot;
+                placeId (pr.removeFromLeft (pr.getWidth() / 2).reduced (1), idsPh[c]);
+                placeId (pr.reduced (1), idsRnd[c]);
             }
         }
         {
-            // filter: knobs + modes at TOP, leave lower part of filter strip free
             auto fr = filterTab.getLocalBounds().reduced (3);
             auto top = fr.removeFromTop (juce::jmax (140, fr.getHeight() * 55 / 100));
             if (filterDisplay != nullptr)
@@ -134,8 +183,11 @@ void SalekHightechAudioProcessorEditor::resized()
             auto modeRow = top.removeFromTop (22);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
-            place (top, knobs, 27, 4, 2);
-            // fr remainder empty under filter
+            auto r1 = top.removeFromTop (top.getHeight() / 2);
+            placeId (r1.removeFromLeft (r1.getWidth() / 2).reduced (2), "filter_cutoff");
+            placeId (r1.reduced (2), "filter_reso");
+            placeId (top.removeFromLeft (top.getWidth() / 2).reduced (2), "filter_drive");
+            placeId (top.reduced (2), "filter_env");
         }
         {
             auto er = envTab.getLocalBounds().reduced (2);
@@ -145,10 +197,17 @@ void SalekHightechAudioProcessorEditor::resized()
                 adsrDisplay->setBounds (curve.reduced (2));
             }
             auto adsrKnobs = er.removeFromLeft (juce::jmin (240, er.getWidth() * 2 / 5));
-            place (adsrKnobs, knobs, 31, 4, 4); // attack decay sustain release
+            const int aw = adsrKnobs.getWidth() / 4;
+            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_attack");
+            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_decay");
+            placeId (adsrKnobs.removeFromLeft (aw).reduced (2), "amp_sustain");
+            placeId (adsrKnobs.reduced (2), "amp_release");
             voiceModeBox.setBounds (er.removeFromTop (20).reduced (1));
-            // glide voices noise sub — by param id if available
-            place (er, knobs, 38, 4, 4);
+            const int ew = er.getWidth() / 4;
+            placeId (er.removeFromLeft (ew).reduced (2), "glide");
+            placeId (er.removeFromLeft (ew).reduced (2), "poly_voices");
+            placeId (er.removeFromLeft (ew).reduced (2), "noise_level");
+            placeId (er.reduced (2), "sub_level");
         }
     }
 
