@@ -246,7 +246,7 @@ private:
     std::unique_ptr<OscShapeMonitor> oscMon1, oscMon2, oscMon3;
     juce::VBlankAttachment vblank;
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
-    struct Knob { juce::Slider s; juce::Label name; };
+    struct Knob { juce::Slider s; juce::Label name; juce::String paramId; };
     std::vector<std::unique_ptr<Knob>> knobs;
     using SAtt = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::vector<std::unique_ptr<SAtt>> atts;
