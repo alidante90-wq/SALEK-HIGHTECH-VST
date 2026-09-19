@@ -295,6 +295,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     juce::Component& parent, const char* id, const char* label, juce::Colour c)
 {
     auto k = std::make_unique<Knob>();
+    k->paramId = id;
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
