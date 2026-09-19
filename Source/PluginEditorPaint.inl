@@ -250,29 +250,69 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0.f, 0.f, W, 40.f);
     }
 
-// ---- GITI BY SALEK logo (TOP-LEFT, large) ----
+// ---- zone 3: BG art previews (MAIN empty lower-left) + swap hint ----
+    if (tabs.getCurrentTabIndex() == 0)
+    {
+        // empty workspace under OSC: show both official BGs as selectable thumbs
+        const float panelX = 200.f; // right of preset strip
+        const float panelY = H * 0.52f;
+        const float panelW = juce::jmin (420.f, W * 0.38f);
+        const float panelH = juce::jmin (200.f, H * 0.28f);
+        auto panel = juce::Rectangle<float> (panelX, panelY, panelW, panelH);
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        g.fillRoundedRectangle (panel, 10.f);
+        g.setColour (cyan.withAlpha (0.35f));
+        g.drawRoundedRectangle (panel, 10.f, 1.2f);
+
+        const float gap = 8.f;
+        const float tw = (panelW - gap * 3.f) * 0.5f;
+        const float th = panelH - 36.f;
+        auto thumb1 = juce::Rectangle<float> (panelX + gap, panelY + 8.f, tw, th);
+        auto thumb2 = juce::Rectangle<float> (panelX + gap * 2.f + tw, panelY + 8.f, tw, th);
+        if (lianImg.isValid())
+        {
+            g.setOpacity (themeId <= 1 ? 0.95f : 0.45f);
+            g.drawImage (lianImg, thumb1, juce::RectanglePlacement::centred);
+            g.setOpacity (1.f);
+            g.setColour (themeId <= 1 ? gold : cyan.withAlpha (0.4f));
+            g.drawRoundedRectangle (thumb1, 6.f, themeId <= 1 ? 2.f : 1.f);
+        }
+        if (cyanImg.isValid())
+        {
+            g.setOpacity (themeId > 1 ? 0.95f : 0.45f);
+            g.drawImage (cyanImg, thumb2, juce::RectanglePlacement::centred);
+            g.setOpacity (1.f);
+            g.setColour (themeId > 1 ? gold : cyan.withAlpha (0.4f));
+            g.drawRoundedRectangle (thumb2, 6.f, themeId > 1 ? 2.f : 1.f);
+        }
+        g.setFont (juce::FontOptions (10.f, juce::Font::bold));
+        g.setColour (gold.withAlpha (0.85f));
+        g.drawText ("ISATIS", thumb1.getX(), thumb1.getBottom() - 2.f, thumb1.getWidth(), 14.f, juce::Justification::centred);
+        g.drawText ("SALEK", thumb2.getX(), thumb2.getBottom() - 2.f, thumb2.getWidth(), 14.f, juce::Justification::centred);
+        g.setColour (cyan.withAlpha (0.7f));
+        g.drawText ("BG  |  use BG button top-right to swap",
+                    panelX, panelY + panelH - 16.f, panelW, 14.f, juce::Justification::centred);
+    }
+
+    // ---- GITI BY SALEK logo — TOP CENTER, always on top, large ----
     if (logoImg.isValid())
     {
-        const float lw = 200.f, lh = 80.f;
-        auto logoArea = juce::Rectangle<float> (12.f, 6.f, lw, lh);
-        // soft glow under logo
-        g.setColour (cyan.withAlpha (0.12f + pulse * 0.08f));
-        g.fillEllipse (logoArea.expanded (8.f).withHeight (logoArea.getHeight() * 0.6f));
-        g.setOpacity (0.98f);
-        g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
+        const float lw = juce::jmin (280.f, W * 0.28f);
+        const float lh = 64.f;
+        auto logoArea = juce::Rectangle<float> ((W - lw) * 0.5f, 2.f, lw, lh);
+        g.setColour (juce::Colours::black.withAlpha (0.45f));
+        g.fillRoundedRectangle (logoArea.expanded (6.f, 2.f), 8.f);
+        g.setColour (cyan.withAlpha (0.2f + pulse * 0.1f));
+        g.drawRoundedRectangle (logoArea.expanded (6.f, 2.f), 8.f, 1.2f);
         g.setOpacity (1.f);
+        g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
     }
     else
     {
         g.setColour (cyan);
-        g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-        g.drawText ("SALEK HIGHTECH", 16, 8, 280, 28, juce::Justification::centredLeft);
+        g.setFont (juce::FontOptions (20.0f, juce::Font::bold));
+        g.drawText ("GITI BY SALEK HIGHTECH", 0, 8, (int) W, 28, juce::Justification::centred);
     }
-
-    // BG name badge (top-right of keyboard area is cluttered — keep subtle top)
-    g.setColour (gold.withAlpha (0.55f + pulse * 0.25f));
-    g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-    g.drawText (themeId <= 1 ? "BG: ISATIS" : "BG: SALEK", W - 110.f, 8.f, 100.f, 16.f, juce::Justification::centredRight);
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
     if (presetCollapsed)
