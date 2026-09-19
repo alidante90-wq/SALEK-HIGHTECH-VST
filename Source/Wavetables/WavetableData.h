@@ -158,7 +158,8 @@ public:
 
     void generateDefaultTables()
     {
-        frames.resize (16);
+        // Big bank: 64 frames — analog-style morph (sine→tri→sqr→saw→complex→metallic)
+        frames.resize (64);
         for (int i = 0; i < WavetableFrame::tableSize; ++i)
         {
             const float t = static_cast<float> (i) / static_cast<float> (WavetableFrame::tableSize);
@@ -176,58 +177,91 @@ public:
                     s += std::sin (static_cast<float> (h) * phase) / static_cast<float> (h);
                 return s;
             };
-            frames[0].samples[idx] = (std::sin(phase) + 0.25f*std::sin(2.f*phase)) * 0.9f;
-            {
+            auto addTri = [&](int harm) {
                 float s = 0.0f;
-                for (int h = 1; h <= 15; h += 2) {
+                for (int h = 1; h <= harm; h += 2) {
                     float sign = ((h - 1) / 2) % 2 == 0 ? 1.0f : -1.0f;
-                    s += sign * std::sin((float)h * phase) / (float)(h * h);
+                    s += sign * std::sin ((float) h * phase) / (float) (h * h);
                 }
-                frames[1].samples[idx] = s * 0.95f;
-            }
-            frames[2].samples[idx] = addSqr(15) * 0.9f;
-            frames[3].samples[idx] = addSaw(32) * 0.85f;
-            frames[4].samples[idx] = addSaw(48) * 0.7f;
-            frames[5].samples[idx] = (addSqr(31) * 0.7f + addSaw(16) * 0.3f) * 0.85f;
+                return s;
+            };
+
+            // 0–15 classic morph (kept + refined)
+            frames[0].samples[idx]  = std::sin (phase);
+            frames[1].samples[idx]  = addTri (15) * 0.95f;
+            frames[2].samples[idx]  = addSqr (15) * 0.9f;
+            frames[3].samples[idx]  = addSaw (32) * 0.85f;
+            frames[4].samples[idx]  = addSaw (48) * 0.7f;
+            frames[5].samples[idx]  = (addSqr (31) * 0.7f + addSaw (16) * 0.3f) * 0.85f;
+            frames[6].samples[idx]  = (std::sin (phase) + 0.35f * std::sin (3.f * phase) + 0.2f * std::sin (5.f * phase)) * 0.75f;
+            frames[7].samples[idx]  = (std::sin (phase) + 0.28f * std::sin (4.f * phase) + 0.2f * std::sin (8.f * phase)) * 0.7f;
+            frames[8].samples[idx]  = std::floor (addSaw (20) * 6.f) / 6.f * 0.8f;
+            frames[9].samples[idx]  = addSqr (41) * 0.75f;
+            frames[10].samples[idx] = (std::sin (phase) * 0.85f + 0.4f * std::sin (2.f * phase) + 0.15f * std::sin (3.f * phase));
             {
-                float s = std::sin(phase);
-                for (int h : {3,5,7,11,13,17})
-                    s += (0.35f / (float)(h/2+1)) * std::sin((float)h * phase);
-                frames[6].samples[idx] = s * 0.7f;
-            }
-            {
-                float s = std::sin(phase);
-                for (int h : {4,5,8,9,12,16})
-                    s += 0.28f * std::sin((float)h * phase);
-                frames[7].samples[idx] = s * 0.65f;
-            }
-            {
-                float s = addSaw(20);
-                s = std::floor(s * 6.0f) / 6.0f;
-                frames[8].samples[idx] = s * 0.8f;
-            }
-            frames[9].samples[idx] = addSqr(41) * 0.75f;
-            frames[10].samples[idx] = (std::sin(phase)*0.85f + 0.4f*std::sin(2.f*phase) + 0.15f*std::sin(3.f*phase));
-            {
-                float s = 0.0f;
+                float s = 0.f;
                 for (int h = 1; h <= 64; ++h)
-                    s += (1.0f / (1.0f + 0.12f*(float)h)) * std::sin((float)h * phase);
+                    s += (1.f / (1.f + 0.12f * (float) h)) * std::sin ((float) h * phase);
                 frames[11].samples[idx] = s * 0.4f;
             }
+            frames[12].samples[idx] = (std::sin (phase) + 0.5f * std::sin (6.f * phase) + 0.3f * std::sin (7.f * phase)) * 0.7f;
+            frames[13].samples[idx] = (std::sin (phase) - 0.6f * std::sin (2.f * phase) + 0.3f * std::sin (5.f * phase)) * 0.75f;
+            frames[14].samples[idx] = (0.55f * addSaw (24) + 0.45f * addSqr (31)) * 0.85f;
+            frames[15].samples[idx] = (addSaw (8) + 0.15f * std::sin (23.f * phase) + 0.1f * std::sin (29.f * phase)) * 0.7f;
+
+            // 16–31 Virus-style / analog fat morphs
+            frames[16].samples[idx] = addSaw (12) * 0.9f;                          // warm saw
+            frames[17].samples[idx] = addSaw (24) * 0.85f;
+            frames[18].samples[idx] = addSaw (64) * 0.65f;                          // bright saw
+            frames[19].samples[idx] = addSqr (9) * 0.9f;                            // soft square
+            frames[20].samples[idx] = addSqr (25) * 0.8f;
+            frames[21].samples[idx] = (addSaw (20) * 0.6f + addSqr (15) * 0.4f) * 0.85f;
+            frames[22].samples[idx] = addTri (31) * 0.9f;
+            frames[23].samples[idx] = (addTri (15) * 0.5f + addSaw (16) * 0.5f) * 0.85f;
+            // pulse-ish
+            frames[24].samples[idx] = (t < 0.25f ? 0.9f : (t < 0.5f ? -0.3f : (t < 0.75f ? 0.5f : -0.9f)));
+            frames[25].samples[idx] = (t < 0.125f ? 1.f : -0.35f) * 0.85f;         // narrow pulse
+            // formant-ish
+            frames[26].samples[idx] = (std::sin (phase) + 0.55f * std::sin (3.f * phase) + 0.35f * std::sin (5.f * phase)
+                                       + 0.2f * std::sin (7.f * phase)) * 0.65f;
+            frames[27].samples[idx] = (std::sin (phase) + 0.4f * std::sin (5.f * phase) + 0.3f * std::sin (9.f * phase)) * 0.7f;
+            // metallic / partial clusters
+            frames[28].samples[idx] = (std::sin (phase) + 0.45f * std::sin (2.7f * phase) + 0.3f * std::sin (4.1f * phase)
+                                       + 0.2f * std::sin (6.3f * phase)) * 0.65f;
+            frames[29].samples[idx] = (std::sin (phase) + 0.5f * std::sin (3.3f * phase) + 0.35f * std::sin (7.1f * phase)) * 0.6f;
+            // bit-crushed morph
+            frames[30].samples[idx] = std::floor (addSaw (32) * 4.f) / 4.f * 0.85f;
+            frames[31].samples[idx] = std::floor (addSqr (21) * 8.f) / 8.f * 0.8f;
+
+            // 32–47 hi-tech / alien / screech material
+            for (int f = 32; f < 48; ++f)
             {
-                float s = std::sin(phase);
-                s += 0.5f * std::sin(6.f*phase) + 0.3f*std::sin(7.f*phase) + 0.2f*std::sin(11.f*phase);
-                frames[12].samples[idx] = s * 0.7f;
+                float morph = (float) (f - 32) / 15.f;
+                float s = 0.f;
+                int harm = 8 + (int) (morph * 48.f);
+                for (int h = 1; h <= harm; ++h)
+                {
+                    float amp = 1.f / (1.f + 0.08f * h * (1.f + morph));
+                    float det = 1.f + morph * 0.15f * std::sin ((float) h);
+                    s += amp * std::sin ((float) h * det * phase);
+                }
+                // add odd harmonics for scream
+                if (morph > 0.4f)
+                    s += 0.3f * morph * std::sin (11.f * phase) + 0.2f * morph * std::sin (13.f * phase);
+                frames[(size_t) f].samples[idx] = s * (0.55f - morph * 0.15f);
             }
+
+            // 48–63 darkpsy / supersaw-ish / folded
+            for (int f = 48; f < 64; ++f)
             {
-                float s = std::sin(phase) - 0.6f*std::sin(2.f*phase) + 0.3f*std::sin(5.f*phase);
-                frames[13].samples[idx] = s * 0.75f;
-            }
-            frames[14].samples[idx] = (0.55f*addSaw(24) + 0.45f*addSqr(31)) * 0.85f;
-            {
-                float s = addSaw(8);
-                s += 0.15f * std::sin(23.f*phase) + 0.1f*std::sin(29.f*phase) + 0.08f*std::sin(31.f*phase);
-                frames[15].samples[idx] = s * 0.7f;
+                float morph = (float) (f - 48) / 15.f;
+                float s = addSaw (16 + (int) (morph * 40.f));
+                // soft fold
+                s = std::tanh (s * (1.2f + morph * 2.5f));
+                // slight even harmonics (analog-ish)
+                s += 0.12f * morph * std::sin (2.f * phase);
+                s += 0.08f * morph * std::sin (4.f * phase);
+                frames[(size_t) f].samples[idx] = s * 0.7f;
             }
         }
         for (auto& f : frames)

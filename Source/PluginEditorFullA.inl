@@ -4,6 +4,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 {
     keyboard.setAvailableRange (21, 108);
     keyboard.setOctaveForMiddleC (4);
+    keyboard.setWantsKeyboardFocus (true);
+    // Keep computer-keyboard → MIDI working even while mouse is on knobs
+    setWantsKeyboardFocus (true);
     glBackdrop = nullptr;
     sonicCore = nullptr;
 

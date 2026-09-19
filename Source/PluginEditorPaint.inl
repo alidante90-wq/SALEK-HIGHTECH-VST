@@ -110,31 +110,36 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // Character PNG overlays in empty zones (NOT the background) — MAIN tab
-    // Left = yellow/purple mark area, Right = secondary fill. Cycle with CHAR button.
-    if (tabs.getCurrentTabIndex() == 0)
+    // Character PNG overlays in empty zones (NOT the background)
+    // MAIN + MOD left (user yellow "PNG girl" mark). Cycle with CHAR button.
     {
-        auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
-        if (sideChar.isValid())
+        const int tab = tabs.getCurrentTabIndex();
+        if (tab == 0 || tab == 1) // MAIN or MOD
         {
-            // LEFT empty zone (user yellow/purple marks)
-            const float cwL = juce::jmin (200.f, W * 0.20f);
-            const float chL = cwL * 1.40f;
-            auto leftDest = juce::Rectangle<float> (18.f, H - chL - 100.f, cwL, chL);
-            g.setOpacity (0.70f);
-            g.drawImage (sideChar, leftDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-
-            // RIGHT secondary (next character in bank)
-            auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
-            if (sideChar2.isValid())
+            auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
+            if (sideChar.isValid())
             {
-                const float cwR = juce::jmin (160.f, W * 0.16f);
-                const float chR = cwR * 1.35f;
-                auto rightDest = juce::Rectangle<float> (W - cwR - 16.f, H - chR - 90.f, cwR, chR);
-                g.setOpacity (0.50f);
-                g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+                // LEFT empty zone
+                const float cwL = juce::jmin (tab == 1 ? 220.f : 200.f, W * 0.20f);
+                const float chL = cwL * 1.40f;
+                auto leftDest = juce::Rectangle<float> (18.f, H - chL - 100.f, cwL, chL);
+                g.setOpacity (tab == 1 ? 0.85f : 0.70f);
+                g.drawImage (sideChar, leftDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+
+                if (tab == 0)
+                {
+                    auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+                    if (sideChar2.isValid())
+                    {
+                        const float cwR = juce::jmin (160.f, W * 0.16f);
+                        const float chR = cwR * 1.35f;
+                        auto rightDest = juce::Rectangle<float> (W - cwR - 16.f, H - chR - 90.f, cwR, chR);
+                        g.setOpacity (0.50f);
+                        g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+                    }
+                }
+                g.setOpacity (1.f);
             }
-            g.setOpacity (1.f);
         }
     }
 
@@ -257,69 +262,26 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRect (0.f, 0.f, W, 40.f);
     }
 
-// ---- zone 3: BG art previews (MAIN empty lower-left) + swap hint ----
-    if (tabs.getCurrentTabIndex() == 0)
-    {
-        // empty workspace under OSC: show both official BGs as selectable thumbs
-        const float panelX = 200.f; // right of preset strip
-        const float panelY = H * 0.52f;
-        const float panelW = juce::jmin (420.f, W * 0.38f);
-        const float panelH = juce::jmin (200.f, H * 0.28f);
-        auto panel = juce::Rectangle<float> (panelX, panelY, panelW, panelH);
-        g.setColour (juce::Colours::black.withAlpha (0.35f));
-        g.fillRoundedRectangle (panel, 10.f);
-        g.setColour (cyan.withAlpha (0.35f));
-        g.drawRoundedRectangle (panel, 10.f, 1.2f);
+// BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
 
-        const float gap = 8.f;
-        const float tw = (panelW - gap * 3.f) * 0.5f;
-        const float th = panelH - 36.f;
-        auto thumb1 = juce::Rectangle<float> (panelX + gap, panelY + 8.f, tw, th);
-        auto thumb2 = juce::Rectangle<float> (panelX + gap * 2.f + tw, panelY + 8.f, tw, th);
-        if (lianImg.isValid())
-        {
-            g.setOpacity (themeId <= 1 ? 0.95f : 0.45f);
-            g.drawImage (lianImg, thumb1, juce::RectanglePlacement::centred);
-            g.setOpacity (1.f);
-            g.setColour (themeId <= 1 ? gold : cyan.withAlpha (0.4f));
-            g.drawRoundedRectangle (thumb1, 6.f, themeId <= 1 ? 2.f : 1.f);
-        }
-        if (cyanImg.isValid())
-        {
-            g.setOpacity (themeId > 1 ? 0.95f : 0.45f);
-            g.drawImage (cyanImg, thumb2, juce::RectanglePlacement::centred);
-            g.setOpacity (1.f);
-            g.setColour (themeId > 1 ? gold : cyan.withAlpha (0.4f));
-            g.drawRoundedRectangle (thumb2, 6.f, themeId > 1 ? 2.f : 1.f);
-        }
-        g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.setColour (gold.withAlpha (0.85f));
-        g.drawText ("ISATIS", thumb1.getX(), thumb1.getBottom() - 2.f, thumb1.getWidth(), 14.f, juce::Justification::centred);
-        g.drawText ("SALEK", thumb2.getX(), thumb2.getBottom() - 2.f, thumb2.getWidth(), 14.f, juce::Justification::centred);
-        g.setColour (cyan.withAlpha (0.7f));
-        g.drawText ("BG  |  use BG button top-right to swap",
-                    panelX, panelY + panelH - 16.f, panelW, 14.f, juce::Justification::centred);
-    }
-
-    // ---- GITI BY SALEK HIGHTECH logo — TOP-LEFT, largest, always on top of every layer ----
-    // (yellow mark #1 in user screenshot)
+    // ---- GITI BY SALEK HIGHTECH logo — TOP-LEFT only (not center), never covers tabs ----
     if (logoImg.isValid())
     {
-        const float lw = juce::jmin (340.f, W * 0.32f);
-        const float lh = 78.f;
-        auto logoArea = juce::Rectangle<float> (6.f, 2.f, lw, lh);
-        g.setColour (juce::Colours::black.withAlpha (0.55f));
-        g.fillRoundedRectangle (logoArea.expanded (8.f, 4.f), 10.f);
-        g.setColour (cyan.withAlpha (0.25f + pulse * 0.15f));
-        g.drawRoundedRectangle (logoArea.expanded (8.f, 4.f), 10.f, 1.6f);
+        const float lw = juce::jmin (200.f, W * 0.18f);
+        const float lh = 48.f;
+        auto logoArea = juce::Rectangle<float> (4.f, 2.f, lw, lh);
+        g.setColour (juce::Colours::black.withAlpha (0.50f));
+        g.fillRoundedRectangle (logoArea.expanded (4.f, 2.f), 8.f);
+        g.setColour (cyan.withAlpha (0.22f + pulse * 0.12f));
+        g.drawRoundedRectangle (logoArea.expanded (4.f, 2.f), 8.f, 1.4f);
         g.setOpacity (1.f);
         g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
     }
     else
     {
         g.setColour (cyan);
-        g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-        g.drawText ("GITI BY SALEK HIGHTECH", 8, 6, 360, 32, juce::Justification::centredLeft);
+        g.setFont (juce::FontOptions (16.0f, juce::Font::bold));
+        g.drawText ("GITI BY SALEK", 6, 4, 200, 24, juce::Justification::centredLeft);
     }
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----

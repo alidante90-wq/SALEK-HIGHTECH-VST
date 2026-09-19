@@ -38,6 +38,21 @@ void SalekHightechAudioProcessorEditor::mouseWheelMove (const juce::MouseEvent& 
     juce::ignoreUnused (e, wheel);
 }
 
+// Computer keyboard → MIDI even while mouse is on knobs / other controls
+bool SalekHightechAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
+{
+    if (keyboard.keyPressed (key))
+        return true;
+    return false;
+}
+
+bool SalekHightechAudioProcessorEditor::keyStateChanged (bool isKeyDown)
+{
+    if (keyboard.keyStateChanged (isKeyDown))
+        return true;
+    return false;
+}
+
 void SalekHightechAudioProcessorEditor::applyUiLanguage()
 {
     tabs.setTabName (0, "MAIN");

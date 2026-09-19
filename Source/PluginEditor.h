@@ -231,6 +231,8 @@ public:
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    bool keyPressed (const juce::KeyPress& key) override;
+    bool keyStateChanged (bool isKeyDown) override;
 private:
     SalekHightechAudioProcessor& processor;
     SalekLookAndFeel lnf;

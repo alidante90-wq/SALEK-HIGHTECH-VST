@@ -77,7 +77,9 @@ public:
         dcState += 0.001f * (sample - dcState);
         sample -= dcState;
 
-        phase += phaseInc;
+        // Subtle analog-style phase drift (Moog/Virus-ish thickness when detuned/unison)
+        analogPhase += 0.000012 + 0.000004 * std::sin (analogPhase * 0.37);
+        phase += phaseInc * (1.0 + 0.00015 * std::sin (analogPhase));
         if (phase >= 1.0) phase -= std::floor (phase);
         else if (phase < 0.0) phase += 1.0 - std::floor (phase);
         return sample * level * am;
@@ -88,7 +90,7 @@ private:
         phaseInc = (double(frequency) * std::pow(2.0, double(detuneCents) / 1200.0)) / sr;
     }
     const Wavetable* wavetable = nullptr;
-    double sr = 44100, phase = 0, phaseInc = 0;
+    double sr = 44100, phase = 0, phaseInc = 0, analogPhase = 0;
     float frequency = 440, tablePos = 0, level = 1, phaseOffset = 0, detuneCents = 0;
     float warp = 0, fold = 0, drive = 0, dcState = 0;
 };

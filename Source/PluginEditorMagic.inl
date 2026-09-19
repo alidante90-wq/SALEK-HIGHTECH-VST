@@ -91,7 +91,14 @@
 
     auto setMode = [this, applyActive] (int m, juce::Colour col, const char* name)
     {
+        // If current mode is HOLDing, carry HOLD over to the new mode
+        const bool wasHeld = holdOn[activeMode];
         activeMode = m;
+        if (wasHeld)
+        {
+            holdOn[m] = true;
+            holdBtn[m].setToggleState (true, juce::dontSendNotification);
+        }
         magicLoopBtn.setToggleState   (m == 0, juce::dontSendNotification);
         magicGlitchBtn.setToggleState (m == 1, juce::dontSendNotification);
         magicFlangeBtn.setToggleState (m == 2, juce::dontSendNotification);
@@ -99,7 +106,7 @@
         if (auto* p = processor.getAPVTS().getParameter ("magic_mode"))
             p->setValueNotifyingHost (p->convertTo0to1 ((float) m));
         processor.getMagic().setMode (m);
-        applyActive();
+        applyActive(); // stays ON if hold carried over
         if (magicPad != nullptr)
         {
             magicPad->setModeColour (col);
