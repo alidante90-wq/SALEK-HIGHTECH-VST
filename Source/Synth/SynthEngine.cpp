@@ -58,6 +58,9 @@ void SynthEngine::setOsc3Drive (float v) { forEachVoice ([&] (SynthVoice& voice)
 void SynthEngine::setOsc1Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Phase (v); }); }
 void SynthEngine::setOsc2Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Phase (v); }); }
 void SynthEngine::setOsc3Phase (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Phase (v); }); }
+void SynthEngine::setOsc1Rand (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Rand (v); }); }
+void SynthEngine::setOsc2Rand (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Rand (v); }); }
+void SynthEngine::setOsc3Rand (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Rand (v); }); }
 void SynthEngine::setFm2to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm2to1 (v); }); }
 void SynthEngine::setFm3to1 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm3to1 (v); }); }
 void SynthEngine::setFm3to2 (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setFm3to2 (v); }); }

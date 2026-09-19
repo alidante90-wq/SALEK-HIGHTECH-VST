@@ -94,6 +94,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (oscTab, "osc3_unison", "UNI", C);
         addKnob (oscTab, "osc3_udet", "DET", M);
         addKnob (oscTab, "osc3_uspread", "SPR", O);
+        // Phase + random phase (prevents locked static note phase)
+        addKnob (oscTab, "osc1_phase", "PHASE", C); addKnob (oscTab, "osc1_rand", "RAND", M);
+        addKnob (oscTab, "osc2_phase", "PHASE", C); addKnob (oscTab, "osc2_rand", "RAND", M);
+        addKnob (oscTab, "osc3_phase", "PHASE", C); addKnob (oscTab, "osc3_rand", "RAND", M);
 
         #include "PluginEditorOscMonitors.inl"
 

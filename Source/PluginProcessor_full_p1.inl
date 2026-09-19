@@ -31,6 +31,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("osc1_warp","OSC1 Warp",0,1,0); F("osc2_warp","OSC2 Warp",0,1,0); F("osc3_warp","OSC3 Warp",0,1,0);
     F("osc1_fold","OSC1 Fold",0,1,0); F("osc2_fold","OSC2 Fold",0,1,0); F("osc3_fold","OSC3 Fold",0,1,0);
     F("osc1_drive","OSC1 Drive",0,1,0); F("osc2_drive","OSC2 Drive",0,1,0); F("osc3_drive","OSC3 Drive",0,1,0);
+    F("osc1_phase","OSC1 Phase",0,1,0); F("osc2_phase","OSC2 Phase",0,1,0); F("osc3_phase","OSC3 Phase",0,1,0);
+    F("osc1_rand","OSC1 Rand",0,1,0); F("osc2_rand","OSC2 Rand",0,1,0); F("osc3_rand","OSC3 Rand",0,1,0);
     I("osc1_octave","OSC1 Oct",-3,3,0); I("osc2_octave","OSC2 Oct",-3,3,0); I("osc3_octave","OSC3 Oct",-3,3,-1);
     I("osc1_semi","OSC1 Semi",-12,12,0); I("osc2_semi","OSC2 Semi",-12,12,0); I("osc3_semi","OSC3 Semi",-12,12,0);
     F("osc1_fine","OSC1 Fine",-100,100,0); F("osc2_fine","OSC2 Fine",-100,100,0); F("osc3_fine","OSC3 Fine",-100,100,0);

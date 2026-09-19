@@ -32,6 +32,19 @@ public:
         currentMidiNote = note; currentVelocity = vel; isNoteOn = true;
         osc1.reset(); osc2.reset(); osc3.reset();
         for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].reset(); uniOsc2[u].reset(); uniOsc3[u].reset(); }
+        // Random phase on note-on so repeated notes don't phase-lock ("دیییو دیییو")
+        auto rnd = [] (float amt) {
+            if (amt < 1e-4f) return 0.f;
+            return amt * (juce::Random::getSystemRandom().nextFloat());
+        };
+        osc1.setPhaseOffset (juce::jlimit (0.f, 1.f, osc1Phase + rnd (osc1Rand)));
+        osc2.setPhaseOffset (juce::jlimit (0.f, 1.f, osc2Phase + rnd (osc2Rand)));
+        osc3.setPhaseOffset (juce::jlimit (0.f, 1.f, osc3Phase + rnd (osc3Rand)));
+        for (int u = 0; u < maxUnison; ++u) {
+            uniOsc1[u].setPhaseOffset (juce::jlimit (0.f, 1.f, osc1Phase + rnd (osc1Rand)));
+            uniOsc2[u].setPhaseOffset (juce::jlimit (0.f, 1.f, osc2Phase + rnd (osc2Rand)));
+            uniOsc3[u].setPhaseOffset (juce::jlimit (0.f, 1.f, osc3Phase + rnd (osc3Rand)));
+        }
         updateFrequencies(); adsr.noteOn();
     }
     void stopNote(float, bool allowTailOff) override {
@@ -56,7 +69,12 @@ public:
     void setOsc2Fold(float v){osc2.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setFold(v);} void setOsc3Fold(float v){osc3.setFold(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setFold(v);}
     void setOsc1Drive(float v){osc1.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setDrive(v);}
     void setOsc2Drive(float v){osc2.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setDrive(v);} void setOsc3Drive(float v){osc3.setDrive(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setDrive(v);}
-    void setOsc1Phase(float v){osc1.setPhaseOffset(v);} void setOsc2Phase(float v){osc2.setPhaseOffset(v);} void setOsc3Phase(float v){osc3.setPhaseOffset(v);}
+    void setOsc1Phase(float v){osc1Phase=juce::jlimit(0.f,1.f,v); osc1.setPhaseOffset(osc1Phase);}
+    void setOsc2Phase(float v){osc2Phase=juce::jlimit(0.f,1.f,v); osc2.setPhaseOffset(osc2Phase);}
+    void setOsc3Phase(float v){osc3Phase=juce::jlimit(0.f,1.f,v); osc3.setPhaseOffset(osc3Phase);}
+    void setOsc1Rand(float v){osc1Rand=juce::jlimit(0.f,1.f,v);}
+    void setOsc2Rand(float v){osc2Rand=juce::jlimit(0.f,1.f,v);}
+    void setOsc3Rand(float v){osc3Rand=juce::jlimit(0.f,1.f,v);}
     void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v); uniVoices1=uniVoices2=uniVoices3=unisonVoices;}
     void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c); uniDet1=uniDet2=uniDet3=unisonDetune;}
     void setUnisonSpread(float s){unisonSpread=juce::jlimit(0.f,1.f,s); uniSpr1=uniSpr2=uniSpr3=unisonSpread;}
@@ -112,6 +130,8 @@ private:
     int osc1Octave=0, osc2Octave=0, osc3Octave=-1;
     int osc1Semi=0, osc2Semi=0, osc3Semi=0;
     float osc1Fine=0, osc2Fine=0, osc3Fine=0;
+    float osc1Phase=0, osc2Phase=0, osc3Phase=0;
+    float osc1Rand=0, osc2Rand=0, osc3Rand=0;
     float fm2to1=0, fm3to1=0, fm3to2=0, pm2to1=0, pm3to1=0, am2to1=0, rm2to1=0;
     float filterEnvAmt=0.5f, baseCutoff=8000;
     float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;

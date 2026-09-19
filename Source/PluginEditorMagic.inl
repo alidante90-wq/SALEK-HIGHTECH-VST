@@ -51,11 +51,13 @@
 
     auto applyActive = [this] ()
     {
-        const bool on = holdOn[activeMode];
-        magicHold.setToggleState (on, juce::dontSendNotification);
+        // Any mode HOLD keeps magic alive (multi-hold)
+        const bool anyHold = holdOn[0] || holdOn[1] || holdOn[2] || holdOn[3];
+        magicHold.setToggleState (anyHold, juce::dontSendNotification);
         if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
-            pa->setValueNotifyingHost (on ? 1.f : 0.f);
-        processor.getMagic().setActive (on);
+            pa->setValueNotifyingHost (anyHold ? 1.f : 0.f);
+        processor.getMagic().setActive (anyHold);
+        processor.getMagic().setMode (activeMode);
     };
 
     magicPad->onChange = [this] (float mx, float my, bool act)
@@ -64,7 +66,8 @@
             px->setValueNotifyingHost (px->convertTo0to1 (mx));
         if (auto* py = processor.getAPVTS().getParameter ("magic_y"))
             py->setValueNotifyingHost (py->convertTo0to1 (my));
-        const bool on = holdOn[activeMode] ? true : act;
+        const bool anyHold = holdOn[0] || holdOn[1] || holdOn[2] || holdOn[3];
+        const bool on = anyHold ? true : act;
         if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
             pa->setValueNotifyingHost (on ? 1.f : 0.f);
         processor.getMagic().setXY (mx, my);
@@ -91,22 +94,18 @@
 
     auto setMode = [this, applyActive] (int m, juce::Colour col, const char* name)
     {
-        // If current mode is HOLDing, carry HOLD over to the new mode
-        const bool wasHeld = holdOn[activeMode];
+        // Keep previous holds; do NOT clear them when switching modes
         activeMode = m;
-        if (wasHeld)
-        {
-            holdOn[m] = true;
-            holdBtn[m].setToggleState (true, juce::dontSendNotification);
-        }
         magicLoopBtn.setToggleState   (m == 0, juce::dontSendNotification);
         magicGlitchBtn.setToggleState (m == 1, juce::dontSendNotification);
         magicFlangeBtn.setToggleState (m == 2, juce::dontSendNotification);
         magicPsychBtn.setToggleState  (m == 3, juce::dontSendNotification);
+        // Sync hold button UI for the new mode without clearing others
+        holdBtn[m].setToggleState (holdOn[m], juce::dontSendNotification);
         if (auto* p = processor.getAPVTS().getParameter ("magic_mode"))
             p->setValueNotifyingHost (p->convertTo0to1 ((float) m));
         processor.getMagic().setMode (m);
-        applyActive(); // stays ON if hold carried over
+        applyActive(); // stays ON if any hold is latched
         if (magicPad != nullptr)
         {
             magicPad->setModeColour (col);

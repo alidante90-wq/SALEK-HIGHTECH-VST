@@ -22,6 +22,7 @@ public:
     void setOsc1Fine (float v); void setOsc2Fine (float v); void setOsc3Fine (float v);
     void setOsc1Detune (float v); void setOsc2Detune (float v); void setOsc3Detune (float v);
     void setOsc1Phase (float v); void setOsc2Phase (float v); void setOsc3Phase (float v);
+    void setOsc1Rand (float v); void setOsc2Rand (float v); void setOsc3Rand (float v);
     void setOsc1Warp (float v); void setOsc2Warp (float v); void setOsc3Warp (float v);
     void setOsc1Fold (float v); void setOsc2Fold (float v); void setOsc3Fold (float v);
     void setOsc1Drive (float v); void setOsc2Drive (float v); void setOsc3Drive (float v);

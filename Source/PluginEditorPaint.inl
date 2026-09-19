@@ -110,36 +110,31 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // Character PNG overlays in empty zones (NOT the background)
-    // MAIN + MOD left (user yellow "PNG girl" mark). Cycle with CHAR button.
+    // Character PNGs cover the SALEK watermark circles (bottom-left + bottom-right)
+    // Cycle with CHAR button. Always visible on MAIN / MOD.
     {
         const int tab = tabs.getCurrentTabIndex();
-        if (tab == 0 || tab == 1) // MAIN or MOD
+        if (tab == 0 || tab == 1)
         {
             auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
+            auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+            // Cover bottom-LEFT SALEK circle
             if (sideChar.isValid())
             {
-                // LEFT empty zone
-                const float cwL = juce::jmin (tab == 1 ? 220.f : 200.f, W * 0.20f);
-                const float chL = cwL * 1.40f;
-                auto leftDest = juce::Rectangle<float> (18.f, H - chL - 100.f, cwL, chL);
-                g.setOpacity (tab == 1 ? 0.85f : 0.70f);
+                const float cwL = 210.f, chL = 280.f;
+                auto leftDest = juce::Rectangle<float> (8.f, H - chL - 72.f, cwL, chL);
+                g.setOpacity (0.92f);
                 g.drawImage (sideChar, leftDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-
-                if (tab == 0)
-                {
-                    auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
-                    if (sideChar2.isValid())
-                    {
-                        const float cwR = juce::jmin (160.f, W * 0.16f);
-                        const float chR = cwR * 1.35f;
-                        auto rightDest = juce::Rectangle<float> (W - cwR - 16.f, H - chR - 90.f, cwR, chR);
-                        g.setOpacity (0.50f);
-                        g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-                    }
-                }
-                g.setOpacity (1.f);
             }
+            // Cover bottom-RIGHT SALEK circle
+            if (sideChar2.isValid())
+            {
+                const float cwR = 190.f, chR = 260.f;
+                auto rightDest = juce::Rectangle<float> (W - cwR - 8.f, H - chR - 72.f, cwR, chR);
+                g.setOpacity (0.88f);
+                g.drawImage (sideChar2, rightDest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            }
+            g.setOpacity (1.f);
         }
     }
 

@@ -14,6 +14,8 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc3Warp(juce::jlimit(0.f,1.f, g("osc3_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Warp)*0.5f));
     synthEngine.setOsc1Fold(g("osc1_fold")); synthEngine.setOsc2Fold(g("osc2_fold")); synthEngine.setOsc3Fold(g("osc3_fold"));
     synthEngine.setOsc1Drive(g("osc1_drive")); synthEngine.setOsc2Drive(g("osc2_drive")); synthEngine.setOsc3Drive(g("osc3_drive"));
+    synthEngine.setOsc1Phase(g("osc1_phase")); synthEngine.setOsc2Phase(g("osc2_phase")); synthEngine.setOsc3Phase(g("osc3_phase"));
+    synthEngine.setOsc1Rand(g("osc1_rand")); synthEngine.setOsc2Rand(g("osc2_rand")); synthEngine.setOsc3Rand(g("osc3_rand"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
     synthEngine.setOsc1Semi((int)g("osc1_semi")); synthEngine.setOsc2Semi((int)g("osc2_semi")); synthEngine.setOsc3Semi((int)g("osc3_semi"));
     synthEngine.setUnison((int)g("unison_voices"));
