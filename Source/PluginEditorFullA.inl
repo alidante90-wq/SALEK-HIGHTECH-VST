@@ -13,15 +13,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     // VBlank disabled — was causing 5-10 FPS lag with heavy BG paint
     // Animation driven by timer only at 12 Hz
-    startTimerHz (8);
+    startTimerHz (6); // UI anim only — low CPU
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();
     if (! logoImg.isValid()) logoImg = SalekAssets::loadLogo();
-    faceImg   = SalekAssets::loadFace();
-    lianImg   = SalekAssets::loadBgIsatis();   // BG v1 — ISATIS (man + cat)
-    cyanImg   = SalekAssets::loadBgSalek();    // BG v2 — SALEK girl red city
-    heroImg   = SalekAssets::loadBgIsatis();
+    // face.png removed (was ~2MB) — BGs only
+    lianImg   = SalekAssets::loadBgIsatis();
+    cyanImg   = SalekAssets::loadBgSalek();
+    heroImg   = lianImg;
     refreshCharCache(); // load char PNGs ONCE
     setSize (1280, 820);
     setResizable (true, true);
@@ -246,7 +246,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     charCycleBtn.setTooltip ("Change character model (left panel) — does NOT change background");
     charCycleBtn.onClick = [this]
     {
-        charPortraitIdx = (charPortraitIdx + 1) % 12;
+        charPortraitIdx = (charPortraitIdx + 1) % 3; // 3 models only
         refreshCharCache();
         repaint();
     };

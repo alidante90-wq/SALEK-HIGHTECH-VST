@@ -78,20 +78,18 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // Cover SALEK watermark discs (chars drawn once at end from cache)
+    // Lightweight 3D bezel
     {
-        g.setColour (juce::Colour (0xff080414).withAlpha (0.95f));
-        g.fillEllipse (15.f, H - 175.f, 160.f, 160.f);
-        g.fillEllipse (W - 175.f, H - 175.f, 160.f, 160.f);
+        g.setColour (cyan.withAlpha (0.28f));
+        g.drawRoundedRectangle (3.f, 3.f, W - 6.f, H - 6.f, 12.f, 2.f);
+        g.setColour (magenta.withAlpha (0.16f));
+        g.drawRoundedRectangle (6.f, 6.f, W - 12.f, H - 12.f, 10.f, 1.f);
+        juce::ColourGradient top (juce::Colours::white.withAlpha (0.07f), W * 0.5f, 0.f,
+                                  juce::Colours::transparentWhite, W * 0.5f, 28.f, false);
+        g.setGradientFill (top);
+        g.fillRect (0.f, 0.f, W, 28.f);
     }
 
-    // Animated effects removed — major FPS win. Static frame only.
-    {
-        g.setColour (cyan.withAlpha (0.30f));
-        g.drawRoundedRectangle (4.f, 4.f, W - 8.f, H - 8.f, 10.f, 1.5f);
-        g.setColour (magenta.withAlpha (0.18f));
-        g.drawRoundedRectangle (7.f, 7.f, W - 14.f, H - 14.f, 8.f, 1.f);
-    }
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
 

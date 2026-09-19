@@ -10,8 +10,8 @@ void SalekHightechAudioProcessorEditor::refreshCharCache()
         const int w = juce::jmax (1, src.getWidth() * h / src.getHeight());
         return src.rescaled (w, h, juce::Graphics::mediumResamplingQuality);
     };
-    charImgL = loadScaled (charPortraitIdx, 320);
-    charImgR = loadScaled (charPortraitIdx + 1, 300);
+    charImgL = loadScaled (charPortraitIdx, 280); // single model, lighter cache
+    charImgR = {}; // right portrait removed — saves RAM/CPU
 }
 
 void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
@@ -22,14 +22,14 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
     // 3/4 -> bg_salek (2 girls)
     if (id == 1 || id == 2)
     {
-        heroImg = lianImg.isValid() ? lianImg : faceImg;
+        heroImg = lianImg;
         themeAccent  = (id == 2) ? juce::Colour (0xff39ff14) : juce::Colour (0xff00e8ff);
         themeAccent2 = (id == 2) ? juce::Colour (0xffffab40) : juce::Colour (0xffffd700);
         themePanelBg = (id == 2) ? juce::Colour (0xff061408) : juce::Colour (0xff0a0614);
     }
     else
     {
-        heroImg = cyanImg.isValid() ? cyanImg : faceImg;
+        heroImg = cyanImg;
         themeAccent  = (id == 3) ? juce::Colour (0xffff2d9b) : juce::Colour (0xffb388ff);
         themeAccent2 = juce::Colour (0xff00e8ff);
         themePanelBg = (id == 3) ? juce::Colour (0xff12081c) : juce::Colour (0xff0c0818);

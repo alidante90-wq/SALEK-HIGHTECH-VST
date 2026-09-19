@@ -186,14 +186,13 @@ inline juce::Image loadCharToronowla()   { return fromDisk ({ "char_toronowla.pn
 inline juce::Image loadCharNeonStreet()  { return fromDisk ({ "char_neon_street.png" }); }
 inline juce::Image loadCharPinkDead()    { return fromDisk ({ "char_pink_dead.png" }); }
 
+/** Only 3 official models — keeps plugin size small */
 inline juce::Image loadCharPortrait (int index = 0)
 {
     juce::Image imgs[] = {
-        loadCharToronowla(), loadCharNeonStreet(), loadCharPinkDead(),
-        loadCharCyber(), loadCharPurple(), loadCharCatgirl(), loadCharFox(),
-        loadCharGun(), loadCharApron(), loadCharWhite(), loadCyanGirl(), loadFace()
+        loadCharToronowla(), loadCharNeonStreet(), loadCharPinkDead()
     };
-    const int n = (int) (sizeof (imgs) / sizeof (imgs[0]));
+    const int n = 3;
     for (int k = 0; k < n; ++k)
     {
         auto& im = imgs[(index + k) % n];
