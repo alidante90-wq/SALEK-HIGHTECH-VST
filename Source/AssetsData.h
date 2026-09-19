@@ -182,10 +182,14 @@ inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png"
 inline juce::Image loadCharGun()     { return fromDisk ({ "char_gun.png" }); }
 inline juce::Image loadCharApron()   { return fromDisk ({ "char_apron.png" }); }
 inline juce::Image loadCharWhite()   { return fromDisk ({ "char_white_suit.png", "char_white.png" }); }
+inline juce::Image loadCharToronowla()   { return fromDisk ({ "char_toronowla.png" }); }
+inline juce::Image loadCharNeonStreet()  { return fromDisk ({ "char_neon_street.png" }); }
+inline juce::Image loadCharPinkDead()    { return fromDisk ({ "char_pink_dead.png" }); }
 
 inline juce::Image loadCharPortrait (int index = 0)
 {
     juce::Image imgs[] = {
+        loadCharToronowla(), loadCharNeonStreet(), loadCharPinkDead(),
         loadCharCyber(), loadCharPurple(), loadCharCatgirl(), loadCharFox(),
         loadCharGun(), loadCharApron(), loadCharWhite(), loadCyanGirl(), loadFace()
     };
