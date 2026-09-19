@@ -47,9 +47,15 @@ void SalekHightechAudioProcessorEditor::resized()
         const int presetW = presetCollapsed ? 28 : 210;
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 88;
-        const int maxH = juce::jmax (160, (int) ((leftStrip.getHeight() - logoPad) * 0.55f));
+        const int maxH = juce::jmax (140, (int) ((leftStrip.getHeight() - logoPad) * 0.42f));
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), maxH);
         presetTab.toFront (false);
+        // Character PNG slot = empty area under presets (red "PNG" zone)
+        {
+            const int cy = leftStrip.getY() + logoPad + maxH + 4;
+            const int ch = juce::jmax (80, leftStrip.getBottom() - cy - 4);
+            charSlotBounds = juce::Rectangle<int> (leftStrip.getX() + 2, cy, leftStrip.getWidth() - 4, ch);
+        }
         auto pb = presetTab.getLocalBounds().reduced (2);
         auto top = pb.removeFromTop (22);
         presetToggle.setBounds (top.removeFromLeft (28).reduced (1, 0));

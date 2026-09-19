@@ -242,7 +242,8 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     charCycleBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
     charCycleBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
-    charCycleBtn.setTooltip ("Cycle character PNG overlay (fill empty space)");
+    charCycleBtn.setButtonText ("MODEL");
+    charCycleBtn.setTooltip ("Change character model (left panel) — does NOT change background");
     charCycleBtn.onClick = [this]
     {
         charPortraitIdx = (charPortraitIdx + 1) % 12;

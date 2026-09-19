@@ -274,6 +274,7 @@ private:
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     int charPortraitIdx = 0;
     juce::Image charImgL, charImgR; // cached portraits
+    juce::Rectangle<int> charSlotBounds; // left under preset list
     juce::Image cachedBg;           // pre-scaled hero (rebuild on resize/theme only)
     int cachedBgW = 0, cachedBgH = 0, cachedBgTheme = -1;
     bool uiLangFa = false;

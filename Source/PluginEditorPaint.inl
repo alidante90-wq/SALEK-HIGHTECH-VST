@@ -114,17 +114,19 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
     // ---- Character PNGs LAST = top z-order (cached images, no disk IO) ----
-    if (charImgL.isValid())
+    // Character model — ONLY in left slot under presets (does NOT change background)
+    if (charImgL.isValid() && charSlotBounds.getWidth() > 20 && charSlotBounds.getHeight() > 40)
     {
-        g.setOpacity (0.95f);
-        g.drawImage (charImgL, juce::Rectangle<float> (6.f, H - 300.f, 210.f, 270.f),
+        auto slot = charSlotBounds.toFloat();
+        // subtle panel behind model
+        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.35f));
+        g.fillRoundedRectangle (slot, 10.f);
+        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.35f));
+        g.drawRoundedRectangle (slot, 10.f, 1.2f);
+        g.setOpacity (0.98f);
+        g.drawImage (charImgL, slot.reduced (4.f),
                      juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-    }
-    if (charImgR.isValid())
-    {
-        g.setOpacity (0.90f);
-        g.drawImage (charImgR, juce::Rectangle<float> (W - 210.f, H - 290.f, 200.f, 260.f),
-                     juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        g.setOpacity (1.f);
     }
     g.setOpacity (1.f);
 
