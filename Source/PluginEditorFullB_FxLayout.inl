@@ -1,35 +1,62 @@
-// FX layout: 2 cols x 4 rows — knobs created in FxSections starting at index 58
+// FX layout by PARAMETER ID (never by fragile index)
 {
     auto area = fxTab.getLocalBounds().reduced (6);
 
-    // 58-60 CHORUS | 61-63 DELAY | 64-66 REVERB | 67 BASSIFY
-    // 68-71 COMP   | 72-74 EQ    | 75-77 PHASER | 78-80 DIST
+    auto byId = [this] (const char* id) -> Knob*
+    {
+        for (auto& k : knobs)
+            if (k != nullptr && k->paramId == id)
+                return k.get();
+        return nullptr;
+    };
+    auto placeKnob = [] (Knob* k, juce::Rectangle<int> box)
+    {
+        if (k == nullptr) return;
+        auto nameArea = box.removeFromBottom (14);
+        k->name.setBounds (nameArea);
+        k->s.setBounds (box);
+        k->s.setVisible (true);
+        k->name.setVisible (true);
+    };
+
+    // hide all known FX knobs first
+    const char* allFx[] = {
+        "chorus_mix","chorus_rate","chorus_depth",
+        "delay_mix","delay_time","delay_fb",
+        "reverb_mix","reverb_size","reverb_decay",
+        "bassify",
+        "comp_threshold","comp_ratio","comp_mix","comp_depth",
+        "eq_low","eq_mid","eq_high",
+        "phaser_mix","phaser_rate","phaser_depth",
+        "dist_mix","dist_drive","dist_crush"
+    };
+    for (auto* id : allFx)
+        if (auto* k = byId (id))
+        {
+            k->s.setVisible (false);
+            k->name.setVisible (false);
+        }
+
     struct Mod {
         int labelIdx;
-        int knobIdx[4];
-        int knobCount;
-        int modeKind; // 0 none, 1 reverb, 2 dist
+        const char* ids[4];
+        int count;
+        int modeKind;
     };
     const Mod mods[8] = {
-        { 0, { 58, 59, 60, -1 }, 3, 0 }, // CHORUS
-        { 1, { 61, 62, 63, -1 }, 3, 0 }, // DELAY
-        { 2, { 64, 65, 66, -1 }, 3, 1 }, // REVERB
-        { 3, { 67, -1, -1, -1 }, 1, 0 }, // BASSIFY
-        { 4, { 68, 69, 70, 71 }, 4, 0 }, // COMP
-        { 5, { 72, 73, 74, -1 }, 3, 0 }, // EQ
-        { 6, { 75, 76, 77, -1 }, 3, 0 }, // PHASER
-        { 7, { 78, 79, 80, -1 }, 3, 2 }  // DIST
+        { 0, { "chorus_mix", "chorus_rate", "chorus_depth", nullptr }, 3, 0 },
+        { 1, { "delay_mix",  "delay_time",  "delay_fb",     nullptr }, 3, 0 },
+        { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr }, 3, 1 },
+        { 3, { "bassify",    nullptr,       nullptr,        nullptr }, 1, 0 },
+        { 4, { "comp_threshold","comp_ratio","comp_mix","comp_depth" }, 4, 0 },
+        { 5, { "eq_low", "eq_mid", "eq_high", nullptr }, 3, 0 },
+        { 6, { "phaser_mix", "phaser_rate", "phaser_depth", nullptr }, 3, 0 },
+        { 7, { "dist_mix", "dist_drive", "dist_crush", nullptr }, 3, 2 }
     };
 
     const int cols = 2, rows = 4;
     const int cellW = area.getWidth() / cols;
     const int cellH = area.getHeight() / rows;
-
-    for (int i = 58; i <= 80 && i < (int) knobs.size(); ++i)
-    {
-        knobs[(size_t) i]->s.setVisible (false);
-        knobs[(size_t) i]->name.setVisible (false);
-    }
 
     for (int m = 0; m < 8; ++m)
     {
@@ -43,9 +70,8 @@
         auto head = cell.removeFromTop (22);
         if (mods[m].labelIdx < fxSectionLabels.size())
         {
-            auto* lab = fxSectionLabels[mods[m].labelIdx];
-            lab->setBounds (head.removeFromLeft (72));
-            lab->setVisible (true);
+            fxSectionLabels[mods[m].labelIdx]->setBounds (head.removeFromLeft (72));
+            fxSectionLabels[mods[m].labelIdx]->setVisible (true);
         }
         fxBypass[mods[m].labelIdx].setBounds (head.removeFromLeft (36).reduced (2, 2));
         fxBypass[mods[m].labelIdx].setVisible (true);
@@ -64,28 +90,21 @@
         if (mods[m].labelIdx < fxMonitors.size())
         {
             const int monW = (mods[m].labelIdx == 4 || mods[m].labelIdx == 5) ? 88 : 48;
-            auto mon = cell.removeFromLeft (monW).reduced (2);
-            fxMonitors[mods[m].labelIdx]->setBounds (mon);
+            fxMonitors[mods[m].labelIdx]->setBounds (cell.removeFromLeft (monW).reduced (2));
             fxMonitors[mods[m].labelIdx]->setVisible (true);
         }
 
-        // place knobs in remaining cell
-        const int n = mods[m].knobCount;
+        const int n = mods[m].count;
         if (n <= 0) continue;
         const int kw = cell.getWidth() / n;
         const int kh = juce::jmin (cell.getHeight(), 78);
         for (int k = 0; k < n; ++k)
         {
-            const int idx = mods[m].knobIdx[k];
-            if (idx < 0 || idx >= (int) knobs.size()) continue;
-            auto* knob = knobs[(size_t) idx].get();
             auto box = juce::Rectangle<int> (
-                cell.getX() + k * kw, cell.getY() + (cell.getHeight() - kh) / 2, kw, kh).reduced (3);
-            auto nameArea = box.removeFromBottom (14);
-            knob->name.setBounds (nameArea);
-            knob->s.setBounds (box);
-            knob->s.setVisible (true);
-            knob->name.setVisible (true);
+                cell.getX() + k * kw,
+                cell.getY() + (cell.getHeight() - kh) / 2,
+                kw, kh).reduced (3);
+            placeKnob (byId (mods[m].ids[k]), box);
         }
     }
 }
