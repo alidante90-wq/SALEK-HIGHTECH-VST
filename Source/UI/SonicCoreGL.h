@@ -9,7 +9,8 @@
  * Feed audio via VisualFifo; setPulse / setAccent from editor.
  */
 class SonicCoreGL : public juce::Component,
-                    private juce::OpenGLRenderer
+                    private juce::OpenGLRenderer,
+                    private juce::Timer
 {
 public:
     explicit SonicCoreGL (VisualFifo& fifoIn) : fifo (fifoIn)
@@ -19,7 +20,8 @@ public:
         openGLContext.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
         openGLContext.setRenderer (this);
         openGLContext.attachTo (*this);
-        openGLContext.setContinuousRepainting (true);
+        // Continuous GL = massive GPU load; drive frames manually at low rate
+        openGLContext.setContinuousRepainting (false);
         openGLContext.setComponentPaintingEnabled (false);
         wave.resize (waveN, 0.f);
         spectrum.resize (specN, 0.f);
@@ -28,10 +30,17 @@ public:
         window.resize ((size_t) fft->getSize());
         for (int i = 0; i < fft->getSize(); ++i)
             window[(size_t) i] = 0.5f - 0.5f * std::cos (juce::MathConstants<float>::twoPi * (float) i / (float) (fft->getSize() - 1));
+        startTimerHz (12); // ~12 GL frames/sec max
+    }
+
+    void timerCallback()
+    {
+        openGLContext.triggerRepaint();
     }
 
     ~SonicCoreGL() override
     {
+        stopTimer();
         openGLContext.detach();
     }
 
@@ -114,9 +123,9 @@ public:
     }
 
 private:
-    static constexpr int waveN = 256;
-    static constexpr int specN = 64;
-    static constexpr int fftOrder = 9;
+    static constexpr int waveN = 128;   // was 256
+    static constexpr int specN = 32;    // was 64
+    static constexpr int fftOrder = 8;  // 256-pt FFT (was 512)
 
     VisualFifo& fifo;
     juce::OpenGLContext openGLContext;
@@ -188,40 +197,23 @@ private:
 
     void drawRings (float t, float pul, juce::Colour a1, juce::Colour a2)
     {
-        for (int ring = 0; ring < 5; ++ring)
+        // 2 rings × 24 segs (was 5 × 64) — large GPU vertex win
+        for (int ring = 0; ring < 2; ++ring)
         {
             std::vector<Vtx> v;
-            const int segs = 64;
-            float rad = 0.18f + ring * 0.09f + pul * 0.06f + 0.02f * std::sin (t * 2.f + ring);
-            auto c = a1.interpolatedWith (a2, (float) ring / 4.f);
-            float alpha = 0.2f + (1.f - ring / 5.f) * 0.35f + pul * 0.25f;
+            v.reserve (25);
+            const int segs = 24;
+            const float rad = 0.22f + ring * 0.12f + pul * 0.05f;
+            auto c = a1.interpolatedWith (a2, (float) ring * 0.5f);
+            const float alpha = 0.25f + pul * 0.2f;
             for (int i = 0; i <= segs; ++i)
             {
-                float ang = juce::MathConstants<float>::twoPi * (float) i / (float) segs + t * (0.3f + ring * 0.05f);
-                float x = std::cos (ang) * rad;
-                float y = std::sin (ang) * rad * 0.75f + 0.08f;
-                v.push_back ({ x, y, c.getFloatRed(), c.getFloatGreen(), c.getFloatBlue(), alpha });
+                const float ang = juce::MathConstants<float>::twoPi * (float) i / (float) segs + t * 0.25f;
+                v.push_back ({ std::cos (ang) * rad, std::sin (ang) * rad * 0.75f + 0.08f,
+                               c.getFloatRed(), c.getFloatGreen(), c.getFloatBlue(), alpha });
             }
             drawLineStrip (v);
         }
-        std::vector<Vtx> core;
-        float cr = 0.08f + pul * 0.04f;
-        auto cc = a1.brighter (0.3f);
-        core.push_back ({ 0.f, 0.08f, cc.getFloatRed(), cc.getFloatGreen(), cc.getFloatBlue(), 0.85f });
-        for (int i = 0; i <= 32; ++i)
-        {
-            float ang = juce::MathConstants<float>::twoPi * (float) i / 32.f;
-            core.push_back ({ std::cos (ang) * cr, 0.08f + std::sin (ang) * cr * 0.9f,
-                              a2.getFloatRed(), a2.getFloatGreen(), a2.getFloatBlue(), 0.7f + pul * 0.3f });
-        }
-        std::vector<Vtx> tris;
-        for (int i = 1; i + 1 < (int) core.size(); ++i)
-        {
-            tris.push_back (core[0]);
-            tris.push_back (core[(size_t) i]);
-            tris.push_back (core[(size_t) i + 1]);
-        }
-        drawTriangles (tris);
     }
 
     void drawWave (float pul, juce::Colour a1)
