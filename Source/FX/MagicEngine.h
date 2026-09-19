@@ -144,8 +144,10 @@ private:
         const float crush = 4.f + intensity * 28.f;
         sL = std::floor (sL * crush) / crush;
         sR = std::floor (sR * crush) / crush;
-        outL = sL * (0.4f + intensity * 0.6f) * (0.5f + 0.5f * env);
-        outR = sR * (0.4f + intensity * 0.6f) * (0.5f + 0.5f * env);
+        // Hotter glitch so it is clearly audible
+        const float gAmp = 0.85f + intensity * 0.9f;
+        outL = sL * gAmp * (0.55f + 0.45f * env);
+        outR = sR * gAmp * (0.55f + 0.45f * env);
     }
 
     void processFlangerVerbSample (float& outL, float& outR) noexcept

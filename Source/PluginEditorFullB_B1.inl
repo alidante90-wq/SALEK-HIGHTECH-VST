@@ -46,9 +46,9 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         const int presetW = presetCollapsed ? 28 : 210;
         auto leftStrip = full.removeFromLeft (presetW);
-        const int logoPad = 72;
-        // Preset takes top ~38%, character model gets the rest of left column
-        const int presetH = juce::jmax (120, (int) ((leftStrip.getHeight() - logoPad) * 0.38f));
+        const int logoPad = 64;
+        // Preset ~32%, big character model gets remaining left column
+        const int presetH = juce::jmax (110, (int) ((leftStrip.getHeight() - logoPad) * 0.32f));
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -232,58 +232,69 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    // MOD — matrix left, FM + macros right (by param ID, roomy text boxes)
+    // MOD — matrix left; clean FM grid + macros right (hide stray knobs)
     {
         auto r = modTab.getLocalBounds().reduced (4);
-        auto right = r.removeFromRight (juce::jmin (320, r.getWidth() * 36 / 100));
-        auto macroBand = right.removeFromBottom (120);
-        auto fmArea = right.reduced (4, 6);
+        auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
 
+        // Hide every knob on modTab first, then show only the ones we place
+        for (auto& kk : knobs)
+        {
+            if (kk == nullptr) continue;
+            if (kk->s.getParentComponent() == &modTab)
+            {
+                kk->s.setVisible (false);
+                kk->name.setVisible (false);
+            }
+        }
+
+        auto byId = [this] (const char* id) -> Knob*
+        {
+            for (auto& k : knobs)
+                if (k != nullptr && k->paramId == id) return k.get();
+            return nullptr;
+        };
+        auto placeOne = [&] (juce::Rectangle<int> cell, const char* id)
+        {
+            auto* k = byId (id);
+            if (k == nullptr) return;
+            k->name.setBounds (cell.removeFromBottom (14));
+            k->name.setJustificationType (juce::Justification::centred);
+            k->name.setFont (juce::FontOptions (10.f, juce::Font::bold));
+            k->name.setVisible (true);
+            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cell.getWidth() - 8), 13);
+            k->s.setNumDecimalPlacesToDisplay (2);
+            k->s.setBounds (cell);
+            k->s.setVisible (true);
+        };
+
+        // FM block top of right rail (2 rows x 3 cols)
+        auto fmArea = right.removeFromTop (juce::jmax (160, right.getHeight() * 55 / 100)).reduced (4, 4);
         const char* fmIds[] = { "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1" };
-        const int fmCols = 3;
-        const int fmRows = 2;
+        const int fmCols = 3, fmRows = 2;
         const int cellW = fmArea.getWidth() / fmCols;
         const int cellH = fmArea.getHeight() / fmRows;
         for (int i = 0; i < 6; ++i)
         {
-            Knob* k = nullptr;
-            for (auto& kk : knobs)
-                if (kk != nullptr && kk->paramId == fmIds[i]) { k = kk.get(); break; }
-            if (k == nullptr) continue;
-            const int col = i % fmCols;
-            const int row = i / fmCols;
             auto cell = juce::Rectangle<int> (
-                fmArea.getX() + col * cellW, fmArea.getY() + row * cellH, cellW, cellH).reduced (6, 4);
-            k->name.setBounds (cell.removeFromTop (14));
-            k->name.setJustificationType (juce::Justification::centred);
-            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
-            k->name.setVisible (true);
-            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cell.getWidth() - 8), 14);
-            k->s.setNumDecimalPlacesToDisplay (1);
-            k->s.setBounds (cell);
-            k->s.setVisible (true);
+                fmArea.getX() + (i % fmCols) * cellW,
+                fmArea.getY() + (i / fmCols) * cellH, cellW, cellH).reduced (5, 3);
+            placeOne (cell, fmIds[i]);
         }
 
+        // Macros bottom of right rail — 4 equal columns
+        auto macroBand = right.reduced (4, 6);
         const char* macIds[] = { "macro1","macro2","macro3","macro4" };
-        const int n = 4;
-        const int cw = juce::jmax (1, macroBand.getWidth() / n);
-        for (int i = 0; i < n; ++i)
+        const int cw = juce::jmax (1, macroBand.getWidth() / 4);
+        for (int i = 0; i < 4; ++i)
         {
-            Knob* k = nullptr;
-            for (auto& kk : knobs)
-                if (kk != nullptr && kk->paramId == macIds[i]) { k = kk.get(); break; }
-            if (k == nullptr) continue;
-            auto cell = juce::Rectangle<int> (macroBand.getX() + i * cw, macroBand.getY(), cw, macroBand.getHeight()).reduced (5, 4);
-            k->name.setBounds (cell.removeFromTop (14));
-            k->name.setJustificationType (juce::Justification::centred);
-            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
-            k->name.setVisible (true);
-            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cw - 12), 14);
-            k->s.setNumDecimalPlacesToDisplay (1);
-            k->s.setBounds (cell);
-            k->s.setVisible (true);
+            auto cell = juce::Rectangle<int> (macroBand.getX() + i * cw, macroBand.getY(),
+                                              cw, macroBand.getHeight()).reduced (4, 2);
+            placeOne (cell, macIds[i]);
         }
-        if (matrixPanel != nullptr) matrixPanel->setBounds (r.reduced (2));
+
+        if (matrixPanel != nullptr)
+            matrixPanel->setBounds (r.reduced (2));
     }
 
     // LFO
@@ -316,8 +327,25 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoLoadB.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoSaveC.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoLoadC.setBounds (copyRow.reduced (1));
-        auto knobArea = r.removeFromBottom (88);
-        place (knobArea, knobs, 45, 6, 6);
+        auto knobArea = r.removeFromBottom (96);
+        {
+            const char* lids[] = { "lfo_rate","lfo_amount","lfo2_rate","lfo2_amount","lfo3_rate","lfo3_amount" };
+            const int cw = juce::jmax (1, knobArea.getWidth() / 6);
+            for (int i = 0; i < 6; ++i)
+            {
+                Knob* k = nullptr;
+                for (auto& kk : knobs)
+                    if (kk != nullptr && kk->paramId == lids[i]) { k = kk.get(); break; }
+                if (k == nullptr) continue;
+                auto cell = juce::Rectangle<int> (knobArea.getX() + i * cw, knobArea.getY(), cw, knobArea.getHeight()).reduced (3, 2);
+                k->name.setBounds (cell.removeFromBottom (14));
+                k->name.setJustificationType (juce::Justification::centred);
+                k->name.setVisible (true);
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cw - 10), 12);
+                k->s.setBounds (cell);
+                k->s.setVisible (true);
+            }
+        }
         lfoShapeEditor.setBounds (r.reduced (2));
     }
 
@@ -350,6 +378,15 @@ void SalekHightechAudioProcessorEditor::resized()
             }
         }
         magicHold.setBounds (rail.reduced (3));
+        // Combo presets strip
+        {
+            auto row = r.removeFromBottom (52).reduced (2, 1);
+            const int n = 14;
+            const int cw = juce::jmax (36, row.getWidth() / n);
+            for (int i = 0; i < n; ++i)
+                if (auto* c = magicTab.findChildWithID ("magicCombo" + juce::String (i)))
+                    c->setBounds (row.getX() + i * cw, row.getY(), cw - 2, row.getHeight());
+        }
         if (magicPad != nullptr)
         {
             magicPad->setBounds (r.reduced (4));

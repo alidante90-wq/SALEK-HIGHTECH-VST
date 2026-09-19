@@ -10,7 +10,7 @@ void SalekHightechAudioProcessorEditor::refreshCharCache()
         const int w = juce::jmax (1, src.getWidth() * h / src.getHeight());
         return src.rescaled (w, h, juce::Graphics::mediumResamplingQuality);
     };
-    charImgL = loadScaled (charPortraitIdx, 280); // single model, lighter cache
+    charImgL = loadScaled (charPortraitIdx, 480); // larger model in left slot // single model, lighter cache
     charImgR = {}; // right portrait removed — saves RAM/CPU
 }
 
