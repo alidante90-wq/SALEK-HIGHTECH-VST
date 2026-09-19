@@ -110,35 +110,15 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-    // Cover SALEK watermark discs baked into BG (always, every tab)
+    // Cover SALEK watermark discs (chars drawn once at end from cache)
     {
-        auto coverCircle = [&] (float cx, float cy, float r)
-        {
-            g.setColour (juce::Colour (0xff080414).withAlpha (0.95f));
-            g.fillEllipse (cx - r, cy - r, r * 2.f, r * 2.f);
-        };
-        coverCircle (95.f, H - 95.f, 80.f);
-        coverCircle (W - 95.f, H - 95.f, 80.f);
-
-        auto sideChar = SalekAssets::loadCharPortrait (charPortraitIdx);
-        auto sideChar2 = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
-        if (sideChar.isValid())
-        {
-            g.setOpacity (0.95f);
-            g.drawImage (sideChar, juce::Rectangle<float> (8.f, H - 290.f, 200.f, 260.f),
-                         juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-        }
-        if (sideChar2.isValid())
-        {
-            g.setOpacity (0.90f);
-            g.drawImage (sideChar2, juce::Rectangle<float> (W - 200.f, H - 280.f, 190.f, 250.f),
-                         juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-        }
-        g.setOpacity (1.f);
+        g.setColour (juce::Colour (0xff080414).withAlpha (0.95f));
+        g.fillEllipse (15.f, H - 175.f, 160.f, 160.f);
+        g.fillEllipse (W - 175.f, H - 175.f, 160.f, 160.f);
     }
 
-    // ---- plasma ribbons (optimized: 4 not 6) ----
-    for (int r = 0; r < 4; ++r)
+    // ---- plasma ribbons (2 only — stop lag) ----
+    for (int r = 0; r < 2; ++r)
     {
         juce::Path ribbon;
         float yBase = H * (0.18f + r * 0.18f) + my * (10.f + r * 2.f);
@@ -168,8 +148,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillEllipse (lx - br * 0.4f, ly - br * 0.4f, br * 0.8f, br * 0.8f);
     }
 
-    // ---- orbs with 3D specular (optimized count) ----
-    for (int i = 0; i < 16; ++i)
+    // ---- orbs (reduced count for performance) ----
+    for (int i = 0; i < 6; ++i)
     {
         float speed = 12.f + (i % 7) * 3.5f;
         float px = std::fmod (t * speed * 0.6f + i * 47.f, W + 60.f) - 30.f + mx * 40.f;
@@ -190,8 +170,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillEllipse (hx, hy, sz * 0.28f, sz * 0.28f);
     }
 
-    // ---- near sparks ----
-    for (int i = 0; i < 40; ++i)
+    // ---- near sparks (reduced) ----
+    for (int i = 0; i < 12; ++i)
     {
         float px = std::fmod (t * (11.f + i % 9) + i * 41.f + mx * 55.f, W);
         float py = std::fmod (t * (8.f + i % 5) + i * 59.f + my * 45.f, H);
@@ -258,25 +238,38 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
 
-    // ---- GITI BY SALEK HIGHTECH logo — TOP-LEFT only (not center), never covers tabs ----
+    // ---- Logo CENTER TOP ----
     if (logoImg.isValid())
     {
-        const float lw = juce::jmin (200.f, W * 0.18f);
-        const float lh = 48.f;
-        auto logoArea = juce::Rectangle<float> (4.f, 2.f, lw, lh);
-        g.setColour (juce::Colours::black.withAlpha (0.50f));
-        g.fillRoundedRectangle (logoArea.expanded (4.f, 2.f), 8.f);
-        g.setColour (cyan.withAlpha (0.22f + pulse * 0.12f));
-        g.drawRoundedRectangle (logoArea.expanded (4.f, 2.f), 8.f, 1.4f);
+        const float lw = juce::jmin (280.f, W * 0.26f);
+        const float lh = 56.f;
+        auto logoArea = juce::Rectangle<float> ((W - lw) * 0.5f, 2.f, lw, lh);
+        g.setColour (juce::Colours::black.withAlpha (0.55f));
+        g.fillRoundedRectangle (logoArea.expanded (6.f, 3.f), 10.f);
         g.setOpacity (1.f);
         g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
     }
     else
     {
         g.setColour (cyan);
-        g.setFont (juce::FontOptions (16.0f, juce::Font::bold));
-        g.drawText ("GITI BY SALEK", 6, 4, 200, 24, juce::Justification::centredLeft);
+        g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+        g.drawText ("GITI BY SALEK HIGHTECH", 0, 4, (int) W, 28, juce::Justification::centred);
     }
+
+    // ---- Character PNGs LAST = top z-order (cached images, no disk IO) ----
+    if (charImgL.isValid())
+    {
+        g.setOpacity (0.95f);
+        g.drawImage (charImgL, juce::Rectangle<float> (6.f, H - 300.f, 210.f, 270.f),
+                     juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+    }
+    if (charImgR.isValid())
+    {
+        g.setOpacity (0.90f);
+        g.drawImage (charImgR, juce::Rectangle<float> (W - 210.f, H - 290.f, 200.f, 260.f),
+                     juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+    }
+    g.setOpacity (1.f);
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
     if (presetCollapsed)

@@ -11,11 +11,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     sonicCore = nullptr;
 
     addAndMakeVisible (keyboard);
-    vblank = juce::VBlankAttachment (this, [this] (double) {
-        animPhase += 0.028f;
-        repaint();
-    });
-    startTimerHz (24); // calmer motion
+    // VBlank disabled — was causing 5-10 FPS lag with heavy BG paint
+    // Animation driven by timer only at 12 Hz
+    startTimerHz (12);
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();
@@ -24,6 +22,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     lianImg   = SalekAssets::loadBgIsatis();   // BG v1 — ISATIS (man + cat)
     cyanImg   = SalekAssets::loadBgSalek();    // BG v2 — SALEK girl red city
     heroImg   = SalekAssets::loadBgIsatis();
+    refreshCharCache(); // load char PNGs ONCE
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);
@@ -247,6 +246,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     charCycleBtn.onClick = [this]
     {
         charPortraitIdx = (charPortraitIdx + 1) % 9;
+        refreshCharCache();
         repaint();
     };
     addAndMakeVisible (charCycleBtn);

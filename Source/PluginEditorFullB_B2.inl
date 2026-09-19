@@ -1,3 +1,9 @@
+void SalekHightechAudioProcessorEditor::refreshCharCache()
+{
+    charImgL = SalekAssets::loadCharPortrait (charPortraitIdx);
+    charImgR = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+}
+
 void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
 {
     const int id = themeBox.getSelectedId();

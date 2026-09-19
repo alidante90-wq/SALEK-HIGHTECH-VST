@@ -273,6 +273,7 @@ private:
     juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     int charPortraitIdx = 0;
+    juce::Image charImgL, charImgR; // cached portraits — load once, not every frame
     bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
@@ -298,6 +299,7 @@ private:
     float animPhase = 0.0f;
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
     juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
+    void refreshCharCache();
     int heroIndex = 0;
     bool presetCollapsed = false;
     void applyHeroFromTheme();
