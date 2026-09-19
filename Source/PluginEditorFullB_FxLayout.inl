@@ -1,6 +1,8 @@
 // FX layout by PARAMETER ID (never by fragile index)
+// Occupy roughly half the page (upper portion)
 {
-    auto area = fxTab.getLocalBounds().reduced (6);
+    auto fullFx = fxTab.getLocalBounds().reduced (6);
+    auto area = fullFx.removeFromTop (juce::jmax (280, fullFx.getHeight() * 55 / 100));
 
     auto byId = [this] (const char* id) -> Knob*
     {

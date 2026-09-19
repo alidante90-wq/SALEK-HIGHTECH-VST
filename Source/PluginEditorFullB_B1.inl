@@ -189,6 +189,7 @@ void SalekHightechAudioProcessorEditor::resized()
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));
         lfo3WaveBox.setBounds (waveRow.reduced (2));
         auto bankRow = r.removeFromTop (24);
+        lfoPointsBox.setBounds (bankRow.removeFromRight (90).reduced (2));
         lfoShapeBank.setBounds (bankRow.reduced (2));
         auto copyRow = r.removeFromTop (22);
         const int cw = copyRow.getWidth() / 9;

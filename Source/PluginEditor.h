@@ -275,6 +275,7 @@ private:
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
     juce::ComboBox lfoShapeBank; // 32 preset shapes
+    juce::ComboBox lfoPointsBox; // 8 / 16 / 32 editable vertices
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
                      lfoPresetSqr { "SQR" }, lfoPresetPulse { "PLS" }, lfoPresetCustom { "DRAW" },
                      lfoPresetExp { "EXP" }, lfoPresetLog { "LOG" }, lfoPresetBell { "BELL" },

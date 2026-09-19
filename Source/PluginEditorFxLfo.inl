@@ -215,7 +215,9 @@ private:
     juce::Colour accent { 0xff00e8ff };
 };
 
-/** Editable LFO shape — freehand paint (Serum 2 style) */
+/** Editable LFO shape — freehand paint (Serum 2 style)
+ *  activePoints = 8 / 16 / 32 controls how many editable vertices (Shift-draw friendly).
+ *  Full TableSize (32) is always written to the LFO via linear stretch. */
 class LfoShapeEditor : public juce::Component
 {
 public:
@@ -233,6 +235,16 @@ public:
     void setLfo (salek::LFO* l) { lfo = l; if (lfo) syncFromLfo(); }
     salek::LFO* getLfo() const noexcept { return lfo; }
 
+    /** 8 / 16 / 32 editable points */
+    void setActivePoints (int n)
+    {
+        if (n <= 8)       activePoints = 8;
+        else if (n <= 16) activePoints = 16;
+        else              activePoints = 32;
+        repaint();
+    }
+    int getActivePoints() const noexcept { return activePoints; }
+
     void syncFromLfo()
     {
         if (! lfo) return;
@@ -243,8 +255,7 @@ public:
 
     void applyTo (salek::LFO& dest)
     {
-        for (int i = 0; i < N; ++i)
-            dest.setCustomPoint (i, points[i]);
+        pushToLfo (dest);
     }
 
     void saveSlot (int slot)
@@ -259,10 +270,8 @@ public:
     {
         if (slot < 0 || slot > 2 || ! bankValid[(size_t) slot]) return;
         for (int i = 0; i < N; ++i)
-        {
             points[i] = bank[(size_t) slot][(size_t) i];
-            if (lfo) lfo->setCustomPoint (i, points[i]);
-        }
+        if (lfo) pushToLfo (*lfo);
         repaint();
     }
 
@@ -275,11 +284,12 @@ public:
         g.drawRoundedRectangle (r, 8.f, 1.4f);
 
         auto plot = r.reduced (8.f, 18.f);
-        // Vital-style grid (16 x 8)
+        const int AP = activePoints;
+        // Grid matches active point density
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.10f));
-        for (int i = 1; i < 16; ++i)
+        for (int i = 1; i < AP; ++i)
         {
-            float x = plot.getX() + plot.getWidth() * (float) i / 16.f;
+            float x = plot.getX() + plot.getWidth() * (float) i / (float) AP;
             g.drawVerticalLine ((int) x, plot.getY(), plot.getBottom());
         }
         for (int j = 1; j < 8; ++j)
@@ -289,20 +299,21 @@ public:
         }
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.28f));
         g.drawHorizontalLine ((int) plot.getCentreY(), plot.getX(), plot.getRight());
-        // vertex dots every 2 samples
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.55f));
-        for (int i = 0; i < N; i += 2)
+
+        // Vertex dots at active resolution
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.75f));
+        for (int i = 0; i < AP; ++i)
         {
-            float x = plot.getX() + (float) i / (float) (N - 1) * plot.getWidth();
-            float y = plot.getCentreY() - points[i] * plot.getHeight() * 0.45f;
-            g.fillEllipse (x - 2.5f, y - 2.5f, 5.f, 5.f);
+            float x = plot.getX() + (float) i / (float) (AP - 1) * plot.getWidth();
+            float y = plot.getCentreY() - sampleAtActive (i) * plot.getHeight() * 0.45f;
+            g.fillEllipse (x - 3.f, y - 3.f, 6.f, 6.f);
         }
 
         juce::Path fill, wave;
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < AP; ++i)
         {
-            float x = plot.getX() + (float) i / (float) (N - 1) * plot.getWidth();
-            float y = plot.getCentreY() - points[i] * plot.getHeight() * 0.45f;
+            float x = plot.getX() + (float) i / (float) (AP - 1) * plot.getWidth();
+            float y = plot.getCentreY() - sampleAtActive (i) * plot.getHeight() * 0.45f;
             if (i == 0) { wave.startNewSubPath (x, y); fill.startNewSubPath (x, plot.getBottom()); fill.lineTo (x, y); }
             else { wave.lineTo (x, y); fill.lineTo (x, y); }
         }
@@ -315,7 +326,7 @@ public:
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint",
+        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = snap  |  pts=" + juce::String (AP),
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -329,46 +340,78 @@ private:
     float bank[3][N] {};
     bool bankValid[3] { false, false, false };
     int lastIdx = -1;
+    int activePoints = 16; // default: comfortable for Shift-draw
 
-    void writePoint (int i, float v)
+    float sampleAtActive (int ai) const
     {
-        i = juce::jlimit (0, N - 1, i);
-        points[i] = juce::jlimit (-1.f, 1.f, v);
-        if (lfo)
+        // Map active index → full table index
+        float t = (float) ai / (float) (activePoints - 1);
+        int ti = juce::jlimit (0, N - 1, (int) std::round (t * (float) (N - 1)));
+        return points[ti];
+    }
+
+    void writeActive (int ai, float v)
+    {
+        ai = juce::jlimit (0, activePoints - 1, ai);
+        v = juce::jlimit (-1.f, 1.f, v);
+        // Write into the corresponding full-table slot, then interpolate neighbours
+        float t = (float) ai / (float) (activePoints - 1);
+        int ti = juce::jlimit (0, N - 1, (int) std::round (t * (float) (N - 1)));
+        points[ti] = v;
+        // Fill gaps between active vertices by linear interpolation across full table
+        if (activePoints < N)
         {
-            lfo->setCustomPoint (i, points[i]);
-            lfo->setWave (salek::LFO::Wave::Custom);
+            for (int i = 0; i < activePoints - 1; ++i)
+            {
+                float t0 = (float) i / (float) (activePoints - 1);
+                float t1 = (float) (i + 1) / (float) (activePoints - 1);
+                int i0 = juce::jlimit (0, N - 1, (int) std::round (t0 * (float) (N - 1)));
+                int i1 = juce::jlimit (0, N - 1, (int) std::round (t1 * (float) (N - 1)));
+                float v0 = points[i0], v1 = points[i1];
+                for (int j = i0; j <= i1; ++j)
+                {
+                    float tt = (i1 == i0) ? 0.f : (float) (j - i0) / (float) (i1 - i0);
+                    points[j] = v0 * (1.f - tt) + v1 * tt;
+                }
+            }
         }
+        if (lfo) pushToLfo (*lfo);
+    }
+
+    void pushToLfo (salek::LFO& dest)
+    {
+        for (int i = 0; i < N; ++i)
+            dest.setCustomPoint (i, points[i]);
+        dest.setWave (salek::LFO::Wave::Custom);
     }
 
     void dragAt (const juce::MouseEvent& e)
     {
         auto plot = getLocalBounds().toFloat().reduced (10.f, 20.f);
         if (plot.getWidth() < 1.f) return;
-        int idx = juce::jlimit (0, N - 1,
-            (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * (float) (N - 1)));
-        // Shift = snap to 16-step X grid + 8-level Y (Vital-like)
+        const int AP = activePoints;
+        int idx = juce::jlimit (0, AP - 1,
+            (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * (float) (AP - 1)));
+        // Shift = hard snap to active grid + 8-level Y
         if (e.mods.isShiftDown())
         {
-            const float step = (float) (N - 1) / 16.f;
-            idx = juce::jlimit (0, N - 1, (int) std::round ((float) idx / step) * (int) step);
+            // already on active grid
         }
         float v = juce::jlimit (-1.f, 1.f,
             (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
         if (e.mods.isShiftDown())
-        {
-            v = std::round (v * 4.f) / 4.f; // 8 levels -1..1
-        }
-        if (lastIdx < 0) writePoint (idx, v);
+            v = std::round (v * 4.f) / 4.f;
+
+        if (lastIdx < 0) writeActive (idx, v);
         else
         {
             int a = juce::jmin (lastIdx, idx), b = juce::jmax (lastIdx, idx);
-            float va = points[lastIdx];
+            float va = sampleAtActive (lastIdx);
             for (int i = a; i <= b; ++i)
             {
                 float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
                 float pv = (lastIdx <= idx) ? va * (1.f - tt) + v * tt : v * (1.f - tt) + va * tt;
-                writePoint (i, pv);
+                writeActive (i, pv);
             }
         }
         lastIdx = idx;

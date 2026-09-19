@@ -3,6 +3,22 @@
         lfoTab.addAndMakeVisible (lfoShapeEditor);
         lfoShapeEditor.setLfo (&processor.getLfo1());
 
+        // Points resolution for freehand draw (8/16/32)
+        lfoPointsBox.clear();
+        lfoPointsBox.addItem ("PTS 8", 1);
+        lfoPointsBox.addItem ("PTS 16", 2);
+        lfoPointsBox.addItem ("PTS 32", 3);
+        lfoPointsBox.setSelectedId (2, juce::dontSendNotification); // default 16
+        lfoPointsBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff12081c));
+        lfoPointsBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffffd700));
+        lfoPointsBox.onChange = [this]
+        {
+            const int id = lfoPointsBox.getSelectedId();
+            lfoShapeEditor.setActivePoints (id == 1 ? 8 : (id == 3 ? 32 : 16));
+        };
+        lfoTab.addAndMakeVisible (lfoPointsBox);
+        lfoShapeEditor.setActivePoints (16);
+
         // Serum-inspired shape bank buttons
         struct ShapeBtn { juce::TextButton* b; const char* label; int preset; };
         ShapeBtn shapes[] = {
