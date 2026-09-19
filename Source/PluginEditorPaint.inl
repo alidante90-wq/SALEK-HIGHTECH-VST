@@ -109,6 +109,28 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         }
     }
 
+
+    // one character PNG in empty zone (NOT background) — MAIN only
+    if (tabs.getCurrentTabIndex() == 0)
+    {
+        static juce::Image sideChar;
+        static bool tried = false;
+        if (! tried)
+        {
+            tried = true;
+            sideChar = SalekAssets::loadCharPortrait (0);
+        }
+        if (sideChar.isValid())
+        {
+            const float cw = juce::jmin (180.f, W * 0.18f);
+            const float ch = cw * 1.35f;
+            auto dest = juce::Rectangle<float> (W - cw - 16.f, H - ch - 90.f, cw, ch);
+            g.setOpacity (0.55f);
+            g.drawImage (sideChar, dest, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            g.setOpacity (1.f);
+        }
+    }
+
     // ---- plasma ribbons (optimized: 4 not 6) ----
     for (int r = 0; r < 4; ++r)
     {
