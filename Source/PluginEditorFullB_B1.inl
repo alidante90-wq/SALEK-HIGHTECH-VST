@@ -216,29 +216,56 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    // MOD
+    // MOD — matrix left, FM + macros right (by param ID, roomy text boxes)
     {
         auto r = modTab.getLocalBounds().reduced (4);
-        auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
-        auto macroBand = right.removeFromBottom (110);
-        auto fmArea = right.reduced (2, 4);
-        place (fmArea, knobs, 35, 6, 3, 92);
+        auto right = r.removeFromRight (juce::jmin (320, r.getWidth() * 36 / 100));
+        auto macroBand = right.removeFromBottom (120);
+        auto fmArea = right.reduced (4, 6);
+
+        const char* fmIds[] = { "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1" };
+        const int fmCols = 3;
+        const int fmRows = 2;
+        const int cellW = fmArea.getWidth() / fmCols;
+        const int cellH = fmArea.getHeight() / fmRows;
+        for (int i = 0; i < 6; ++i)
         {
-            const int start = 41, n = 4;
-            const int cw = juce::jmax (1, macroBand.getWidth() / n);
-            for (int i = 0; i < n; ++i)
-            {
-                if (start + i >= (int) knobs.size()) break;
-                auto* k = knobs[(size_t) (start + i)].get();
-                auto cell = juce::Rectangle<int> (macroBand.getX() + i * cw, macroBand.getY(), cw, macroBand.getHeight()).reduced (3, 2);
-                k->name.setBounds (cell.removeFromBottom (16));
-                k->name.setJustificationType (juce::Justification::centred);
-                k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-                k->name.setVisible (true);
-                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cw - 10), 12);
-                k->s.setBounds (cell);
-                k->s.setVisible (true);
-            }
+            Knob* k = nullptr;
+            for (auto& kk : knobs)
+                if (kk != nullptr && kk->paramId == fmIds[i]) { k = kk.get(); break; }
+            if (k == nullptr) continue;
+            const int col = i % fmCols;
+            const int row = i / fmCols;
+            auto cell = juce::Rectangle<int> (
+                fmArea.getX() + col * cellW, fmArea.getY() + row * cellH, cellW, cellH).reduced (6, 4);
+            k->name.setBounds (cell.removeFromTop (14));
+            k->name.setJustificationType (juce::Justification::centred);
+            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
+            k->name.setVisible (true);
+            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cell.getWidth() - 8), 14);
+            k->s.setNumDecimalPlacesToDisplay (1);
+            k->s.setBounds (cell);
+            k->s.setVisible (true);
+        }
+
+        const char* macIds[] = { "macro1","macro2","macro3","macro4" };
+        const int n = 4;
+        const int cw = juce::jmax (1, macroBand.getWidth() / n);
+        for (int i = 0; i < n; ++i)
+        {
+            Knob* k = nullptr;
+            for (auto& kk : knobs)
+                if (kk != nullptr && kk->paramId == macIds[i]) { k = kk.get(); break; }
+            if (k == nullptr) continue;
+            auto cell = juce::Rectangle<int> (macroBand.getX() + i * cw, macroBand.getY(), cw, macroBand.getHeight()).reduced (5, 4);
+            k->name.setBounds (cell.removeFromTop (14));
+            k->name.setJustificationType (juce::Justification::centred);
+            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
+            k->name.setVisible (true);
+            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cw - 12), 14);
+            k->s.setNumDecimalPlacesToDisplay (1);
+            k->s.setBounds (cell);
+            k->s.setVisible (true);
         }
         if (matrixPanel != nullptr) matrixPanel->setBounds (r.reduced (2));
     }
