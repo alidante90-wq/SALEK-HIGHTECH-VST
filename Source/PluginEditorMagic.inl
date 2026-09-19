@@ -183,7 +183,7 @@
                 if (i == 12) { setP ("fm_2to1", 0.7f); setP ("reverb_mix", 0.45f); }
                 if (i == 13) { setP ("osc1_fold", 0.55f); setP ("delay_mix", 0.4f); setP ("reverb_mix", 0.3f); }
                 if (magicPad != nullptr)
-                    magicPad->setXY (xs[i], ys[i]);
+                    magicPad->setPosition (xs[i], ys[i], true);
             };
         }
     }

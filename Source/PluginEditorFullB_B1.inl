@@ -330,18 +330,18 @@ void SalekHightechAudioProcessorEditor::resized()
         auto knobArea = r.removeFromBottom (96);
         {
             const char* lids[] = { "lfo_rate","lfo_amount","lfo2_rate","lfo2_amount","lfo3_rate","lfo3_amount" };
-            const int cw = juce::jmax (1, knobArea.getWidth() / 6);
+            const int lfoCw = juce::jmax (1, knobArea.getWidth() / 6);
             for (int i = 0; i < 6; ++i)
             {
                 Knob* k = nullptr;
                 for (auto& kk : knobs)
                     if (kk != nullptr && kk->paramId == lids[i]) { k = kk.get(); break; }
                 if (k == nullptr) continue;
-                auto cell = juce::Rectangle<int> (knobArea.getX() + i * cw, knobArea.getY(), cw, knobArea.getHeight()).reduced (3, 2);
+                auto cell = juce::Rectangle<int> (knobArea.getX() + i * lfoCw, knobArea.getY(), lfoCw, knobArea.getHeight()).reduced (3, 2);
                 k->name.setBounds (cell.removeFromBottom (14));
                 k->name.setJustificationType (juce::Justification::centred);
                 k->name.setVisible (true);
-                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cw - 10), 12);
+                k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, lfoCw - 10), 12);
                 k->s.setBounds (cell);
                 k->s.setVisible (true);
             }
