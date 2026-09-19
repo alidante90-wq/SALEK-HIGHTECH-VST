@@ -33,7 +33,6 @@ juce_add_plugin(SALEK_HIGHTECH
 
 juce_generate_juce_header(SALEK_HIGHTECH)
 
-# Slim binary assets — only active UI backgrounds + logo (faster generate / smaller binary)
 juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/bg_isatis.jpg"
     "Source/Assets/bg_salek.jpg"
@@ -86,3 +85,11 @@ target_link_libraries(SALEK_HIGHTECH
 if (MSVC)
     target_compile_options(SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj /utf-8)
 endif()
+
+# Copy Assets next to plugin so character PNGs load at runtime
+add_custom_command(TARGET SALEK_HIGHTECH POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/Source/Assets"
+        "$<TARGET_FILE_DIR:SALEK_HIGHTECH>/Assets"
+    COMMENT "Copy Assets beside plugin binary"
+)
