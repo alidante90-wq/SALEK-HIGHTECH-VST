@@ -78,10 +78,11 @@ inline juce::Image fromBinaryName (const char* name)
     const char* data = BinaryData::getNamedResource (name, sz);
     return fromMemory (data, sz);
 }
+
 inline juce::Image anyEmbedded()
 {
-    for (auto* n : { "face_png", "lian_png", "wp5627062_jpg",
-                     "bg_isatis_jpg", "bg_salek_jpg", "logo_giti_png" })
+    for (auto* n : { "logo_giti_png", "bg_isatis_jpg", "bg_salek_jpg",
+                     "face_png", "lian_png", "wp5627062_jpg" })
     {
         auto img = fromBinaryName (n);
         if (img.isValid()) return img;
@@ -92,20 +93,29 @@ inline juce::Image anyEmbedded()
 inline juce::Image anyEmbedded() { return {}; }
 #endif
 
-inline juce::Image loadLogo()
+// ---- All loaders: single juce::Image img (MSVC C2374 safe) ----
+
+inline juce::Image loadLogoGiti()
 {
+    juce::Image img;
 #if SALEK_HAS_BINARY_DATA
-    auto img = fromBinaryName ("logo_giti_png");
+    img = fromBinaryName ("logo_giti_png");
     if (img.isValid()) return img;
 #endif
-    auto img = fromDisk ({ "logo_giti.png", "LOGO.png" });
+    img = fromDisk ({ "logo_giti.png", "LOGO.png" });
     return img.isValid() ? img : makeFallbackLogo();
+}
+
+inline juce::Image loadLogo()
+{
+    return loadLogoGiti();
 }
 
 inline juce::Image loadBgIsatis()
 {
+    juce::Image img;
 #if SALEK_HAS_BINARY_DATA
-    auto img = fromBinaryName ("bg_isatis_jpg");
+    img = fromBinaryName ("bg_isatis_jpg");
     if (img.isValid()) return img;
 #endif
     img = fromDisk ({ "bg_isatis.jpg", "bg_isatis.png" });
@@ -114,26 +124,64 @@ inline juce::Image loadBgIsatis()
 
 inline juce::Image loadBgSalek()
 {
+    juce::Image img;
 #if SALEK_HAS_BINARY_DATA
-    auto img = fromBinaryName ("bg_salek_jpg");
+    img = fromBinaryName ("bg_salek_jpg");
     if (img.isValid()) return img;
 #endif
-    return fromDisk ({ "bg_salek.jpg", "bg_salek.png" });
+    img = fromDisk ({ "bg_salek.jpg", "bg_salek.png" });
+    return img;
 }
 
-inline juce::Image loadLogoGiti() { return loadLogo(); }
-inline juce::Image loadFace() { return fromDisk ({ "face.png" }); }
-inline juce::Image loadLian() { return fromDisk ({ "lian.png" }); }
-inline juce::Image loadCyanGirl() { return fromDisk ({ "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg", "OIP.webp" }); }
-inline juce::Image loadToronowla() { return fromDisk ({ "wp5627062.jpg", "toronowla.png" }); }
+inline juce::Image loadFace()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("face_png");
+    if (img.isValid()) return img;
+#endif
+    return fromDisk ({ "face.png" });
+}
+
+inline juce::Image loadLian()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("lian_png");
+    if (img.isValid()) return img;
+#endif
+    img = fromDisk ({ "lian.png" });
+    return img.isValid() ? img : loadFace();
+}
+
+inline juce::Image loadToronowla()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("wp5627062_jpg");
+    if (img.isValid()) return img;
+#endif
+    return fromDisk ({ "wp5627062.jpg", "toronowla.png" });
+}
+
+inline juce::Image loadCyanGirl()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhqfullview_jpg");
+    if (img.isValid()) return img;
+#endif
+    img = fromDisk ({ "purple_haired_girl_with_ribbon_by_tuwalg_dg4rfhq-fullview.jpg", "OIP.webp" });
+    return img.isValid() ? img : loadFace();
+}
 
 inline juce::Image loadCharPurple()  { return fromDisk ({ "char_purple_latex.png", "char_purple_latex.png.png", "char_purple.png" }); }
 inline juce::Image loadCharCatgirl() { return fromDisk ({ "char_catgirl.png" }); }
-inline juce::Image loadCharFox()     { return fromDisk ({ "char_foxgirl.png" }); }
-inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png" }); }
+inline juce::Image loadCharFox()     { return fromDisk ({ "char_foxgirl.png", "char_fox.png" }); }
+inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png", "char_cyber.png" }); }
 inline juce::Image loadCharGun()     { return fromDisk ({ "char_gun.png" }); }
 inline juce::Image loadCharApron()   { return fromDisk ({ "char_apron.png" }); }
-inline juce::Image loadCharWhite()   { return fromDisk ({ "char_white_suit.png" }); }
+inline juce::Image loadCharWhite()   { return fromDisk ({ "char_white_suit.png", "char_white.png" }); }
 
 inline juce::Image loadCharPortrait (int index = 0)
 {
@@ -151,4 +199,4 @@ inline juce::Image loadCharPortrait (int index = 0)
 }
 
 inline juce::Image loadHero() { return loadBgIsatis(); }
-}
+} // namespace SalekAssets
