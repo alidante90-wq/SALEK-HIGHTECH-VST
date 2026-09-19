@@ -106,7 +106,16 @@ void SalekHightechAudioProcessorEditor::listBoxItemClicked (int row, const juce:
 void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
-    if (++ticks < 4) resized();
+    ++ticks;
+    if (ticks < 6) resized();
+    // FL Studio recovery: if MAIN is active but osc area collapsed, re-layout
+    if ((ticks % 24) == 0) // ~4s at 6Hz
+    {
+        if (tabs.getCurrentTabIndex() == 0
+            && (oscTab.getWidth() < 50 || oscTab.getHeight() < 50
+                || mainTab.getWidth() < 100))
+            resized();
+    }
     animPhase += 0.03f;
 
     auto g = [&](const char* id, float d=0.f) -> float {

@@ -139,11 +139,18 @@ void SalekHightechAudioProcessorEditor::resized()
         };
 
         auto b = mainTab.getLocalBounds().reduced (2);
+        // FL Studio sometimes reports 0-size mid-session — skip only MAIN placement
+        if (b.getWidth() >= 200 && b.getHeight() >= 120)
+        {
         // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
         envTab.setBounds (b.removeFromBottom (130));
         filterTab.setBounds (b.removeFromRight (180));
         auto oscFull = b;
-        oscTab.setBounds (oscFull); // full remaining height for OSC columns
+        oscTab.setBounds (oscFull);
+        oscTab.setVisible (true);
+        filterTab.setVisible (true);
+        envTab.setVisible (true);
+        mainTab.setVisible (true);
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
@@ -232,16 +239,40 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
+
+        } // end valid MAIN size
+    // FL recovery: never leave MAIN knobs invisible after tab switch / host resize
+    {
+        auto forceVis = [] (juce::Component& c)
+        {
+            c.setVisible (true);
+            for (int i = 0; i < c.getNumChildComponents(); ++i)
+                if (auto* ch = c.getChildComponent (i))
+                    ch->setVisible (true);
+        };
+        forceVis (oscTab);
+        forceVis (filterTab);
+        forceVis (envTab);
+        forceVis (mainTab);
+    }
+
     // MOD — matrix left; clean FM grid + macros right (hide stray knobs)
     {
         auto r = modTab.getLocalBounds().reduced (4);
         auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
 
-        // Hide every knob on modTab first, then show only the ones we place
+        // Only hide MOD-owned params (never touch osc/filter/env parents)
+        static const char* modOnly[] = {
+            "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1",
+            "macro1","macro2","macro3","macro4","lfo_rate","lfo_amount"
+        };
         for (auto& kk : knobs)
         {
             if (kk == nullptr) continue;
-            if (kk->s.getParentComponent() == &modTab)
+            bool isMod = false;
+            for (auto* id : modOnly)
+                if (kk->paramId == id) { isMod = true; break; }
+            if (isMod)
             {
                 kk->s.setVisible (false);
                 kk->name.setVisible (false);
