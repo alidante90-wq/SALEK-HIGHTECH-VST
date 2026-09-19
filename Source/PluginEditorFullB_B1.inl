@@ -169,6 +169,7 @@ void SalekHightechAudioProcessorEditor::resized()
             const char* idsSpr[3]   = { "osc1_uspread", "osc2_uspread", "osc3_uspread" };
             const char* idsPh[3]    = { "osc1_phase", "osc2_phase", "osc3_phase" };
             const char* idsRnd[3]   = { "osc1_rand", "osc2_rand", "osc3_rand" };
+            const char* idsPan[3]   = { "osc1_pan", "osc2_pan", "osc3_pan" };
 
             for (int c = 0; c < 3; ++c)
             {
@@ -194,8 +195,10 @@ void SalekHightechAudioProcessorEditor::resized()
                 placeId (uniRow.removeFromLeft (uw).reduced (2), idsDet[c]);
                 placeId (uniRow.reduced (2), idsSpr[c]);
                 auto pr = col;
-                placeId (pr.removeFromLeft (pr.getWidth() / 2).reduced (2), idsPh[c]);
-                placeId (pr.reduced (2), idsRnd[c]);
+                auto pr3 = pr.getWidth() / 3;
+                placeId (pr.removeFromLeft (pr3).reduced (2), idsPh[c]);
+                placeId (pr.removeFromLeft (pr3).reduced (2), idsRnd[c]);
+                placeId (pr.reduced (2), idsPan[c]);
             }
         }
         {

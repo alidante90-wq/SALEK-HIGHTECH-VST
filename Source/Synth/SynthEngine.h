@@ -17,6 +17,7 @@ public:
 
     void setOsc1TablePos (float v); void setOsc2TablePos (float v); void setOsc3TablePos (float v);
     void setOsc1Level (float v); void setOsc2Level (float v); void setOsc3Level (float v);
+    void setOsc1Pan (float v); void setOsc2Pan (float v); void setOsc3Pan (float v);
     void setOsc1Octave (int v); void setOsc2Octave (int v); void setOsc3Octave (int v);
     void setOsc1Semi (int v); void setOsc2Semi (int v); void setOsc3Semi (int v);
     void setOsc1Fine (float v); void setOsc2Fine (float v); void setOsc3Fine (float v);

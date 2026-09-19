@@ -75,6 +75,9 @@ public:
     void setOsc1Rand(float v){osc1Rand=juce::jlimit(0.f,1.f,v);}
     void setOsc2Rand(float v){osc2Rand=juce::jlimit(0.f,1.f,v);}
     void setOsc3Rand(float v){osc3Rand=juce::jlimit(0.f,1.f,v);}
+    void setOsc1Pan(float v){osc1Pan=juce::jlimit(0.f,1.f,v);}
+    void setOsc2Pan(float v){osc2Pan=juce::jlimit(0.f,1.f,v);}
+    void setOsc3Pan(float v){osc3Pan=juce::jlimit(0.f,1.f,v);}
     void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v); uniVoices1=uniVoices2=uniVoices3=unisonVoices;}
     void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c); uniDet1=uniDet2=uniDet3=unisonDetune;}
     void setUnisonSpread(float s){unisonSpread=juce::jlimit(0.f,1.f,s); uniSpr1=uniSpr2=uniSpr3=unisonSpread;}
@@ -132,6 +135,7 @@ private:
     float osc1Fine=0, osc2Fine=0, osc3Fine=0;
     float osc1Phase=0, osc2Phase=0, osc3Phase=0;
     float osc1Rand=0, osc2Rand=0, osc3Rand=0;
+    float osc1Pan=0.5f, osc2Pan=0.5f, osc3Pan=0.5f;
     float fm2to1=0, fm3to1=0, fm3to2=0, pm2to1=0, pm3to1=0, am2to1=0, rm2to1=0;
     float filterEnvAmt=0.5f, baseCutoff=8000;
     float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;

@@ -48,6 +48,16 @@ public:
         Fm3to1,
         Pitch,
         Amp,
+        Osc1Pan,
+        Osc2Pan,
+        Osc3Pan,
+        Osc1Drive,
+        Osc2Drive,
+        Osc3Drive,
+        DelayMix,
+        ReverbMix,
+        DistDrive,
+        ChorusMix,
         NumDests
     };
 
@@ -66,7 +76,9 @@ public:
         static const char* n[] = {
             "CUT","RESO","O1LVL","O2LVL","O3LVL",
             "O1TBL","O2TBL","O3TBL","O1WRP","O2WRP","O3WRP",
-            "O1FLD","O2FLD","O3FLD","FM21","FM31","PITCH","AMP"
+            "O1FLD","O2FLD","O3FLD","FM21","FM31","PITCH","AMP",
+            "O1PAN","O2PAN","O3PAN","O1DRV","O2DRV","O3DRV",
+            "DLYMX","REVMX","DIST","CHOR"
         };
         int i = (int) d;
         return (i >= 0 && i < (int) Dest::NumDests) ? n[i] : "?";

@@ -6,6 +6,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     float o2l = juce::jlimit(0.f,1.f, g("osc2_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Level)*0.5f);
     float o3l = juce::jlimit(0.f,1.f, g("osc3_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Level)*0.5f);
     synthEngine.setOsc1Level(o1l); synthEngine.setOsc2Level(o2l); synthEngine.setOsc3Level(o3l);
+    synthEngine.setOsc1Pan(juce::jlimit(0.f,1.f, g("osc1_pan")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Pan)*0.5f));
+    synthEngine.setOsc2Pan(juce::jlimit(0.f,1.f, g("osc2_pan")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Pan)*0.5f));
+    synthEngine.setOsc3Pan(juce::jlimit(0.f,1.f, g("osc3_pan")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Pan)*0.5f));
     synthEngine.setOsc1TablePos(juce::jlimit(0.f,1.f, g("osc1_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Table)*0.5f));
     synthEngine.setOsc2TablePos(juce::jlimit(0.f,1.f, g("osc2_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Table)*0.5f));
     synthEngine.setOsc3TablePos(juce::jlimit(0.f,1.f, g("osc3_table")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Table)*0.5f));
@@ -13,7 +16,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc2Warp(juce::jlimit(0.f,1.f, g("osc2_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Warp)*0.5f));
     synthEngine.setOsc3Warp(juce::jlimit(0.f,1.f, g("osc3_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Warp)*0.5f));
     synthEngine.setOsc1Fold(g("osc1_fold")); synthEngine.setOsc2Fold(g("osc2_fold")); synthEngine.setOsc3Fold(g("osc3_fold"));
-    synthEngine.setOsc1Drive(g("osc1_drive")); synthEngine.setOsc2Drive(g("osc2_drive")); synthEngine.setOsc3Drive(g("osc3_drive"));
+    synthEngine.setOsc1Drive(juce::jlimit(0.f,1.f,g("osc1_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Drive)*0.5f));
+    synthEngine.setOsc2Drive(juce::jlimit(0.f,1.f,g("osc2_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Drive)*0.5f));
+    synthEngine.setOsc3Drive(juce::jlimit(0.f,1.f,g("osc3_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Drive)*0.5f));
     synthEngine.setOsc1Phase(g("osc1_phase")); synthEngine.setOsc2Phase(g("osc2_phase")); synthEngine.setOsc3Phase(g("osc3_phase"));
     synthEngine.setOsc1Rand(g("osc1_rand")); synthEngine.setOsc2Rand(g("osc2_rand")); synthEngine.setOsc3Rand(g("osc3_rand"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
@@ -83,13 +88,17 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
         juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
-    delay.setMix(g("delay_mix")); delay.setTimeMs(g("delay_time")); delay.setFeedback(g("delay_fb"));
-    chorus.setMix(g("chorus_mix")); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
-    reverb.setMix(g("reverb_mix")); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
+    delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
+    delay.setTimeMsL(g("delay_time_l") > 1.f ? g("delay_time_l") : g("delay_time"));
+    delay.setTimeMsR(g("delay_time_r") > 1.f ? g("delay_time_r") : g("delay_time") * 1.07f);
+    delay.setFeedback(g("delay_fb"));
+    delay.setMode((int) g("delay_mode"));
+    chorus.setMix(juce::jlimit(0.f,1.f,g("chorus_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::ChorusMix)*0.5f)); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
+    reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
     reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
     phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
-    distortion.setMix(g("dist_mix")); distortion.setDrive(g("dist_drive")); distortion.setBitcrush(g("dist_crush"));
+    distortion.setMix(g("dist_mix")); distortion.setDrive(juce::jlimit(0.f,1.f,g("dist_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f)); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));

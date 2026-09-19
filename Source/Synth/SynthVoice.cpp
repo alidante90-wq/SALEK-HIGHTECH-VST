@@ -129,6 +129,18 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             nL = nR = n;
         }
 
+
+        // Per-oscillator pan (0=L .. 1=R), preserves unison width
+        auto applyPan = [] (float& L, float& R, float pan)
+        {
+            const float b = (pan - 0.5f) * 2.f; // -1..1
+            if (b < 0.f) R *= (1.f + b);
+            else         L *= (1.f - b);
+        };
+        applyPan (o1L, o1R, osc1Pan);
+        applyPan (o2L, o2R, osc2Pan);
+        applyPan (o3L, o3R, osc3Pan);
+
         // Filter route: which oscs go through filter
         const bool f1 = (filterRoute == 0 || filterRoute == 1 || filterRoute == 4 || filterRoute == 5);
         const bool f2 = (filterRoute == 0 || filterRoute == 2 || filterRoute == 4 || filterRoute == 6);

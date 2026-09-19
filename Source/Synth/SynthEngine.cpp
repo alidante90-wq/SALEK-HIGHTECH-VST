@@ -32,6 +32,9 @@ void SynthEngine::setOsc1TablePos (float v) { forEachVoice ([&] (SynthVoice& voi
 void SynthEngine::setOsc2TablePos (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2TablePos (v); }); }
 void SynthEngine::setOsc3TablePos (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3TablePos (v); }); }
 void SynthEngine::setOsc1Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Level (v); }); }
+void SynthEngine::setOsc1Pan (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Pan (v); }); }
+void SynthEngine::setOsc2Pan (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Pan (v); }); }
+void SynthEngine::setOsc3Pan (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Pan (v); }); }
 void SynthEngine::setOsc2Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Level (v); }); }
 void SynthEngine::setOsc3Level (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Level (v); }); }
 void SynthEngine::setOsc1Octave (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Octave (v); }); }

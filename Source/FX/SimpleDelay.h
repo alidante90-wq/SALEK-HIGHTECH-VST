@@ -3,8 +3,7 @@
 #include <vector>
 #include <cmath>
 namespace salek {
-/** Tempo-style delay with fractional read, stereo offset, feedback tone.
- *  TIME: 1 ms .. 1.8 s | FB: 0..0.95 | MIX: dry/wet */
+/** Stereo / Ping-Pong / Mono delay with independent L/R times. */
 class SimpleDelay {
 public:
     void prepare (double sampleRate, int maxBlock)
@@ -19,10 +18,21 @@ public:
 
     void setTimeMs (float ms) noexcept
     {
-        targetDelay = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
+        targetDelayL = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
+        targetDelayR = targetDelayL * 1.07f;
+    }
+    void setTimeMsL (float ms) noexcept
+    {
+        targetDelayL = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
+    }
+    void setTimeMsR (float ms) noexcept
+    {
+        targetDelayR = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
     }
     void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    /** 0 Stereo, 1 PingPong, 2 Mono */
+    void setMode (int m) noexcept { mode = juce::jlimit (0, 2, m); }
 
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
@@ -32,25 +42,25 @@ public:
         const int bs = (int) bufL.size();
         if (bs < 8) return;
 
-        // smooth time changes (anti-zipper)
-        const float smooth = 0.0015f;
-        delaySamples += smooth * (targetDelay - delaySamples);
+        const float smooth = 0.002f;
+        delaySamplesL += smooth * (targetDelayL - delaySamplesL);
+        delaySamplesR += smooth * (targetDelayR - delaySamplesR);
 
-        // feedback damping: longer times slightly darker
-        const float tone = juce::jlimit (0.25f, 0.9f, 0.82f - delaySamples / float (sr) * 0.3f);
-
-        // stereo: R slightly longer for width (ping-ish)
-        const float delayR = delaySamples * 1.068f;
+        const float tone = juce::jlimit (0.25f, 0.9f, 0.82f - delaySamplesL / float (sr) * 0.3f);
 
         for (int i = 0; i < n; ++i)
         {
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
+            if (mode == 2) // Mono: average input
+            {
+                const float m = 0.5f * (inL + inR);
+                inL = inR = m;
+            }
 
-            float dL = readFrac (bufL, delaySamples);
-            float dR = readFrac (bufR, delayR);
+            float dL = readFrac (bufL, delaySamplesL);
+            float dR = readFrac (bufR, delaySamplesR);
 
-            // tone on wet before feedback
             lpL += tone * (dL - lpL);
             lpR += tone * (dR - lpR);
             dL = lpL;
@@ -59,10 +69,24 @@ public:
             buffer.setSample (0, i, inL * (1.f - mix) + dL * mix);
             if (ch > 1) buffer.setSample (1, i, inR * (1.f - mix) + dR * mix);
 
-            // cross-feed slight ping-pong character at high FB
-            float cross = feedback * 0.15f;
-            bufL[(size_t) writePos] = inL + dL * (feedback - cross) + dR * cross;
-            bufR[(size_t) writePos] = inR + dR * (feedback - cross) + dL * cross;
+            if (mode == 1) // PingPong: cross feedback
+            {
+                bufL[(size_t) writePos] = inL + dR * feedback;
+                bufR[(size_t) writePos] = inR + dL * feedback;
+            }
+            else if (mode == 2) // Mono: shared
+            {
+                const float monoIn = 0.5f * (inL + inR);
+                const float monoD = 0.5f * (dL + dR);
+                bufL[(size_t) writePos] = monoIn + monoD * feedback;
+                bufR[(size_t) writePos] = bufL[(size_t) writePos];
+            }
+            else // Stereo: light cross
+            {
+                const float cross = feedback * 0.12f;
+                bufL[(size_t) writePos] = inL + dL * (feedback - cross) + dR * cross;
+                bufR[(size_t) writePos] = inR + dR * (feedback - cross) + dL * cross;
+            }
 
             writePos = (writePos + 1) % bs;
         }
@@ -77,15 +101,16 @@ private:
         int i0 = ((int) rp) % bs;
         int i1 = (i0 + 1) % bs;
         float f = rp - std::floor (rp);
-        // hermite-ish soft
         return buf[(size_t) i0] * (1.f - f) + buf[(size_t) i1] * f;
     }
 
     double sr = 44100.0;
     std::vector<float> bufL, bufR;
     int writePos = 0;
-    float delaySamples = 300.f, targetDelay = 300.f;
+    float delaySamplesL = 300.f, delaySamplesR = 320.f;
+    float targetDelayL = 300.f, targetDelayR = 320.f;
     float feedback = 0.3f, mix = 0.f;
     float lpL = 0.f, lpR = 0.f;
+    int mode = 0;
 };
 }

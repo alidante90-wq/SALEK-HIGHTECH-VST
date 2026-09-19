@@ -86,8 +86,28 @@
         addKnob (fxTab, "dist_mix", "DIST", O);
         addKnob (fxTab, "dist_drive", "DRIVE", M);
         addKnob (fxTab, "dist_crush", "CRUSH", C);
+        addKnob (fxTab, "delay_time_l", "D TIME L", C);
+        addKnob (fxTab, "delay_time_r", "D TIME R", M);
     }
 
+    // Mode menus + APVTS attachment (were missing → modes never applied)
+    distModeBox.clear (juce::dontSendNotification);
+    distModeBox.addItemList ({ "Tube", "Sat", "Hard", "Fold", "Bit", "Rect" }, 1);
+    distModeBox.setSelectedItemIndex (0, juce::dontSendNotification);
+    reverbModeBox.clear (juce::dontSendNotification);
+    reverbModeBox.addItemList ({ "Room", "Hall", "Plate", "Chamber", "Spring" }, 1);
+    reverbModeBox.setSelectedItemIndex (0, juce::dontSendNotification);
     fxTab.addAndMakeVisible (distModeBox);
     fxTab.addAndMakeVisible (reverbModeBox);
+    delayModeBox.clear (juce::dontSendNotification);
+    delayModeBox.addItemList ({ "Stereo", "PingPong", "Mono" }, 1);
+    delayModeBox.setSelectedItemIndex (0, juce::dontSendNotification);
+    fxTab.addAndMakeVisible (delayModeBox);
+    comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+        processor.getAPVTS(), "delay_mode", delayModeBox));
+    comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+        processor.getAPVTS(), "dist_mode", distModeBox));
+    comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+        processor.getAPVTS(), "reverb_mode", reverbModeBox));
 }
+
