@@ -46,15 +46,25 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         const int presetW = presetCollapsed ? 28 : 210;
         auto leftStrip = full.removeFromLeft (presetW);
-        const int logoPad = 88;
-        const int maxH = juce::jmax (140, (int) ((leftStrip.getHeight() - logoPad) * 0.42f));
-        presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), maxH);
+        const int logoPad = 72;
+        // Preset takes top ~38%, character model gets the rest of left column
+        const int presetH = juce::jmax (120, (int) ((leftStrip.getHeight() - logoPad) * 0.38f));
+        presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
-        // Character PNG slot = empty area under presets (red "PNG" zone)
+        // Character PNG slot under presets (always visible when not collapsed)
         {
-            const int cy = leftStrip.getY() + logoPad + maxH + 4;
-            const int ch = juce::jmax (80, leftStrip.getBottom() - cy - 4);
-            charSlotBounds = juce::Rectangle<int> (leftStrip.getX() + 2, cy, leftStrip.getWidth() - 4, ch);
+            if (presetCollapsed)
+            {
+                charSlotBounds = juce::Rectangle<int> (
+                    leftStrip.getX() + 2, leftStrip.getY() + logoPad,
+                    leftStrip.getWidth() - 4, juce::jmax (100, leftStrip.getHeight() - logoPad - 8));
+            }
+            else
+            {
+                const int cy = leftStrip.getY() + logoPad + presetH + 4;
+                const int ch = juce::jmax (120, leftStrip.getBottom() - cy - 4);
+                charSlotBounds = juce::Rectangle<int> (leftStrip.getX() + 2, cy, leftStrip.getWidth() - 4, ch);
+            }
         }
         auto pb = presetTab.getLocalBounds().reduced (2);
         auto top = pb.removeFromTop (22);

@@ -182,9 +182,33 @@ inline juce::Image loadCharCyber()   { return fromDisk ({ "char_cyber_white.png"
 inline juce::Image loadCharGun()     { return fromDisk ({ "char_gun.png" }); }
 inline juce::Image loadCharApron()   { return fromDisk ({ "char_apron.png" }); }
 inline juce::Image loadCharWhite()   { return fromDisk ({ "char_white_suit.png", "char_white.png" }); }
-inline juce::Image loadCharToronowla()   { return fromDisk ({ "char_toronowla.png" }); }
-inline juce::Image loadCharNeonStreet()  { return fromDisk ({ "char_neon_street.png" }); }
-inline juce::Image loadCharPinkDead()    { return fromDisk ({ "char_pink_dead.png" }); }
+inline juce::Image loadCharToronowla()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("char_toronowla_png");
+    if (img.isValid()) return img;
+#endif
+    return fromDisk ({ "char_toronowla.png" });
+}
+inline juce::Image loadCharNeonStreet()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("char_neon_street_png");
+    if (img.isValid()) return img;
+#endif
+    return fromDisk ({ "char_neon_street.png" });
+}
+inline juce::Image loadCharPinkDead()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("char_pink_dead_png");
+    if (img.isValid()) return img;
+#endif
+    return fromDisk ({ "char_pink_dead.png" });
+}
 
 /** Only 3 official models — keeps plugin size small */
 inline juce::Image loadCharPortrait (int index = 0)
