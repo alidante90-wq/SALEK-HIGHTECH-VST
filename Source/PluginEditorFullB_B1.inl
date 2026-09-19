@@ -123,10 +123,11 @@ void SalekHightechAudioProcessorEditor::resized()
         };
 
         auto b = mainTab.getLocalBounds().reduced (2);
-        envTab.setBounds (b.removeFromBottom (110));
-        filterTab.setBounds (b.removeFromRight (200));
+        envTab.setBounds (b.removeFromBottom (100));
+        filterTab.setBounds (b.removeFromRight (180));
         auto oscFull = b;
-        oscTab.setBounds (oscFull.removeFromTop (oscFull.getHeight() / 2));
+        // OSC needs most of the vertical space so knobs stay readable
+        oscTab.setBounds (oscFull.removeFromTop (juce::jmax (280, oscFull.getHeight() * 75 / 100)));
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
