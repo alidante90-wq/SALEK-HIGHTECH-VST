@@ -245,7 +245,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     charCycleBtn.setTooltip ("Cycle character PNG overlay (fill empty space)");
     charCycleBtn.onClick = [this]
     {
-        charPortraitIdx = (charPortraitIdx + 1) % 9;
+        charPortraitIdx = (charPortraitIdx + 1) % 12;
         refreshCharCache();
         repaint();
     };
