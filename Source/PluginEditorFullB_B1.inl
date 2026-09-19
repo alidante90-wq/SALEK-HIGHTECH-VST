@@ -85,12 +85,15 @@ void SalekHightechAudioProcessorEditor::resized()
     tabs.setBounds (full);
     tabs.toFront (false);
 
-    // MAIN
+    // MAIN — OSC top half + separators, filter top-right, env bottom with real glide knobs
     {
         auto b = mainTab.getLocalBounds().reduced (2);
-        envTab.setBounds (b.removeFromBottom (120));
-        filterTab.setBounds (b.removeFromRight (220));
-        oscTab.setBounds (b);
+        envTab.setBounds (b.removeFromBottom (110));
+        filterTab.setBounds (b.removeFromRight (200));
+        // OSC uses only UPPER half — lower half left empty (user workspace)
+        auto oscFull = b;
+        oscTab.setBounds (oscFull.removeFromTop (oscFull.getHeight() / 2));
+        // (oscFull remainder is empty by design)
 
         {
             auto oa = oscTab.getLocalBounds().reduced (2);
@@ -99,36 +102,44 @@ void SalekHightechAudioProcessorEditor::resized()
             juce::ComboBox* shapes[3] = { &osc1ShapeBox, &osc2ShapeBox, &osc3ShapeBox };
             for (int c = 0; c < 3; ++c)
             {
-                auto col = juce::Rectangle<int> (oa.getX() + c * colW, oa.getY(), colW, oa.getHeight()).reduced (3, 2);
-                auto monH = juce::jlimit (40, 64, col.getHeight() / 6);
+                auto col = juce::Rectangle<int> (oa.getX() + c * colW, oa.getY(), colW, oa.getHeight()).reduced (4, 2);
+                // vertical separator between oscillators
+                if (c > 0)
+                {
+                    // drawn in paint; keep a small gap via reduced above
+                }
+                auto monH = juce::jlimit (36, 56, col.getHeight() / 5);
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
-                shapes[c]->setBounds (col.removeFromTop (20).reduced (1));
-                auto paramArea = col.removeFromTop (juce::jmax (80, col.getHeight() * 2 / 3));
+                shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
+                auto paramArea = col.removeFromTop (juce::jmax (70, col.getHeight() * 2 / 3));
                 place (paramArea, knobs, c * 6, 6, 2);
                 place (col, knobs, 18 + c * 3, 3, 3);
             }
         }
         {
+            // filter: knobs + modes at TOP, leave lower part of filter strip free
             auto fr = filterTab.getLocalBounds().reduced (3);
+            auto top = fr.removeFromTop (juce::jmax (140, fr.getHeight() * 55 / 100));
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (juce::jlimit (50, 80, fr.getHeight() / 3)).reduced (2));
-            auto modeRow = fr.removeFromTop (24);
+                filterDisplay->setBounds (top.removeFromTop (juce::jlimit (44, 70, top.getHeight() / 3)).reduced (2));
+            auto modeRow = top.removeFromTop (22);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
-            place (fr, knobs, 27, 4, 2);
+            place (top, knobs, 27, 4, 2);
+            // fr remainder empty under filter
         }
         {
             auto er = envTab.getLocalBounds().reduced (2);
             if (adsrDisplay != nullptr)
             {
-                auto curve = er.removeFromLeft (juce::jmin (160, er.getWidth() / 4));
+                auto curve = er.removeFromLeft (juce::jmin (150, er.getWidth() / 4));
                 adsrDisplay->setBounds (curve.reduced (2));
             }
-            auto adsrKnobs = er.removeFromLeft (juce::jmin (280, er.getWidth() / 2));
-            place (adsrKnobs, knobs, 31, 4, 4);
-            voiceModeBox.setBounds (er.removeFromTop (22).reduced (1));
-            const int extraStart = (int) knobs.size() - 4;
-            if (extraStart >= 0) place (er, knobs, extraStart, 4, 4);
+            auto adsrKnobs = er.removeFromLeft (juce::jmin (260, er.getWidth() / 2));
+            place (adsrKnobs, knobs, 31, 4, 4); // attack decay sustain release
+            voiceModeBox.setBounds (er.removeFromTop (20).reduced (1));
+            // FIXED indices: glide=38 voices=39 noise=40 sub=41 (not knobs.size()-4!)
+            place (er, knobs, 38, 4, 4);
         }
     }
 
