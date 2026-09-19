@@ -1,7 +1,17 @@
 void SalekHightechAudioProcessorEditor::refreshCharCache()
 {
-    charImgL = SalekAssets::loadCharPortrait (charPortraitIdx);
-    charImgR = SalekAssets::loadCharPortrait (charPortraitIdx + 1);
+    // Downscale once — full-res PNGs destroy UI FPS
+    auto loadScaled = [] (int idx, int maxH) -> juce::Image
+    {
+        auto src = SalekAssets::loadCharPortrait (idx);
+        if (! src.isValid()) return {};
+        if (src.getHeight() <= maxH) return src;
+        const int h = maxH;
+        const int w = juce::jmax (1, src.getWidth() * h / src.getHeight());
+        return src.rescaled (w, h, juce::Graphics::mediumResamplingQuality);
+    };
+    charImgL = loadScaled (charPortraitIdx, 320);
+    charImgR = loadScaled (charPortraitIdx + 1, 300);
 }
 
 void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
