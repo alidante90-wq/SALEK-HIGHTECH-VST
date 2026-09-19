@@ -12,7 +12,7 @@
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (24); }
+    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (8); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -35,7 +35,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (20); }
+    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (8); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -62,7 +62,7 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
 
 class FilterCurveDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (24); }
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (8); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -168,7 +168,7 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
 
 class LfoDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
+    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (10); }
     void paint (juce::Graphics& g) override {
         auto bounds = getLocalBounds().toFloat().reduced (2.f);
         g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (bounds, 8.f);
@@ -273,7 +273,9 @@ private:
     juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     int charPortraitIdx = 0;
-    juce::Image charImgL, charImgR; // cached portraits — load once, not every frame
+    juce::Image charImgL, charImgR; // cached portraits
+    juce::Image cachedBg;           // pre-scaled hero (rebuild on resize/theme only)
+    int cachedBgW = 0, cachedBgH = 0, cachedBgTheme = -1;
     bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;

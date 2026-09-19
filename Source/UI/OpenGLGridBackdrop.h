@@ -14,7 +14,7 @@ public:
         openGLContext.setRenderer (this);
         openGLContext.attachTo (*this);
         openGLContext.setContinuousRepainting (true);
-        startTimerHz (30);
+        startTimerHz (8);
         setOpaque (false);
         setInterceptsMouseClicks (false, false); // UI stays on top / clickable
     }

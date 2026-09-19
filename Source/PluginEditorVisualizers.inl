@@ -3,7 +3,7 @@
 
 class ScopeDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit ScopeDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (30); }
+    explicit ScopeDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (10); }
     void setFifo (VisualFifo* f) { visualFifo = f; }
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -58,7 +58,7 @@ private:
 
 class SpectrumDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit SpectrumDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (24); }
+    explicit SpectrumDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (8); }
     void setFifo (VisualFifo* f) { visualFifo = f; }
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (1.f);

@@ -153,26 +153,25 @@ void SalekHightechAudioProcessorEditor::resized()
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
                 shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
 
-                // 3 rows x 2: LVL/TABLE, WARP/FOLD, DRIVE/OCT
-                auto row1 = col.removeFromTop (col.getHeight() / 4);
-                placeId (row1.removeFromLeft (row1.getWidth() / 2).reduced (2), idsLvl[c]);
-                placeId (row1.reduced (2), idsTbl[c]);
-                auto row2 = col.removeFromTop (col.getHeight() / 3);
-                placeId (row2.removeFromLeft (row2.getWidth() / 2).reduced (2), idsWarp[c]);
-                placeId (row2.reduced (2), idsFold[c]);
-                auto row3 = col.removeFromTop (col.getHeight() / 2);
-                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (2), idsDrive[c]);
-                placeId (row3.reduced (2), idsOct[c]);
-                // bottom: UNI DET SPR | PHASE RAND
-                auto bot = col;
-                auto uniRow = bot.removeFromTop (bot.getHeight() / 2);
+                // Equal rows so knobs stay readable
+                const int rowH = juce::jmax (48, col.getHeight() / 5);
+                auto row1 = col.removeFromTop (rowH);
+                placeId (row1.removeFromLeft (row1.getWidth() / 2).reduced (3), idsLvl[c]);
+                placeId (row1.reduced (3), idsTbl[c]);
+                auto row2 = col.removeFromTop (rowH);
+                placeId (row2.removeFromLeft (row2.getWidth() / 2).reduced (3), idsWarp[c]);
+                placeId (row2.reduced (3), idsFold[c]);
+                auto row3 = col.removeFromTop (rowH);
+                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (3), idsDrive[c]);
+                placeId (row3.reduced (3), idsOct[c]);
+                auto uniRow = col.removeFromTop (rowH);
                 const int uw = uniRow.getWidth() / 3;
-                placeId (uniRow.removeFromLeft (uw).reduced (1), idsUni[c]);
-                placeId (uniRow.removeFromLeft (uw).reduced (1), idsDet[c]);
-                placeId (uniRow.reduced (1), idsSpr[c]);
-                auto pr = bot;
-                placeId (pr.removeFromLeft (pr.getWidth() / 2).reduced (1), idsPh[c]);
-                placeId (pr.reduced (1), idsRnd[c]);
+                placeId (uniRow.removeFromLeft (uw).reduced (2), idsUni[c]);
+                placeId (uniRow.removeFromLeft (uw).reduced (2), idsDet[c]);
+                placeId (uniRow.reduced (2), idsSpr[c]);
+                auto pr = col;
+                placeId (pr.removeFromLeft (pr.getWidth() / 2).reduced (2), idsPh[c]);
+                placeId (pr.reduced (2), idsRnd[c]);
             }
         }
         {

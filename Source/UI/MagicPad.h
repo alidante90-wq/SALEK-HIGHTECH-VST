@@ -9,7 +9,7 @@ class MagicPad : public juce::Component, private juce::Timer
 public:
     std::function<void(float,float,bool)> onChange; // x,y,active
 
-    MagicPad() { startTimerHz (40); }
+    MagicPad() { startTimerHz (12); }
 
     void setPosition (float nx, float ny, bool act)
     {

@@ -8,7 +8,7 @@ class ModMatrixPanel : public juce::Component, private juce::Timer
 public:
     explicit ModMatrixPanel (salek::ModMatrix& m) : matrix (m)
     {
-        startTimerHz (24);
+        startTimerHz (8);
         matrix.addRoute (salek::ModMatrix::Source::LFO1, salek::ModMatrix::Dest::FilterCutoff, 0.0f);
         matrix.addRoute (salek::ModMatrix::Source::LFO2, salek::ModMatrix::Dest::Osc1Table, 0.0f);
         matrix.addRoute (salek::ModMatrix::Source::LFO3, salek::ModMatrix::Dest::Osc1Warp, 0.0f);

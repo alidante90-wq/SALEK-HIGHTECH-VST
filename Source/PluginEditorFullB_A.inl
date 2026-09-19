@@ -107,14 +107,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     if (++ticks < 4) resized();
-    float bpmScale = 1.f;
-    if (auto* ph = processor.getPlayHead())
-    {
-        if (auto pos = ph->getPosition())
-            if (pos->getBpm())
-                bpmScale = (float) (*pos->getBpm() / 120.0);
-    }
-    animPhase += 0.022f * juce::jlimit (0.5f, 1.8f, bpmScale);
+    animPhase += 0.03f;
 
     auto g = [&](const char* id, float d=0.f) -> float {
         if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
