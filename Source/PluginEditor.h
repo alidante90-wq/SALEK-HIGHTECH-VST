@@ -271,6 +271,10 @@ private:
     juce::TextButton presetToggle { "<<" }; // collapses preset list only
     juce::TextButton bgSwapBtn { "BG" }; // swap background art
     juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
+    juce::TextButton modSrcLfo1 { "LFO1" }, modSrcLfo2 { "LFO2" }, modSrcLfo3 { "LFO3" };
+    int armedModSource = -1; // 0/1/2 = LFO1/2/3 for click-to-assign
+    juce::Slider masterGainSlider;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> masterGainAtt;
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     int charPortraitIdx = 0;
     juce::Image charImgL, charImgR; // cached portraits

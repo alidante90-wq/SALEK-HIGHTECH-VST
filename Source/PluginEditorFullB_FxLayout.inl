@@ -59,7 +59,7 @@
         { 1, { "delay_mix",  "delay_time_l","delay_time_r", "delay_fb" }, 4, 3 },
         { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr }, 3, 1 },
         { 3, { "bassify",    nullptr,       nullptr,        nullptr }, 1, 0 },
-        { 4, { "comp_thr_lo","comp_thr_mid","comp_thr_hi","comp_mix" }, 4, 0 },
+        { 4, { "comp_thr_lo","comp_thr_mid","comp_mix","comp_gain" }, 4, 0 },
         { 5, { "eq_low", "eq_mid", "eq_high", nullptr }, 3, 0 },
         { 6, { "phaser_mix", "phaser_rate", "phaser_depth", nullptr }, 3, 0 },
         { 7, { "dist_mix", "dist_drive", "dist_crush", nullptr }, 3, 2 }

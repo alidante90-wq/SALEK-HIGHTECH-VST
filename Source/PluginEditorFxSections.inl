@@ -70,6 +70,7 @@
         addKnob (fxTab, "comp_threshold", "C THR", O);
         addKnob (fxTab, "comp_ratio", "C RATIO", M);
         addKnob (fxTab, "comp_mix", "C MIX", C);
+        addKnob (fxTab, "comp_gain", "C GAIN", G);
         addKnob (fxTab, "comp_depth", "C DEPTH", G);
         addKnob (fxTab, "comp_thr_lo", "LO THR", C);
         addKnob (fxTab, "comp_thr_mid", "MID THR", M);

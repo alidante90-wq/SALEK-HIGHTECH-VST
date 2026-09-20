@@ -75,8 +75,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         (void) osc2.processSample (pmFor2, 1.0f);
 
         // --- OSC1 with unison (carrier, FM/PM/AM from 2&3) ---
-        const float fmIndex2 = fm2to1 * 2.5f;
-        const float fmIndex3 = fm3to1 * 2.5f;
+        const float fmIndex2 = fm2to1 * 4.0f; // deeper FM
+        const float fmIndex3 = fm3to1 * 3.55f;
         const float pmFrom2  = s2Mono * (fmIndex2 + pm2to1);
         const float pmFrom3  = s3Mono * (fmIndex3 + pm3to1);
         float am = 1.0f;

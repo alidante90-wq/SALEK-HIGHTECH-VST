@@ -326,7 +326,7 @@ public:
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        g.drawText ("LFO SHAPE  |  drag = paint  |  Shift = snap  |  pts=" + juce::String (AP),
+        g.drawText ("LFO SHAPE  |  drag = curve  |  Shift = grid snap + corner  |  pts=" + juce::String (AP),
                     getLocalBounds().removeFromTop (16).reduced (8, 0),
                     juce::Justification::centredLeft);
     }
@@ -390,18 +390,33 @@ private:
         auto plot = getLocalBounds().toFloat().reduced (10.f, 20.f);
         if (plot.getWidth() < 1.f) return;
         const int AP = activePoints;
+        // Snap X to cubic/active grid (Serum-style: never crooked when Shift)
         int idx = juce::jlimit (0, AP - 1,
             (int) std::round ((e.position.x - plot.getX()) / plot.getWidth() * (float) (AP - 1)));
-        // Shift = hard snap to active grid + 8-level Y
-        if (e.mods.isShiftDown())
-        {
-            // already on active grid
-        }
         float v = juce::jlimit (-1.f, 1.f,
             (plot.getCentreY() - e.position.y) / (plot.getHeight() * 0.45f));
-        if (e.mods.isShiftDown())
-            v = std::round (v * 4.f) / 4.f;
 
+        if (e.mods.isShiftDown())
+        {
+            // 9 horizontal levels (-1..1) like Serum grid
+            v = std::round (v * 4.f) / 4.f;
+            // Single-point edit only when Shift — clean corners, no smear
+            writeActive (idx, v);
+            // Soft curve toward neighbors (Catmull-ish ease) for organic edges
+            if (idx > 0 && idx < AP - 1)
+            {
+                float prev = sampleAtActive (idx - 1);
+                float next = sampleAtActive (idx + 1);
+                // gentle ease on adjacent slots only
+                writeActive (idx - 1, prev * 0.85f + v * 0.15f);
+                writeActive (idx + 1, next * 0.85f + v * 0.15f);
+            }
+            lastIdx = idx;
+            repaint();
+            return;
+        }
+
+        // Free draw: linear fill between last and current
         if (lastIdx < 0) writeActive (idx, v);
         else
         {
@@ -410,7 +425,9 @@ private:
             for (int i = a; i <= b; ++i)
             {
                 float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                float pv = (lastIdx <= idx) ? va * (1.f - tt) + v * tt : v * (1.f - tt) + va * tt;
+                // smoothstep curve between points
+                float s = tt * tt * (3.f - 2.f * tt);
+                float pv = (lastIdx <= idx) ? va * (1.f - s) + v * s : v * (1.f - s) + va * s;
                 writeActive (i, pv);
             }
         }

@@ -23,6 +23,38 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     cyanImg   = SalekAssets::loadBgSalek();
     heroImg   = lianImg;
     refreshCharCache(); // load char PNGs ONCE
+    
+    // Global LFO mod sources (Serum/Vital style) — visible all tabs
+    auto styleModSrc = [this] (juce::TextButton& b, juce::Colour c, int src)
+    {
+        b.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
+        b.setColour (juce::TextButton::buttonOnColourId, c.withAlpha (0.55f));
+        b.setColour (juce::TextButton::textColourOffId, c);
+        b.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
+        b.setClickingTogglesState (true);
+        b.setTooltip ("Arm " + b.getButtonText() + " then click any matrix destination / knob label");
+        b.onClick = [this, src, &b]
+        {
+            const bool on = b.getToggleState();
+            armedModSource = on ? src : -1;
+            modSrcLfo1.setToggleState (src == 0 && on, juce::dontSendNotification);
+            modSrcLfo2.setToggleState (src == 1 && on, juce::dontSendNotification);
+            modSrcLfo3.setToggleState (src == 2 && on, juce::dontSendNotification);
+            if (! on) armedModSource = -1;
+        };
+        addAndMakeVisible (b);
+    };
+    styleModSrc (modSrcLfo1, juce::Colour (0xff00e8ff), 0);
+    styleModSrc (modSrcLfo2, juce::Colour (0xffff2d9b), 1);
+    styleModSrc (modSrcLfo3, juce::Colour (0xff39ff14), 2);
+
+    masterGainSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    masterGainSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+    masterGainSlider.setTooltip ("Master Gain");
+    addAndMakeVisible (masterGainSlider);
+    masterGainAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
+        processor.getAPVTS(), "master_gain", masterGainSlider);
+
     setSize (1280, 820);
     setResizable (true, true);
     setResizeLimits (1020, 700, 1700, 1100);

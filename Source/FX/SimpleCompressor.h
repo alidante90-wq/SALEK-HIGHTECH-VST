@@ -54,6 +54,7 @@ public:
     void setAttackMs (float ms) noexcept { attackMs = juce::jmax (0.1f, ms); updateCoeffs(); }
     void setReleaseMs (float ms) noexcept { releaseMs = juce::jmax (1.f, ms); updateCoeffs(); }
     void setDepth (float d) noexcept { depth = juce::jlimit (0.f, 1.f, d); }
+    void setMakeupDb (float db) noexcept { makeupDb = juce::jlimit (-12.f, 24.f, db); }
 
     float getBandGR (int band) const noexcept
     {
@@ -134,7 +135,7 @@ public:
                 outR += xR * g;
             }
 
-            const float makeup = 1.f + depth * 0.28f;
+            const float makeup = juce::Decibels::decibelsToGain (makeupDb) * (1.f + depth * 0.15f);
             outL *= makeup; outR *= makeup;
             buffer.setSample (0, i, L * (1.f - mix) + outL * mix);
             if (chs > 1)
@@ -155,7 +156,7 @@ private:
     }
 
     double sr = 44100.0;
-    float thresholdDb = -12.f, ratio = 4.f, mix = 0.f, depth = 0.55f;
+    float thresholdDb = -12.f, ratio = 4.f, mix = 0.f, depth = 0.55f, makeupDb = 0.f;
     float attackMs = 8.f, releaseMs = 80.f;
     float atkCoeff = 0.1f, relCoeff = 0.01f;
     float aLo = 0.05f, aHi = 0.2f;

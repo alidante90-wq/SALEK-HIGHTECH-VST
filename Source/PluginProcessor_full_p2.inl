@@ -102,6 +102,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     distortion.setMode ((int) g("dist_mode"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
+    compressor.setMakeupDb(g("comp_gain"));
     // Independent LO / MID / HI thresholds (overrides global offsets when set)
     compressor.setBandThresholdDb (0, g("comp_thr_lo"));
     compressor.setBandThresholdDb (1, g("comp_thr_mid"));

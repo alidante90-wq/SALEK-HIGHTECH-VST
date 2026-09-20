@@ -101,6 +101,10 @@ void SalekHightechAudioProcessorEditor::resized()
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
     bgSwapBtn.setBounds (header.removeFromRight (40).reduced (2));
+    masterGainSlider.setBounds (header.removeFromRight (44).reduced (2));
+    modSrcLfo3.setBounds (header.removeFromRight (42).reduced (1));
+    modSrcLfo2.setBounds (header.removeFromRight (42).reduced (1));
+    modSrcLfo1.setBounds (header.removeFromRight (42).reduced (1));
     spectrum.setBounds (header.removeFromRight (80).reduced (2));
     scope.setBounds (header.removeFromRight (100).reduced (2));
     if (wtDisplay != nullptr)
@@ -385,46 +389,41 @@ void SalekHightechAudioProcessorEditor::resized()
 
     #include "PluginEditorFullB_FxLayout.inl"
 
-    // MAGIC: mode + per-effect HOLD
+    // MAGIC: pad + combo presets only (8 mode/hold buttons removed per UX)
     {
         auto r = magicTab.getLocalBounds().reduced (6);
-        auto rail = r.removeFromRight (160);
-        magicHint.setBounds (rail.removeFromBottom (28).reduced (2));
-        const int rowH = juce::jmax (36, rail.getHeight() / 5);
-        juce::TextButton* modes[4] = { &magicLoopBtn, &magicGlitchBtn, &magicFlangeBtn, &magicPsychBtn };
-        const char* holdNames[4] = { "H-LOOP", "H-GLITCH", "H-FLANGE", "H-PSY" };
-        for (int i = 0; i < 4; ++i)
-        {
-            auto row = rail.removeFromTop (rowH).reduced (2, 2);
-            auto holdArea = row.removeFromRight (70);
-            modes[i]->setBounds (row);
-            for (int c = 0; c < magicTab.getNumChildComponents(); ++c)
+        // Hide legacy mode / hold buttons
+        magicLoopBtn.setVisible (false);
+        magicGlitchBtn.setVisible (false);
+        magicFlangeBtn.setVisible (false);
+        magicPsychBtn.setVisible (false);
+        magicHold.setVisible (false);
+        for (int c = 0; c < magicTab.getNumChildComponents(); ++c)
+            if (auto* b = dynamic_cast<juce::TextButton*> (magicTab.getChildComponent (c)))
             {
-                if (auto* b = dynamic_cast<juce::TextButton*> (magicTab.getChildComponent (c)))
-                {
-                    if (b->getButtonText() == holdNames[i])
-                    {
-                        b->setBounds (holdArea.reduced (1));
-                        b->setVisible (true);
-                        break;
-                    }
-                }
+                auto t = b->getButtonText();
+                if (t.startsWith ("H-") || t == "LOOP" || t == "GLITCH" || t == "FLANGE" || t == "PSY" || t == "HOLD")
+                    b->setVisible (false);
             }
-        }
-        magicHold.setBounds (rail.reduced (3));
-        // Combo presets strip
+        magicHint.setVisible (false);
+
+        // Combo presets strip bottom
         {
             auto row = r.removeFromBottom (52).reduced (2, 1);
             const int n = 14;
             const int cw = juce::jmax (36, row.getWidth() / n);
             for (int i = 0; i < n; ++i)
                 if (auto* c = magicTab.findChildWithID ("magicCombo" + juce::String (i)))
+                {
+                    c->setVisible (true);
                     c->setBounds (row.getX() + i * cw, row.getY(), cw - 2, row.getHeight());
+                }
         }
         if (magicPad != nullptr)
         {
             magicPad->setBounds (r.reduced (4));
             magicPad->setAudioPeak (processor.getOutputPeak());
+            magicPad->setVisible (true);
         }
     }
 
