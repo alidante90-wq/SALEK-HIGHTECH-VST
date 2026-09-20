@@ -19,6 +19,12 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoImg   = SalekAssets::loadLogoGiti();
     if (! logoImg.isValid()) logoImg = SalekAssets::loadLogo();
     logoAltImg = SalekAssets::loadLogoAlt();
+    // Prefer transparent sheet logo when available
+    {
+        auto sheet = SalekAssets::loadSalekSheetLogo();
+        if (sheet.isValid() && sheet.getWidth() > 100)
+            logoImg = sheet;
+    }
     logoOverlay.img = logoImg;
     logoOverlay.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (logoOverlay);

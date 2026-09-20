@@ -17,6 +17,33 @@
         juce::Colour (0xffff6600), juce::Colour (0xffb388ff), juce::Colour (0xff00ffcc), juce::Colour (0xffff3355)
     };
 
+
+    // SALEK 50-icon pack → section badges (atlas indices)
+    {
+        const int iconIdx[8] = {
+            37, // chorus
+            36, // delay
+            35, // reverb
+            9,  // bassify ~ sub
+            41, // comp
+            40, // eq
+            39, // phaser
+            32  // dist
+        };
+        for (int i = 0; i < 8; ++i)
+        {
+            auto* ic = fxSectionIcons.add (new juce::ImageComponent ("fxIcon" + juce::String (i)));
+            auto img = SalekAssets::loadIcon (iconIdx[i]);
+            if (img.isValid())
+            {
+                ic->setImage (img);
+                ic->setImagePlacement (juce::RectanglePlacement::centred);
+            }
+            ic->setInterceptsMouseClicks (false, false);
+            fxTab.addAndMakeVisible (ic);
+        }
+    }
+
     for (int i = 0; i < 8; ++i)
     {
         auto* lab = fxSectionLabels.add (new juce::Label ("fx", names[i]));

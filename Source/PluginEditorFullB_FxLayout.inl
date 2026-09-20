@@ -80,9 +80,15 @@
             cellW, cellH).reduced (4);
 
         auto head = cell.removeFromTop (22);
+        if (mods[m].labelIdx < fxSectionIcons.size())
+        {
+            fxSectionIcons[mods[m].labelIdx]->setBounds (head.removeFromLeft (22).reduced (1));
+            fxSectionIcons[mods[m].labelIdx]->setVisible (true);
+            fxSectionIcons[mods[m].labelIdx]->toFront (false);
+        }
         if (mods[m].labelIdx < fxSectionLabels.size())
         {
-            fxSectionLabels[mods[m].labelIdx]->setBounds (head.removeFromLeft (72));
+            fxSectionLabels[mods[m].labelIdx]->setBounds (head.removeFromLeft (56));
             fxSectionLabels[mods[m].labelIdx]->setVisible (true);
         }
         fxBypass[mods[m].labelIdx].setBounds (head.removeFromLeft (36).reduced (2, 2));

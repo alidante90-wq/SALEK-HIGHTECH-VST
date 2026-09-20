@@ -121,6 +121,41 @@ inline juce::Image loadLogoAlt()
     return img;
 }
 
+inline juce::Image loadIconsAtlas()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("icons_atlas_png");
+    if (img.isValid()) return img;
+#endif
+    img = fromDisk ({ "icons_atlas.png", "Source/Assets/icons_atlas.png" });
+    return img;
+}
+
+/** 0..49 from SALEK 50-icon pack (atlas 10 cols x 5 rows, 64px cells). */
+inline juce::Image loadIcon (int index)
+{
+    auto atlas = loadIconsAtlas();
+    if (! atlas.isValid()) return {};
+    index = juce::jlimit (0, 49, index);
+    const int col = index % 10;
+    const int row = index / 10;
+    return atlas.getClippedImage (juce::Rectangle<int> (col * 64, row * 64, 64, 64));
+}
+
+inline juce::Image loadSalekSheetLogo()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("logo_salek_sheet_png");
+    if (img.isValid()) return img;
+#endif
+    img = fromDisk ({ "logo_salek_sheet.png" });
+    return img;
+}
+
+
+
 inline juce::Image loadBgIsatis()
 {
     juce::Image img;
