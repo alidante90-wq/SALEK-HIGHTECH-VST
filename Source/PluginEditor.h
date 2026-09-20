@@ -271,13 +271,14 @@ private:
     juce::ToggleButton fxBypass[8];
     juce::TextButton presetToggle { "<<" }; // collapses preset list only
     juce::TextButton bgSwapBtn { "BG" }; // swap background art
+    juce::TextButton inspireBtn { "INSPIRE" };
     juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
     juce::TextButton modSrcLfo1 { "LFO1" }, modSrcLfo2 { "LFO2" }, modSrcLfo3 { "LFO3" };
     int armedModSource = -1; // 0/1/2 = LFO1/2/3 for click-to-assign
     juce::Slider masterGainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> masterGainAtt;
     juce::TextButton langToggle { "EN" };   // EN <-> FA
-    int charPortraitIdx = 0;
+    int charPortraitIdx = 8;
     juce::Image charImgL, charImgR; // cached portraits
     juce::Rectangle<int> charSlotBounds; // left under preset list
     juce::Image cachedBg;           // pre-scaled hero (rebuild on resize/theme only)
@@ -313,11 +314,8 @@ private:
         void paint (juce::Graphics& g) override
         {
             if (! img.isValid()) return;
+            // Transparent — no panel behind logo (user request)
             auto r = getLocalBounds().toFloat();
-            g.setColour (juce::Colours::black.withAlpha (0.65f));
-            g.fillRoundedRectangle (r.expanded (4.f), 12.f);
-            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.4f));
-            g.drawRoundedRectangle (r.expanded (4.f), 12.f, 1.4f);
             g.setOpacity (1.f);
             g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
         }

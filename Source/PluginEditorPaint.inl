@@ -92,15 +92,34 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
-    // Logo drawn by logoOverlay component (always on top)
+        // FX underlay — solid dark (never pink / garbage)
+    {
+        const int ti = tabs.getCurrentTabIndex();
+        const bool isFx = (ti >= 0 && ti < tabs.getNumTabs()
+                           && tabs.getTabNames()[ti] == "FX");
+        if (isFx)
+        {
+            auto r = getLocalArea (&fxTab, fxTab.getLocalBounds()).toFloat();
+            if (r.getWidth() > 10.f)
+            {
+                g.setColour (juce::Colour (0xff08060f));
+                g.fillRoundedRectangle (r.reduced (1.f), 10.f);
+                g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.2f));
+                g.drawRoundedRectangle (r.reduced (1.f), 10.f, 1.2f);
+            }
+        }
+    }
+
+// Logo drawn by logoOverlay component (always on top)
 
 
     // ---- Alt logo (Designer) bottom-right ----
     if (logoAltImg.isValid())
     {
-        const float aw = juce::jmin (160.f, W * 0.14f);
-        const float ah = aw; // square art
-        auto area = juce::Rectangle<float> (W - aw - 16.f, H - ah - 48.f, aw, ah);
+        const float aw = juce::jmin (120.f, W * 0.11f);
+        const float ah = aw;
+        // top-left under brand triangle (not covering keyboard / filter)
+        auto area = juce::Rectangle<float> (10.f, 92.f, aw, ah);
         g.setOpacity (0.92f);
         g.drawImage (logoAltImg, area, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
         g.setOpacity (1.f);

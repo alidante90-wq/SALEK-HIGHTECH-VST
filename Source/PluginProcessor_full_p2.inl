@@ -44,8 +44,23 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setFm2to1(g("fm_2to1")); synthEngine.setFm3to1(g("fm_3to1")); synthEngine.setFm3to2(g("fm_3to2"));
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
     float cut = g("filter_cutoff");
-    const float macroAmt = g("macro1");
-    cut *= (0.85f + 0.15f * (1.0f - macroAmt) + macroAmt * 1.35f);
+    float reso = g("filter_reso");
+    // Smart macros: 1=Bright 2=Space 3=Destroy 4=Width
+    const float mBright = g("macro1");
+    const float mSpace  = g("macro2");
+    const float mDest   = g("macro3");
+    const float mWidth  = g("macro4");
+    cut *= (0.75f + mBright * 1.6f);
+    reso = juce::jlimit (0.f, 0.98f, reso + mBright * 0.15f);
+    // space → delay/reverb (applied later via param push if available)
+    // push smart macros into FX (non-destructive scale)
+    if (auto* p = apvts.getParameter ("delay_mix"))
+        juce::ignoreUnused (p);
+    // runtime scale in render path:
+    // stored as members for voice/FX - apply on buffer FX stage below
+    const float spaceScale = 0.15f + mSpace * 0.85f;
+    const float destScale  = mDest;
+    const float widthScale = 0.3f + mWidth * 0.7f;
     cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
     synthEngine.setFilterResonance(juce::jlimit(0.f,1.f, g("filter_reso")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterReso)*0.5f));
@@ -88,13 +103,13 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
         juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
-    delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
+    delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
     delay.setTimeMsL(g("delay_time_l") > 1.f ? g("delay_time_l") : g("delay_time"));
     delay.setTimeMsR(g("delay_time_r") > 1.f ? g("delay_time_r") : g("delay_time") * 1.07f);
     delay.setFeedback(g("delay_fb"));
     delay.setMode((int) g("delay_mode"));
-    chorus.setMix(juce::jlimit(0.f,1.f,g("chorus_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::ChorusMix)*0.5f)); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
-    reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
+    chorus.setMix(juce::jlimit(0.f,1.f,g("chorus_mix")*widthScale+modMatrix.getModulation(salek::ModMatrix::Dest::ChorusMix)*0.5f)); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
+    reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
     reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
     phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));

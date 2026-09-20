@@ -102,7 +102,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (72); // room for big top logo
+    auto header = full.removeFromTop (88); // big top logo strip
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -113,11 +113,12 @@ void SalekHightechAudioProcessorEditor::resized()
     modSrcLfo3.setBounds (header.removeFromRight (44).reduced (1, 3));
     modSrcLfo2.setBounds (header.removeFromRight (44).reduced (1, 3));
     modSrcLfo1.setBounds (header.removeFromRight (44).reduced (1, 3));
+    inspireBtn.setBounds (header.removeFromRight (64).reduced (2, 8));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (520, juce::jmax (280, header.getWidth() - 20));
-        const int lh = header.getHeight() - 4;
-        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() + 2, lw, lh);
+        const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() - 40));
+        const int lh = header.getHeight() - 2;
+        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
     }

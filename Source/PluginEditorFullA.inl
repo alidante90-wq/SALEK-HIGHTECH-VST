@@ -22,7 +22,40 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoOverlay.img = logoImg;
     logoOverlay.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (logoOverlay);
+
+    inspireBtn.setButtonText ("INSPIRE");
+    inspireBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0530));
+    inspireBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
+    inspireBtn.setTooltip ("Randomize in current style (genre-aware)");
+    addAndMakeVisible (inspireBtn);
+    inspireBtn.onClick = [this]
+    {
+        // Style-aware randomize from current program category
+        const int n = processor.getNumPrograms();
+        if (n <= 1) return;
+        juce::String cur = processor.getProgramName (processor.getCurrentProgram());
+        juce::String cat = cur.upToFirstOccurrenceOf ("/", false, false);
+        juce::Array<int> pool;
+        for (int i = 0; i < n; ++i)
+        {
+            auto nm = processor.getProgramName (i);
+            if (cat.isNotEmpty() && nm.startsWithIgnoreCase (cat + "/"))
+                pool.add (i);
+        }
+        if (pool.isEmpty())
+        {
+            for (int i = 1; i < n; ++i) pool.add (i); // skip Init
+        }
+        if (pool.isEmpty()) return;
+        const int pick = pool[juce::Random::getSystemRandom().nextInt (pool.size())];
+        processor.setCurrentProgram (pick);
+        rebuildPresetRows();
+        repaint();
+    };
+
     logoOverlay.toFront (false);
+    charPortraitIdx = 8; // white-hair / purple latex style default
+    refreshCharCache();
     // face.png removed (was ~2MB) — BGs only
     lianImg   = SalekAssets::loadBgIsatis();
     cyanImg   = SalekAssets::loadBgSalek();
@@ -120,8 +153,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         panel->setColour (juce::ResizableWindow::backgroundColourId, juce::Colours::transparentBlack);
     }
     // FX: solid dark underlay so knobs readable (user: black under FX)
-    fxTab.setOpaque (true);
-    fxTab.setColour (juce::ResizableWindow::backgroundColourId, juce::Colour (0xff08060f));
+    // Opaque without paint() shows garbage/pink — keep transparent; editor paints dark underlay
+    fxTab.setOpaque (false);
+    fxTab.setColour (juce::ResizableWindow::backgroundColourId, juce::Colours::transparentBlack);
 
     {
         mainTab.addAndMakeVisible (oscTab);
