@@ -19,6 +19,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoImg   = SalekAssets::loadLogoGiti();
     if (! logoImg.isValid()) logoImg = SalekAssets::loadLogo();
     logoAltImg = SalekAssets::loadLogoAlt();
+    logoOverlay.img = logoImg;
+    logoOverlay.setInterceptsMouseClicks (false, false);
+    addAndMakeVisible (logoOverlay);
+    logoOverlay.toFront (false);
     // face.png removed (was ~2MB) — BGs only
     lianImg   = SalekAssets::loadBgIsatis();
     cyanImg   = SalekAssets::loadBgSalek();

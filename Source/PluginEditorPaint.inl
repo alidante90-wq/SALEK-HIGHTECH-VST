@@ -92,27 +92,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
+    // Logo drawn by logoOverlay component (always on top)
 
-    // ---- Logo CENTER TOP ----
-    if (logoImg.isValid())
-    {
-        const float lw = juce::jmin (620.f, W * 0.52f);
-        const float lh = juce::jmin (160.f, H * 0.17f);
-        auto logoArea = juce::Rectangle<float> ((W - lw) * 0.5f, 0.f, lw, lh);
-        // strong backdrop so logo always readable over busy BG
-        g.setColour (juce::Colours::black.withAlpha (0.72f));
-        g.fillRoundedRectangle (logoArea.expanded (10.f, 6.f), 14.f);
-        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.35f));
-        g.drawRoundedRectangle (logoArea.expanded (10.f, 6.f), 14.f, 1.5f);
-        g.setOpacity (1.f);
-        g.drawImage (logoImg, logoArea, juce::RectanglePlacement::centred);
-    }
-    else
-    {
-        g.setColour (cyan);
-        g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-        g.drawText ("GITI BY SALEK HIGHTECH", 0, 4, (int) W, 28, juce::Justification::centred);
-    }
 
     // ---- Alt logo (Designer) bottom-right ----
     if (logoAltImg.isValid())
