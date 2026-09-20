@@ -96,8 +96,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     // ---- Logo CENTER TOP ----
     if (logoImg.isValid())
     {
-        const float lw = juce::jmin (560.f, W * 0.48f);
-        const float lh = juce::jmin (140.f, H * 0.15f);
+        const float lw = juce::jmin (620.f, W * 0.52f);
+        const float lh = juce::jmin (160.f, H * 0.17f);
         auto logoArea = juce::Rectangle<float> ((W - lw) * 0.5f, 0.f, lw, lh);
         // strong backdrop so logo always readable over busy BG
         g.setColour (juce::Colours::black.withAlpha (0.72f));
