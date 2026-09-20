@@ -43,28 +43,32 @@ void SalekHightechAudioProcessorEditor::resized()
     };
 
     {
-        // Model strip + title above keyboard
-        auto bottom = full.removeFromBottom (68 + 78);
-        auto strip = bottom.removeFromTop (78).reduced (4, 2);
-        modelStripTitle.setBounds (strip.removeFromTop (16));
+        // ONLY place for model strip: above keyboard (never over knobs)
+        auto bottom = full.removeFromBottom (68 + 88);
+        auto strip = bottom.removeFromTop (88).reduced (6, 2);
+        // dark bar so models readable
+        modelStripBounds = strip;
+        modelStripTitle.setBounds (strip.removeFromTop (14));
         modelStripTitle.setVisible (true);
+        modelStripTitle.toFront (false);
         const int n = modelStrip.size();
         if (n > 0)
         {
-            const int cell = juce::jmax (8, strip.getWidth() / n);
+            const int cell = juce::jmax (12, strip.getWidth() / n);
             for (int i = 0; i < n; ++i)
             {
                 if (auto* ic = modelStrip[i])
                 {
-                    // portrait crop feel — not full-body stretch
-                    ic->setBounds (strip.getX() + i * cell + 2, strip.getY(), cell - 4, strip.getHeight());
+                    ic->setBounds (strip.getX() + i * cell + 3, strip.getY() + 2, cell - 6, strip.getHeight() - 4);
                     ic->setVisible (true);
+                    ic->toFront (false);
                 }
             }
         }
         auto kb = bottom.reduced (2, 1);
         keyboard.setKeyWidth ((float) juce::jmax (10, kb.getWidth() / 52));
         keyboard.setBounds (kb);
+        keyboard.toFront (false);
     }
     full.removeFromBottom (2);
 

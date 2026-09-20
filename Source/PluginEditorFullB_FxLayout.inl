@@ -2,37 +2,8 @@
 // Occupy roughly half the page (upper portion)
 {
     auto fullFx = fxTab.getLocalBounds().reduced (6);
-    // Leave bottom band inside FX for model strip (user: models 1-8 here)
-    auto modelBand = fullFx.removeFromBottom (juce::jmin (100, fullFx.getHeight() / 4));
+    // Models live ONLY in bottom strip above keyboard (not over FX knobs)
     auto area = fullFx;
-    // Reposition shared model strip into FX empty zone when FX tab is active
-    {
-        modelStripTitle.setBounds (modelBand.removeFromTop (18).translated (0, 0));
-        modelStripTitle.toFront (false);
-        const int n = modelStrip.size();
-        if (n > 0)
-        {
-            const int cell = juce::jmax (10, modelBand.getWidth() / n);
-            for (int i = 0; i < n; ++i)
-            {
-                if (auto* ic = modelStrip[i])
-                {
-                    // map to editor coords if parent is editor
-                    auto r = juce::Rectangle<int> (modelBand.getX() + i * cell + 2, modelBand.getY(), cell - 4, modelBand.getHeight());
-                    // model strip components are children of editor — convert from fxTab
-                    if (auto* ed = fxTab.getParentComponent())
-                    {
-                        auto tl = ed->getLocalPoint (&fxTab, r.getTopLeft());
-                        ic->setBounds (tl.x, tl.y, r.getWidth(), r.getHeight());
-                    }
-                    else
-                        ic->setBounds (r);
-                    ic->setVisible (true);
-                    ic->toFront (false);
-                }
-            }
-        }
-    }
 
     auto byId = [this] (const char* id) -> Knob*
     {

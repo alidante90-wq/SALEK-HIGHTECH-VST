@@ -76,6 +76,38 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         modelStrip.add (ic);
     }
 
+    
+    for (int i = 0; i < modelStrip.size(); ++i)
+    {
+        if (auto* ic = modelStrip[i])
+        {
+            ic->setMouseCursor (juce::MouseCursor::PointingHandCursor);
+            // capture index for click
+        }
+    }
+    // Click any strip model → set main character
+    struct ModelPickHook : public juce::MouseListener
+    {
+        SalekHightechAudioProcessorEditor* ed = nullptr;
+        int idx = 0;
+        void mouseDown (const juce::MouseEvent&) override
+        {
+            if (ed == nullptr) return;
+            ed->charPortraitIdx = idx;
+            ed->refreshCharCache();
+            ed->repaint();
+        }
+    };
+    for (int i = 0; i < modelStrip.size(); ++i)
+    {
+        auto* hook = new ModelPickHook();
+        hook->ed = this;
+        hook->idx = i;
+        if (auto* ic = modelStrip[i])
+            ic->addMouseListener (hook, false);
+        modHookListeners.push_back (std::unique_ptr<juce::MouseListener> (hook));
+    }
+
     charPortraitIdx = 8; // white-hair / purple latex style default
     refreshCharCache();
     // face.png removed (was ~2MB) — BGs only

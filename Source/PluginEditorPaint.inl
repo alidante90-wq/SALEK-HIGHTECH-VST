@@ -93,6 +93,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
         
+    
+    // Bottom model strip backdrop (above keyboard)
+    if (modelStripBounds.getWidth() > 20)
+    {
+        auto r = modelStripBounds.toFloat();
+        g.setColour (juce::Colour (0xff06040e).withAlpha (0.82f));
+        g.fillRoundedRectangle (r, 8.f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.25f));
+        g.drawRoundedRectangle (r, 8.f, 1.f);
+    }
+
     if (armedModSource >= 0)
     {
         const juce::Colour cols[3] = {
