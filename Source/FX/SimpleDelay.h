@@ -31,6 +31,7 @@ public:
     }
     void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setWow (float w) noexcept { wowAmt = juce::jlimit (0.f, 1.f, w); }
     /** 0 Stereo, 1 PingPong, 2 Mono */
     void setMode (int m) noexcept { mode = juce::jlimit (0, 2, m); }
 
@@ -58,8 +59,10 @@ public:
                 inL = inR = m;
             }
 
-            float dL = readFrac (bufL, delaySamplesL);
-            float dR = readFrac (bufR, delaySamplesR);
+            wowPhase += 0.0007f;
+            const float wow = 1.f + wowAmt * 0.015f * std::sin (wowPhase * 6.283185f);
+            float dL = readFrac (bufL, delaySamplesL * wow);
+            float dR = readFrac (bufR, delaySamplesR * (2.f - wow));
 
             lpL += tone * (dL - lpL);
             lpR += tone * (dR - lpR);
@@ -110,6 +113,7 @@ private:
     float delaySamplesL = 300.f, delaySamplesR = 320.f;
     float targetDelayL = 300.f, targetDelayR = 320.f;
     float feedback = 0.3f, mix = 0.f;
+    float wowAmt = 0.12f, wowPhase = 0.f;
     float lpL = 0.f, lpR = 0.f;
     int mode = 0;
 };

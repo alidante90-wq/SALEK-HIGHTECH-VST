@@ -92,7 +92,19 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
 
 
 // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
-        // FX underlay — solid dark (never pink / garbage)
+        
+    if (armedModSource >= 0)
+    {
+        const juce::Colour cols[3] = {
+            juce::Colour (0xff00e8ff), juce::Colour (0xffff2d9b), juce::Colour (0xff39ff14)
+        };
+        g.setColour (cols[juce::jlimit (0, 2, armedModSource)].withAlpha (0.9f));
+        g.setFont (juce::FontOptions (12.f, juce::Font::bold));
+        g.drawText ("LFO" + juce::String (armedModSource + 1) + " ARMED — click / drop on knob  |  Shift=100%  Alt=invert",
+                    8, 130, (int) W - 16, 18, juce::Justification::centred);
+    }
+
+    // FX underlay — solid dark (never pink / garbage)
     {
         const int ti = tabs.getCurrentTabIndex();
         const bool isFx = (ti >= 0 && ti < tabs.getNumTabs()

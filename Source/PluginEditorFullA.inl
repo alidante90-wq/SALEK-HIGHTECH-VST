@@ -115,7 +115,6 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         void mouseDown (const juce::MouseEvent& e) override
         {
             if (ed == nullptr || ed->armedModSource < 0) return;
-            // Ignore clicks on the LFO arm buttons themselves
             if (e.eventComponent == &ed->modSrcLfo1 || e.eventComponent == &ed->modSrcLfo2
                 || e.eventComponent == &ed->modSrcLfo3)
                 return;
@@ -140,17 +139,43 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         SalekHightechAudioProcessorEditor* ed = nullptr;
         int src = 0;
-        void mouseDrag (const juce::MouseEvent& e) override
-        {
-            if (ed == nullptr || e.getDistanceFromDragStart() < 4) return;
-            if (ed->isDragAndDropActive()) return;
-            ed->armedModSource = src;
-            juce::String desc = "SALEK_LFO" + juce::String (src);
-            ed->startDragging (desc, e.eventComponent);
-        }
         void mouseDown (const juce::MouseEvent&) override
         {
-            if (ed != nullptr) ed->armedModSource = src;
+            if (ed == nullptr) return;
+            ed->armedModSource = src;
+            ed->isModDragging = false;
+            // exclusive arm UI
+            ed->modSrcLfo1.setToggleState (src == 0, juce::dontSendNotification);
+            ed->modSrcLfo2.setToggleState (src == 1, juce::dontSendNotification);
+            ed->modSrcLfo3.setToggleState (src == 2, juce::dontSendNotification);
+        }
+        void mouseDrag (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr || e.getDistanceFromDragStart() < 5) return;
+            ed->armedModSource = src;
+            ed->isModDragging = true;
+            ed->setMouseCursor (juce::MouseCursor::CopyingCursor);
+            // Also try JUCE DnD for targets that implement DragAndDropTarget
+            if (! ed->isDragAndDropActive())
+            {
+                juce::String desc = "SALEK_LFO" + juce::String (src);
+                ed->startDragging (desc, e.eventComponent);
+            }
+        }
+        void mouseUp (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr) return;
+            if (ed->isModDragging || ed->armedModSource >= 0)
+            {
+                auto pos = e.getEventRelativeTo (ed).getPosition();
+                float amt = 0.5f;
+                if (e.mods.isShiftDown()) amt = 1.0f;
+                if (e.mods.isAltDown()) amt = -0.5f;
+                if (e.mods.isRightButtonDown()) amt = 0.f;
+                ed->tryAssignModAt (pos, amt, e.mods);
+            }
+            ed->isModDragging = false;
+            ed->setMouseCursor (juce::MouseCursor::NormalCursor);
         }
     };
     for (int i = 0; i < 3; ++i)
@@ -568,6 +593,16 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else if (paramId == "reverb_mix")    dest = D::ReverbMix;
     else if (paramId == "dist_drive")    dest = D::DistDrive;
     else if (paramId == "chorus_mix")    dest = D::ChorusMix;
+    else if (paramId == "phaser_mix")    dest = D::PhaserMix;
+    else if (paramId == "filter_env")    dest = D::FilterEnv;
+    else if (paramId == "bassify")       dest = D::Bassify;
+    else if (paramId == "osc1_unison")   dest = D::Osc1Level;
+    else if (paramId == "osc1_udet")     dest = D::Osc1Warp;
+    else if (paramId == "osc1_uspread")  dest = D::Osc1Pan;
+    else if (paramId == "osc2_unison")   dest = D::Osc2Level;
+    else if (paramId == "osc2_udet")     dest = D::Osc2Warp;
+    else if (paramId == "osc3_unison")   dest = D::Osc3Level;
+    else if (paramId == "master_drive")  dest = D::DistDrive;
     else return;
 
     S src = (armedModSource == 0) ? S::LFO1 : (armedModSource == 1) ? S::LFO2 : S::LFO3;
@@ -576,14 +611,11 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else
         processor.getModMatrix().addRoute (src, dest, juce::jlimit (-1.f, 1.f, amount));
 
-    // Visual flash on source
-    if (armedModSource == 0) modSrcLfo1.setToggleState (false, juce::dontSendNotification);
-    if (armedModSource == 1) modSrcLfo2.setToggleState (false, juce::dontSendNotification);
-    if (armedModSource == 2) modSrcLfo3.setToggleState (false, juce::dontSendNotification);
-    armedModSource = -1;
-
+    // Keep LFO armed for multiple routes (click OFF on LFO to disarm)
+    // Brief visual: flash matrix
     if (matrixPanel != nullptr)
         matrixPanel->repaint();
+    repaint();
 }
 
 void SalekHightechAudioProcessorEditor::addCombo (juce::Component& parent, juce::ComboBox& box,

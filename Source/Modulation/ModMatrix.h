@@ -58,6 +58,9 @@ public:
         ReverbMix,
         DistDrive,
         ChorusMix,
+        FilterEnv,
+        PhaserMix,
+        Bassify,
         NumDests
     };
 
@@ -78,7 +81,7 @@ public:
             "O1TBL","O2TBL","O3TBL","O1WRP","O2WRP","O3WRP",
             "O1FLD","O2FLD","O3FLD","FM21","FM31","PITCH","AMP",
             "O1PAN","O2PAN","O3PAN","O1DRV","O2DRV","O3DRV",
-            "DLYMX","REVMX","DIST","CHOR"
+            "DLYMX","REVMX","DIST","CHOR","FENV","PHSR","BASS"
         };
         int i = (int) d;
         return (i >= 0 && i < (int) Dest::NumDests) ? n[i] : "?";

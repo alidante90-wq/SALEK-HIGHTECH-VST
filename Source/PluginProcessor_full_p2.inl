@@ -64,7 +64,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
     synthEngine.setFilterResonance(juce::jlimit(0.f,1.f, g("filter_reso")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterReso)*0.5f));
-    synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(g("filter_env"));
+    synthEngine.setFilterDrive(g("filter_drive")); synthEngine.setFilterEnvAmt(juce::jlimit(0.f,1.f,g("filter_env")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterEnv)*0.5f));
     synthEngine.setFilterMode((int)g("filter_mode"));
     synthEngine.setFilterRoute((int)g("filter_route"));
     synthEngine.setNoiseLevel(g("noise_level"));
@@ -112,7 +112,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
     reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
-    phaser.setMix(g("phaser_mix")); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
+    phaser.setMix(juce::jlimit(0.f,1.f,g("phaser_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::PhaserMix)*0.5f)); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(juce::jlimit(0.f,1.f,g("dist_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f)); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
