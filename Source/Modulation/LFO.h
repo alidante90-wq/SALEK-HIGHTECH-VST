@@ -146,7 +146,7 @@ public:
     float getPhase() const noexcept { return (float) phase; }
 
 private:
-    double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0;
+    double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;
     Wave wave=Wave::Sine;
     std::array<float, TableSize> customTable {};
 };
