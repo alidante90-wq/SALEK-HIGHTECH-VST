@@ -107,15 +107,16 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     ++ticks;
-    if (ticks < 6) resized();
-    // FL recovery rarely
-    if ((ticks % 40) == 0)
+    // Layout settle once (was 6 full resized — expensive)
+    if (ticks == 1 || ticks == 3)
+        resized();
+    else if ((ticks % 60) == 0)
     {
         if (tabs.getCurrentTabIndex() == 0
             && (oscTab.getWidth() < 50 || oscTab.getHeight() < 50 || mainTab.getWidth() < 100))
             resized();
     }
-    animPhase += 0.025f;
+    animPhase += 0.02f;
 
     // Only refresh FX meters when FX tab is visible (big multi-instance win)
     const int tab = tabs.getCurrentTabIndex();
@@ -146,10 +147,11 @@ void SalekHightechAudioProcessorEditor::timerCallback()
     }
     // NEVER full-editor repaint every tick — was freezing multi-instance FL
     // Light pulse only for mod source glow
-    if ((ticks % 3) == 0)
+    // Pulse LFO pills only when armed
+    if (armedModSource >= 0 && (ticks % 4) == 0)
     {
-        modSrcLfo1.repaint();
-        modSrcLfo2.repaint();
-        modSrcLfo3.repaint();
+        if (armedModSource == 0) modSrcLfo1.repaint();
+        if (armedModSource == 1) modSrcLfo2.repaint();
+        if (armedModSource == 2) modSrcLfo3.repaint();
     }
 }

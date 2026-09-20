@@ -111,8 +111,8 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         };
         g.setColour (cols[juce::jlimit (0, 2, armedModSource)].withAlpha (0.9f));
         g.setFont (juce::FontOptions (12.f, juce::Font::bold));
-        g.drawText ("LFO" + juce::String (armedModSource + 1) + " ARMED — click / drop on knob  |  Shift=100%  Alt=invert",
-                    8, 130, (int) W - 16, 18, juce::Justification::centred);
+        g.drawText ("LFO" + juce::String (armedModSource + 1) + " ARMED — click knob",
+                    8, 80, (int) W - 16, 16, juce::Justification::centred);
     }
 
     // FX underlay — solid dark (never pink / garbage)

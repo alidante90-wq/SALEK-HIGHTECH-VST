@@ -44,8 +44,8 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         // ONLY place for model strip: above keyboard (never over knobs)
-        auto bottom = full.removeFromBottom (68 + 88);
-        auto strip = bottom.removeFromTop (88).reduced (6, 2);
+        auto bottom = full.removeFromBottom (64 + 70);
+        auto strip = bottom.removeFromTop (70).reduced (4, 2);
         // dark bar so models readable
         modelStripBounds = strip;
         modelStripTitle.setBounds (strip.removeFromTop (14));
@@ -75,9 +75,9 @@ void SalekHightechAudioProcessorEditor::resized()
     {
         const int presetW = presetCollapsed ? 28 : 210;
         auto leftStrip = full.removeFromLeft (presetW);
-        const int logoPad = 64;
+        const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (150, (int) ((leftStrip.getHeight() - logoPad) * 0.38f));
+        const int presetH = juce::jmax (140, (int) ((leftStrip.getHeight() - logoPad) * 0.34f));
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -127,7 +127,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (128); // max logo strip
+    auto header = full.removeFromTop (78); // compact header, more content
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -135,16 +135,16 @@ void SalekHightechAudioProcessorEditor::resized()
     masterGainSlider.setBounds (header.removeFromRight (40).reduced (2));
     // Compact LFO sources (horizontal strip, always visible)
     // LFO sources — drag sources (Vital-style)
-    modSrcLfo3.setBounds (header.removeFromRight (52).reduced (2, 6));
-    modSrcLfo2.setBounds (header.removeFromRight (52).reduced (2, 6));
-    modSrcLfo1.setBounds (header.removeFromRight (52).reduced (2, 6));
+    modSrcLfo3.setBounds (header.removeFromRight (46).reduced (2, 10));
+    modSrcLfo2.setBounds (header.removeFromRight (46).reduced (2, 10));
+    modSrcLfo1.setBounds (header.removeFromRight (46).reduced (2, 10));
     modSrcLfo1.setButtonText ("LFO1");
     modSrcLfo2.setButtonText ("LFO2");
     modSrcLfo3.setButtonText ("LFO3");
-    inspireBtn.setBounds (header.removeFromRight (64).reduced (2, 8));
+    inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (980, juce::jmax (560, header.getWidth() - 8));
+        const int lw = juce::jmin (520, juce::jmax (280, header.getWidth() / 3));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);

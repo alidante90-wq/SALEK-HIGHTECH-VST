@@ -12,7 +12,7 @@
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
+    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -35,7 +35,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
+    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -62,7 +62,7 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
 
 class FilterCurveDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -168,7 +168,7 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
 
 class LfoDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
+    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
     void paint (juce::Graphics& g) override {
         auto bounds = getLocalBounds().toFloat().reduced (2.f);
         g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (bounds, 8.f);

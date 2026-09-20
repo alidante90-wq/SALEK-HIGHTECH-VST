@@ -13,7 +13,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     // VBlank disabled — was causing 5-10 FPS lag with heavy BG paint
     // Animation driven by timer only at 12 Hz
-    startTimerHz (4); // multi-instance friendly
+    startTimerHz (3); // lighter UI refresh
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();
