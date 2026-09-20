@@ -285,13 +285,13 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
         addKnob (oscTab, "osc1_level", "LVL", C); addKnob (oscTab, "osc1_table", "TABLE", M);
         addKnob (oscTab, "osc1_warp", "WARP", O); addKnob (oscTab, "osc1_fold", "FOLD", M);
-        addKnob (oscTab, "osc1_drive", "DRIVE", O); addKnob (oscTab, "osc1_octave", "OCT", V);
+        addKnob (oscTab, "osc1_drive", "DRIVE", O); addKnob (oscTab, "osc1_octave", "OCT", V); addKnob (oscTab, "osc1_semi", "SEMI", M);
         addKnob (oscTab, "osc2_level", "LVL", C); addKnob (oscTab, "osc2_table", "TABLE", M);
         addKnob (oscTab, "osc2_warp", "WARP", O); addKnob (oscTab, "osc2_fold", "FOLD", M);
-        addKnob (oscTab, "osc2_drive", "DRIVE", O); addKnob (oscTab, "osc2_octave", "OCT", V);
+        addKnob (oscTab, "osc2_drive", "DRIVE", O); addKnob (oscTab, "osc2_octave", "OCT", V); addKnob (oscTab, "osc2_semi", "SEMI", M);
         addKnob (oscTab, "osc3_level", "LVL", C); addKnob (oscTab, "osc3_table", "TABLE", M);
         addKnob (oscTab, "osc3_warp", "WARP", O); addKnob (oscTab, "osc3_fold", "FOLD", M);
-        addKnob (oscTab, "osc3_drive", "DRIVE", O); addKnob (oscTab, "osc3_octave", "OCT", V);
+        addKnob (oscTab, "osc3_drive", "DRIVE", O); addKnob (oscTab, "osc3_octave", "OCT", V); addKnob (oscTab, "osc3_semi", "SEMI", M);
         // Per-osc unison row (each column gets its own UNI / DET / SPR)
         addKnob (oscTab, "osc1_unison", "UNI", C);
         addKnob (oscTab, "osc1_udet", "DET", M);

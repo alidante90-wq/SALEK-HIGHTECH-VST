@@ -73,11 +73,11 @@ void SalekHightechAudioProcessorEditor::resized()
     full.removeFromBottom (2);
 
     {
-        const int presetW = presetCollapsed ? 28 : 210;
+        const int presetW = presetCollapsed ? 28 : 240; // wider left = bigger model
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (140, (int) ((leftStrip.getHeight() - logoPad) * 0.34f));
+        const int presetH = juce::jmax (120, (int) ((leftStrip.getHeight() - logoPad) * 0.28f)); // more height for model
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -127,7 +127,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (78); // compact header, more content
+    auto header = full.removeFromTop (96); // logo prominence (I WANT)
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -144,7 +144,7 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (520, juce::jmax (280, header.getWidth() / 3));
+        const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() * 2 / 5));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);
@@ -239,6 +239,7 @@ void SalekHightechAudioProcessorEditor::resized()
             const char* idsFold[3]  = { "osc1_fold", "osc2_fold", "osc3_fold" };
             const char* idsDrive[3] = { "osc1_drive", "osc2_drive", "osc3_drive" };
             const char* idsOct[3]   = { "osc1_octave", "osc2_octave", "osc3_octave" };
+            const char* idsSemi[3]  = { "osc1_semi", "osc2_semi", "osc3_semi" };
             const char* idsUni[3]   = { "osc1_unison", "osc2_unison", "osc3_unison" };
             const char* idsDet[3]   = { "osc1_udet", "osc2_udet", "osc3_udet" };
             const char* idsSpr[3]   = { "osc1_uspread", "osc2_uspread", "osc3_uspread" };
@@ -262,8 +263,9 @@ void SalekHightechAudioProcessorEditor::resized()
                 placeId (row2.removeFromLeft (row2.getWidth() / 2).reduced (3), idsWarp[c]);
                 placeId (row2.reduced (3), idsFold[c]);
                 auto row3 = col.removeFromTop (rowH);
-                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (3), idsDrive[c]);
-                placeId (row3.reduced (3), idsOct[c]);
+                placeId (row3.removeFromLeft (row3.getWidth() / 3).reduced (2), idsDrive[c]);
+                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (2), idsOct[c]);
+                placeId (row3.reduced (2), idsSemi[c]);
                 auto uniRow = col.removeFromTop (rowH);
                 const int uw = uniRow.getWidth() / 3;
                 placeId (uniRow.removeFromLeft (uw).reduced (2), idsUni[c]);
