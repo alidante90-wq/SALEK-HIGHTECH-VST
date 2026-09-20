@@ -75,6 +75,8 @@
         addKnob (fxTab, "comp_thr_lo", "LO THR", C);
         addKnob (fxTab, "comp_thr_mid", "MID THR", M);
         addKnob (fxTab, "comp_thr_hi", "HI THR", O);
+        addKnob (fxTab, "comp_attack", "C ATK", C);
+        addKnob (fxTab, "comp_release", "C REL", M);
         // EQ
         addKnob (fxTab, "eq_low", "EQ LOW", G);
         addKnob (fxTab, "eq_mid", "EQ MID", O);

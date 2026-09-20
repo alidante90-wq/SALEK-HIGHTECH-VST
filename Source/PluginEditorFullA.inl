@@ -54,6 +54,28 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     };
 
     logoOverlay.toFront (false);
+
+    // Bottom model strip title
+    modelStripTitle.setText ("SALEK HIGHTECH", juce::dontSendNotification);
+    modelStripTitle.setJustificationType (juce::Justification::centred);
+    modelStripTitle.setFont (juce::FontOptions (13.0f, juce::Font::bold));
+    modelStripTitle.setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
+    addAndMakeVisible (modelStripTitle);
+    modelStrip.clear();
+    for (int i = 0; i < 10; ++i)
+    {
+        auto* ic = new juce::ImageComponent ("model" + juce::String (i));
+        auto im = SalekAssets::loadCharPortrait (i);
+        if (im.isValid())
+        {
+            ic->setImage (im);
+            ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        }
+        ic->setInterceptsMouseClicks (true, false);
+        addAndMakeVisible (ic);
+        modelStrip.add (ic);
+    }
+
     charPortraitIdx = 8; // white-hair / purple latex style default
     refreshCharCache();
     // face.png removed (was ~2MB) — BGs only
@@ -92,11 +114,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         int src = 0;
         void mouseDrag (const juce::MouseEvent& e) override
         {
-            if (ed == nullptr || e.getDistanceFromDragStart() < 6) return;
+            if (ed == nullptr || e.getDistanceFromDragStart() < 4) return;
+            if (ed->isDragAndDropActive()) return;
             ed->armedModSource = src;
             juce::String desc = "SALEK_LFO" + juce::String (src);
-            if (auto* c = dynamic_cast<juce::DragAndDropContainer*> (ed))
-                c->startDragging (desc, e.eventComponent);
+            ed->startDragging (desc, e.eventComponent);
+        }
+        void mouseDown (const juce::MouseEvent&) override
+        {
+            if (ed != nullptr) ed->armedModSource = src;
         }
     };
     for (int i = 0; i < 3; ++i)
@@ -465,6 +491,17 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->name.addMouseListener (hook.get(), false);
     k->s.addMouseListener (hook.get(), false);
     modHookListeners.push_back (std::move (hook));
+
+    // Real DragAndDropTarget over the knob (Serum/Vital style drop zone)
+    {
+        auto dt = std::make_unique<KnobDropTarget>();
+        dt->ed = this;
+        dt->paramId = id;
+        dt->setInterceptsMouseClicks (false, false); // slider still drags; DnD hits target
+        parent.addAndMakeVisible (*dt);
+        dt->toBehind (&k->s);
+        knobDropTargets.push_back (std::move (dt));
+    }
 
     knobs.push_back (std::move (k));
     return *knobs.back();

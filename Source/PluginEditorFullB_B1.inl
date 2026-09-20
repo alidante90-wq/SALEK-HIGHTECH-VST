@@ -43,11 +43,30 @@ void SalekHightechAudioProcessorEditor::resized()
     };
 
     {
-        auto kb = full.removeFromBottom (68).reduced (2, 1);
+        // Model strip + title above keyboard
+        auto bottom = full.removeFromBottom (68 + 78);
+        auto strip = bottom.removeFromTop (78).reduced (4, 2);
+        modelStripTitle.setBounds (strip.removeFromTop (16));
+        modelStripTitle.setVisible (true);
+        const int n = modelStrip.size();
+        if (n > 0)
+        {
+            const int cell = juce::jmax (8, strip.getWidth() / n);
+            for (int i = 0; i < n; ++i)
+            {
+                if (auto* ic = modelStrip[i])
+                {
+                    // portrait crop feel — not full-body stretch
+                    ic->setBounds (strip.getX() + i * cell + 2, strip.getY(), cell - 4, strip.getHeight());
+                    ic->setVisible (true);
+                }
+            }
+        }
+        auto kb = bottom.reduced (2, 1);
         keyboard.setKeyWidth ((float) juce::jmax (10, kb.getWidth() / 52));
         keyboard.setBounds (kb);
     }
-    full.removeFromBottom (4);
+    full.removeFromBottom (2);
 
     {
         const int presetW = presetCollapsed ? 28 : 210;
@@ -102,7 +121,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (88); // big top logo strip
+    auto header = full.removeFromTop (110); // oversized logo strip
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -116,12 +135,32 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (64).reduced (2, 8));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() - 40));
+        const int lw = juce::jmin (820, juce::jmax (480, header.getWidth() - 20));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
     }
+
+    // Keep drop targets aligned with knob sliders
+    for (size_t i = 0; i < knobDropTargets.size() && i < knobs.size(); ++i)
+    {
+        if (knobs[i] != nullptr && knobDropTargets[i] != nullptr)
+        {
+            auto r = knobs[i]->s.getBounds();
+            // parent of drop may differ — convert
+            if (auto* p = knobDropTargets[i]->getParentComponent())
+            {
+                if (auto* sp = knobs[i]->s.getParentComponent())
+                {
+                    auto topLeft = p->getLocalPoint (sp, r.getTopLeft());
+                    knobDropTargets[i]->setBounds (topLeft.x, topLeft.y, r.getWidth(), r.getHeight());
+                }
+            }
+            knobDropTargets[i]->setVisible (knobs[i]->s.isVisible());
+        }
+    }
+
     // Remove top scopes / spectrum / wt strip (user X)
     spectrum.setBounds (0, 0, 0, 0); spectrum.setVisible (false);
     scope.setBounds (0, 0, 0, 0); scope.setVisible (false);

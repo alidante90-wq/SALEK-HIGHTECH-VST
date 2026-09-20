@@ -334,6 +334,50 @@ private:
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void assignModToParam (const juce::String& paramId, float amount = 0.5f);
     std::vector<std::unique_ptr<juce::MouseListener>> modHookListeners;
+    struct KnobDropTarget : public juce::Component, public juce::DragAndDropTarget
+    {
+        SalekHightechAudioProcessorEditor* ed = nullptr;
+        juce::String paramId;
+        bool hot = false;
+        bool isInterestedInDragSource (const SourceDetails& d) override
+        {
+            return d.description.toString().startsWith ("SALEK_LFO");
+        }
+        void itemDragEnter (const SourceDetails&) override { hot = true;  repaint(); }
+        void itemDragExit  (const SourceDetails&) override { hot = false; repaint(); }
+        void itemDropped (const SourceDetails& d) override
+        {
+            hot = false;
+            auto s = d.description.toString(); // SALEK_LFO0/1/2
+            int src = 0;
+            if (s.endsWithChar ('1')) src = 1;
+            else if (s.endsWithChar ('2')) src = 2;
+            if (ed != nullptr)
+            {
+                ed->armedModSource = src;
+                float amt = 0.5f;
+                if (juce::ModifierKeys::currentModifiers.isShiftDown()) amt = 1.0f;
+                if (juce::ModifierKeys::currentModifiers.isAltDown())   amt = -0.5f;
+                ed->assignModToParam (paramId, amt);
+            }
+            repaint();
+        }
+        void paint (juce::Graphics& g) override
+        {
+            if (! hot) return;
+            g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f));
+            g.fillEllipse (getLocalBounds().toFloat().reduced (2.f));
+            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.9f));
+            g.drawEllipse (getLocalBounds().toFloat().reduced (2.f), 2.f);
+        }
+        // Let slider receive normal mouse; DnD container still hits this target
+        bool shouldDrawDragImageWhenOver() override { return false; }
+    };
+    std::vector<std::unique_ptr<KnobDropTarget>> knobDropTargets;
+    // bottom model strip
+    juce::OwnedArray<juce::ImageComponent> modelStrip;
+    juce::Label modelStripTitle;
+    juce::Rectangle<int> modelStripBounds;
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
 };
