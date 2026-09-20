@@ -14,7 +14,7 @@ class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
     explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
-    void timerCallback() override { repaint(); }
+    void timerCallback() override { if (isShowing()) repaint(); }
 private:
     juce::AudioProcessorValueTreeState& apvts;
 };
@@ -37,7 +37,7 @@ class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
     explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
-    void timerCallback() override { repaint(); }
+    void timerCallback() override { if (isShowing()) repaint(); }
 private:
     juce::AudioProcessorValueTreeState& apvts;
 };
@@ -64,7 +64,7 @@ class FilterCurveDisplay : public juce::Component, private juce::Timer {
 public:
     explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
-    void timerCallback() override { repaint(); }
+    void timerCallback() override { if (isShowing()) repaint(); }
 private:
     juce::AudioProcessorValueTreeState& apvts;
 };
@@ -209,7 +209,7 @@ public:
             g.setColour (cols[L]); g.strokePath (curve, juce::PathStrokeType (1.6f));
         }
     }
-    void timerCallback() override { phase += 0.12f; repaint(); }
+    void timerCallback() override { if (! isShowing()) return; phase += 0.12f; repaint(); }
 private:
     juce::AudioProcessorValueTreeState& apvts; float phase = 0.f;
 };
@@ -317,7 +317,7 @@ private:
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
-    void assignModToParam (const juce::String& paramId);
+    void assignModToParam (const juce::String& paramId, float amount = 0.5f);
     std::vector<std::unique_ptr<juce::MouseListener>> modHookListeners;
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)

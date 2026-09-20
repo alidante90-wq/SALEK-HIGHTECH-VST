@@ -172,6 +172,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             return p->load() > 0.5f;
         return false;
     };
+    auto g = [&](const char* id) -> float {
+        if (auto* p = apvts.getRawParameterValue (id))
+            return p->load();
+        return 0.f;
+    };
    
     const float bassify = apvts.getRawParameterValue("bassify")->load();
     if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
@@ -198,14 +203,24 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-    if (! bypassed ("chorus_bypass"))  chorus.process (buffer);
-    if (! bypassed ("phaser_bypass"))  phaser.process (buffer);
-    if (! bypassed ("dist_bypass"))    distortion.process (buffer);
-    if (! bypassed ("eq_bypass"))      eq.process (buffer);
-    if (! bypassed ("comp_bypass"))    compressor.process (buffer);
-    if (! bypassed ("delay_bypass"))   delay.process (buffer);
-    if (! bypassed ("reverb_bypass"))  reverb.process (buffer);
-    spatial.process (buffer);
+    // Mix=0 early-out saves a lot with 2+ instances in FL
+    if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
+    if (! bypassed ("phaser_bypass") && g ("phaser_mix") > 1e-4f)  phaser.process (buffer);
+    if (! bypassed ("dist_bypass") && g ("dist_mix") > 1e-4f)      distortion.process (buffer);
+    if (! bypassed ("eq_bypass"))
+    {
+        if (std::abs (g ("eq_low")) > 0.05f || std::abs (g ("eq_mid")) > 0.05f || std::abs (g ("eq_high")) > 0.05f)
+            eq.process (buffer);
+    }
+    if (! bypassed ("comp_bypass") && g ("comp_mix") > 1e-4f)    compressor.process (buffer);
+    if (! bypassed ("delay_bypass") && g ("delay_mix") > 1e-4f)   delay.process (buffer);
+    if (! bypassed ("reverb_bypass") && g ("reverb_mix") > 1e-4f) reverb.process (buffer);
+    {
+        const float az = std::abs (g ("spatial_azim"));
+        const float ds = g ("spatial_dist");
+        if (az > 0.5f || ds > 1e-3f || std::abs (g ("spatial_elev")) > 0.5f)
+            spatial.process (buffer);
+    }
 
     if (auto* gm = apvts.getRawParameterValue ("granular_mix"))
     {

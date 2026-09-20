@@ -32,7 +32,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         b.setColour (juce::TextButton::textColourOffId, c);
         b.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
         b.setClickingTogglesState (true);
-        b.setTooltip ("Arm " + b.getButtonText() + " then click any matrix destination / knob label");
+        b.setTooltip ("Vital-style: arm " + b.getButtonText() + " → click knob | Shift=100% | Alt=invert | Ctrl=25% | Right-click=clear");
         b.onClick = [this, src, &b]
         {
             const bool on = b.getToggleState();
@@ -375,13 +375,12 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
         void mouseDown (const juce::MouseEvent& e) override
         {
             if (ed == nullptr || ed->armedModSource < 0) return;
-            if (e.mods.isLeftButtonDown())
-                ed->assignModToParam (pid);
-            if (e.mods.isRightButtonDown())
-            {
-                // clear routes for this dest if mapped
-                ed->assignModToParam (pid); // first click assigns; use amount 0 via special - see assign
-            }
+            float amt = 0.5f;
+            if (e.mods.isShiftDown()) amt = 1.0f;       // precise max like Vital
+            if (e.mods.isAltDown())   amt = -0.5f;      // bipolar invert
+            if (e.mods.isCommandDown() || e.mods.isCtrlDown()) amt = 0.25f; // fine
+            if (e.mods.isRightButtonDown()) amt = 0.f;  // clear
+            ed->assignModToParam (pid, amt);
         }
     };
     auto hook = std::make_unique<ModHook>();
@@ -395,7 +394,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     return *knobs.back();
 }
 
-void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& paramId)
+void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& paramId, float amount)
 {
     if (armedModSource < 0 || armedModSource > 2) return;
 
@@ -431,7 +430,10 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else return;
 
     S src = (armedModSource == 0) ? S::LFO1 : (armedModSource == 1) ? S::LFO2 : S::LFO3;
-    processor.getModMatrix().addRoute (src, dest, 0.5f);
+    if (std::abs (amount) < 1e-4f)
+        processor.getModMatrix().removeRoute (src, dest);
+    else
+        processor.getModMatrix().addRoute (src, dest, juce::jlimit (-1.f, 1.f, amount));
 
     // Visual flash on source
     if (armedModSource == 0) modSrcLfo1.setToggleState (false, juce::dontSendNotification);

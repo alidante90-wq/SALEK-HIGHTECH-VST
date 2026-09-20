@@ -5,7 +5,7 @@
 class OscShapeMonitor : public juce::Component, private juce::Timer
 {
 public:
-    OscShapeMonitor() { startTimerHz (10); }
+    OscShapeMonitor() { startTimerHz (5); }
 
     void setAPVTS (juce::AudioProcessorValueTreeState* s) { apvts = s; }
     void setOscIndex (int i) { osc = juce::jlimit (0, 2, i); }
@@ -96,7 +96,7 @@ public:
                     juce::Justification::centredLeft);
     }
 
-    void timerCallback() override { anim += 0.1f; repaint(); }
+    void timerCallback() override { if (! isShowing()) return; anim += 0.1f; repaint(); }
 
 private:
     juce::AudioProcessorValueTreeState* apvts = nullptr;

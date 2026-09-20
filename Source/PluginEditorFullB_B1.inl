@@ -101,12 +101,13 @@ void SalekHightechAudioProcessorEditor::resized()
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
     bgSwapBtn.setBounds (header.removeFromRight (40).reduced (2));
-    masterGainSlider.setBounds (header.removeFromRight (44).reduced (2));
-    modSrcLfo3.setBounds (header.removeFromRight (42).reduced (1));
-    modSrcLfo2.setBounds (header.removeFromRight (42).reduced (1));
-    modSrcLfo1.setBounds (header.removeFromRight (42).reduced (1));
-    spectrum.setBounds (header.removeFromRight (80).reduced (2));
-    scope.setBounds (header.removeFromRight (100).reduced (2));
+    masterGainSlider.setBounds (header.removeFromRight (40).reduced (2));
+    // Compact LFO sources (horizontal strip, always visible)
+    modSrcLfo3.setBounds (header.removeFromRight (38).reduced (1, 4));
+    modSrcLfo2.setBounds (header.removeFromRight (38).reduced (1, 4));
+    modSrcLfo1.setBounds (header.removeFromRight (38).reduced (1, 4));
+    spectrum.setBounds (header.removeFromRight (72).reduced (2));
+    scope.setBounds (header.removeFromRight (90).reduced (2));
     if (wtDisplay != nullptr)
         wtDisplay->setBounds (header.removeFromRight (140).reduced (2));
 
