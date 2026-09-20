@@ -307,6 +307,22 @@ private:
     float animPhase = 0.0f;
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
     juce::Image logoImg, logoAltImg, heroImg, faceImg, lianImg, cyanImg;
+    struct LogoOverlayComp : public juce::Component
+    {
+        juce::Image img;
+        void paint (juce::Graphics& g) override
+        {
+            if (! img.isValid()) return;
+            auto r = getLocalBounds().toFloat();
+            g.setColour (juce::Colours::black.withAlpha (0.65f));
+            g.fillRoundedRectangle (r.expanded (4.f), 12.f);
+            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.4f));
+            g.drawRoundedRectangle (r.expanded (4.f), 12.f, 1.4f);
+            g.setOpacity (1.f);
+            g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        }
+    };
+    LogoOverlayComp logoOverlay;
     void refreshCharCache();
     int heroIndex = 0;
     bool presetCollapsed = false;
