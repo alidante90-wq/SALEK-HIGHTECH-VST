@@ -110,6 +110,16 @@ inline juce::Image loadLogo()
 {
     return loadLogoGiti();
 }
+inline juce::Image loadLogoAlt()
+{
+    juce::Image img;
+#if SALEK_HAS_BINARY_DATA
+    img = fromBinaryName ("logo_giti_alt_png");
+    if (img.isValid()) return img;
+#endif
+    img = fromDisk ({ "logo_giti_alt.png", "Designer.png" });
+    return img;
+}
 
 inline juce::Image loadBgIsatis()
 {

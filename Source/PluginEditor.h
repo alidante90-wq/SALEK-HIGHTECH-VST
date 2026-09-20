@@ -306,7 +306,7 @@ private:
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };
-    juce::Image logoImg, heroImg, faceImg, lianImg, cyanImg;
+    juce::Image logoImg, logoAltImg, heroImg, faceImg, lianImg, cyanImg;
     void refreshCharCache();
     int heroIndex = 0;
     bool presetCollapsed = false;

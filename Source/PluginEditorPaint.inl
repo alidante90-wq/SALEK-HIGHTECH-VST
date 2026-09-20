@@ -114,6 +114,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.drawText ("GITI BY SALEK HIGHTECH", 0, 4, (int) W, 28, juce::Justification::centred);
     }
 
+    // ---- Alt logo (Designer) bottom-right ----
+    if (logoAltImg.isValid())
+    {
+        const float aw = juce::jmin (160.f, W * 0.14f);
+        const float ah = aw; // square art
+        auto area = juce::Rectangle<float> (W - aw - 16.f, H - ah - 48.f, aw, ah);
+        g.setOpacity (0.92f);
+        g.drawImage (logoAltImg, area, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        g.setOpacity (1.f);
+    }
+
     // ---- Character PNGs LAST = top z-order (cached images, no disk IO) ----
     // Character model — ONLY in left slot under presets (does NOT change background)
     if (charImgL.isValid() && charSlotBounds.getWidth() > 20 && charSlotBounds.getHeight() > 40)

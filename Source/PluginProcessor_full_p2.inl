@@ -243,7 +243,20 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     magic.process (buffer);
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
-    buffer.applyGain (gain * 0.92f);
+    const float drive = apvts.getRawParameterValue("master_drive")->load();
+    const float gMul = gain * (0.85f + drive * 0.1f);
+    // Soft-clip master (clean loudness, no digital harshness)
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        auto* d = buffer.getWritePointer (ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float x = d[i] * gMul;
+            // gentle tanh stage + ceiling
+            x = std::tanh (x * (1.0f + drive * 0.8f));
+            d[i] = juce::jlimit (-0.98f, 0.98f, x);
+        }
+    }
 
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {

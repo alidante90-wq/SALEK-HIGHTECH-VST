@@ -18,6 +18,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();
     if (! logoImg.isValid()) logoImg = SalekAssets::loadLogo();
+    logoAltImg = SalekAssets::loadLogoAlt();
     // face.png removed (was ~2MB) — BGs only
     lianImg   = SalekAssets::loadBgIsatis();
     cyanImg   = SalekAssets::loadBgSalek();
@@ -411,10 +412,12 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
             if (e.mods.isRightButtonDown()) amt = 0.f;
             ed->assignModToParam (pid, amt);
         }
-        void mouseUp (const juce::MouseEvent&) override
+        void mouseUp (const juce::MouseEvent& e) override
         {
-            // Drop end after drag from LFO pill (instance method on editor)
-            if (ed != nullptr && ed->armedModSource >= 0 && ed->isDragAndDropActive())
+            // Drop: if an LFO was armed via drag, assign on release over this knob
+            if (ed == nullptr || ed->armedModSource < 0) return;
+            // Only if this release is not a simple click already handled
+            if (e.mouseWasDraggedSinceMouseDown())
                 ed->assignModToParam (pid, 0.5f);
         }
     };
