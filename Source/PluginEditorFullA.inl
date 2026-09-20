@@ -413,9 +413,8 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
         }
         void mouseUp (const juce::MouseEvent&) override
         {
-            // Drop end after drag from LFO pill
-            if (ed != nullptr && ed->armedModSource >= 0
-                && juce::DragAndDropContainer::isDragAndDropActive())
+            // Drop end after drag from LFO pill (instance method on editor)
+            if (ed != nullptr && ed->armedModSource >= 0 && ed->isDragAndDropActive())
                 ed->assignModToParam (pid, 0.5f);
         }
     };
