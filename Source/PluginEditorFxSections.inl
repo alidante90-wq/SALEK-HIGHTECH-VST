@@ -87,6 +87,11 @@
         addKnob (fxTab, "dist_mix", "DIST", O);
         addKnob (fxTab, "dist_drive", "DRIVE", M);
         addKnob (fxTab, "dist_crush", "CRUSH", C);
+        // Spatial (binaural)
+        addKnob (fxTab, "spatial_azim", "AZIM", C);
+        addKnob (fxTab, "spatial_dist", "DISTC", M);
+        addKnob (fxTab, "spatial_size", "WIDTH", O);
+        addKnob (fxTab, "spatial_elev", "ELEV", G);
         addKnob (fxTab, "delay_time_l", "D TIME L", C);
         addKnob (fxTab, "delay_time_r", "D TIME R", M);
     }

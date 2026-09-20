@@ -108,22 +108,23 @@ void SalekHightechAudioProcessorEditor::timerCallback()
     static int ticks = 0;
     ++ticks;
     if (ticks < 6) resized();
-    // FL Studio recovery: if MAIN is active but osc area collapsed, re-layout
-    if ((ticks % 24) == 0) // ~4s at 6Hz
+    // FL recovery rarely
+    if ((ticks % 40) == 0)
     {
         if (tabs.getCurrentTabIndex() == 0
-            && (oscTab.getWidth() < 50 || oscTab.getHeight() < 50
-                || mainTab.getWidth() < 100))
+            && (oscTab.getWidth() < 50 || oscTab.getHeight() < 50 || mainTab.getWidth() < 100))
             resized();
     }
-    animPhase += 0.03f;
+    animPhase += 0.025f;
 
-    auto g = [&](const char* id, float d=0.f) -> float {
-        if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
-        return d;
-    };
-    if (fxMonitors.size() >= 8)
+    // Only refresh FX meters when FX tab is visible (big multi-instance win)
+    const int tab = tabs.getCurrentTabIndex();
+    if (tab == 3 && fxMonitors.size() >= 8)
     {
+        auto g = [&](const char* id, float d=0.f) -> float {
+            if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
+            return d;
+        };
         fxMonitors[0]->setLevel (g ("chorus_mix"));
         fxMonitors[1]->setLevel (g ("delay_mix"));
         fxMonitors[2]->setLevel (g ("reverb_mix"));
@@ -134,18 +135,21 @@ void SalekHightechAudioProcessorEditor::timerCallback()
             auto& c = processor.getCompressor();
             auto toN = [] (float db) { return juce::jmap (db, -40.f, 0.f, 0.f, 1.f); };
             fxMonitors[4]->setBandThresholdNorms (
-                toN (c.getBandThresholdDb (0)),
-                toN (c.getBandThresholdDb (1)),
-                toN (c.getBandThresholdDb (2)));
+                toN (c.getBandThresholdDb (0)), toN (c.getBandThresholdDb (1)), toN (c.getBandThresholdDb (2)));
+            fxMonitors[4]->setBandGR (c.getBandGR (0), c.getBandGR (1), c.getBandGR (2));
         }
-        fxMonitors[4]->setBandGR (
-            processor.getCompressor().getBandGR (0),
-            processor.getCompressor().getBandGR (1),
-            processor.getCompressor().getBandGR (2));
         fxMonitors[5]->setLevel (juce::jmax (std::abs (g ("eq_low")), std::abs (g ("eq_mid")), std::abs (g ("eq_high"))) / 12.f);
         fxMonitors[5]->setEqBands (g ("eq_low") / 12.f, g ("eq_mid") / 12.f, g ("eq_high") / 12.f);
         fxMonitors[6]->setLevel (g ("phaser_mix"));
         fxMonitors[7]->setLevel (g ("dist_mix"));
+        for (auto* m : fxMonitors) if (m) m->repaint();
     }
-    repaint();
+    // NEVER full-editor repaint every tick — was freezing multi-instance FL
+    // Light pulse only for mod source glow
+    if ((ticks % 3) == 0)
+    {
+        modSrcLfo1.repaint();
+        modSrcLfo2.repaint();
+        modSrcLfo3.repaint();
+    }
 }

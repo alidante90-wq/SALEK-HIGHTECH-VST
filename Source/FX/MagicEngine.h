@@ -60,6 +60,9 @@ public:
         const int n = buffer.getNumSamples();
         const int chs = buffer.getNumChannels();
         if (chs < 1 || n < 1) return;
+        // Idle: skip entire FX (critical for multi-instance CPU)
+        if (! activeTarget && activeGain < 1e-4f)
+            return;
 
         for (int i = 0; i < n; ++i)
         {

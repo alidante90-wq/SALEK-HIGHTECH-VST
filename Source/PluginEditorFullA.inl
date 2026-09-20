@@ -13,7 +13,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     // VBlank disabled — was causing 5-10 FPS lag with heavy BG paint
     // Animation driven by timer only at 12 Hz
-    startTimerHz (6); // UI anim only — low CPU
+    startTimerHz (4); // multi-instance friendly
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();
@@ -366,8 +366,81 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
     k->name.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
     parent.addAndMakeVisible (k->name);
+
+    // Vital-style: arm LFO1/2/3 then click knob name to assign
+    struct ModHook : public juce::MouseListener
+    {
+        SalekHightechAudioProcessorEditor* ed = nullptr;
+        juce::String pid;
+        void mouseDown (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr || ed->armedModSource < 0) return;
+            if (e.mods.isLeftButtonDown())
+                ed->assignModToParam (pid);
+            if (e.mods.isRightButtonDown())
+            {
+                // clear routes for this dest if mapped
+                ed->assignModToParam (pid); // first click assigns; use amount 0 via special - see assign
+            }
+        }
+    };
+    auto hook = std::make_unique<ModHook>();
+    hook->ed = this;
+    hook->pid = id;
+    k->name.addMouseListener (hook.get(), false);
+    k->s.addMouseListener (hook.get(), false);
+    modHookListeners.push_back (std::move (hook));
+
     knobs.push_back (std::move (k));
     return *knobs.back();
+}
+
+void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& paramId)
+{
+    if (armedModSource < 0 || armedModSource > 2) return;
+
+    using D = salek::ModMatrix::Dest;
+    using S = salek::ModMatrix::Source;
+    D dest = D::NumDests;
+    if      (paramId == "filter_cutoff") dest = D::FilterCutoff;
+    else if (paramId == "filter_reso")   dest = D::FilterReso;
+    else if (paramId == "osc1_level")    dest = D::Osc1Level;
+    else if (paramId == "osc2_level")    dest = D::Osc2Level;
+    else if (paramId == "osc3_level")    dest = D::Osc3Level;
+    else if (paramId == "osc1_table")    dest = D::Osc1Table;
+    else if (paramId == "osc2_table")    dest = D::Osc2Table;
+    else if (paramId == "osc3_table")    dest = D::Osc3Table;
+    else if (paramId == "osc1_warp")     dest = D::Osc1Warp;
+    else if (paramId == "osc2_warp")     dest = D::Osc2Warp;
+    else if (paramId == "osc3_warp")     dest = D::Osc3Warp;
+    else if (paramId == "osc1_fold")     dest = D::Osc1Fold;
+    else if (paramId == "osc2_fold")     dest = D::Osc2Fold;
+    else if (paramId == "osc3_fold")     dest = D::Osc3Fold;
+    else if (paramId == "osc1_pan")      dest = D::Osc1Pan;
+    else if (paramId == "osc2_pan")      dest = D::Osc2Pan;
+    else if (paramId == "osc3_pan")      dest = D::Osc3Pan;
+    else if (paramId == "osc1_drive")    dest = D::Osc1Drive;
+    else if (paramId == "osc2_drive")    dest = D::Osc2Drive;
+    else if (paramId == "osc3_drive")    dest = D::Osc3Drive;
+    else if (paramId == "fm_2to1")       dest = D::Fm2to1;
+    else if (paramId == "fm_3to1")       dest = D::Fm3to1;
+    else if (paramId == "delay_mix")     dest = D::DelayMix;
+    else if (paramId == "reverb_mix")    dest = D::ReverbMix;
+    else if (paramId == "dist_drive")    dest = D::DistDrive;
+    else if (paramId == "chorus_mix")    dest = D::ChorusMix;
+    else return;
+
+    S src = (armedModSource == 0) ? S::LFO1 : (armedModSource == 1) ? S::LFO2 : S::LFO3;
+    processor.getModMatrix().addRoute (src, dest, 0.5f);
+
+    // Visual flash on source
+    if (armedModSource == 0) modSrcLfo1.setToggleState (false, juce::dontSendNotification);
+    if (armedModSource == 1) modSrcLfo2.setToggleState (false, juce::dontSendNotification);
+    if (armedModSource == 2) modSrcLfo3.setToggleState (false, juce::dontSendNotification);
+    armedModSource = -1;
+
+    if (matrixPanel != nullptr)
+        matrixPanel->repaint();
 }
 
 void SalekHightechAudioProcessorEditor::addCombo (juce::Component& parent, juce::ComboBox& box,

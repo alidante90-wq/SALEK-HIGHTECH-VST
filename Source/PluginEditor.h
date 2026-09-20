@@ -12,7 +12,7 @@
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (6); }
+    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -35,7 +35,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (6); }
+    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -62,7 +62,7 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
 
 class FilterCurveDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (6); }
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { repaint(); }
 private:
@@ -168,7 +168,7 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
 
 class LfoDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (6); }
+    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (4); }
     void paint (juce::Graphics& g) override {
         auto bounds = getLocalBounds().toFloat().reduced (2.f);
         g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (bounds, 8.f);
@@ -317,6 +317,8 @@ private:
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
+    void assignModToParam (const juce::String& paramId);
+    std::vector<std::unique_ptr<juce::MouseListener>> modHookListeners;
     void addCombo(juce::Component& parent, juce::ComboBox& box, const char* id, juce::StringArray items);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SalekHightechAudioProcessorEditor)
 };
