@@ -73,7 +73,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 64;
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (110, (int) ((leftStrip.getHeight() - logoPad) * 0.32f));
+        const int presetH = juce::jmax (150, (int) ((leftStrip.getHeight() - logoPad) * 0.38f));
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -92,17 +92,19 @@ void SalekHightechAudioProcessorEditor::resized()
             }
         }
         auto pb = presetTab.getLocalBounds().reduced (2);
-        auto top = pb.removeFromTop (22);
-        presetToggle.setBounds (top.removeFromLeft (28).reduced (1, 0));
+        // Two-line toolbar — bigger hit targets
+        auto row1 = pb.removeFromTop (28);
+        presetToggle.setBounds (row1.removeFromLeft (32).reduced (1, 1));
         if (! presetCollapsed)
         {
-            prevPreset.setBounds (top.removeFromLeft (20).reduced (1));
-            nextPreset.setBounds (top.removeFromLeft (20).reduced (1));
-            initBtn.setBounds (top.removeFromLeft (28).reduced (1));
-            savePresetBtn.setBounds (top.removeFromLeft (30).reduced (1));
-            loadPresetBtn.setBounds (top.removeFromLeft (30).reduced (1));
-            bankBtn.setBounds (top.removeFromLeft (34).reduced (1));
-            presetLabel.setBounds (pb.removeFromTop (18).reduced (2, 0));
+            prevPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
+            nextPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
+            initBtn.setBounds (row1.removeFromLeft (row1.getWidth()).reduced (1, 1));
+            auto row2 = pb.removeFromTop (28);
+            savePresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 3).reduced (1, 1));
+            loadPresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 2).reduced (1, 1));
+            bankBtn.setBounds (row2.reduced (1, 1));
+            presetLabel.setBounds (pb.removeFromTop (16).reduced (2, 0));
             presetList.setBounds (pb);
             presetList.setOpaque (false);
             presetTab.setOpaque (false);
@@ -121,7 +123,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (110); // oversized logo strip
+    auto header = full.removeFromTop (128); // max logo strip
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -129,13 +131,16 @@ void SalekHightechAudioProcessorEditor::resized()
     masterGainSlider.setBounds (header.removeFromRight (40).reduced (2));
     // Compact LFO sources (horizontal strip, always visible)
     // LFO sources — drag sources (Vital-style)
-    modSrcLfo3.setBounds (header.removeFromRight (44).reduced (1, 3));
-    modSrcLfo2.setBounds (header.removeFromRight (44).reduced (1, 3));
-    modSrcLfo1.setBounds (header.removeFromRight (44).reduced (1, 3));
+    modSrcLfo3.setBounds (header.removeFromRight (52).reduced (2, 6));
+    modSrcLfo2.setBounds (header.removeFromRight (52).reduced (2, 6));
+    modSrcLfo1.setBounds (header.removeFromRight (52).reduced (2, 6));
+    modSrcLfo1.setButtonText ("LFO1");
+    modSrcLfo2.setButtonText ("LFO2");
+    modSrcLfo3.setButtonText ("LFO3");
     inspireBtn.setBounds (header.removeFromRight (64).reduced (2, 8));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (820, juce::jmax (480, header.getWidth() - 20));
+        const int lw = juce::jmin (980, juce::jmax (560, header.getWidth() - 8));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);

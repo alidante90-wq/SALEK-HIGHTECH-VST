@@ -107,6 +107,34 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     styleModSrc (modSrcLfo1, juce::Colour (0xff00e8ff), 0);
     styleModSrc (modSrcLfo2, juce::Colour (0xffff2d9b), 1);
     styleModSrc (modSrcLfo3, juce::Colour (0xff39ff14), 2);
+
+    // Global: when LFO armed, click any knob to route (works even if DnD target misses)
+    struct GlobalModClickHook : public juce::MouseListener
+    {
+        SalekHightechAudioProcessorEditor* ed = nullptr;
+        void mouseDown (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr || ed->armedModSource < 0) return;
+            // Ignore clicks on the LFO arm buttons themselves
+            if (e.eventComponent == &ed->modSrcLfo1 || e.eventComponent == &ed->modSrcLfo2
+                || e.eventComponent == &ed->modSrcLfo3)
+                return;
+            auto pos = e.getEventRelativeTo (ed).getPosition();
+            float amt = 0.5f;
+            if (e.mods.isShiftDown()) amt = 1.0f;
+            if (e.mods.isAltDown()) amt = -0.5f;
+            if (e.mods.isCommandDown() || e.mods.isCtrlDown()) amt = 0.25f;
+            if (e.mods.isRightButtonDown()) amt = 0.f;
+            ed->tryAssignModAt (pos, amt, e.mods);
+        }
+    };
+    {
+        auto* ghook = new GlobalModClickHook();
+        ghook->ed = this;
+        addMouseListener (ghook, true); // all children
+        modHookListeners.push_back (std::unique_ptr<juce::MouseListener> (ghook));
+    }
+
     // Real drag-and-drop from LFO pills onto knobs
     struct LfoDragHook : public juce::MouseListener
     {
@@ -497,9 +525,9 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
         auto dt = std::make_unique<KnobDropTarget>();
         dt->ed = this;
         dt->paramId = id;
-        dt->setInterceptsMouseClicks (false, false); // slider still drags; DnD hits target
+        dt->setInterceptsMouseClicks (true, false);
         parent.addAndMakeVisible (*dt);
-        dt->toBehind (&k->s);
+        dt->toFront (false); // above slider; hitTest false unless dragging
         knobDropTargets.push_back (std::move (dt));
     }
 
@@ -612,4 +640,39 @@ void SalekHightechAudioProcessorEditor::rebuildPresetRows()
     }
     presetList.updateContent();
     presetList.repaint();
+}
+
+
+void SalekHightechAudioProcessorEditor::tryAssignModAt (juce::Point<int> editorPos, float amount, const juce::ModifierKeys&)
+{
+    if (armedModSource < 0) return;
+    for (auto& k : knobs)
+    {
+        if (k == nullptr || ! k->s.isShowing()) continue;
+        auto r = getLocalArea (&k->s, k->s.getLocalBounds());
+        auto rn = getLocalArea (&k->name, k->name.getLocalBounds());
+        if (r.contains (editorPos) || rn.contains (editorPos))
+        {
+            assignModToParam (k->paramId, amount);
+            return;
+        }
+    }
+}
+
+void SalekHightechAudioProcessorEditor::mouseDrag (const juce::MouseEvent& e)
+{
+    juce::AudioProcessorEditor::mouseDrag (e);
+}
+void SalekHightechAudioProcessorEditor::mouseUp (const juce::MouseEvent& e)
+{
+    // Fallback: if LFO armed and release over a knob, assign (even without DnD target hit)
+    if (armedModSource >= 0 && e.mouseWasDraggedSinceMouseDown())
+    {
+        auto pos = e.getEventRelativeTo (this).getPosition();
+        float amt = 0.5f;
+        if (e.mods.isShiftDown()) amt = 1.0f;
+        if (e.mods.isAltDown()) amt = -0.5f;
+        tryAssignModAt (pos, amt, e.mods);
+    }
+    juce::AudioProcessorEditor::mouseUp (e);
 }

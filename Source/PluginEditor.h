@@ -333,6 +333,9 @@ private:
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void assignModToParam (const juce::String& paramId, float amount = 0.5f);
+    void tryAssignModAt (juce::Point<int> editorPos, float amount, const juce::ModifierKeys& mods);
+    void mouseUp (const juce::MouseEvent& e) override;
+    void mouseDrag (const juce::MouseEvent& e) override;
     std::vector<std::unique_ptr<juce::MouseListener>> modHookListeners;
     struct KnobDropTarget : public juce::Component, public juce::DragAndDropTarget
     {
@@ -365,13 +368,17 @@ private:
         void paint (juce::Graphics& g) override
         {
             if (! hot) return;
-            g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.35f));
+            g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f));
             g.fillEllipse (getLocalBounds().toFloat().reduced (2.f));
-            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.9f));
-            g.drawEllipse (getLocalBounds().toFloat().reduced (2.f), 2.f);
+            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.95f));
+            g.drawEllipse (getLocalBounds().toFloat().reduced (2.f), 2.5f);
         }
-        // Let slider receive normal mouse; DnD container still hits this target
         bool shouldDrawDragImageWhenOver() override { return false; }
+        // Critical: only intercept hits while a drag is active so slider stays usable
+        bool hitTest (int, int) override
+        {
+            return ed != nullptr && ed->isDragAndDropActive();
+        }
     };
     std::vector<std::unique_ptr<KnobDropTarget>> knobDropTargets;
     // bottom model strip
