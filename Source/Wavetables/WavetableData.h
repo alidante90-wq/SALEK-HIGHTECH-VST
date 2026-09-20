@@ -158,8 +158,8 @@ public:
 
     void generateDefaultTables()
     {
-        // Big bank: 64 frames — analog-style morph (sine→tri→sqr→saw→complex→metallic)
-        frames.resize (64);
+        // Big bank: 128 frames — analog-style morph (sine→tri→sqr→saw→complex→metallic)
+        frames.resize (128); // wide bank
         for (int i = 0; i < WavetableFrame::tableSize; ++i)
         {
             const float t = static_cast<float> (i) / static_cast<float> (WavetableFrame::tableSize);
@@ -256,12 +256,34 @@ public:
             {
                 float morph = (float) (f - 48) / 15.f;
                 float s = addSaw (16 + (int) (morph * 40.f));
-                // soft fold
                 s = std::tanh (s * (1.2f + morph * 2.5f));
-                // slight even harmonics (analog-ish)
                 s += 0.12f * morph * std::sin (2.f * phase);
                 s += 0.08f * morph * std::sin (4.f * phase);
                 frames[(size_t) f].samples[idx] = s * 0.7f;
+            }
+            // 64–95 formant / vowel / vocal-ish
+            for (int f = 64; f < 96; ++f)
+            {
+                float morph = (float) (f - 64) / 31.f;
+                float f1 = 0.8f + morph * 2.5f;
+                float f2 = 2.2f + morph * 4.f;
+                float f3 = 5.0f + morph * 6.f;
+                float s = std::sin (phase)
+                        + 0.55f * std::sin (f1 * phase)
+                        + 0.35f * std::sin (f2 * phase)
+                        + 0.2f * std::sin (f3 * phase);
+                s *= (0.55f + 0.2f * std::sin (3.f * phase + morph));
+                frames[(size_t) f].samples[idx] = s * 0.55f;
+            }
+            // 96–127 metallic / sync / FM-ish / glassy
+            for (int f = 96; f < 128; ++f)
+            {
+                float morph = (float) (f - 96) / 31.f;
+                float mod = std::sin ((2.f + morph * 8.f) * phase);
+                float s = std::sin (phase + morph * 2.5f * mod);
+                s += 0.25f * morph * std::sin ((7.f + morph * 11.f) * phase);
+                s = std::tanh (s * (1.1f + morph));
+                frames[(size_t) f].samples[idx] = s * 0.6f;
             }
         }
         for (auto& f : frames)

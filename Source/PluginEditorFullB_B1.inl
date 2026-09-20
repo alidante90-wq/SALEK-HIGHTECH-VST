@@ -26,11 +26,17 @@ void SalekHightechAudioProcessorEditor::resized()
             k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cell.getWidth() - 8), 12);
             k->s.setNumDecimalPlacesToDisplay (2);
             k->s.textFromValueFunction = [] (double v)
-            {
-                if (std::abs (v - std::round (v)) < 1e-3)
-                    return juce::String ((int) std::round (v));
-                return juce::String (v, 2);
-            };
+                {
+                    if (std::abs (v) >= 1000.0)
+                        return juce::String ((int) std::round (v));
+                    if (std::abs (v - std::round (v)) < 1e-3)
+                        return juce::String ((int) std::round (v));
+                    if (std::abs (v) >= 100.0)
+                        return juce::String (v, 0);
+                    if (std::abs (v) >= 10.0)
+                        return juce::String (v, 1);
+                    return juce::String (v, 2);
+                };
             k->s.setBounds (cell);
             k->s.setVisible (true);
         }
@@ -103,13 +109,14 @@ void SalekHightechAudioProcessorEditor::resized()
     bgSwapBtn.setBounds (header.removeFromRight (40).reduced (2));
     masterGainSlider.setBounds (header.removeFromRight (40).reduced (2));
     // Compact LFO sources (horizontal strip, always visible)
-    modSrcLfo3.setBounds (header.removeFromRight (38).reduced (1, 4));
-    modSrcLfo2.setBounds (header.removeFromRight (38).reduced (1, 4));
-    modSrcLfo1.setBounds (header.removeFromRight (38).reduced (1, 4));
-    spectrum.setBounds (header.removeFromRight (72).reduced (2));
-    scope.setBounds (header.removeFromRight (90).reduced (2));
-    if (wtDisplay != nullptr)
-        wtDisplay->setBounds (header.removeFromRight (140).reduced (2));
+    // LFO sources — drag sources (Vital-style)
+    modSrcLfo3.setBounds (header.removeFromRight (44).reduced (1, 3));
+    modSrcLfo2.setBounds (header.removeFromRight (44).reduced (1, 3));
+    modSrcLfo1.setBounds (header.removeFromRight (44).reduced (1, 3));
+    // Remove top scopes / spectrum / wt strip (user X)
+    spectrum.setBounds (0, 0, 0, 0); spectrum.setVisible (false);
+    scope.setBounds (0, 0, 0, 0); scope.setVisible (false);
+    if (wtDisplay != nullptr) { wtDisplay->setBounds (0, 0, 0, 0); wtDisplay->setVisible (false); }
 
     tabs.setBounds (full);
     tabs.toFront (false);
@@ -134,8 +141,14 @@ void SalekHightechAudioProcessorEditor::resized()
                 k->s.setNumDecimalPlacesToDisplay (2);
                 k->s.textFromValueFunction = [] (double v)
                 {
+                    if (std::abs (v) >= 1000.0)
+                        return juce::String ((int) std::round (v));
                     if (std::abs (v - std::round (v)) < 1e-3)
                         return juce::String ((int) std::round (v));
+                    if (std::abs (v) >= 100.0)
+                        return juce::String (v, 0);
+                    if (std::abs (v) >= 10.0)
+                        return juce::String (v, 1);
                     return juce::String (v, 2);
                 };
                 k->s.setBounds (box);
@@ -209,16 +222,16 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (56).reduced (2));
-            auto modeRow = fr.removeFromTop (22);
+                filterDisplay->setBounds (fr.removeFromTop (48).reduced (2));
+            auto modeRow = fr.removeFromTop (20);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
-            // 2x2 grid: CUTOFF RESO / F DRIVE F ENV
-            auto r1 = fr.removeFromTop (fr.getHeight() / 2);
-            placeId (r1.removeFromLeft (r1.getWidth() / 2).reduced (4), "filter_cutoff");
-            placeId (r1.reduced (4), "filter_reso");
-            placeId (fr.removeFromLeft (fr.getWidth() / 2).reduced (4), "filter_drive");
-            placeId (fr.reduced (4), "filter_env");
+            // Clear vertical stack: CUTOFF (big) | RESO | F DRIVE | F ENV
+            const int fh = juce::jmax (40, fr.getHeight() / 4);
+            placeId (fr.removeFromTop (fh).reduced (3, 2), "filter_cutoff");
+            placeId (fr.removeFromTop (fh).reduced (3, 2), "filter_reso");
+            placeId (fr.removeFromTop (fh).reduced (3, 2), "filter_drive");
+            placeId (fr.reduced (3, 2), "filter_env");
         }
         {
             auto er = envTab.getLocalBounds().reduced (4);

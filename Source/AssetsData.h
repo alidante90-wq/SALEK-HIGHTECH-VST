@@ -210,13 +210,35 @@ inline juce::Image loadCharPinkDead()
     return fromDisk ({ "char_pink_dead.png" });
 }
 
-/** Only 3 official models — keeps plugin size small */
+/** 10 character models (binary + disk fallback) */
 inline juce::Image loadCharPortrait (int index = 0)
 {
-    juce::Image imgs[] = {
-        loadCharToronowla(), loadCharNeonStreet(), loadCharPinkDead()
+    // Prefer binary-embedded loaders first
+    auto loadBin = [] (const char* res) -> juce::Image {
+        auto im = fromBinaryName (res);
+        return im;
     };
-    const int n = 3;
+    juce::Image imgs[] = {
+        loadCharToronowla(),
+        loadCharNeonStreet(),
+        loadCharPinkDead(),
+        loadBin ("char_apron_png"),
+        loadBin ("char_catgirl_png"),
+        loadBin ("char_cyber_white_png"),
+        loadBin ("char_foxgirl_png"),
+        loadBin ("char_gun_png"),
+        loadBin ("char_purple_latex_png"),
+        loadBin ("char_white_suit_png"),
+        loadCharApron(),
+        loadCharCatgirl(),
+        loadCharCyber(),
+        loadCharFox(),
+        loadCharGun(),
+        loadCharPurple(),
+        loadCharWhite()
+    };
+    const int n = (int) (sizeof (imgs) / sizeof (imgs[0]));
+    // skip invalid by walking
     for (int k = 0; k < n; ++k)
     {
         auto& im = imgs[(index + k) % n];

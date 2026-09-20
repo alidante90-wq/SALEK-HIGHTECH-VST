@@ -217,6 +217,7 @@ private:
 #include "PluginEditorStepGrid.inl"
 
 class SalekHightechAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                                  public juce::DragAndDropContainer,
                                           public juce::Timer,
                                           public juce::ListBoxModel
 {

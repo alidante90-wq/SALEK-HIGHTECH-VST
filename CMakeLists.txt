@@ -40,6 +40,13 @@ juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/char_toronowla.png"
     "Source/Assets/char_neon_street.png"
     "Source/Assets/char_pink_dead.png"
+    "Source/Assets/char_apron.png"
+    "Source/Assets/char_catgirl.png"
+    "Source/Assets/char_cyber_white.png"
+    "Source/Assets/char_foxgirl.png"
+    "Source/Assets/char_gun.png"
+    "Source/Assets/char_purple_latex.png"
+    "Source/Assets/char_white_suit.png"
 )
 
 target_sources(SALEK_HIGHTECH PRIVATE

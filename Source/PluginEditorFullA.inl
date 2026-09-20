@@ -47,6 +47,30 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     styleModSrc (modSrcLfo1, juce::Colour (0xff00e8ff), 0);
     styleModSrc (modSrcLfo2, juce::Colour (0xffff2d9b), 1);
     styleModSrc (modSrcLfo3, juce::Colour (0xff39ff14), 2);
+    // Real drag-and-drop from LFO pills onto knobs
+    struct LfoDragHook : public juce::MouseListener
+    {
+        SalekHightechAudioProcessorEditor* ed = nullptr;
+        int src = 0;
+        void mouseDrag (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr || e.getDistanceFromDragStart() < 6) return;
+            ed->armedModSource = src;
+            juce::String desc = "SALEK_LFO" + juce::String (src);
+            if (auto* c = dynamic_cast<juce::DragAndDropContainer*> (ed))
+                c->startDragging (desc, e.eventComponent);
+        }
+    };
+    for (int i = 0; i < 3; ++i)
+    {
+        auto* hook = new LfoDragHook();
+        hook->ed = this;
+        hook->src = i;
+        juce::TextButton* btns[3] = { &modSrcLfo1, &modSrcLfo2, &modSrcLfo3 };
+        btns[i]->addMouseListener (hook, false);
+        // leak-free store
+        modHookListeners.push_back (std::unique_ptr<juce::MouseListener> (hook));
+    }
 
     masterGainSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     masterGainSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
@@ -85,11 +109,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.setOpaque (false);
     tabs.setColour (juce::TabbedComponent::backgroundColourId, juce::Colours::transparentBlack);
     tabs.setColour (juce::TabbedComponent::outlineColourId, juce::Colour (0x55ffffff));
-    for (auto* panel : { &mainTab, &modTab, &lfoTab, &fxTab, &magicTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
+    for (auto* panel : { &mainTab, &modTab, &lfoTab, &magicTab, &seqTab, &oscTab, &filterTab, &envTab, &presetTab })
     {
         panel->setOpaque (false);
         panel->setColour (juce::ResizableWindow::backgroundColourId, juce::Colours::transparentBlack);
     }
+    // FX: solid dark underlay so knobs readable (user: black under FX)
+    fxTab.setOpaque (true);
+    fxTab.setColour (juce::ResizableWindow::backgroundColourId, juce::Colour (0xff08060f));
 
     {
         mainTab.addAndMakeVisible (oscTab);
@@ -278,7 +305,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     charCycleBtn.setTooltip ("Change character model (left panel) — does NOT change background");
     charCycleBtn.onClick = [this]
     {
-        charPortraitIdx = (charPortraitIdx + 1) % 3; // 3 models only
+        charPortraitIdx = (charPortraitIdx + 1) % 10; // 3 models only
         refreshCharCache();
         repaint();
     };
@@ -353,10 +380,11 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     k->s.setScrollWheelEnabled (true);
     k->s.setMouseDragSensitivity (180);
     // Cleaner value text: max 2 decimals, integers without .00
-    k->s.textFromValueFunction = [] (double v)
-    {
-        if (std::abs (v - std::round (v)) < 1e-4)
-            return juce::String ((int) std::round (v));
+    k->s.textFromValueFunction = [] (double v) {
+        if (std::abs (v) >= 1000.0) return juce::String ((int) std::round (v));
+        if (std::abs (v - std::round (v)) < 1e-4) return juce::String ((int) std::round (v));
+        if (std::abs (v) >= 100.0) return juce::String (v, 0);
+        if (std::abs (v) >= 10.0) return juce::String (v, 1);
         return juce::String (v, 2);
     };
     parent.addAndMakeVisible (k->s);
@@ -374,13 +402,21 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
         juce::String pid;
         void mouseDown (const juce::MouseEvent& e) override
         {
-            if (ed == nullptr || ed->armedModSource < 0) return;
+            if (ed == nullptr) return;
+            if (ed->armedModSource < 0) return;
             float amt = 0.5f;
-            if (e.mods.isShiftDown()) amt = 1.0f;       // precise max like Vital
-            if (e.mods.isAltDown())   amt = -0.5f;      // bipolar invert
-            if (e.mods.isCommandDown() || e.mods.isCtrlDown()) amt = 0.25f; // fine
-            if (e.mods.isRightButtonDown()) amt = 0.f;  // clear
+            if (e.mods.isShiftDown()) amt = 1.0f;
+            if (e.mods.isAltDown())   amt = -0.5f;
+            if (e.mods.isCommandDown() || e.mods.isCtrlDown()) amt = 0.25f;
+            if (e.mods.isRightButtonDown()) amt = 0.f;
             ed->assignModToParam (pid, amt);
+        }
+        void mouseUp (const juce::MouseEvent&) override
+        {
+            // Drop end after drag from LFO pill
+            if (ed != nullptr && ed->armedModSource >= 0
+                && juce::DragAndDropContainer::isDragAndDropActive())
+                ed->assignModToParam (pid, 0.5f);
         }
     };
     auto hook = std::make_unique<ModHook>();
