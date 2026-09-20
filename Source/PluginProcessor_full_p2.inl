@@ -82,9 +82,11 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
         lfo.setAmount (1.0f);
         static const salek::LFO::Wave waves[] = {
             salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
-            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom
+            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
+            salek::LFO::Wave::SmoothRnd, salek::LFO::Wave::Chaos, salek::LFO::Wave::Pulse,
+            salek::LFO::Wave::Exp, salek::LFO::Wave::Sine3, salek::LFO::Wave::SoftSquare
         };
-        lfo.setWave (waves[juce::jlimit (0, 5, wave)]);
+        lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
         juce::ignoreUnused (amt);
     };
     setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"));

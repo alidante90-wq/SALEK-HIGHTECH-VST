@@ -5,7 +5,7 @@
 namespace salek {
 class LFO {
 public:
-    enum class Wave { Sine, Triangle, Saw, Square, SAndH, Custom };
+    enum class Wave { Sine, Triangle, Saw, Square, SAndH, Custom, SmoothRnd, Chaos, Pulse, Exp, Sine3, SoftSquare };
     static constexpr int TableSize = 32;
     static constexpr int NumShapes = 32;
 
@@ -95,6 +95,40 @@ public:
             case Wave::SAndH:
                 if(phase<phaseInc) lastSH=juce::Random::getSystemRandom().nextFloat()*2-1;
                 v=lastSH; break;
+            case Wave::SmoothRnd:
+            {
+                if (phase < phaseInc)
+                {
+                    lastSH2 = lastSH;
+                    lastSH = juce::Random::getSystemRandom().nextFloat()*2-1;
+                }
+                float frac = (float) (phase / juce::jmax (1e-9, phaseInc));
+                frac = juce::jlimit (0.f, 1.f, frac);
+                frac = frac * frac * (3.f - 2.f * frac);
+                v = lastSH2 * (1.f - frac) + lastSH * frac;
+                break;
+            }
+            case Wave::Chaos:
+                chaosState = 3.7f * chaosState * (1.f - chaosState);
+                v = chaosState * 2.f - 1.f;
+                break;
+            case Wave::Pulse:
+                v = p < 0.18f ? 1.f : -0.35f;
+                break;
+            case Wave::Exp:
+                v = 2.f * (1.f - std::exp (-5.f * p)) - 1.f;
+                break;
+            case Wave::Sine3:
+                v = std::sin (p * juce::MathConstants<float>::twoPi)
+                  + 0.35f * std::sin (3.f * p * juce::MathConstants<float>::twoPi);
+                v *= 0.75f;
+                break;
+            case Wave::SoftSquare:
+            {
+                float s = std::sin (p * juce::MathConstants<float>::twoPi);
+                v = std::tanh (s * 4.f);
+                break;
+            }
             case Wave::Custom:
             {
                 float idx = p * (float) (TableSize - 1);

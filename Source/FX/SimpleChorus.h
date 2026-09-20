@@ -46,8 +46,15 @@ public:
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             delayL[(size_t) writePos] = inL;
             delayR[(size_t) writePos] = inR;
-            float wetL = read (delayL, dL);
-            float wetR = read (delayR, dR);
+            // second voice (BBD-ish offset)
+            const float mod2 = std::sin ((phase * 0.73f + 0.25f) * juce::MathConstants<float>::twoPi);
+            const float dL2 = baseDelay * 1.35f + mod2 * depth * maxDelay * 0.25f;
+            const float dR2 = baseDelay * 1.35f - mod2 * depth * maxDelay * 0.25f;
+            float wetL = read (delayL, dL) * 0.65f + read (delayL, dL2) * 0.35f;
+            float wetR = read (delayR, dR) * 0.65f + read (delayR, dR2) * 0.35f;
+            // analog soft sat + slight HF roll on wet
+            wetL = std::tanh (wetL * 1.2f);
+            wetR = std::tanh (wetR * 1.2f);
             buffer.setSample (0, i, inL * (1.0f - mix) + wetL * mix);
             if (ch > 1) buffer.setSample (1, i, inR * (1.0f - mix) + wetR * mix);
             writePos = (writePos + 1) % size;
