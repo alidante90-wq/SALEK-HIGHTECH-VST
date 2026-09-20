@@ -231,6 +231,33 @@ void SalekHightechAudioProcessorEditor::resized()
             auto oa = oscTab.getLocalBounds().reduced (2);
             const int gap = 12;
             const int colW = (oa.getWidth() - gap * 2) / 3;
+
+        // SALEK icons over OSC / FILTER headers
+        if (tabSectionIcons.size() >= 5)
+        {
+            const int ih = 28;
+            for (int c = 0; c < 3; ++c)
+            {
+                auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, ih);
+                tabSectionIcons[c]->setBounds (col.removeFromLeft (ih).reduced (2));
+                if (tabSectionIcons[c]->getParentComponent() != &oscTab)
+                    oscTab.addAndMakeVisible (*tabSectionIcons[c]);
+                tabSectionIcons[c]->setVisible (true);
+                tabSectionIcons[c]->toFront (false);
+            }
+            // filter + env icons
+            auto fr = filterTab.getLocalBounds().removeFromTop (28);
+            tabSectionIcons[3]->setBounds (fr.removeFromLeft (28).reduced (2));
+            if (tabSectionIcons[3]->getParentComponent() != &filterTab)
+                filterTab.addAndMakeVisible (*tabSectionIcons[3]);
+            tabSectionIcons[3]->setVisible (true);
+            auto er = envTab.getLocalBounds().removeFromTop (28);
+            tabSectionIcons[4]->setBounds (er.removeFromLeft (28).reduced (2));
+            if (tabSectionIcons[4]->getParentComponent() != &envTab)
+                envTab.addAndMakeVisible (*tabSectionIcons[4]);
+            tabSectionIcons[4]->setVisible (true);
+        }
+
             juce::Component* mons[3] = { oscMon1.get(), oscMon2.get(), oscMon3.get() };
             juce::ComboBox* shapes[3] = { &osc1ShapeBox, &osc2ShapeBox, &osc3ShapeBox };
             const char* idsLvl[3]   = { "osc1_level", "osc2_level", "osc3_level" };
@@ -338,6 +365,22 @@ void SalekHightechAudioProcessorEditor::resized()
 
     // MOD — matrix left; clean FM grid + macros right (hide stray knobs)
     {
+
+        // MOD icons: MATRIX / MACRO / FM
+        if (tabSectionIcons.size() >= 11)
+        {
+            auto top = modTab.getLocalBounds().removeFromTop (32).reduced (4, 2);
+            for (int i = 0; i < 3; ++i)
+            {
+                auto* ic = tabSectionIcons[8 + i];
+                ic->setBounds (top.removeFromLeft (32).reduced (2));
+                if (ic->getParentComponent() != &modTab)
+                    modTab.addAndMakeVisible (*ic);
+                ic->setVisible (true);
+                ic->toFront (false);
+            }
+        }
+
         auto r = modTab.getLocalBounds().reduced (4);
         auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
 
@@ -410,6 +453,22 @@ void SalekHightechAudioProcessorEditor::resized()
 
     // LFO
     {
+
+        // LFO tab icons (LFO / SYNC / RND)
+        if (tabSectionIcons.size() >= 8)
+        {
+            auto top = lfoTab.getLocalBounds().removeFromTop (32).reduced (4, 2);
+            for (int i = 0; i < 3; ++i)
+            {
+                auto* ic = tabSectionIcons[5 + i];
+                ic->setBounds (top.removeFromLeft (32).reduced (2));
+                if (ic->getParentComponent() != &lfoTab)
+                    lfoTab.addAndMakeVisible (*ic);
+                ic->setVisible (true);
+                ic->toFront (false);
+            }
+        }
+
         auto r = lfoTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr) lfoDisplay->setBounds (r.removeFromTop (56).reduced (1));
         auto presetRow = r.removeFromTop (24);

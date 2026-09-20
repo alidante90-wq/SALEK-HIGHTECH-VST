@@ -37,8 +37,8 @@ juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/bg_isatis.jpg"
     "Source/Assets/bg_salek.jpg"
     "Source/Assets/logo_giti.png"
-    "Source/Assets/logo_giti_alt.png",
-    "Source/Assets/icons_atlas.png",
+    "Source/Assets/logo_giti_alt.png"
+    "Source/Assets/icons_atlas.png"
     "Source/Assets/logo_salek_sheet.png"
     "Source/Assets/char_toronowla.png"
     "Source/Assets/char_neon_street.png"

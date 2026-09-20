@@ -257,6 +257,26 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     tabs.addTab ("LFO", juce::Colours::transparentBlack, &lfoTab, false);
     tabs.addTab ("FX", juce::Colours::transparentBlack, &fxTab, false);
     tabs.addTab ("MAGIC", juce::Colours::transparentBlack, &magicTab, false);
+    
+    // SALEK icon pack badges for MAIN / LFO / MOD
+    {
+        // indices: OSC1,OSC2,OSC3,FILTER1,ENV, LFO,LFO_SYNC,LFO_RND, MATRIX,MACRO,FM,WAVETABLE
+        const int idxs[] = { 0, 1, 2, 11, 15, 17, 18, 19, 20, 21, 5, 3 };
+        for (int i = 0; i < 12; ++i)
+        {
+            auto* ic = tabSectionIcons.add (new juce::ImageComponent ("tabIcon" + juce::String (i)));
+            auto img = SalekAssets::loadIcon (idxs[i]);
+            if (img.isValid())
+            {
+                ic->setImage (img);
+                ic->setImagePlacement (juce::RectanglePlacement::centred);
+            }
+            ic->setInterceptsMouseClicks (false, false);
+            ic->setVisible (false);
+            addAndMakeVisible (ic); // reparent to tabs in layout
+        }
+    }
+
     tabs.addTab ("SEQ", juce::Colours::transparentBlack, &seqTab, false);
     addAndMakeVisible (tabs);
     tabs.setTabBarDepth (28);
