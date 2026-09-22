@@ -131,8 +131,26 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     spectralSmear.setMix (g("spectral_mix"));
     spectralSmear.setAmount (g("spectral_amt"));
     spectralSmear.setFreeze (g("spectral_freeze") > 0.5f);
+    spectralSmear.setShift (g("spectral_shift"));
+    spectralSmear.setGate (g("spectral_gate"));
     mseg.setRateHz (g("mseg_rate"));
     mseg.setLoop (g("mseg_loop") > 0.5f);
+    {
+        static const salek::shae::MSEG::Curve curves[] = {
+            salek::shae::MSEG::Curve::Linear, salek::shae::MSEG::Curve::Exp,
+            salek::shae::MSEG::Curve::Log, salek::shae::MSEG::Curve::Smooth };
+        mseg.setCurve (curves[juce::jlimit (0, 3, (int) g("mseg_curve"))]);
+        const int sh = (int) g("mseg_shape");
+        static int lastShape = -1;
+        if (sh != lastShape)
+        {
+            lastShape = sh;
+            if (sh == 0) mseg.loadADSRShape();
+            else if (sh == 1) mseg.loadRampUp();
+            else if (sh == 2) mseg.loadTriangle();
+            else mseg.loadHitechBurst();
+        }
+    }
     {
         const float mv = mseg.processBlock (juce::jmax (1, numSamples)) * g("mseg_amount");
         modMatrix.setSourceValue (salek::ModMatrix::Source::MSEG, mv);

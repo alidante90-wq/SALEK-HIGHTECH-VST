@@ -90,8 +90,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("res_freq","Res Freq",40,2000,220);
     F("spectral_mix","Spectral",0,1,0); F("spectral_amt","Spec Amt",0,1,0.5f);
     B("spectral_freeze","Spec Freeze",false);
+    F("spectral_shift","Spec Shift",-1,1,0); F("spectral_gate","Spec Gate",0,1,0);
     F("mseg_rate","MSEG Rate",0.01f,20,1); F("mseg_amount","MSEG Amt",0,1,0);
     B("mseg_loop","MSEG Loop",true);
+    C("mseg_curve","MSEG Curve",{"Linear","Exp","Log","Smooth"},3);
+    C("mseg_shape","MSEG Shape",{"ADSR","Ramp","Triangle","HiTech"},0);
     C("quality_mode","Quality",{"ECO","NORMAL","HIGH","ULTRA"},1);
     C("dist_mode","Dist Mode",{"Soft","Tube","Tape","HardClip","Shaper","Fold","Asym","Rect","Crush","Down","Digital","Metal","Neuro","Hitech"},0);
     F("bassify","Bassify",0,1,0);

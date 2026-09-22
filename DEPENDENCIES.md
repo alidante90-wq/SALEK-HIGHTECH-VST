@@ -21,3 +21,7 @@
 - PolyBLEP / BLAMP (Välimäki et al. style bandlimited steps)
 - ZDF state-variable filter coefficient forms
 - Soft clipping / waveshaping gain compensation
+
+## SHAE Spectral / MSEG (this revision)
+- Spectral: custom inharmonic comb-resonator bank + freeze/shift/gate (no FFT, no third-party)
+- MSEG: custom multi-point envelope with curve modes and shape presets

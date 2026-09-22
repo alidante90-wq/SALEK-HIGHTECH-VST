@@ -367,118 +367,221 @@ struct Resonator
 };
 
 /** Lightweight spectral smear: parallel tuned comb stack (no FFT, realtime-safe) */
+/** Advanced spectral colour without heavy FFT:
+ *  - parallel tuned resonators (partials)
+ *  - freeze (hold resonator state)
+ *  - shift (scale delay lengths → pitch-ish smear)
+ *  - gate (noise floor / spectral gate approx)
+ */
 struct SpectralSmear
 {
-    static constexpr int kCombs = 6;
+    static constexpr int kCombs = 8;
     void prepare (double sampleRate) noexcept
     {
         sr = sampleRate > 0 ? sampleRate : 44100.0;
-        for (int i = 0; i < kCombs; ++i)
-        {
-            const int n = juce::jmax (32, (int) (sr * 0.03 / (i + 1)));
-            comb[i].assign ((size_t) n, 0.f);
-            cpos[i] = 0;
-        }
+        rebuildDelays (1.f);
+        for (int i = 0; i < kCombs; ++i) { cpos[i] = 0; dampZ[i] = 0.f; }
     }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
     void setAmount (float a) noexcept { amount = juce::jlimit (0.f, 1.f, a); }
     void setFreeze (bool f) noexcept { freeze = f; }
+    void setShift (float s) noexcept
+    {
+        // -1..+1 → delay scale 0.5..2
+        shift = juce::jlimit (-1.f, 1.f, s);
+        rebuildDelays (std::pow (2.f, shift));
+    }
+    void setGate (float g) noexcept { gate = juce::jlimit (0.f, 1.f, g); }
 
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
         if (mix < 1e-4f) return;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
+        const float fb = 0.5f + amount * 0.45f;
+        const float gateThresh = gate * gate * 0.08f;
+
         for (int i = 0; i < n; ++i)
         {
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             float mono = 0.5f * (inL + inR);
+            float env = std::abs (mono);
+            envFollow += 0.02f * (env - envFollow);
+            const float gateGain = (gate < 1e-3f) ? 1.f
+                : juce::jlimit (0.f, 1.f, (envFollow - gateThresh) / (gateThresh + 1e-4f));
+
             float wet = 0.f;
             for (int c = 0; c < kCombs; ++c)
             {
                 auto& b = comb[c];
                 const int len = (int) b.size();
-                if (len < 2) continue;
+                if (len < 4) continue;
                 int p = cpos[c] % len;
                 float o = b[(size_t) p];
+                // mild damping LP inside loop
+                dampZ[c] += (0.25f + amount * 0.5f) * (o - dampZ[c]);
+                o = dampZ[c];
                 if (! freeze)
-                    b[(size_t) p] = mono + o * (0.55f + amount * 0.35f);
+                    b[(size_t) p] = mono * gateGain + o * fb;
                 cpos[c] = (p + 1) % len;
-                wet += o;
+                // odd combs → L bias, even → R
+                wet += o * (0.7f + 0.3f * ((c & 1) ? 1.f : 0.7f));
             }
             wet *= (1.f / (float) kCombs);
-            wet = fastTanh (wet * (1.f + amount));
-            buffer.setSample (0, i, inL * (1.f - mix) + wet * mix);
+            wet = fastTanh (wet * (1.1f + amount * 0.6f));
+            const float w = mix * (0.55f + amount * 0.45f);
+            buffer.setSample (0, i, inL * (1.f - w) + wet * w);
             if (ch > 1)
-                buffer.setSample (1, i, inR * (1.f - mix) + wet * mix * 0.97f);
+                buffer.setSample (1, i, inR * (1.f - w) + wet * w * 0.96f);
+        }
+    }
+
+    void rebuildDelays (float scale) noexcept
+    {
+        // Inharmonic partial ratios for alien/metallic spectra
+        static const float ratios[kCombs] = { 1.f, 1.47f, 2.12f, 2.76f, 3.51f, 4.33f, 5.18f, 6.07f };
+        for (int i = 0; i < kCombs; ++i)
+        {
+            float sec = 0.028f / ratios[i] * scale;
+            int n = juce::jmax (16, (int) (sr * sec));
+            n = juce::jmin (n, (int) (sr * 0.08));
+            comb[i].assign ((size_t) n, 0.f);
+            cpos[i] = 0;
         }
     }
 
     double sr = 44100.0;
     std::vector<float> comb[kCombs];
     int cpos[kCombs] {};
-    float mix = 0.f, amount = 0.5f;
+    float dampZ[kCombs] {};
+    float mix = 0.f, amount = 0.5f, shift = 0.f, gate = 0.f, envFollow = 0.f;
     bool freeze = false;
 };
 
-/** Multi-segment envelope (MSEG) — up to 8 points, looping optional */
+/** Engineered multi-segment envelope (MSEG)
+ *  - up to 8 points with per-segment curve (lin / exp / log / s-curve)
+ *  - loop or one-shot
+ *  - bipolar or unipolar output
+ *  - shape presets for production use
+ */
 struct MSEG
 {
     static constexpr int maxPts = 8;
+    enum class Curve : int { Linear = 0, Exp, Log, Smooth };
+
     void prepare (double sampleRate) noexcept { sr = sampleRate > 0 ? sampleRate : 44100.0; phase = 0; }
-    void reset() noexcept { phase = 0; }
+    void reset() noexcept { phase = 0.0; finished = false; }
+    void trigger() noexcept { phase = 0.0; finished = false; }
     void setRateHz (float hz) noexcept { rate = juce::jlimit (0.01f, 40.f, hz); }
     void setLoop (bool l) noexcept { loop = l; }
+    void setBipolar (bool b) noexcept { bipolar = b; }
+    void setCurve (Curve c) noexcept { curve = c; }
     void setPoint (int i, float t, float v) noexcept
     {
         if (i < 0 || i >= maxPts) return;
         ptsT[i] = juce::jlimit (0.f, 1.f, t);
         ptsV[i] = juce::jlimit (-1.f, 1.f, v);
         nPts = juce::jmax (nPts, i + 1);
+        sortPoints();
     }
     void setNumPoints (int n) noexcept { nPts = juce::jlimit (2, maxPts, n); }
 
     float processBlock (int numSamples) noexcept
     {
-        const double inc = (double) rate / sr;
+        if (finished && ! loop) return bipolar ? 0.f : ptsV[juce::jmax (0, nPts - 1)];
         float v = eval ((float) phase);
-        phase += inc * (double) juce::jmax (1, numSamples);
+        phase += ((double) rate / sr) * (double) juce::jmax (1, numSamples);
         if (loop)
         {
             while (phase >= 1.0) phase -= 1.0;
         }
-        else if (phase > 1.0) { phase = 1.0; v = ptsV[juce::jmax (0, nPts - 1)]; }
-        return v;
+        else if (phase >= 1.0)
+        {
+            phase = 1.0;
+            finished = true;
+            v = ptsV[juce::jmax (0, nPts - 1)];
+        }
+        // bipolar: leave -1..1; unipolar shapes already use 0..1 points
+        if (bipolar)
+            ; // keep signed
+        return flushDenormal (v);
     }
 
     float eval (float t) const noexcept
     {
         if (nPts < 2) return 0.f;
         t = juce::jlimit (0.f, 1.f, t);
-        // find segment
         for (int i = 0; i < nPts - 1; ++i)
         {
             float t0 = ptsT[i], t1 = ptsT[i + 1];
-            if (t1 <= t0) t1 = t0 + 1e-4f;
-            if (t >= t0 && t <= t1)
+            if (t1 <= t0) continue;
+            if (t >= t0 && (t <= t1 || i == nPts - 2))
             {
                 float f = (t - t0) / (t1 - t0);
-                // smoothstep
-                f = f * f * (3.f - 2.f * f);
+                f = juce::jlimit (0.f, 1.f, f);
+                switch (curve)
+                {
+                    case Curve::Exp:    f = f * f; break;
+                    case Curve::Log:    f = 1.f - (1.f - f) * (1.f - f); break;
+                    case Curve::Smooth: f = f * f * (3.f - 2.f * f); break;
+                    default: break;
+                }
                 return ptsV[i] + (ptsV[i + 1] - ptsV[i]) * f;
             }
         }
         return ptsV[nPts - 1];
     }
 
+    void sortPoints() noexcept
+    {
+        // simple insertion keep time ordered
+        for (int i = 1; i < nPts; ++i)
+        {
+            float t = ptsT[i], v = ptsV[i];
+            int j = i;
+            while (j > 0 && ptsT[j - 1] > t)
+            {
+                ptsT[j] = ptsT[j - 1];
+                ptsV[j] = ptsV[j - 1];
+                --j;
+            }
+            ptsT[j] = t; ptsV[j] = v;
+        }
+        ptsT[0] = 0.f;
+        ptsT[nPts - 1] = 1.f;
+    }
+
     void loadADSRShape() noexcept
     {
-        nPts = 4;
+        nPts = 4; bipolar = false; curve = Curve::Smooth;
         ptsT[0] = 0.f;   ptsV[0] = 0.f;
-        ptsT[1] = 0.15f; ptsV[1] = 1.f;
-        ptsT[2] = 0.4f;  ptsV[2] = 0.55f;
+        ptsT[1] = 0.12f; ptsV[1] = 1.f;
+        ptsT[2] = 0.35f; ptsV[2] = 0.55f;
         ptsT[3] = 1.f;   ptsV[3] = 0.f;
+    }
+    void loadRampUp() noexcept
+    {
+        nPts = 2; bipolar = false; curve = Curve::Exp;
+        ptsT[0] = 0.f; ptsV[0] = 0.f;
+        ptsT[1] = 1.f; ptsV[1] = 1.f;
+    }
+    void loadTriangle() noexcept
+    {
+        nPts = 3; bipolar = true; curve = Curve::Linear;
+        ptsT[0] = 0.f;  ptsV[0] = -1.f;
+        ptsT[1] = 0.5f; ptsV[1] = 1.f;
+        ptsT[2] = 1.f;  ptsV[2] = -1.f;
+    }
+    void loadHitechBurst() noexcept
+    {
+        nPts = 6; bipolar = false; curve = Curve::Smooth;
+        ptsT[0] = 0.f;   ptsV[0] = 0.f;
+        ptsT[1] = 0.05f; ptsV[1] = 1.f;
+        ptsT[2] = 0.12f; ptsV[2] = 0.2f;
+        ptsT[3] = 0.2f;  ptsV[3] = 0.9f;
+        ptsT[4] = 0.45f; ptsV[4] = 0.35f;
+        ptsT[5] = 1.f;   ptsV[5] = 0.f;
     }
 
     double sr = 44100.0, phase = 0;
@@ -486,7 +589,8 @@ struct MSEG
     float ptsT[maxPts] { 0, 0.33f, 0.66f, 1.f };
     float ptsV[maxPts] { 0, 1.f, 0.5f, 0.f };
     int nPts = 4;
-    bool loop = true;
+    bool loop = true, bipolar = false, finished = false;
+    Curve curve = Curve::Smooth;
 };
 
 } // namespace shae
