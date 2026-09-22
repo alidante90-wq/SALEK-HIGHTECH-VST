@@ -108,6 +108,19 @@ public:
     void mouseDrag (const juce::MouseEvent& e) override
     {
         if (apvts == nullptr) return;
+        if (e.mods.isAltDown())
+        {
+            // Alt+drag: edit FOLD (Y) and WARP (X) — point-style shape sculpting proxy
+            const char* foldIds[] = { "osc1_fold", "osc2_fold", "osc3_fold" };
+            const char* warpIds[] = { "osc1_warp", "osc2_warp", "osc3_warp" };
+            float nx = juce::jlimit (0.f, 1.f, e.position.x / (float) juce::jmax (1, getWidth()));
+            float ny = juce::jlimit (0.f, 1.f, 1.f - e.position.y / (float) juce::jmax (1, getHeight()));
+            if (auto* pf = apvts->getParameter (foldIds[osc]))
+            { pf->beginChangeGesture(); pf->setValueNotifyingHost (pf->convertTo0to1 (ny)); pf->endChangeGesture(); }
+            if (auto* pw = apvts->getParameter (warpIds[osc]))
+            { pw->beginChangeGesture(); pw->setValueNotifyingHost (pw->convertTo0to1 (nx)); pw->endChangeGesture(); }
+            return;
+        }
         dragTable (e);
     }
     void mouseDoubleClick (const juce::MouseEvent&) override

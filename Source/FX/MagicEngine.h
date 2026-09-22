@@ -296,6 +296,8 @@ private:
     int glitchPos = 0;
     float psychFbL = 0.f, psychFbR = 0.f;
     float verbFbL = 0.f, verbFbR = 0.f, verbLpL = 0.f, verbLpR = 0.f;
+    float acidLpL = 0.f, acidLpR = 0.f, acidBpL = 0.f, acidBpR = 0.f;
+    juce::Random noiseRng { 0x5a1e0001 };
 };
 
 } // namespace salek

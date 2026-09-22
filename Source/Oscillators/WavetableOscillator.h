@@ -45,23 +45,21 @@ public:
 
         float sample = wavetable->getSample (tablePos, float (p));
 
-        // Wavefold — cleaner multi-stage fold (Serum-style glassy)
+        // Wavefold — soft onset, glassy mid, aggressive high (professional response)
         if (fold > 1e-4f) {
-            float gain = 1.f + fold * 6.2f;
+            const float f = fold * fold; // perceptual curve
+            float gain = 1.f + f * 7.5f;
             float x = sample * gain;
-            // primary sine fold
-            float folded = std::sin (x * juce::MathConstants<float>::halfPi * (0.75f + fold * 0.85f));
-            // secondary hard fold for extra harmonics, limited iterations
+            float folded = std::sin (x * juce::MathConstants<float>::halfPi * (0.8f + f * 0.9f));
             float hard = x;
             for (int i = 0; i < 3; ++i) {
                 if (hard > 1.f) hard = 2.f - hard;
                 else if (hard < -1.f) hard = -2.f - hard;
                 else break;
             }
-            // blend with soft knee so low fold stays clean
-            float mix = fold * fold; // quadratic for smoother onset
-            sample = folded * (0.6f + mix * 0.2f) + hard * (0.4f - mix * 0.2f);
-            sample /= (1.f + fold * 0.75f);
+            // low fold = almost pure; high = more hard edges
+            sample = folded * (1.f - f * 0.45f) + hard * (f * 0.45f);
+            sample /= (1.f + f * 0.9f);
         }
 
         // Drive — transparent tube → plastic saturation with better headroom

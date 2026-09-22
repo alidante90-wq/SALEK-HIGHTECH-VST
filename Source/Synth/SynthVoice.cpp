@@ -109,10 +109,11 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         if (nUni2 > 0) { s2L *= invN2; s2R *= invN2; s2Mono *= invN2; }
 
         // --- OSC1 with unison (carrier, FM/PM/AM from 2&3) ---
-        const float fmIndex2 = fm2to1 * 4.0f; // deeper FM
-        const float fmIndex3 = fm3to1 * 3.55f;
-        const float pmFrom2  = s2Mono * (fmIndex2 + pm2to1);
-        const float pmFrom3  = s3Mono * (fmIndex3 + pm3to1);
+        // FM index: exponential feel — fine control low, aggressive high (Serum-like)
+        const float fmIndex2 = fm2to1 * fm2to1 * 5.5f;
+        const float fmIndex3 = fm3to1 * fm3to1 * 4.8f;
+        const float pmFrom2  = s2Mono * (fmIndex2 + pm2to1 * 1.25f);
+        const float pmFrom3  = s3Mono * (fmIndex3 + pm3to1 * 1.1f);
         float am = 1.0f;
         if (am2to1 > 1.0e-4f)
             am = 1.0f + (s2Mono * am2to1);
