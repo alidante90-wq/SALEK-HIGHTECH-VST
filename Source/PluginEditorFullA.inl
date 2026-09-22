@@ -713,7 +713,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
 
 void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& paramId, float amount)
 {
-    if (armedModSource < 0 || armedModSource > 2) return;
+    if (armedModSource < 0 || armedModSource >= (int) salek::ModMatrix::Source::NumSources) return;
 
     using D = salek::ModMatrix::Dest;
     using S = salek::ModMatrix::Source;
@@ -758,7 +758,7 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else if (paramId == "master_drive")  dest = D::DistDrive;
     else return;
 
-    S src = (armedModSource == 0) ? S::LFO1 : (armedModSource == 1) ? S::LFO2 : S::LFO3;
+    S src = static_cast<S> (armedModSource);
     if (std::abs (amount) < 1e-4f)
         processor.getModMatrix().removeRoute (src, dest);
     else

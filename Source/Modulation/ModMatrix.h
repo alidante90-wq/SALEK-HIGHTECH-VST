@@ -7,10 +7,14 @@
 namespace salek
 {
 
+/** Realtime-safe modulation matrix.
+ *  Optimized: setSourceValue rebuilds per-dest sums once per block;
+ *  getModulation(dest) is O(1).
+ */
 class ModMatrix
 {
 public:
-    static constexpr int MaxRoutes = 64; // expanded — plenty of free matrix slots
+    static constexpr int MaxRoutes = 64;
 
     enum class Source : int
     {
@@ -70,10 +74,10 @@ public:
     static const char* sourceName (Source s)
     {
         static const char* n[] = {
-            "LFO1","LFO2","LFO3","ENV","VEL","MW","MAC1","MAC2","MAC3","MAC4","RND","MSEG",
-            "MAC1","MAC2","MAC3","MAC4","RND"
+            "LFO1","LFO2","LFO3","ENV","VEL","MW",
+            "MAC1","MAC2","MAC3","MAC4","RND","MSEG"
         };
-        int i = (int) s;
+        const int i = (int) s;
         return (i >= 0 && i < (int) Source::NumSources) ? n[i] : "?";
     }
 
@@ -86,7 +90,7 @@ public:
             "O1PAN","O2PAN","O3PAN","O1DRV","O2DRV","O3DRV",
             "DLYMX","REVMX","DIST","CHOR","FENV","PHSR","BASS","MAGX","MAGY"
         };
-        int i = (int) d;
+        const int i = (int) d;
         return (i >= 0 && i < (int) Dest::NumDests) ? n[i] : "?";
     }
 
@@ -101,25 +105,29 @@ public:
     void clear() noexcept
     {
         for (auto& r : routes) r.active = false;
+        dirty = true;
     }
 
     int addRoute (Source src, Dest dst, float amount) noexcept
     {
+        amount = juce::jlimit (-1.0f, 1.0f, amount);
         for (int i = 0; i < MaxRoutes; ++i)
         {
-            if (routes[static_cast<size_t>(i)].active
-                && routes[static_cast<size_t>(i)].source == src
-                && routes[static_cast<size_t>(i)].dest == dst)
+            auto& r = routes[static_cast<size_t>(i)];
+            if (r.active && r.source == src && r.dest == dst)
             {
-                routes[static_cast<size_t>(i)].amount = juce::jlimit (-1.0f, 1.0f, amount);
+                r.amount = amount;
+                dirty = true;
                 return i;
             }
         }
         for (int i = 0; i < MaxRoutes; ++i)
         {
-            if (! routes[static_cast<size_t>(i)].active)
+            auto& r = routes[static_cast<size_t>(i)];
+            if (! r.active)
             {
-                routes[static_cast<size_t>(i)] = { src, dst, juce::jlimit (-1.0f, 1.0f, amount), true };
+                r = { src, dst, amount, true };
+                dirty = true;
                 return i;
             }
         }
@@ -129,21 +137,33 @@ public:
     void removeRoute (int slot) noexcept
     {
         if (slot >= 0 && slot < MaxRoutes)
+        {
             routes[static_cast<size_t>(slot)].active = false;
+            dirty = true;
+        }
     }
 
     void removeRoute (Source src, Dest dst) noexcept
     {
         for (int i = 0; i < MaxRoutes; ++i)
-            if (routes[static_cast<size_t>(i)].active
-                && routes[static_cast<size_t>(i)].source == src
-                && routes[static_cast<size_t>(i)].dest == dst)
-                routes[static_cast<size_t>(i)].active = false;
+        {
+            auto& r = routes[static_cast<size_t>(i)];
+            if (r.active && r.source == src && r.dest == dst)
+            {
+                r.active = false;
+                dirty = true;
+            }
+        }
     }
 
     void setSourceValue (Source s, float v) noexcept
     {
-        sourceValues[static_cast<size_t>(s)] = v;
+        const size_t i = static_cast<size_t>(s);
+        if (i >= static_cast<size_t>(Source::NumSources)) return;
+        // Avoid denormals / NaN in matrix
+        if (! std::isfinite (v)) v = 0.f;
+        sourceValues[i] = v;
+        dirty = true;
     }
 
     float getSourceValue (Source s) const noexcept
@@ -151,23 +171,50 @@ public:
         return sourceValues[static_cast<size_t>(s)];
     }
 
-    float getModulation (Dest d) const noexcept
+    /** Call once after all setSourceValue for the block (or rely on lazy getModulation). */
+    void finalizeBlock() noexcept
     {
-        float sum = 0.0f;
+        if (! dirty) return;
+        destSums.fill (0.f);
         for (const auto& r : routes)
         {
-            if (r.active && r.dest == d)
-                sum += sourceValues[static_cast<size_t>(r.source)] * r.amount;
+            if (! r.active) continue;
+            const size_t si = static_cast<size_t>(r.source);
+            const size_t di = static_cast<size_t>(r.dest);
+            if (si >= static_cast<size_t>(Source::NumSources)) continue;
+            if (di >= static_cast<size_t>(Dest::NumDests)) continue;
+            destSums[di] += sourceValues[si] * r.amount;
         }
-        return sum;
+        // soft clamp per dest to avoid extreme stacks
+        for (auto& s : destSums)
+            s = juce::jlimit (-2.f, 2.f, s);
+        dirty = false;
+    }
+
+    float getModulation (Dest d) const noexcept
+    {
+        // Lazy rebuild if someone forgot finalizeBlock
+        if (dirty)
+            const_cast<ModMatrix*>(this)->finalizeBlock();
+        const size_t i = static_cast<size_t>(d);
+        return i < destSums.size() ? destSums[i] : 0.f;
     }
 
     const std::array<Route, MaxRoutes>& getRoutes() const noexcept { return routes; }
     Route& getRoute (int i) noexcept { return routes[static_cast<size_t>(juce::jlimit(0, MaxRoutes-1, i))]; }
 
+    int countActiveRoutes() const noexcept
+    {
+        int n = 0;
+        for (const auto& r : routes) if (r.active) ++n;
+        return n;
+    }
+
 private:
     std::array<Route, MaxRoutes> routes {};
     std::array<float, static_cast<size_t>(Source::NumSources)> sourceValues {};
+    std::array<float, static_cast<size_t>(Dest::NumDests)> destSums {};
+    bool dirty = true;
 };
 
 } // namespace salek

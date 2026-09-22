@@ -2,6 +2,67 @@
 void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
 {
     auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
+
+    // ---- Modulation sources first (then O(1) dest lookup) ----
+    {
+        auto setLfo = [] (salek::LFO& lfo, float rate, int wave)
+        {
+            lfo.setRate (rate);
+            lfo.setAmount (1.0f);
+            static const salek::LFO::Wave waves[] = {
+                salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
+                salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
+                salek::LFO::Wave::SmoothRnd, salek::LFO::Wave::Chaos, salek::LFO::Wave::Pulse,
+                salek::LFO::Wave::Exp, salek::LFO::Wave::Sine3, salek::LFO::Wave::SoftSquare
+            };
+            lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
+        };
+        setLfo (lfo1, g("lfo_rate"),  (int) g("lfo_wave"));
+        setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"));
+        setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"));
+        const int ns = juce::jmax (1, numSamples);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, lfo1.processBlock (ns) * g("lfo_amount"));
+        modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, lfo2.processBlock (ns) * g("lfo2_amount"));
+        modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, lfo3.processBlock (ns) * g("lfo3_amount"));
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
+            juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
+        {
+            static float envApprox = 0.f;
+            if (apvts.getRawParameterValue ("seq_on")->load() > 0.5f)
+                envApprox = juce::jmax (envApprox * 0.985f, stepSequencer.getCurrentMod());
+            else
+                envApprox *= 0.985f;
+            modMatrix.setSourceValue (salek::ModMatrix::Source::Env1, juce::jlimit (0.f, 1.f, envApprox));
+        }
+        mseg.setRateHz (g("mseg_rate"));
+        mseg.setLoop (g("mseg_loop") > 0.5f);
+        {
+            static const salek::shae::MSEG::Curve curves[] = {
+                salek::shae::MSEG::Curve::Linear, salek::shae::MSEG::Curve::Exp,
+                salek::shae::MSEG::Curve::Log, salek::shae::MSEG::Curve::Smooth };
+            mseg.setCurve (curves[juce::jlimit (0, 3, (int) g("mseg_curve"))]);
+            const int sh = (int) g("mseg_shape");
+            static int lastShape = -1;
+            if (sh != lastShape)
+            {
+                lastShape = sh;
+                if (sh == 0) mseg.loadADSRShape();
+                else if (sh == 1) mseg.loadRampUp();
+                else if (sh == 2) mseg.loadTriangle();
+                else mseg.loadHitechBurst();
+            }
+            modMatrix.setSourceValue (salek::ModMatrix::Source::MSEG,
+                mseg.processBlock (ns) * g("mseg_amount"));
+        }
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Velocity, lastNoteVelocity);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::ModWheel, modWheelValue);
+        modMatrix.finalizeBlock();
+    }
+
     float o1l = juce::jlimit(0.f,1.f, g("osc1_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Level)*0.5f);
     float o2l = juce::jlimit(0.f,1.f, g("osc2_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Level)*0.5f);
     float o3l = juce::jlimit(0.f,1.f, g("osc3_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Level)*0.5f);
@@ -15,7 +76,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     synthEngine.setOsc1Warp(juce::jlimit(0.f,1.f, g("osc1_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Warp)*0.5f));
     synthEngine.setOsc2Warp(juce::jlimit(0.f,1.f, g("osc2_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Warp)*0.5f));
     synthEngine.setOsc3Warp(juce::jlimit(0.f,1.f, g("osc3_warp")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Warp)*0.5f));
-    synthEngine.setOsc1Fold(g("osc1_fold")); synthEngine.setOsc2Fold(g("osc2_fold")); synthEngine.setOsc3Fold(g("osc3_fold"));
+    synthEngine.setOsc1Fold(juce::jlimit(0.f,1.f,g("osc1_fold")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Fold)*0.5f));
+    synthEngine.setOsc2Fold(juce::jlimit(0.f,1.f,g("osc2_fold")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Fold)*0.5f));
+    synthEngine.setOsc3Fold(juce::jlimit(0.f,1.f,g("osc3_fold")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Fold)*0.5f));
     synthEngine.setOsc1Drive(juce::jlimit(0.f,1.f,g("osc1_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Drive)*0.5f));
     synthEngine.setOsc2Drive(juce::jlimit(0.f,1.f,g("osc2_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc2Drive)*0.5f));
     synthEngine.setOsc3Drive(juce::jlimit(0.f,1.f,g("osc3_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::Osc3Drive)*0.5f));
@@ -81,103 +144,6 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     synthEngine.setScaleMode((int)g("scale_mode"));
     synthEngine.setKoronCents(g("koron_cents"));
 
-    auto setLfo = [] (salek::LFO& lfo, float rate, float amt, int wave)
-    {
-        lfo.setRate (rate);
-        lfo.setAmount (1.0f); // amplitude applied outside via * g(amount)
-        static const salek::LFO::Wave waves[] = {
-            salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
-            salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
-            salek::LFO::Wave::SmoothRnd, salek::LFO::Wave::Chaos, salek::LFO::Wave::Pulse,
-            salek::LFO::Wave::Exp, salek::LFO::Wave::Sine3, salek::LFO::Wave::SoftSquare
-        };
-        lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
-        juce::ignoreUnused (amt);
-    };
-    setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"));
-    setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"));
-    setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"));
-
-    float v1 = lfo1.processBlock (juce::jmax (1, numSamples)) * g("lfo_amount");
-    float v2 = lfo2.processBlock (juce::jmax (1, numSamples)) * g("lfo2_amount");
-    float v3 = lfo3.processBlock (juce::jmax (1, numSamples)) * g("lfo3_amount");
-    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);
-    // Env1 approx from note activity (MIDI/seq gate)
-    {
-        static float envApprox = 0.f;
-        const bool gate = stepSequencer.getCurrentStep() >= 0 && stepSequencer.getCurrentMod() >= 0.f
-                          ? (apvts.getRawParameterValue ("seq_on")->load() > 0.5f)
-                          : false;
-        // Prefer amp envelope proxy via master activity peak
-        static float peak = 0.f;
-        // slow fall — matrix still gets a usable ENV source
-        envApprox *= 0.985f;
-        if (apvts.getRawParameterValue ("seq_on")->load() > 0.5f)
-            envApprox = juce::jmax (envApprox, stepSequencer.getCurrentMod());
-        envApprox = juce::jlimit (0.f, 1.f, envApprox);
-        modMatrix.setSourceValue (salek::ModMatrix::Source::Env1, envApprox);
-        juce::ignoreUnused (gate, peak);
-    }
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
-        juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
-    delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
-    delay.setTimeMsL(g("delay_time_l") > 1.f ? g("delay_time_l") : g("delay_time"));
-    delay.setTimeMsR(g("delay_time_r") > 1.f ? g("delay_time_r") : g("delay_time") * 1.07f);
-    delay.setFeedback(g("delay_fb"));
-    delay.setMode((int) g("delay_mode"));
-    chorus.setMix(juce::jlimit(0.f,1.f,g("chorus_mix")*widthScale+modMatrix.getModulation(salek::ModMatrix::Dest::ChorusMix)*0.5f)); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
-    reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
-    reverb.setMode ((int) g("reverb_mode"));
-    reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
-    phaser.setMix(juce::jlimit(0.f,1.f,g("phaser_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::PhaserMix)*0.5f)); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
-    distortion.setMix(juce::jlimit(0.f,1.f, g("dist_mix") * (0.2f + destScale * 0.8f) + destScale * 0.15f));
-    distortion.setDrive(juce::jlimit(0.f,1.f, g("dist_drive") + destScale * 0.55f + modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f));
-    distortion.setBitcrush(juce::jlimit(0.f,1.f, g("dist_crush") + destScale * 0.25f));
-    distortion.setMode ((int) g("dist_mode"));
-    {
-        const int q = (int) g("quality_mode");
-        distortion.setOversample (q >= 2); // HIGH/ULTRA
-    }
-    formantFilter.setMorph (g("formant_morph"));
-    formantFilter.setAmount (g("formant_amt"));
-    resonator.setMix (g("res_mix"));
-    resonator.setDecay (g("res_decay"));
-    resonator.setBrightness (g("res_bright"));
-    resonator.setMaterial ((int) g("res_material"));
-    resonator.setFrequency (g("res_freq"));
-    spectralSmear.setMix (g("spectral_mix"));
-    spectralSmear.setAmount (g("spectral_amt"));
-    spectralSmear.setFreeze (g("spectral_freeze") > 0.5f);
-    spectralSmear.setShift (g("spectral_shift"));
-    spectralSmear.setGate (g("spectral_gate"));
-    mseg.setRateHz (g("mseg_rate"));
-    mseg.setLoop (g("mseg_loop") > 0.5f);
-    {
-        static const salek::shae::MSEG::Curve curves[] = {
-            salek::shae::MSEG::Curve::Linear, salek::shae::MSEG::Curve::Exp,
-            salek::shae::MSEG::Curve::Log, salek::shae::MSEG::Curve::Smooth };
-        mseg.setCurve (curves[juce::jlimit (0, 3, (int) g("mseg_curve"))]);
-        const int sh = (int) g("mseg_shape");
-        static int lastShape = -1;
-        if (sh != lastShape)
-        {
-            lastShape = sh;
-            if (sh == 0) mseg.loadADSRShape();
-            else if (sh == 1) mseg.loadRampUp();
-            else if (sh == 2) mseg.loadTriangle();
-            else mseg.loadHitechBurst();
-        }
-    }
-    {
-        const float mv = mseg.processBlock (juce::jmax (1, numSamples)) * g("mseg_amount");
-        modMatrix.setSourceValue (salek::ModMatrix::Source::MSEG, mv);
-    }
     compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
     compressor.setMakeupDb(g("comp_gain"));
@@ -227,6 +193,14 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     applyParamsToEngine (buffer.getNumSamples());
     keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
+    for (const auto metadata : midi)
+    {
+        const auto msg = metadata.getMessage();
+        if (msg.isNoteOn())
+            lastNoteVelocity = msg.getFloatVelocity();
+        else if (msg.isController() && msg.getControllerNumber() == 1)
+            modWheelValue = msg.getControllerValue() / 127.f;
+    }
 
     juce::MidiBuffer routed;
     routed.addEvents (midi, 0, buffer.getNumSamples(), 0);

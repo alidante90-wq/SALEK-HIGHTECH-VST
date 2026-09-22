@@ -96,6 +96,8 @@ private:
     salek::shae::Resonator resonator;
     salek::shae::SpectralSmear spectralSmear;
     salek::shae::MSEG mseg;
+    float lastNoteVelocity = 0.f;
+    float modWheelValue = 0.f;
     salek::MagicEngine magic;
     salek::GranularOscillator granular;
     salek::Arpeggiator arpeggiator;
