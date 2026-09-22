@@ -123,6 +123,20 @@
         addKnob (fxTab, "spatial_elev", "ELEV", G);
         addKnob (fxTab, "delay_time_l", "D TIME L", C);
         addKnob (fxTab, "delay_time_r", "D TIME R", M);
+        addKnob (fxTab, "formant_morph", "FORMANT", C);
+        addKnob (fxTab, "formant_amt", "F AMT", M);
+        addKnob (fxTab, "res_mix", "RES", O);
+        addKnob (fxTab, "res_decay", "R DEC", C);
+        addKnob (fxTab, "res_bright", "R BRT", M);
+        addKnob (fxTab, "res_freq", "R FREQ", G);
+        addKnob (fxTab, "spectral_mix", "SPEC", O);
+        addKnob (fxTab, "spectral_amt", "S AMT", C);
+        addKnob (fxTab, "spectral_shift", "S SHFT", M);
+        addKnob (fxTab, "spectral_gate", "S GATE", G);
+        addKnob (fxTab, "granular_mix", "GRAN", O);
+        addKnob (fxTab, "granular_density", "G DEN", C);
+        addKnob (fxTab, "granular_size", "G SIZE", M);
+        addKnob (fxTab, "granular_pos", "G POS", G);
     }
 
     // Mode menus + APVTS attachment (were missing → modes never applied)
