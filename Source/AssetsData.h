@@ -127,8 +127,10 @@ inline juce::Image loadIconsAtlas()
 #if SALEK_HAS_BINARY_DATA
     img = fromBinaryName ("icons_atlas_png");
     if (img.isValid()) return img;
+    img = fromBinaryName ("Source_Assets_icons_atlas_png");
+    if (img.isValid()) return img;
 #endif
-    img = fromDisk ({ "icons_atlas.png", "Source/Assets/icons_atlas.png" });
+    img = fromDisk ({ "icons_atlas.png", "Source/Assets/icons_atlas.png", "Assets/icons_atlas.png" });
     return img;
 }
 

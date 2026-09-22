@@ -23,11 +23,11 @@
     magicGlitchBtn.setButtonText ("GLITCH");
     magicFlangeBtn.setButtonText ("FLANGE");
     magicPsychBtn.setButtonText ("PSY");
-    magicHold.setButtonText ("HOLD");
+    magicHold.setButtonText ("HOLD XY");
 
     // Per-mode HOLD buttons (member-like via static editor-scoped arrays)
     static juce::TextButton holdBtn[4];
-    static bool holdOn[4] = { false, false, false, false };
+    static bool holdOn[9] = {};
     static int activeMode = 0;
     const juce::Colour holdCols[4] = {
         juce::Colour (0xff00e8ff), juce::Colour (0xffff2d9b),
@@ -52,7 +52,7 @@
     auto applyActive = [this] ()
     {
         // Any mode HOLD keeps magic alive (multi-hold)
-        const bool anyHold = holdOn[0] || holdOn[1] || holdOn[2] || holdOn[3];
+        const bool anyHold = magicHold.getToggleState() || holdOn[0]||holdOn[1]||holdOn[2]||holdOn[3];
         magicHold.setToggleState (anyHold, juce::dontSendNotification);
         if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
             pa->setValueNotifyingHost (anyHold ? 1.f : 0.f);
@@ -66,7 +66,7 @@
             px->setValueNotifyingHost (px->convertTo0to1 (mx));
         if (auto* py = processor.getAPVTS().getParameter ("magic_y"))
             py->setValueNotifyingHost (py->convertTo0to1 (my));
-        const bool anyHold = holdOn[0] || holdOn[1] || holdOn[2] || holdOn[3];
+        const bool anyHold = magicHold.getToggleState() || holdOn[0]||holdOn[1]||holdOn[2]||holdOn[3];
         const bool on = anyHold ? true : act;
         if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
             pa->setValueNotifyingHost (on ? 1.f : 0.f);
@@ -87,8 +87,11 @@
     // Master HOLD mirrors current mode's hold
     magicHold.onClick = [this, applyActive]
     {
-        holdOn[activeMode] = magicHold.getToggleState();
-        holdBtn[activeMode].setToggleState (holdOn[activeMode], juce::dontSendNotification);
+        const bool on = magicHold.getToggleState();
+        holdOn[activeMode] = on;
+        if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+            pa->setValueNotifyingHost (on ? 1.f : 0.f);
+        processor.getMagic().setActive (on);
         applyActive();
     };
 

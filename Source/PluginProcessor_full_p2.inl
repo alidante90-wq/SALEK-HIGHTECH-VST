@@ -273,9 +273,13 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float x = d[i] * gMul;
-            // gentle tanh stage + ceiling
-            x = std::tanh (x * (1.0f + drive * 0.8f));
-            d[i] = juce::jlimit (-0.98f, 0.98f, x);
+            // Modern soft clip — smooth, less digital edge
+            x = std::tanh (x * (0.88f + drive * 0.5f));
+            // gentle ceiling
+            const float ax = std::abs (x);
+            if (ax > 0.85f)
+                x = std::copysign (0.85f + 0.13f * std::tanh ((ax - 0.85f) * 5.f), x);
+            d[i] = juce::jlimit (-0.97f, 0.97f, x);
         }
     }
 

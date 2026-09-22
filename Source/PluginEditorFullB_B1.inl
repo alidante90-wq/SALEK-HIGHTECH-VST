@@ -73,11 +73,11 @@ void SalekHightechAudioProcessorEditor::resized()
     full.removeFromBottom (2);
 
     {
-        const int presetW = presetCollapsed ? 28 : 240; // wider left = bigger model
+        const int presetW = presetCollapsed ? 28 : 260; // room for preset names
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (120, (int) ((leftStrip.getHeight() - logoPad) * 0.28f)); // more height for model
+        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.50f)); // half presets, half model
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -524,20 +524,23 @@ void SalekHightechAudioProcessorEditor::resized()
     // MAGIC: pad + combo presets only (8 mode/hold buttons removed per UX)
     {
         auto r = magicTab.getLocalBounds().reduced (6);
-        // Hide legacy mode / hold buttons
+        // Keep HOLD visible so XY pad stays active without finger-down
         magicLoopBtn.setVisible (false);
         magicGlitchBtn.setVisible (false);
         magicFlangeBtn.setVisible (false);
         magicPsychBtn.setVisible (false);
-        magicHold.setVisible (false);
+        magicHint.setVisible (false);
         for (int c = 0; c < magicTab.getNumChildComponents(); ++c)
             if (auto* b = dynamic_cast<juce::TextButton*> (magicTab.getChildComponent (c)))
             {
                 auto t = b->getButtonText();
-                if (t.startsWith ("H-") || t == "LOOP" || t == "GLITCH" || t == "FLANGE" || t == "PSY" || t == "HOLD")
+                if (t.startsWith ("H-") || t == "LOOP" || t == "GLITCH" || t == "FLANGE" || t == "PSY")
                     b->setVisible (false);
             }
-        magicHint.setVisible (false);
+        // HOLD strip under combo row is placed with pad
+        magicHold.setButtonText ("HOLD XY");
+        magicHold.setVisible (true);
+        magicHold.toFront (false);
 
         // Combo presets strip bottom
         {
@@ -551,7 +554,7 @@ void SalekHightechAudioProcessorEditor::resized()
                     c->setBounds (row.getX() + i * cw, row.getY(), cw - 2, row.getHeight());
                 }
         }
-        // MAGIC X / Y knobs (LFO-targetable)
+        // HOLD + MAGIC X/Y (hold keeps FX active so XY works continuously)
         {
             auto byId = [this] (const char* id) -> Knob* {
                 for (auto& k : knobs)
@@ -568,7 +571,9 @@ void SalekHightechAudioProcessorEditor::resized()
                     k->s.setVisible (true);
                 }
             };
-            auto xyCol = r.removeFromRight (100).reduced (4, 2);
+            auto xyCol = r.removeFromRight (110).reduced (4, 2);
+            magicHold.setBounds (xyCol.removeFromTop (36).reduced (2));
+            magicHold.setVisible (true);
             placeM (xyCol.removeFromTop (xyCol.getHeight() / 2).reduced (2), "magic_x");
             placeM (xyCol.reduced (2), "magic_y");
         }

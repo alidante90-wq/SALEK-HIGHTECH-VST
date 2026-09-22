@@ -193,12 +193,23 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
                 if (dest.getWidth() < 8) return;
                 idx = juce::jlimit (0, 49, idx);
                 auto src = juce::Rectangle<int> ((idx % 10) * 64, (idx / 10) * 64, 64, 64);
-                auto sub = atlas.getClippedImage (src);
-                if (! sub.isValid()) return;
-                g.setOpacity (0.95f);
-                g.drawImage (sub, dest.toFloat(),
-                             juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-                g.setOpacity (1.f);
+                auto sub = atlas.isValid() ? atlas.getClippedImage (src) : juce::Image();
+                if (sub.isValid())
+                {
+                    g.setOpacity (1.f);
+                    g.drawImage (sub, dest.toFloat(),
+                                 juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+                }
+                else
+                {
+                    // neon fallback so icons never "missing"
+                    auto d = dest.toFloat().reduced (2.f);
+                    g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.85f));
+                    g.drawEllipse (d, 1.6f);
+                    g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.7f));
+                    g.drawLine (d.getCentreX(), d.getY() + 4, d.getCentreX(), d.getBottom() - 4, 1.4f);
+                    g.drawLine (d.getX() + 4, d.getCentreY(), d.getRight() - 4, d.getCentreY(), 1.4f);
+                }
             };
             // OSC1/2/3 headers from osc monitors if present
             if (oscMon1 != nullptr)
