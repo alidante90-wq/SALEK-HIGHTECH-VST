@@ -35,6 +35,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
 
         // --- OSC3 with unison (modulator) ---
         float s3L = 0.f, s3R = 0.f, s3Mono = 0.f;
+        if (osc3Level > 1.0e-5f)
         for (int u = 0; u < nUni3; ++u)
         {
             float det = 0.f, pan = 0.5f;
@@ -50,12 +51,12 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             s3R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
             s3Mono += s;
         }
-        s3L *= invN3; s3R *= invN3; s3Mono *= invN3;
-        (void) osc3.processSample (0.0f, 1.0f);
+        if (osc3Level > 1.0e-5f) { s3L *= invN3; s3R *= invN3; s3Mono *= invN3; }
 
         // --- OSC2 with unison (FM from OSC3) ---
         float s2L = 0.f, s2R = 0.f, s2Mono = 0.f;
         const float pmFor2 = s3Mono * fm3to2 * 0.5f;
+        if (osc2Level > 1.0e-5f)
         for (int u = 0; u < nUni2; ++u)
         {
             float det = 0.f, pan = 0.5f;
@@ -71,8 +72,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             s2R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
             s2Mono += s;
         }
-        s2L *= invN2; s2R *= invN2; s2Mono *= invN2;
-        (void) osc2.processSample (pmFor2, 1.0f);
+        if (osc2Level > 1.0e-5f) { s2L *= invN2; s2R *= invN2; s2Mono *= invN2; }
 
         // --- OSC1 with unison (carrier, FM/PM/AM from 2&3) ---
         const float fmIndex2 = fm2to1 * 4.0f; // deeper FM
@@ -85,6 +85,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         const float pmCarrier = pmFrom2 + pmFrom3;
 
         float s1L = 0.f, s1R = 0.f;
+        if (osc1Level > 1.0e-5f)
         for (int u = 0; u < nUni1; ++u)
         {
             float det = 0.f, pan = 0.5f;
@@ -99,8 +100,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             s1L += s * std::cos (pan * juce::MathConstants<float>::halfPi);
             s1R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
         }
-        s1L *= invN1; s1R *= invN1;
-        (void) osc1.processSample (pmCarrier, am);
+        if (osc1Level > 1.0e-5f) { s1L *= invN1; s1R *= invN1; }
 
         // Per-osc levels before filter route
         float o1L = s1L, o1R = s1R;
@@ -146,9 +146,10 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         const bool f2 = (filterRoute == 0 || filterRoute == 2 || filterRoute == 4 || filterRoute == 6);
         const bool f3 = (filterRoute == 0 || filterRoute == 3 || filterRoute == 5 || filterRoute == 6);
         float thruL = 0.f, thruR = 0.f, dryL = 0.f, dryR = 0.f;
+        // Full per-osc level (already applied in WavetableOscillator::processSample)
         if (f1) { thruL += o1L; thruR += o1R; } else { dryL += o1L; dryR += o1R; }
-        if (f2) { thruL += o2L * 0.22f; thruR += o2R * 0.22f; } else { dryL += o2L * 0.22f; dryR += o2R * 0.22f; }
-        if (f3) { thruL += o3L * 0.18f; thruR += o3R * 0.18f; } else { dryL += o3L * 0.18f; dryR += o3R * 0.18f; }
+        if (f2) { thruL += o2L; thruR += o2R; } else { dryL += o2L; dryR += o2R; }
+        if (f3) { thruL += o3L; thruR += o3R; } else { dryL += o3L; dryR += o3R; }
         // sub + noise always filtered when route=All, else dry
         if (filterRoute == 0) { thruL += subL + nL; thruR += subR + nR; }
         else { dryL += subL + nL; dryR += subR + nR; }

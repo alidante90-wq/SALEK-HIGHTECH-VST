@@ -57,8 +57,8 @@ public:
 
     void setOsc1TablePos(float v){osc1.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setTablePosition(v);}
     void setOsc2TablePos(float v){osc2.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setTablePosition(v);} void setOsc3TablePos(float v){osc3.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setTablePosition(v);}
-    void setOsc1Level(float v){osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setLevel(v);}
-    void setOsc2Level(float v){osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v);} void setOsc3Level(float v){osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v);}
+    void setOsc1Level(float v){osc1Level=v; osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setLevel(v);}
+    void setOsc2Level(float v){osc2Level=v; osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v);} void setOsc3Level(float v){osc3Level=v; osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v);}
     void setOsc1Octave(int v){osc1Octave=v; updateFrequencies();} void setOsc2Octave(int v){osc2Octave=v; updateFrequencies();} void setOsc3Octave(int v){osc3Octave=v; updateFrequencies();}
     void setOsc1Semi(int v){osc1Semi=v; updateFrequencies();} void setOsc2Semi(int v){osc2Semi=v; updateFrequencies();} void setOsc3Semi(int v){osc3Semi=v; updateFrequencies();}
     void setOsc1Fine(float v){osc1Fine=v; updateFrequencies();} void setOsc2Fine(float v){osc2Fine=v; updateFrequencies();} void setOsc3Fine(float v){osc3Fine=v; updateFrequencies();}
@@ -138,6 +138,7 @@ private:
     float osc1Pan=0.5f, osc2Pan=0.5f, osc3Pan=0.5f;
     float fm2to1=0, fm3to1=0, fm3to2=0, pm2to1=0, pm3to1=0, am2to1=0, rm2to1=0;
     float filterEnvAmt=0.5f, baseCutoff=8000;
+    float osc1Level=0.7f, osc2Level=0.5f, osc3Level=0.4f;
     float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;
     int filterRoute=0; // 0=All,1=O1,2=O2,3=O3,4=1+2,5=1+3,6=2+3
     juce::Random noiseRng;
