@@ -238,7 +238,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             auto r = getLocalArea (&lfoTab, lfoTab.getLocalBounds());
             auto drawIcon = [&] (int idx, int x)
             {
-                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                auto sub = SalekAssets::loadIcon (idx);
                 g.drawImage (sub, juce::Rectangle<float> ((float) x, (float) r.getY() + 4, 28.f, 28.f),
                              juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
             };
@@ -251,7 +251,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             auto r = getLocalArea (&modTab, modTab.getLocalBounds());
             auto drawIcon = [&] (int idx, int x)
             {
-                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                auto sub = SalekAssets::loadIcon (idx);
                 g.drawImage (sub, juce::Rectangle<float> ((float) x, (float) r.getY() + 4, 28.f, 28.f),
                              juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
             };
@@ -266,7 +266,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             for (int i = 0; i < 8; ++i)
             {
                 int idx = idxs[i];
-                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                auto sub = SalekAssets::loadIcon (idx);
                 float x = (float) r.getX() + 10.f + (float) (i % 2) * (r.getWidth() * 0.5f);
                 float y = (float) r.getY() + 8.f + (float) (i / 2) * (r.getHeight() * 0.22f);
                 g.drawImage (sub, juce::Rectangle<float> (x, y, 26.f, 26.f),
@@ -335,34 +335,31 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         }
 
 
-    // ========== ICON OVERLAY HEADER / PRESET (atlas) ==========
+    // ========== ICON OVERLAY HEADER / PRESET (precise atlas coords) ==========
     {
-        auto atlas = SalekAssets::iconsAtlas();
-        if (atlas.isValid())
+        auto drawBtnIcon = [&] (juce::Component& c, SalekAssets::IconId id)
         {
-            auto drawBtnIcon = [&] (juce::Component& c, int idx)
-            {
-                if (! c.isVisible() || c.getWidth() < 4) return;
-                auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (4.f);
-                auto sub = atlas.getClippedImage ({ (idx % 10) * 64, (idx / 10) * 64, 64, 64 });
-                if (sub.isValid())
-                    g.drawImage (sub, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-            };
-            // Preset bar
-            drawBtnIcon (prevPreset, 22);      // left
-            drawBtnIcon (nextPreset, 23);      // right
-            drawBtnIcon (initBtn, 0);          // init / home-ish
-            drawBtnIcon (savePresetBtn, 30);   // save
-            drawBtnIcon (loadPresetBtn, 31);   // load
-            drawBtnIcon (bankBtn, 24);         // bank
-            // Header tools
-            drawBtnIcon (inspireBtn, 25);      // random / inspire
-            drawBtnIcon (modSrcLfo1, 17);
-            drawBtnIcon (modSrcLfo2, 18);
-            drawBtnIcon (modSrcLfo3, 19);
-            drawBtnIcon (bgSwapBtn, 26);       // background
-            drawBtnIcon (charCycleBtn, 27);    // model
-        }
+            if (! c.isVisible() || c.getWidth() < 4) return;
+            auto img = SalekAssets::loadIcon (id);
+            if (! img.isValid()) return;
+            auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (3.f);
+            g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        };
+        using IC = SalekAssets::IconId;
+        // Preset bar
+        drawBtnIcon (prevPreset,    IC::Glide);       // prev
+        drawBtnIcon (nextPreset,    IC::Portamento);  // next
+        drawBtnIcon (initBtn,       IC::Transpose);   // init
+        drawBtnIcon (savePresetBtn, IC::Master);      // save-ish
+        drawBtnIcon (loadPresetBtn, IC::Wavetable);   // load-ish
+        drawBtnIcon (bankBtn,       IC::Seq);         // bank / patterns
+        // Header tools
+        drawBtnIcon (inspireBtn,    IC::Randomize);
+        drawBtnIcon (modSrcLfo1,    IC::Lfo);
+        drawBtnIcon (modSrcLfo2,    IC::LfoRandom);
+        drawBtnIcon (modSrcLfo3,    IC::LfoSync);
+        drawBtnIcon (bgSwapBtn,     IC::FrameMorph);
+        drawBtnIcon (charCycleBtn,  IC::Osc1);
     }
 
 }

@@ -134,16 +134,44 @@ inline juce::Image loadIconsAtlas()
     return img;
 }
 
-/** 0..49 from SALEK 50-icon pack (atlas 10 cols x 5 rows, 64px cells). */
+/** 0..49 from SALEK 50-icon pack.
+ *  Atlas is 640x320 = 10 cols x 5 rows. Tile size derived from image size.
+ *  Alphabetical build order matches Source/Assets/icons/icon_*.png
+ */
 inline juce::Image loadIcon (int index)
 {
     auto atlas = loadIconsAtlas();
     if (! atlas.isValid()) return {};
-    index = juce::jlimit (0, 49, index);
-    const int col = index % 10;
-    const int row = index / 10;
-    return atlas.getClippedImage (juce::Rectangle<int> (col * 64, row * 64, 64, 64));
+    const int cols = 10;
+    const int rows = 5;
+    const int tw = juce::jmax (1, atlas.getWidth()  / cols);
+    const int th = juce::jmax (1, atlas.getHeight() / rows);
+    index = juce::jlimit (0, cols * rows - 1, index);
+    const int col = index % cols;
+    const int row = index / cols;
+    return atlas.getClippedImage (juce::Rectangle<int> (col * tw, row * th, tw, th));
 }
+
+/** Semantic icon ids (atlas rebuilt alphabetically from icon_*.png). */
+enum class IconId : int
+{
+    Am = 0, Arp, Chorus, Compressor, Delay, Distortion, Envelope, Eq,
+    Filter1, Filter2, Filter3, Filter4, FilterEnv, Flanger, Fm, FrameMorph,
+    Glide, Lfo, LfoRandom, LfoSync, Limiter, Lofi, Macro, Master,
+    Matrix, ModRouting, Multistage, Noise, Osc1, Osc2, Osc3, PhaseDist,
+    Phaser, Pitch, Pm, Portamento, Random, Randomize, Reverb, Rm,
+    SampleHold, Saturation, Seq, Sub, Tape, Transpose, Vca, Vcf,
+    Wavefold, Wavetable,
+    Count
+};
+
+inline juce::Image loadIcon (IconId id)
+{
+    return loadIcon ((int) id);
+}
+
+inline juce::Image iconsAtlas() { return loadIconsAtlas(); }
+
 
 inline juce::Image loadSalekSheetLogo()
 {
