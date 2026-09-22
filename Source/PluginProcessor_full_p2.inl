@@ -93,9 +93,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"));
     setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"));
 
-    float v1 = lfo1.process() * g("lfo_amount");
-    float v2 = lfo2.process() * g("lfo2_amount");
-    float v3 = lfo3.process() * g("lfo3_amount");
+    float v1 = lfo1.processBlock (juce::jmax (1, numSamples)) * g("lfo_amount");
+    float v2 = lfo2.processBlock (juce::jmax (1, numSamples)) * g("lfo2_amount");
+    float v3 = lfo3.processBlock (juce::jmax (1, numSamples)) * g("lfo3_amount");
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);

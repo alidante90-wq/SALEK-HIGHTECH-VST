@@ -143,6 +143,25 @@ public:
         return v*amount;
     }
 
+    /** Advance LFO by whole audio block (fixes 1-sample-per-block bug = 500x too slow) */
+    float processBlock (int numSamples) noexcept
+    {
+        if (numSamples <= 1)
+            return process();
+        // multi-step for S&H / chaos correctness on short blocks; full step on long
+        if (numSamples <= 16)
+        {
+            float v = 0.f;
+            for (int i = 0; i < numSamples; ++i)
+                v = process();
+            return v;
+        }
+        float v = process();
+        phase += phaseInc * (double) (numSamples - 1);
+        phase -= std::floor (phase);
+        return v;
+    }
+
     float getPhase() const noexcept { return (float) phase; }
 
 private:

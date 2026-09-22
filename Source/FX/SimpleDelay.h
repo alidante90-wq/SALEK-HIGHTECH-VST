@@ -38,6 +38,8 @@ public:
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
         if (mix < 1e-4f) return;
+        const float wet = std::sqrt (mix); // more audible at mid settings
+        const float dry = 1.f - wet * 0.85f;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
         const int bs = (int) bufL.size();
@@ -69,8 +71,8 @@ public:
             dL = lpL;
             dR = lpR;
 
-            buffer.setSample (0, i, inL * (1.f - mix) + dL * mix);
-            if (ch > 1) buffer.setSample (1, i, inR * (1.f - mix) + dR * mix);
+            buffer.setSample (0, i, inL * dry + dL * wet);
+            if (ch > 1) buffer.setSample (1, i, inR * dry + dR * wet);
 
             if (mode == 1) // PingPong: cross feedback
             {

@@ -57,10 +57,10 @@
     };
     const Mod mods[8] = {
         { 0, { "chorus_mix", "chorus_rate", "chorus_depth", nullptr }, 3, 0 },
-        { 1, { "delay_mix",  "delay_time_l","delay_time_r", "delay_fb" }, 4, 3 },
+        { 1, { "delay_mix",  "delay_time", "delay_fb", "delay_time_l" }, 4, 3 },
         { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr }, 3, 1 },
         { 3, { "bassify", "spatial_azim", "spatial_dist", "spatial_size" }, 4, 0 },
-        { 4, { "comp_ratio","comp_attack","comp_release","comp_gain" }, 4, 0 },
+        { 4, { "comp_mix","comp_threshold","comp_ratio","comp_gain" }, 4, 0 },
         { 5, { "eq_low", "eq_mid", "eq_high", nullptr }, 3, 0 },
         { 6, { "phaser_mix", "phaser_rate", "phaser_depth", nullptr }, 3, 0 },
         { 7, { "dist_mix", "dist_drive", "dist_crush", nullptr }, 3, 2 }
