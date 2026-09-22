@@ -334,4 +334,35 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             }
         }
 
+
+    // ========== ICON OVERLAY HEADER / PRESET (atlas) ==========
+    {
+        auto atlas = SalekAssets::iconsAtlas();
+        if (atlas.isValid())
+        {
+            auto drawBtnIcon = [&] (juce::Component& c, int idx)
+            {
+                if (! c.isVisible() || c.getWidth() < 4) return;
+                auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (4.f);
+                auto sub = atlas.getClippedImage ({ (idx % 10) * 64, (idx / 10) * 64, 64, 64 });
+                if (sub.isValid())
+                    g.drawImage (sub, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            };
+            // Preset bar
+            drawBtnIcon (prevPreset, 22);      // left
+            drawBtnIcon (nextPreset, 23);      // right
+            drawBtnIcon (initBtn, 0);          // init / home-ish
+            drawBtnIcon (savePresetBtn, 30);   // save
+            drawBtnIcon (loadPresetBtn, 31);   // load
+            drawBtnIcon (bankBtn, 24);         // bank
+            // Header tools
+            drawBtnIcon (inspireBtn, 25);      // random / inspire
+            drawBtnIcon (modSrcLfo1, 17);
+            drawBtnIcon (modSrcLfo2, 18);
+            drawBtnIcon (modSrcLfo3, 19);
+            drawBtnIcon (bgSwapBtn, 26);       // background
+            drawBtnIcon (charCycleBtn, 27);    // model
+        }
+    }
+
 }

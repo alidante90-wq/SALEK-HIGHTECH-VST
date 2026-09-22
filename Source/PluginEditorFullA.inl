@@ -29,7 +29,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoOverlay.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (logoOverlay);
 
-    inspireBtn.setButtonText ("INSPIRE");
+    inspireBtn.setButtonText (""); // icon painted
     inspireBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0530));
     inspireBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
     inspireBtn.setTooltip ("Randomize in current style (genre-aware)");
@@ -394,6 +394,18 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         loadPresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
         bankBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff201040));
         bankBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffaa00));
+        savePresetBtn.setButtonText ("");
+        loadPresetBtn.setButtonText ("");
+        bankBtn.setButtonText ("");
+        prevPreset.setButtonText ("");
+        nextPreset.setButtonText ("");
+        initBtn.setButtonText ("");
+        savePresetBtn.setTooltip ("Save preset");
+        loadPresetBtn.setTooltip ("Load preset");
+        bankBtn.setTooltip ("Bank");
+        initBtn.setTooltip ("Init");
+        prevPreset.setTooltip ("Previous preset");
+        nextPreset.setTooltip ("Next preset");
         prevPreset.onClick = [this] {
             int i = processor.getCurrentProgram();
             if (i > 0) processor.setCurrentProgram (i - 1);

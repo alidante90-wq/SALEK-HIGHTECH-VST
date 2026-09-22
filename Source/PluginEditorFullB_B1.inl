@@ -138,9 +138,17 @@ void SalekHightechAudioProcessorEditor::resized()
     modSrcLfo3.setBounds (header.removeFromRight (46).reduced (2, 10));
     modSrcLfo2.setBounds (header.removeFromRight (46).reduced (2, 10));
     modSrcLfo1.setBounds (header.removeFromRight (46).reduced (2, 10));
-    modSrcLfo1.setButtonText ("LFO1");
-    modSrcLfo2.setButtonText ("LFO2");
-    modSrcLfo3.setButtonText ("LFO3");
+    modSrcLfo1.setButtonText ("");
+    modSrcLfo2.setButtonText ("");
+    modSrcLfo3.setButtonText ("");
+    modSrcLfo1.setTooltip ("LFO1 — drag to knob");
+    modSrcLfo2.setTooltip ("LFO2 — drag to knob");
+    modSrcLfo3.setTooltip ("LFO3 — drag to knob");
+    bgSwapBtn.setButtonText ("");
+    bgSwapBtn.setTooltip ("Swap background");
+    charCycleBtn.setButtonText ("");
+    charCycleBtn.setTooltip ("Cycle character model");
+    inspireBtn.setButtonText ("");
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
