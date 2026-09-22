@@ -137,7 +137,7 @@
     static juce::TextButton magicCombo[14];
     static const char* comboNames[14] = {
         "VOID", "STAB", "WARP", "SLICE", "DRONE", "ACID", "GLASS",
-        "CRUSH", "ECHOX", "PSY+X", "LOOPY", "NOISE", "ALIEN", "TORO"
+        "CRASH", "ECHOX", "PSY+X", "LOOPY", "NOISE", "ALIEN", "TORO"
     };
     static bool combosInited = false;
     if (! combosInited)
@@ -160,26 +160,36 @@
                         p->endChangeGesture();
                     }
                 };
-                // Always enable magic
-                setP ("magic_on", 1.f);
-                // Mode: 0 loop 1 glitch 2 flange 3 psy
-                const int modes[14] = { 1,0,3,1,0,1,2,1,2,3,0,1,3,1 };
+                // Always enable magic (bool + engine)
+                if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+                {
+                    pa->beginChangeGesture();
+                    pa->setValueNotifyingHost (1.f);
+                    pa->endChangeGesture();
+                }
+                // 0 Loop 1 Glitch 2 Flange 3 Psy 4 Void 5 Slice 6 Acid 7 Crash 8 Noise
+                // VOID STAB WARP SLICE DRONE ACID GLASS CRASH ECHOX PSY+X LOOPY NOISE ALIEN TORO
+                const int modes[14] = { 4, 0, 3, 5, 0, 6, 2, 7, 2, 3, 0, 8, 3, 1 };
                 const float xs[14]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f,0.88f };
                 const float ys[14]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f,0.92f };
-                setP ("magic_mode", (float) modes[i]);
+                if (auto* pm = dynamic_cast<juce::AudioParameterChoice*> (processor.getAPVTS().getParameter ("magic_mode")))
+                {
+                    pm->beginChangeGesture();
+                    pm->setValueNotifyingHost (pm->convertTo0to1 ((float) modes[i]));
+                    pm->endChangeGesture();
+                }
                 setP ("magic_x", xs[i]);
                 setP ("magic_y", ys[i]);
                 processor.getMagic().setMode (modes[i]);
                 processor.getMagic().setXY (xs[i], ys[i]);
                 processor.getMagic().setActive (true);
-                // Pair with FX for character
-                if (i == 0) { setP ("reverb_mix", 0.55f); setP ("delay_mix", 0.2f); }
+                if (i == 0) { setP ("reverb_mix", 0.55f); setP ("delay_mix", 0.25f); }
                 if (i == 1) { setP ("dist_mix", 0.4f); setP ("master_drive", 0.45f); }
-                if (i == 3 || i == 7) { setP ("delay_mix", 0.45f); setP ("delay_feedback", 0.55f); }
-                if (i == 5) { setP ("filter_cutoff", 600.f); setP ("filter_reso", 0.75f); }
+                if (i == 3 || i == 7) { setP ("delay_mix", 0.45f); setP ("delay_fb", 0.55f); }
+                if (i == 5) { setP ("filter_cutoff", 600.f); setP ("filter_reso", 0.85f); setP ("filter_env", 0.9f); }
                 if (i == 8) { setP ("delay_mix", 0.6f); setP ("reverb_mix", 0.35f); }
                 if (i == 9) { setP ("phaser_mix", 0.5f); setP ("chorus_mix", 0.3f); }
-                if (i == 11) { setP ("noise_level", 0.35f); setP ("dist_mix", 0.5f); }
+                if (i == 11) { setP ("noise_level", 0.45f); setP ("dist_mix", 0.55f); }
                 if (i == 12) { setP ("fm_2to1", 0.7f); setP ("reverb_mix", 0.45f); }
                 if (i == 13) { setP ("osc1_fold", 0.55f); setP ("delay_mix", 0.4f); setP ("reverb_mix", 0.3f); }
                 if (magicPad != nullptr)

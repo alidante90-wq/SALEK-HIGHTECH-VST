@@ -129,7 +129,11 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
 
     magic.setMode ((int) g("magic_mode"));
-    magic.setXY (g("magic_x"), g("magic_y"));
+    {
+        float mx = juce::jlimit (0.f, 1.f, g("magic_x") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicX) * 0.5f);
+        float my = juce::jlimit (0.f, 1.f, g("magic_y") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicY) * 0.5f);
+        magic.setXY (mx, my);
+    }
     magic.setActive (g("magic_on") > 0.5f);
 }
 

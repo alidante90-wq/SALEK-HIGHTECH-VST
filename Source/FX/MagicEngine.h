@@ -34,7 +34,7 @@ public:
 
     void setMode (int m) noexcept
     {
-        const int nm = juce::jlimit (0, 3, m);
+        const int nm = juce::jlimit (0, 8, m);
         if (nm != mode) { mode = nm; resetModeState(); }
     }
 
@@ -93,6 +93,11 @@ public:
                     case 1: processGlitchSample (wetL, wetR); break;
                     case 2: processFlangerVerbSample (wetL, wetR); break;
                     case 3: processPsychedelicSample (wetL, wetR); break;
+                    case 4: processVoidSample (wetL, wetR); break;
+                    case 5: processSliceSample (wetL, wetR); break;
+                    case 6: processAcidSample (wetL, wetR); break;
+                    case 7: processCrashSample (wetL, wetR); break;
+                    case 8: processNoiseSample (wetL, wetR); break;
                     default: break;
                 }
             }
@@ -201,6 +206,83 @@ private:
         const float dryR = bufR[(size_t) ((writePos - 1 + bufSize) % bufSize)];
         outL = dryL * (1.f - mix) + wetL * mix;
         outR = dryR * (1.f - mix) + wetR * mix;
+    }
+
+
+    void processVoidSample (float& outL, float& outR) noexcept
+    {
+        processFlangerVerbSample (outL, outR);
+        const float gate = xSmoothed > 0.12f ? 1.f : (xSmoothed / 0.12f);
+        const float depth = 0.5f + ySmoothed * 0.5f;
+        outL *= depth * gate;
+        outR *= depth * gate;
+        const float mid = 0.5f * (outL + outR);
+        outL = std::tanh ((mid + (outL - mid) * (1.15f + xSmoothed)) * 1.3f);
+        outR = std::tanh ((mid + (outR - mid) * (1.15f + xSmoothed)) * 1.3f);
+    }
+
+    void processSliceSample (float& outL, float& outR) noexcept
+    {
+        const int cap = juce::jmax (128, freezeCapLen > 0 ? freezeCapLen : juce::jmax (256, bufSize / 8));
+        const int sliceLen = juce::jlimit (64, cap, (int) (48.f + xSmoothed * 1600.f));
+        glitchPos = (glitchPos + 1) % sliceLen;
+        const int rp = glitchPos % cap;
+        float sL = 0.f, sR = 0.f;
+        if (! freezeL.empty())
+        {
+            sL = freezeL[(size_t) (rp % (int) freezeL.size())];
+            sR = freezeR[(size_t) (rp % (int) freezeR.size())];
+        }
+        else if (! bufL.empty())
+        {
+            const int br = (writePos - 1 - glitchPos + bufSize) % bufSize;
+            sL = bufL[(size_t) br];
+            sR = bufR[(size_t) br];
+        }
+        const float t = (float) glitchPos / (float) sliceLen;
+        const float env = 1.f - std::pow (t, 0.4f + ySmoothed * 0.6f);
+        outL = sL * env * (0.9f + ySmoothed * 0.4f);
+        outR = sR * env * (0.9f + ySmoothed * 0.4f);
+    }
+
+    void processAcidSample (float& outL, float& outR) noexcept
+    {
+        const float f = 0.015f + xSmoothed * 0.5f;
+        const float q = 0.4f + ySmoothed * 9.f;
+        acidLpL += f * (outL - acidLpL);
+        acidLpR += f * (outR - acidLpR);
+        float hpL = outL - acidLpL;
+        float hpR = outR - acidLpR;
+        acidBpL = hpL * q * 0.15f;
+        acidBpR = hpR * q * 0.15f;
+        outL = std::tanh ((acidLpL + acidBpL) * (1.4f + ySmoothed * 3.5f));
+        outR = std::tanh ((acidLpR + acidBpR) * (1.4f + ySmoothed * 3.5f));
+    }
+
+    void processCrashSample (float& outL, float& outR) noexcept
+    {
+        processGlitchSample (outL, outR);
+        const float n = noiseRng.nextFloat() * 2.f - 1.f;
+        const float amt = 0.2f + ySmoothed * 0.75f;
+        outL = std::tanh (outL * 2.2f + n * amt * xSmoothed);
+        outR = std::tanh (outR * 2.2f + n * amt * (1.f - xSmoothed * 0.4f));
+    }
+
+    void processNoiseSample (float& outL, float& outR) noexcept
+    {
+        const float nL = noiseRng.nextFloat() * 2.f - 1.f;
+        const float nR = noiseRng.nextFloat() * 2.f - 1.f;
+        float tL = 0.f, tR = 0.f;
+        if (! bufL.empty() && bufSize > 0)
+        {
+            const int rp = (writePos - 1 + bufSize) % bufSize;
+            tL = bufL[(size_t) rp];
+            tR = bufR[(size_t) rp];
+        }
+        const float tone = 1.f - ySmoothed;
+        const float dense = 0.2f + xSmoothed * 0.9f;
+        outL = std::tanh ((nL * dense + tL * tone) * (1.3f + ySmoothed));
+        outR = std::tanh ((nR * dense + tR * tone) * (1.3f + ySmoothed));
     }
 
     double sr = 44100.0;

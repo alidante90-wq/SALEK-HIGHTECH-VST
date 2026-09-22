@@ -106,7 +106,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("koron_cents","Koron Cents",-50,50,0);
     F("magic_x","Magic X",0,1,0.5f); F("magic_y","Magic Y",0,1,0.5f);
     B("magic_on","Magic On",false);
-    C("magic_mode","Magic Mode",{"Loop","Glitch","FlangeVerb","Psychedelic"},0);
+    C("magic_mode","Magic Mode",{"Loop","Glitch","FlangeVerb","Psychedelic","Void","Slice","Acid","Crash","Noise"},0);
     // Voice / filter extras
     F("glide","Glide",0,1,0);
     C("voice_mode","Voice Mode",{"Poly","Mono","Legato"},0);

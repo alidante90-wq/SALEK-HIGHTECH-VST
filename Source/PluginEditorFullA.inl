@@ -164,6 +164,17 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             if (e.mods.isRightButtonDown()) amt = 0.f;
             ed->tryAssignModAt (pos, amt, e.mods);
         }
+        void mouseUp (const juce::MouseEvent& e) override
+        {
+            if (ed == nullptr || ! ed->isModDragging) return;
+            auto pos = e.getEventRelativeTo (ed).getPosition();
+            float amt = 0.5f;
+            if (e.mods.isShiftDown()) amt = 1.0f;
+            if (e.mods.isAltDown()) amt = -0.5f;
+            ed->tryAssignModAt (pos, amt, e.mods);
+            ed->isModDragging = false;
+            ed->setMouseCursor (juce::MouseCursor::NormalCursor);
+        }
     };
     {
         auto* ghook = new GlobalModClickHook();
@@ -189,7 +200,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         }
         void mouseDrag (const juce::MouseEvent& e) override
         {
-            if (ed == nullptr || e.getDistanceFromDragStart() < 5) return;
+            if (ed == nullptr || e.getDistanceFromDragStart() < 3) return;
             ed->armedModSource = src;
             ed->isModDragging = true;
             ed->setMouseCursor (juce::MouseCursor::CopyingCursor);
@@ -433,6 +444,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     {
         #include "PluginEditorMagic.inl"
+    // Explicit X/Y knobs (also LFO-modulatable)
+    {
+        const auto C = juce::Colour (0xff00e8ff);
+        const auto M = juce::Colour (0xffff2d9b);
+        addKnob (magicTab, "magic_x", "MAGIC X", C);
+        addKnob (magicTab, "magic_y", "MAGIC Y", M);
+    }
+
     }
 
     {
@@ -654,6 +673,8 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else if (paramId == "phaser_mix")    dest = D::PhaserMix;
     else if (paramId == "filter_env")    dest = D::FilterEnv;
     else if (paramId == "bassify")       dest = D::Bassify;
+    else if (paramId == "magic_x")       dest = D::MagicX;
+    else if (paramId == "magic_y")       dest = D::MagicY;
     else if (paramId == "osc1_unison")   dest = D::Osc1Level;
     else if (paramId == "osc1_udet")     dest = D::Osc1Warp;
     else if (paramId == "osc1_uspread")  dest = D::Osc1Pan;

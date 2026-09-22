@@ -551,6 +551,27 @@ void SalekHightechAudioProcessorEditor::resized()
                     c->setBounds (row.getX() + i * cw, row.getY(), cw - 2, row.getHeight());
                 }
         }
+        // MAGIC X / Y knobs (LFO-targetable)
+        {
+            auto byId = [this] (const char* id) -> Knob* {
+                for (auto& k : knobs)
+                    if (k != nullptr && k->paramId == id) return k.get();
+                return nullptr;
+            };
+            auto placeM = [&] (juce::Rectangle<int> cell, const char* id) {
+                if (auto* k = byId (id))
+                {
+                    k->name.setBounds (cell.removeFromBottom (14));
+                    k->name.setVisible (true);
+                    k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 48, 12);
+                    k->s.setBounds (cell);
+                    k->s.setVisible (true);
+                }
+            };
+            auto xyCol = r.removeFromRight (100).reduced (4, 2);
+            placeM (xyCol.removeFromTop (xyCol.getHeight() / 2).reduced (2), "magic_x");
+            placeM (xyCol.reduced (2), "magic_y");
+        }
         if (magicPad != nullptr)
         {
             magicPad->setBounds (r.reduced (4));
