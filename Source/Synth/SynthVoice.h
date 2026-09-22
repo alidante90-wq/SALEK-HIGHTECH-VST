@@ -111,7 +111,9 @@ private:
     void updateFrequencies();
     void refreshUnisonTuning() noexcept;
     float noteToHz(int note, int oct, int semi, float fine) const {
-        return PersianScale::noteToHz (note, oct, semi, fine, scaleMode, koronCents, scaleRoot);
+        // Global -1 octave: all pitches sit lower (psy / club range)
+        constexpr int globalOctaveShift = -12; // semitones
+        return PersianScale::noteToHz (note + globalOctaveShift, oct, semi, fine, scaleMode, koronCents, scaleRoot);
     }
     static constexpr int maxUnison = 7;
     static constexpr int maxUniBudget = 12; // soft cap across OSC1+2+3
