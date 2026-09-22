@@ -75,7 +75,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         if (im.isValid())
         {
             ic->setImage (im);
-            ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            ic->setImagePlacement (juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom | juce::RectanglePlacement::onlyReduceInSize);
         }
         ic->setInterceptsMouseClicks (true, false);
         addAndMakeVisible (ic);

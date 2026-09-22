@@ -153,17 +153,117 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     if (charImgL.isValid() && charSlotBounds.getWidth() > 20 && charSlotBounds.getHeight() > 40)
     {
         auto slot = charSlotBounds.toFloat();
-        // subtle panel behind model
-        g.setColour (juce::Colour (0xff0a0614).withAlpha (0.35f));
-        g.fillRoundedRectangle (slot, 10.f);
-        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.35f));
-        g.drawRoundedRectangle (slot, 10.f, 1.2f);
+        // dark panel
+        g.setColour (juce::Colour (0xff06040e).withAlpha (0.72f));
+        g.fillRoundedRectangle (slot, 12.f);
+        // multi-layer neon frame (cyan + magenta)
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.25f));
+        g.drawRoundedRectangle (slot.expanded (2.f), 14.f, 3.5f);
+        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.55f));
+        g.drawRoundedRectangle (slot, 12.f, 2.0f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.85f));
+        g.drawRoundedRectangle (slot.reduced (2.f), 10.f, 1.2f);
+        // corner accents
+        const float c = 14.f;
+        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.9f));
+        g.drawLine (slot.getX(), slot.getY() + c, slot.getX(), slot.getY(), 2.f);
+        g.drawLine (slot.getX(), slot.getY(), slot.getX() + c, slot.getY(), 2.f);
+        g.drawLine (slot.getRight(), slot.getY() + c, slot.getRight(), slot.getY(), 2.f);
+        g.drawLine (slot.getRight() - c, slot.getY(), slot.getRight(), slot.getY(), 2.f);
+        g.drawLine (slot.getX(), slot.getBottom() - c, slot.getX(), slot.getBottom(), 2.f);
+        g.drawLine (slot.getX(), slot.getBottom(), slot.getX() + c, slot.getBottom(), 2.f);
+        g.drawLine (slot.getRight(), slot.getBottom() - c, slot.getRight(), slot.getBottom(), 2.f);
+        g.drawLine (slot.getRight() - c, slot.getBottom(), slot.getRight(), slot.getBottom(), 2.f);
+        // BOTTOM-aligned portrait (fixes knee-up / full-body mismatch)
         g.setOpacity (0.98f);
-        g.drawImage (charImgL, slot.reduced (4.f),
-                     juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        g.drawImage (charImgL, slot.reduced (6.f, 8.f),
+                     juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom
+                     | juce::RectanglePlacement::onlyReduceInSize);
         g.setOpacity (1.f);
     }
     g.setOpacity (1.f);
+
+    // SALEK icon badges (paint fallback — always visible if atlas loads)
+    {
+        auto atlas = SalekAssets::loadIconsAtlas();
+        if (atlas.isValid() && tabs.getCurrentTabIndex() == 0)
+        {
+            auto drawIcon = [&] (int idx, juce::Rectangle<int> dest)
+            {
+                if (dest.getWidth() < 8) return;
+                idx = juce::jlimit (0, 49, idx);
+                auto src = juce::Rectangle<int> ((idx % 10) * 64, (idx / 10) * 64, 64, 64);
+                auto sub = atlas.getClippedImage (src);
+                if (! sub.isValid()) return;
+                g.setOpacity (0.95f);
+                g.drawImage (sub, dest.toFloat(),
+                             juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+                g.setOpacity (1.f);
+            };
+            // OSC1/2/3 headers from osc monitors if present
+            if (oscMon1 != nullptr)
+            {
+                auto r = getLocalArea (oscMon1.get(), oscMon1->getLocalBounds());
+                drawIcon (0, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+            }
+            if (oscMon2 != nullptr)
+            {
+                auto r = getLocalArea (oscMon2.get(), oscMon2->getLocalBounds());
+                drawIcon (1, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+            }
+            if (oscMon3 != nullptr)
+            {
+                auto r = getLocalArea (oscMon3.get(), oscMon3->getLocalBounds());
+                drawIcon (2, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+            }
+            if (filterTab.isShowing())
+            {
+                auto r = getLocalArea (&filterTab, filterTab.getLocalBounds());
+                drawIcon (11, juce::Rectangle<int> (r.getX() + 4, r.getY() + 4, 26, 26));
+            }
+        }
+        else if (atlas.isValid() && tabs.getCurrentTabIndex() == 2) // LFO
+        {
+            auto r = getLocalArea (&lfoTab, lfoTab.getLocalBounds());
+            auto drawIcon = [&] (int idx, int x)
+            {
+                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                g.drawImage (sub, juce::Rectangle<float> ((float) x, (float) r.getY() + 4, 28.f, 28.f),
+                             juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            };
+            drawIcon (17, r.getX() + 8);
+            drawIcon (18, r.getX() + 40);
+            drawIcon (19, r.getX() + 72);
+        }
+        else if (atlas.isValid() && tabs.getCurrentTabIndex() == 1) // MOD
+        {
+            auto r = getLocalArea (&modTab, modTab.getLocalBounds());
+            auto drawIcon = [&] (int idx, int x)
+            {
+                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                g.drawImage (sub, juce::Rectangle<float> ((float) x, (float) r.getY() + 4, 28.f, 28.f),
+                             juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            };
+            drawIcon (20, r.getX() + 8);
+            drawIcon (21, r.getX() + 40);
+            drawIcon (5,  r.getX() + 72);
+        }
+        else if (atlas.isValid() && tabs.getCurrentTabIndex() == 3) // FX
+        {
+            auto r = getLocalArea (&fxTab, fxTab.getLocalBounds());
+            const int idxs[] = { 37, 36, 35, 9, 41, 40, 39, 32 };
+            for (int i = 0; i < 8; ++i)
+            {
+                int idx = idxs[i];
+                auto sub = atlas.getClippedImage ({ (idx%10)*64, (idx/10)*64, 64, 64 });
+                float x = (float) r.getX() + 10.f + (float) (i % 2) * (r.getWidth() * 0.5f);
+                float y = (float) r.getY() + 8.f + (float) (i / 2) * (r.getHeight() * 0.22f);
+                g.drawImage (sub, juce::Rectangle<float> (x, y, 26.f, 26.f),
+                             juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            }
+        }
+
+    }
 
     // ---- left panel: only show branding card when preset sidebar is collapsed ----
     if (presetCollapsed)
