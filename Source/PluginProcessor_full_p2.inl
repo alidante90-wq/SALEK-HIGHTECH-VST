@@ -287,6 +287,60 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
+    // ---- Push all FX params (UI knobs were never wired → delay/reverb silent) ----
+    {
+        const float dMix = juce::jlimit (0.f, 1.f, g ("delay_mix") * spaceScale);
+        delay.setMix (dMix);
+        delay.setTimeMs (g ("delay_time"));
+        delay.setTimeMsL (g ("delay_time_l"));
+        delay.setTimeMsR (g ("delay_time_r"));
+        delay.setFeedback (g ("delay_fb"));
+        delay.setMode ((int) g ("delay_mode"));
+
+        const float rMix = juce::jlimit (0.f, 1.f, g ("reverb_mix") * spaceScale);
+        reverb.setMix (rMix);
+        reverb.setSize (g ("reverb_size"));
+        reverb.setDecay (g ("reverb_decay"));
+        reverb.setMode ((int) g ("reverb_mode"));
+
+        const float cMix = juce::jlimit (0.f, 1.f, g ("chorus_mix") * widthScale);
+        chorus.setMix (cMix);
+        chorus.setRate (g ("chorus_rate"));
+        chorus.setDepth (g ("chorus_depth"));
+
+        phaser.setMix (g ("phaser_mix"));
+        phaser.setRate (g ("phaser_rate"));
+        phaser.setDepth (g ("phaser_depth"));
+
+        distortion.setMix (juce::jlimit (0.f, 1.f, g ("dist_mix") * (0.35f + destScale * 0.9f)));
+        distortion.setDrive (juce::jlimit (0.f, 1.f, g ("dist_drive") * (0.5f + destScale)));
+        distortion.setBitcrush (g ("dist_crush"));
+        distortion.setMode ((int) g ("dist_mode"));
+
+        formantFilter.setMorph (g ("formant_morph"));
+        formantFilter.setAmount (g ("formant_amt"));
+
+        resonator.setMix (g ("res_mix"));
+        resonator.setDecay (g ("res_decay"));
+        resonator.setBrightness (g ("res_bright"));
+        resonator.setFrequency (g ("res_freq"));
+        resonator.setMaterial ((int) g ("res_material"));
+
+        spectralSmear.setMix (g ("spectral_mix"));
+        spectralSmear.setAmount (g ("spectral_amt"));
+        spectralSmear.setShift (g ("spectral_shift"));
+        spectralSmear.setGate (g ("spectral_gate"));
+
+        spatial.setAzimuth (g ("spatial_azim"));
+        spatial.setDistance (g ("spatial_dist"));
+        spatial.setSize (g ("spatial_size"));
+        spatial.setElevation (g ("spatial_elev"));
+
+        eq.setLowGainDb (g ("eq_low"));
+        eq.setMidGainDb (g ("eq_mid"));
+        eq.setHighGainDb (g ("eq_high"));
+    }
+
     // Mix=0 early-out saves a lot with 2+ instances in FL
     if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
     if (! bypassed ("phaser_bypass") && g ("phaser_mix") > 1e-4f)  phaser.process (buffer);

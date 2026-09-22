@@ -1,4 +1,31 @@
 
+void SalekHightechAudioProcessorEditor::paintOverChildren (juce::Graphics& g)
+{
+    auto drawOn = [&] (juce::Component& c, SalekAssets::IconId id)
+    {
+        if (! c.isShowing() || c.getWidth() < 8) return;
+        auto img = SalekAssets::loadIcon (id);
+        if (! img.isValid()) return;
+        auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (4.f);
+        g.setOpacity (1.f);
+        g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+    };
+    using IC = SalekAssets::IconId;
+    drawOn (prevPreset, IC::Glide);
+    drawOn (nextPreset, IC::Portamento);
+    drawOn (initBtn, IC::Transpose);
+    drawOn (savePresetBtn, IC::Master);
+    drawOn (loadPresetBtn, IC::Wavetable);
+    drawOn (bankBtn, IC::Seq);
+    drawOn (inspireBtn, IC::Randomize);
+    drawOn (modSrcLfo1, IC::Lfo);
+    drawOn (modSrcLfo2, IC::LfoRandom);
+    drawOn (modSrcLfo3, IC::LfoSync);
+    drawOn (bgSwapBtn, IC::FrameMorph);
+    drawOn (charCycleBtn, IC::Osc1);
+}
+
+
 void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, SalekAssets::IconId id)
 {
     auto img = SalekAssets::loadIcon (id);

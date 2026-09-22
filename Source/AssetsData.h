@@ -125,12 +125,20 @@ inline juce::Image loadIconsAtlas()
 {
     juce::Image img;
 #if SALEK_HAS_BINARY_DATA
-    img = fromBinaryName ("icons_atlas_png");
-    if (img.isValid()) return img;
-    img = fromBinaryName ("Source_Assets_icons_atlas_png");
-    if (img.isValid()) return img;
+    static const char* kNames[] = {
+        "icons_atlas_png",
+        "Source_Assets_icons_atlas_png",
+        "icons_atlas",
+        "Source_Assets_icons_atlas"
+    };
+    for (auto* n : kNames)
+    {
+        img = fromBinaryName (n);
+        if (img.isValid()) return img;
+    }
 #endif
-    img = fromDisk ({ "icons_atlas.png", "Source/Assets/icons_atlas.png", "Assets/icons_atlas.png" });
+    img = fromDisk ({ "icons_atlas.png", "Source/Assets/icons_atlas.png",
+                      "Assets/icons_atlas.png", "icons/icons_atlas.png" });
     return img;
 }
 

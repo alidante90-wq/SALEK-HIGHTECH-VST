@@ -226,6 +226,7 @@ public:
     explicit SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor&);
     ~SalekHightechAudioProcessorEditor() override;
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
     int getNumRows() override;
