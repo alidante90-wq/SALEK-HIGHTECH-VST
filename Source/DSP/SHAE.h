@@ -1,4 +1,10 @@
 #pragma once
+/**
+ * SHAE — SALEK HIGHTECH AUDIO ENGINE
+ * Custom realtime-safe DSP (original implementation).
+ * License of this file: same as the GITI project (proprietary to SALEK HIGHTECH unless stated otherwise).
+ * Algorithms inspired by public DSP literature (PolyBLEP, ZDF SVF, waveshaping) — no third-party code copied.
+ */
 #include <JuceHeader.h>
 #include <cmath>
 #include <array>
@@ -7,7 +13,6 @@
 namespace salek {
 namespace shae {
 
-/** SALEK HIGHTECH AUDIO ENGINE — quality / oversampling modes */
 enum class Quality : int { Eco = 0, Normal = 1, High = 2, Ultra = 3 };
 
 inline int oversampleFactor (Quality q) noexcept
@@ -21,9 +26,39 @@ inline int oversampleFactor (Quality q) noexcept
     return 1;
 }
 
-/** PolyBLEP for bandlimited naive waveforms (anti-alias) */
+inline float flushDenormal (float x) noexcept
+{
+    return (std::abs (x) < 1.0e-15f) ? 0.f : x;
+}
+
+inline bool isFinite (float x) noexcept
+{
+    return std::isfinite (x);
+}
+
+/** Fast tanh approx (Pade) — realtime friendly */
+inline float fastTanh (float x) noexcept
+{
+    if (x < -3.f) return -1.f;
+    if (x >  3.f) return  1.f;
+    const float x2 = x * x;
+    return x * (27.f + x2) / (27.f + 9.f * x2);
+}
+
+/** Soft clip with approximate gain compensation */
+inline float softClipComp (float x, float drive) noexcept
+{
+    const float g = 1.f + drive * 4.f;
+    const float y = fastTanh (x * g);
+    // compensate average gain so drive ≠ automatic loudness
+    const float comp = 1.f / (0.75f + 0.25f * fastTanh (g * 0.5f));
+    return y * comp;
+}
+
+/** PolyBLEP residual (bandlimited step) */
 inline float polyBLEP (float t, float dt) noexcept
 {
+    if (dt < 1e-8f) return 0.f;
     if (t < dt)
     {
         t = t / dt;
@@ -37,24 +72,58 @@ inline float polyBLEP (float t, float dt) noexcept
     return 0.f;
 }
 
-/** BLAMP for triangle / integrated BLEP */
 inline float polyBLAMP (float t, float dt) noexcept
 {
     if (dt < 1e-8f) return 0.f;
     if (t < dt)
     {
         t = t / dt - 1.f;
-        return -1.f / 3.f * t * t * t;
+        return (-1.f / 3.f) * t * t * t;
     }
     if (t > 1.f - dt)
     {
         t = (t - 1.f) / dt + 1.f;
-        return 1.f / 3.f * t * t * t;
+        return (1.f / 3.f) * t * t * t;
     }
     return 0.f;
 }
 
-/** SALEK Distortion Matrix modes */
+/** DC blocker (1-pole HPF ~20Hz) */
+struct DCBlocker
+{
+    void prepare (double sampleRate) noexcept
+    {
+        const float hz = 20.f;
+        const float x = std::exp (-2.f * juce::MathConstants<float>::pi * hz / (float) sampleRate);
+        R = x;
+        xz = yz = 0.f;
+    }
+    float process (float x) noexcept
+    {
+        float y = x - xz + R * yz;
+        xz = x;
+        yz = y;
+        return flushDenormal (y);
+    }
+    float R = 0.995f, xz = 0.f, yz = 0.f;
+};
+
+/** One-pole lowpass for mono-bass extraction */
+struct OnePoleLP
+{
+    void setCutoff (float hz, double sr) noexcept
+    {
+        a = 1.f - std::exp (-2.f * juce::MathConstants<float>::pi * hz / (float) sr);
+    }
+    float process (float x) noexcept
+    {
+        z += a * (x - z);
+        return flushDenormal (z);
+    }
+    float a = 0.1f, z = 0.f;
+};
+
+// ---------- Distortion Matrix ----------
 enum class DistMode : int {
     Soft = 0, Tube, Tape, HardClip, WaveShaper, WaveFold,
     Asymmetric, Rectifier, BitCrush, Downsample, Digital, Metal, Neuro, Hitech,
@@ -72,58 +141,79 @@ inline const char* distModeName (int m) noexcept
 
 inline float processDistSample (float x, int mode, float drive) noexcept
 {
-    const float g = 1.f + drive * 6.f;
+    const float d = juce::jlimit (0.f, 1.f, drive);
+    // Pre-gain with compensation path
+    const float g = 1.f + d * 5.5f;
     x *= g;
+    float y = x;
     switch (mode)
     {
-        case 0: // Soft
-            return std::tanh (x) / (0.9f + 0.1f * drive);
-        case 1: // Tube (even harmonics bias)
-            return std::tanh (x + 0.15f * drive * x * x) * 0.95f;
+        case 0: y = softClipComp (x / g, d); break; // already compensated
+        case 1: // Tube
+            y = fastTanh (x + 0.12f * d * x * x);
+            y *= 1.f / (0.8f + 0.2f * d);
+            break;
         case 2: // Tape
-            return std::tanh (x * (1.f + 0.3f * drive)) - 0.08f * drive * x * x * x;
+            y = fastTanh (x * (1.f + 0.25f * d)) - 0.06f * d * x * x * x;
+            y *= 0.95f;
+            break;
         case 3: // HardClip
-            return juce::jlimit (-1.f, 1.f, x * (0.7f + 0.3f * drive));
+            y = juce::jlimit (-1.f, 1.f, x * (0.65f + 0.35f * d));
+            break;
         case 4: // WaveShaper
-            return std::sin (x * juce::MathConstants<float>::halfPi * (0.8f + drive * 0.4f));
+            y = std::sin (x * juce::MathConstants<float>::halfPi * (0.75f + d * 0.45f));
+            break;
         case 5: // WaveFold
         {
-            float y = x;
+            float t = x;
             for (int i = 0; i < 3; ++i)
             {
-                if (y > 1.f) y = 2.f - y;
-                else if (y < -1.f) y = -2.f - y;
+                if (t > 1.f) t = 2.f - t;
+                else if (t < -1.f) t = -2.f - t;
                 else break;
             }
-            return y / (1.f + drive * 0.5f);
+            y = t / (1.f + d * 0.6f);
+            break;
         }
         case 6: // Asymmetric
-            return x >= 0.f ? std::tanh (x) : std::tanh (x * (1.2f + drive));
+            y = x >= 0.f ? fastTanh (x) : fastTanh (x * (1.15f + d));
+            break;
         case 7: // Rectifier
-            return std::tanh (std::abs (x) * 1.2f) * (x >= 0.f ? 1.f : -0.6f);
+            y = fastTanh (std::abs (x) * 1.15f) * (x >= 0.f ? 1.f : -0.55f);
+            break;
         case 8: // BitCrush
         {
-            float bits = 3.f + (1.f - drive) * 9.f;
+            float bits = 3.f + (1.f - d) * 9.f;
             float step = std::pow (2.f, -bits);
-            return std::floor (x / step + 0.5f) * step;
+            y = std::floor (x / step + 0.5f) * step;
+            break;
         }
-        case 9: // Downsample (handled externally mostly)
-            return std::tanh (x);
+        case 9: // Downsample placeholder (caller may hold samples)
+            y = softClipComp (x / g, d);
+            break;
         case 10: // Digital
-            return juce::jlimit (-1.f, 1.f, x * 1.4f) * (1.f - 0.2f * drive)
-                 + 0.15f * drive * std::copysign (1.f, x);
+            y = juce::jlimit (-1.f, 1.f, x * 1.35f);
+            y = y * (1.f - 0.15f * d) + 0.12f * d * std::copysign (1.f, y);
+            break;
         case 11: // Metal
-            return std::tanh (x * 2.f) + 0.3f * drive * std::sin (x * 8.f);
+            y = fastTanh (x * 1.8f) + 0.28f * d * std::sin (x * 7.5f);
+            y *= 0.85f;
+            break;
         case 12: // Neuro
-            return std::tanh (x + drive * 0.5f * std::sin (x * 12.f)) * 0.9f;
+            y = fastTanh (x + d * 0.45f * std::sin (x * 11.f)) * 0.9f;
+            break;
         case 13: // Hitech
-            return std::sin (std::tanh (x * (1.5f + drive)) * juce::MathConstants<float>::pi * 0.5f);
+            y = std::sin (fastTanh (x * (1.4f + d)) * juce::MathConstants<float>::halfPi);
+            break;
         default:
-            return std::tanh (x);
+            y = softClipComp (x / g, d);
+            break;
     }
+    if (! isFinite (y)) y = 0.f;
+    return y;
 }
 
-/** 3-band formant (A E I O U morph 0..1) — SALEK vocal/alien */
+// ---------- Formant ----------
 struct FormantFilter
 {
     void prepare (double sampleRate) noexcept
@@ -131,15 +221,12 @@ struct FormantFilter
         sr = sampleRate > 0 ? sampleRate : 44100.0;
         for (auto& s : st) s = 0.f;
     }
-
     void setMorph (float m) noexcept { morph = juce::jlimit (0.f, 1.f, m); }
     void setAmount (float a) noexcept { amount = juce::jlimit (0.f, 1.f, a); }
 
-    // Vowel center freqs (approx F1,F2,F3)
     void process (float& L, float& R) noexcept
     {
         if (amount < 1e-4f) return;
-        // A E I O U tables
         static const float F1[5] = { 800.f,  500.f,  300.f,  450.f,  325.f };
         static const float F2[5] = { 1200.f, 1800.f, 2300.f, 800.f,  700.f };
         static const float F3[5] = { 2500.f, 2500.f, 3000.f, 2800.f, 2600.f };
@@ -152,50 +239,21 @@ struct FormantFilter
         float f2 = F2[i0] + (F2[i1] - F2[i0]) * f;
         float f3 = F3[i0] + (F3[i1] - F3[i0]) * f;
 
-        auto bp = [&] (float x, float freq, float& z1, float& z2) -> float
+        auto peak = [&] (float x, float freq, float& s) -> float
         {
-            float w = 2.f * juce::MathConstants<float>::pi * freq / (float) sr;
-            float q = 6.f + amount * 8.f;
-            float a = std::sin (w) / (2.f * q);
-            float y = x - z1 * (2.f * std::cos (w) * (1.f - a)) - z2 * (1.f - 2.f * a);
-            // simplified resonator
-            float r = 0.96f + amount * 0.03f;
-            float out = x + r * (std::sin (w) * z1);
-            z2 = z1;
-            z1 = out * 0.15f + x * 0.85f;
-            juce::ignoreUnused (a, y);
-            // band emphasis via 1-pole peak
-            float c = 1.f - std::exp (-2.f * juce::MathConstants<float>::pi * freq / (float) sr);
-            float lp = z1 + c * (x - z1);
-            z1 = lp;
-            return (x + (x - lp) * amount * 2.5f);
-        };
-
-        // Use three cascaded peak-ish stages
-        float yL = L, yR = R;
-        // crude formant: sum of bandpassed resonances
-        auto res = [&] (float x, float freq, float& s) -> float
-        {
-            float c = 1.f - std::exp (-2.f * juce::MathConstants<float>::pi * (freq * 0.5f) / (float) sr);
+            float c = 1.f - std::exp (-2.f * juce::MathConstants<float>::pi * (freq * 0.45f) / (float) sr);
             s += c * (x - s);
+            s = flushDenormal (s);
             float hp = x - s;
-            float c2 = 1.f - std::exp (-2.f * juce::MathConstants<float>::pi * freq / (float) sr);
-            // band
-            float b = s; // low
-            float mid = hp;
-            juce::ignoreUnused (c2, b);
-            return x + mid * amount * 1.8f * (freq / 2000.f);
+            return x + hp * amount * 1.6f * juce::jlimit (0.3f, 1.4f, freq / 1800.f);
         };
 
-        yL = res (yL, f1, st[0]);
-        yL = res (yL, f2, st[1]);
-        yL = res (yL, f3, st[2]);
-        yR = res (yR, f1, st[3]);
-        yR = res (yR, f2, st[4]);
-        yR = res (yR, f3, st[5]);
-        L = L * (1.f - amount * 0.7f) + yL * (amount * 0.7f);
-        R = R * (1.f - amount * 0.7f) + yR * (amount * 0.7f);
-        juce::ignoreUnused (bp);
+        float yL = peak (peak (peak (L, f1, st[0]), f2, st[1]), f3, st[2]);
+        float yR = peak (peak (peak (R, f1, st[3]), f2, st[4]), f3, st[5]);
+        L = L * (1.f - amount * 0.65f) + yL * (amount * 0.65f);
+        R = R * (1.f - amount * 0.65f) + yR * (amount * 0.65f);
+        if (! isFinite (L)) L = 0.f;
+        if (! isFinite (R)) R = 0.f;
     }
 
     double sr = 44100.0;
@@ -203,7 +261,7 @@ struct FormantFilter
     float st[6] {};
 };
 
-/** Simple 2x oversampler (upsample linear, process, downsample) for hot path stages */
+/** Lightweight 2x oversampler for nonlinear stages */
 struct Oversampler2x
 {
     void reset() noexcept { zUpL = zUpR = zDnL = zDnR = 0.f; }
@@ -218,19 +276,17 @@ struct Oversampler2x
         {
             float L0 = buffer.getSample (0, i);
             float R0 = ch > 1 ? buffer.getSample (1, i) : L0;
-            // upsample: hold + interpolate mid
             float L1 = 0.5f * (L0 + zUpL);
             float R1 = 0.5f * (R0 + zUpR);
             zUpL = L0; zUpR = R0;
             processSample (L1, R1);
             processSample (L0, R0);
-            // simple downsample average + mild LP
             float oL = 0.5f * (L1 + L0);
             float oR = 0.5f * (R1 + R0);
-            zDnL += 0.55f * (oL - zDnL);
-            zDnR += 0.55f * (oR - zDnR);
-            buffer.setSample (0, i, zDnL);
-            if (ch > 1) buffer.setSample (1, i, zDnR);
+            zDnL += 0.5f * (oL - zDnL);
+            zDnR += 0.5f * (oR - zDnR);
+            buffer.setSample (0, i, flushDenormal (zDnL));
+            if (ch > 1) buffer.setSample (1, i, flushDenormal (zDnR));
         }
     }
 

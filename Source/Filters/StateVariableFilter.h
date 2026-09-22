@@ -79,6 +79,7 @@ public:
 
     float process (float x) noexcept
     {
+        if (! std::isfinite (x)) x = 0.f;
         // Pre-drive (stronger / more saturated for Acid & Ladder)
         float preDrive = drive;
         if (mode == Mode::AcidLP)
@@ -109,7 +110,7 @@ public:
         switch (mode)
         {
             case Mode::LowPass12:
-                y = v2last; break;
+                y = sanitize (v2last); break;
             case Mode::AcidLP:
             {
                 // 12dB core + soft diode-like soft clip on resonance peak
@@ -212,11 +213,16 @@ public:
 
         if (resonance > 0.4f && mode != Mode::AllPass)
         {
-            const float boost = 1.0f + (resonance - 0.4f) * 1.8f;
+            // Softer resonance boost — avoid runaway aliasing/harshness
+            const float boost = 1.0f + (resonance - 0.4f) * 1.35f;
             y *= boost;
         }
-        y = std::tanh (y * (1.15f + drive * 0.8f));
-        return y;
+        y = std::tanh (y * (1.08f + drive * 0.55f));
+        if (std::abs (ic1eq) < 1e-15f) ic1eq = 0.f;
+        if (std::abs (ic2eq) < 1e-15f) ic2eq = 0.f;
+        if (std::abs (ic1b) < 1e-15f) ic1b = 0.f;
+        if (std::abs (ic2b) < 1e-15f) ic2b = 0.f;
+        return sanitize (y);
     }
 
 private:
@@ -236,6 +242,13 @@ private:
         return v2;
     }
 
+    static float sanitize (float y) noexcept
+    {
+        if (! std::isfinite (y)) return 0.f;
+        if (std::abs (y) < 1.0e-15f) return 0.f;
+        return juce::jlimit (-4.f, 4.f, y); // soft ceiling before voice tanh
+    }
+
     float processComb (float x) noexcept
     {
         const int maxD = (int) combBuf.size() - 1;
@@ -251,8 +264,10 @@ private:
     void update() noexcept
     {
         const float g = std::tan (juce::MathConstants<float>::pi * cutoff / static_cast<float> (sr));
-        k = 2.0f - 1.92f * resonance;
-        if (k < 0.08f) k = 0.08f;
+        // Resonance mapping: stable ZDF-style (k never near 0)
+        k = 2.0f - 1.85f * resonance;
+        if (k < 0.12f) k = 0.12f;
+        if (k > 1.98f) k = 1.98f;
         a1 = 1.0f / (1.0f + g * (g + k));
         a2 = g * a1;
         a3 = g * a2;

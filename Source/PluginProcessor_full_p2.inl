@@ -286,21 +286,47 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     float gain = apvts.getRawParameterValue("master_gain")->load();
     const float drive = apvts.getRawParameterValue("master_drive")->load();
     const float gMul = gain * (0.85f + drive * 0.1f);
-    // SHAE Master Core: DC block → soft clip → ceiling
+    // SHAE Master Core: DC block → mono bass → soft clip → ceiling
     static float dcL = 0.f, dcR = 0.f;
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    static float lpL = 0.f, lpR = 0.f;
+    const float bassC = 0.08f; // ~120Hz @ 48k one-pole
+    const int nS = buffer.getNumSamples();
+    const int nCh = buffer.getNumChannels();
+    if (nCh >= 2)
     {
-        auto* d = buffer.getWritePointer (ch);
-        float& dc = (ch == 0 ? dcL : dcR);
-        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        auto* L = buffer.getWritePointer (0);
+        auto* R = buffer.getWritePointer (1);
+        for (int i = 0; i < nS; ++i)
+        {
+            float xL = L[i] * gMul;
+            float xR = R[i] * gMul;
+            dcL += 0.0005f * (xL - dcL); xL -= dcL;
+            dcR += 0.0005f * (xR - dcR); xR -= dcR;
+            // Mono low end (stable club/system compatibility)
+            lpL += bassC * (xL - lpL);
+            lpR += bassC * (xR - lpR);
+            float midBass = 0.5f * (lpL + lpR);
+            float hiL = xL - lpL;
+            float hiR = xR - lpR;
+            xL = midBass + hiL;
+            xR = midBass + hiR;
+            xL = salek::shae::softClipComp (xL, drive * 0.6f);
+            xR = salek::shae::softClipComp (xR, drive * 0.6f);
+            const float aL = std::abs (xL), aR = std::abs (xR);
+            if (aL > 0.88f) xL = std::copysign (0.88f + 0.1f * std::tanh ((aL - 0.88f) * 5.f), xL);
+            if (aR > 0.88f) xR = std::copysign (0.88f + 0.1f * std::tanh ((aR - 0.88f) * 5.f), xR);
+            L[i] = juce::jlimit (-0.97f, 0.97f, xL);
+            R[i] = juce::jlimit (-0.97f, 0.97f, xR);
+        }
+    }
+    else if (nCh == 1)
+    {
+        auto* d = buffer.getWritePointer (0);
+        for (int i = 0; i < nS; ++i)
         {
             float x = d[i] * gMul;
-            dc += 0.0005f * (x - dc); // slow DC tracker
-            x -= dc;
-            x = std::tanh (x * (0.88f + drive * 0.5f));
-            const float ax = std::abs (x);
-            if (ax > 0.85f)
-                x = std::copysign (0.85f + 0.13f * std::tanh ((ax - 0.85f) * 5.f), x);
+            dcL += 0.0005f * (x - dcL); x -= dcL;
+            x = salek::shae::softClipComp (x, drive * 0.6f);
             d[i] = juce::jlimit (-0.97f, 0.97f, x);
         }
     }

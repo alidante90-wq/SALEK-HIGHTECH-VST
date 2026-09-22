@@ -72,13 +72,9 @@ public:
             sample /= (1.f + f * 0.9f);
         }
 
-        // Drive — transparent tube → plastic saturation with better headroom
+        // Drive — SHAE soft clip with gain compensation
         if (drive > 1e-4f) {
-            float g = 1.f + drive * 5.8f;
-            float y = sample * g;
-            // soft-clip + mild even harmonics
-            y = std::tanh (y * (1.f + drive * 0.28f)) - 0.07f * drive * y * y;
-            sample = y / (0.88f + 0.12f * std::tanh (g));
+            sample = shae::softClipComp (sample, drive);
         }
 
         // tiny DC block for clarity at high resonance chains
