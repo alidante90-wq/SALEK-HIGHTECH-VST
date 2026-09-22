@@ -7,6 +7,53 @@ void SynthVoice::updateFrequencies()
     osc1.setFrequency (noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine));
     osc2.setFrequency (noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine));
     osc3.setFrequency (noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine));
+    uniFreqDirty = true;
+}
+
+void SynthVoice::refreshUnisonTuning() noexcept
+{
+    // Soft budget: if all three oscs max unison, scale down to protect CPU
+    int v1 = juce::jmax (1, uniVoices1);
+    int v2 = juce::jmax (1, uniVoices2);
+    int v3 = juce::jmax (1, uniVoices3);
+    // Silent oscs cost 0 toward budget
+    const int c1 = osc1Level > 1e-5f ? v1 : 0;
+    const int c2 = osc2Level > 1e-5f ? v2 : 0;
+    const int c3 = osc3Level > 1e-5f ? v3 : 0;
+    int total = c1 + c2 + c3;
+    if (total > maxUniBudget && total > 0)
+    {
+        const float scale = (float) maxUniBudget / (float) total;
+        if (c1 > 0) v1 = juce::jmax (1, (int) std::lround (v1 * scale));
+        if (c2 > 0) v2 = juce::jmax (1, (int) std::lround (v2 * scale));
+        if (c3 > 0) v3 = juce::jmax (1, (int) std::lround (v3 * scale));
+    }
+    nUniEff1 = osc1Level > 1e-5f ? v1 : 0;
+    nUniEff2 = osc2Level > 1e-5f ? v2 : 0;
+    nUniEff3 = osc3Level > 1e-5f ? v3 : 0;
+
+    auto fill = [&] (int n, float detAmt, float spr, float* detTbl, float* panTbl,
+                     WavetableOscillator* oscs, int oct, int semi, float fine)
+    {
+        for (int u = 0; u < maxUnison; ++u)
+        {
+            float det = 0.f, pan = 0.5f;
+            if (n > 1 && u < n)
+            {
+                const float t = ((float) u / (float) (n - 1)) * 2.0f - 1.0f;
+                det = t * detAmt;
+                pan = 0.5f + 0.5f * t * spr;
+            }
+            detTbl[u] = det;
+            panTbl[u] = pan;
+            if (u < n)
+                oscs[u].setFrequency (noteToHz (currentMidiNote, oct, semi, fine + det));
+        }
+    };
+    fill (nUniEff1, uniDet1, uniSpr1, uniDetTbl1, uniPanTbl1, uniOsc1, osc1Octave, osc1Semi, osc1Fine);
+    fill (nUniEff2, uniDet2 * 0.9f, uniSpr2, uniDetTbl2, uniPanTbl2, uniOsc2, osc2Octave, osc2Semi, osc2Fine);
+    fill (nUniEff3, uniDet3 * 0.85f, uniSpr3, uniDetTbl3, uniPanTbl3, uniOsc3, osc3Octave, osc3Semi, osc3Fine);
+    uniFreqDirty = false;
 }
 
 void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -18,12 +65,15 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
     auto* right = outputBuffer.getNumChannels() > 1
                     ? outputBuffer.getWritePointer (1, startSample) : nullptr;
 
-    const int nUni1 = juce::jmax (1, uniVoices1);
-    const int nUni2 = juce::jmax (1, uniVoices2);
-    const int nUni3 = juce::jmax (1, uniVoices3);
-    const float invN1 = 1.0f / std::sqrt ((float) nUni1);
-    const float invN2 = 1.0f / std::sqrt ((float) nUni2);
-    const float invN3 = 1.0f / std::sqrt ((float) nUni3);
+    if (uniFreqDirty)
+        refreshUnisonTuning();
+
+    const int nUni1 = juce::jmax (0, nUniEff1);
+    const int nUni2 = juce::jmax (0, nUniEff2);
+    const int nUni3 = juce::jmax (0, nUniEff3);
+    const float invN1 = nUni1 > 0 ? 1.0f / std::sqrt ((float) nUni1) : 0.f;
+    const float invN2 = nUni2 > 0 ? 1.0f / std::sqrt ((float) nUni2) : 0.f;
+    const float invN3 = nUni3 > 0 ? 1.0f / std::sqrt ((float) nUni3) : 0.f;
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -35,44 +85,28 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
 
         // --- OSC3 with unison (modulator) ---
         float s3L = 0.f, s3R = 0.f, s3Mono = 0.f;
-        if (osc3Level > 1.0e-5f)
         for (int u = 0; u < nUni3; ++u)
         {
-            float det = 0.f, pan = 0.5f;
-            if (nUni3 > 1)
-            {
-                const float t = ((float) u / (float) (nUni3 - 1)) * 2.0f - 1.0f;
-                det = t * uniDet3 * 0.85f;
-                pan = 0.5f + 0.5f * t * uniSpr3;
-            }
-            uniOsc3[u].setFrequency (noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine + det));
+            const float pan = uniPanTbl3[u];
             const float s = uniOsc3[u].processSample (0.0f, 1.0f);
             s3L += s * std::cos (pan * juce::MathConstants<float>::halfPi);
             s3R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
             s3Mono += s;
         }
-        if (osc3Level > 1.0e-5f) { s3L *= invN3; s3R *= invN3; s3Mono *= invN3; }
+        if (nUni3 > 0) { s3L *= invN3; s3R *= invN3; s3Mono *= invN3; }
 
         // --- OSC2 with unison (FM from OSC3) ---
         float s2L = 0.f, s2R = 0.f, s2Mono = 0.f;
         const float pmFor2 = s3Mono * fm3to2 * 0.5f;
-        if (osc2Level > 1.0e-5f)
         for (int u = 0; u < nUni2; ++u)
         {
-            float det = 0.f, pan = 0.5f;
-            if (nUni2 > 1)
-            {
-                const float t = ((float) u / (float) (nUni2 - 1)) * 2.0f - 1.0f;
-                det = t * uniDet2 * 0.9f;
-                pan = 0.5f + 0.5f * t * uniSpr2;
-            }
-            uniOsc2[u].setFrequency (noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine + det));
+            const float pan = uniPanTbl2[u];
             const float s = uniOsc2[u].processSample (pmFor2, 1.0f);
             s2L += s * std::cos (pan * juce::MathConstants<float>::halfPi);
             s2R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
             s2Mono += s;
         }
-        if (osc2Level > 1.0e-5f) { s2L *= invN2; s2R *= invN2; s2Mono *= invN2; }
+        if (nUni2 > 0) { s2L *= invN2; s2R *= invN2; s2Mono *= invN2; }
 
         // --- OSC1 with unison (carrier, FM/PM/AM from 2&3) ---
         const float fmIndex2 = fm2to1 * 4.0f; // deeper FM
@@ -85,22 +119,14 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         const float pmCarrier = pmFrom2 + pmFrom3;
 
         float s1L = 0.f, s1R = 0.f;
-        if (osc1Level > 1.0e-5f)
         for (int u = 0; u < nUni1; ++u)
         {
-            float det = 0.f, pan = 0.5f;
-            if (nUni1 > 1)
-            {
-                const float t = ((float) u / (float) (nUni1 - 1)) * 2.0f - 1.0f;
-                det = t * uniDet1;
-                pan = 0.5f + 0.5f * t * uniSpr1;
-            }
-            uniOsc1[u].setFrequency (noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine + det));
+            const float pan = uniPanTbl1[u];
             const float s = uniOsc1[u].processSample (pmCarrier, am);
             s1L += s * std::cos (pan * juce::MathConstants<float>::halfPi);
             s1R += s * std::sin (pan * juce::MathConstants<float>::halfPi);
         }
-        if (osc1Level > 1.0e-5f) { s1L *= invN1; s1R *= invN1; }
+        if (nUni1 > 0) { s1L *= invN1; s1R *= invN1; }
 
         // Per-osc levels before filter route
         float o1L = s1L, o1R = s1R;

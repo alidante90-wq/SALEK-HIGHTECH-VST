@@ -57,8 +57,8 @@ public:
 
     void setOsc1TablePos(float v){osc1.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setTablePosition(v);}
     void setOsc2TablePos(float v){osc2.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setTablePosition(v);} void setOsc3TablePos(float v){osc3.setTablePosition(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setTablePosition(v);}
-    void setOsc1Level(float v){osc1Level=v; osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setLevel(v);}
-    void setOsc2Level(float v){osc2Level=v; osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v);} void setOsc3Level(float v){osc3Level=v; osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v);}
+    void setOsc1Level(float v){const bool was=osc1Level>1e-5f; osc1Level=v; osc1.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setLevel(v); if(was!=(v>1e-5f)) uniFreqDirty=true;}
+    void setOsc2Level(float v){const bool was=osc2Level>1e-5f; osc2Level=v; osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v); if(was!=(v>1e-5f)) uniFreqDirty=true;} void setOsc3Level(float v){const bool was=osc3Level>1e-5f; osc3Level=v; osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v); if(was!=(v>1e-5f)) uniFreqDirty=true;}
     void setOsc1Octave(int v){osc1Octave=v; updateFrequencies();} void setOsc2Octave(int v){osc2Octave=v; updateFrequencies();} void setOsc3Octave(int v){osc3Octave=v; updateFrequencies();}
     void setOsc1Semi(int v){osc1Semi=v; updateFrequencies();} void setOsc2Semi(int v){osc2Semi=v; updateFrequencies();} void setOsc3Semi(int v){osc3Semi=v; updateFrequencies();}
     void setOsc1Fine(float v){osc1Fine=v; updateFrequencies();} void setOsc2Fine(float v){osc2Fine=v; updateFrequencies();} void setOsc3Fine(float v){osc3Fine=v; updateFrequencies();}
@@ -81,9 +81,9 @@ public:
     void setUnison(int v){unisonVoices=juce::jlimit(1,maxUnison,v); uniVoices1=uniVoices2=uniVoices3=unisonVoices;}
     void setUnisonDetune(float c){unisonDetune=juce::jlimit(0.f,100.f,c); uniDet1=uniDet2=uniDet3=unisonDetune;}
     void setUnisonSpread(float s){unisonSpread=juce::jlimit(0.f,1.f,s); uniSpr1=uniSpr2=uniSpr3=unisonSpread;}
-    void setOsc1Unison(int v,float d,float s){uniVoices1=juce::jlimit(1,maxUnison,v); uniDet1=d; uniSpr1=s;}
-    void setOsc2Unison(int v,float d,float s){uniVoices2=juce::jlimit(1,maxUnison,v); uniDet2=d; uniSpr2=s;}
-    void setOsc3Unison(int v,float d,float s){uniVoices3=juce::jlimit(1,maxUnison,v); uniDet3=d; uniSpr3=s;}
+    void setOsc1Unison(int v,float d,float s){uniVoices1=juce::jlimit(1,maxUnison,v); uniDet1=d; uniSpr1=s; uniFreqDirty=true;}
+    void setOsc2Unison(int v,float d,float s){uniVoices2=juce::jlimit(1,maxUnison,v); uniDet2=d; uniSpr2=s; uniFreqDirty=true;}
+    void setOsc3Unison(int v,float d,float s){uniVoices3=juce::jlimit(1,maxUnison,v); uniDet3=d; uniSpr3=s; uniFreqDirty=true;}
     void setFm2to1(float v){fm2to1=v;} void setFm3to1(float v){fm3to1=v;} void setFm3to2(float v){fm3to2=v;}
     void setPm2to1(float v){pm2to1=v;} void setPm3to1(float v){pm3to1=v;} void setAm2to1(float v){am2to1=v;} void setRm2to1(float v){rm2to1=v;}
     void setFilterCutoff(float) {} void setFilterBaseCutoff(float hz){baseCutoff=hz; filter.setCutoff(hz);}
@@ -109,10 +109,12 @@ public:
 
 private:
     void updateFrequencies();
+    void refreshUnisonTuning() noexcept;
     float noteToHz(int note, int oct, int semi, float fine) const {
         return PersianScale::noteToHz (note, oct, semi, fine, scaleMode, koronCents, scaleRoot);
     }
     static constexpr int maxUnison = 7;
+    static constexpr int maxUniBudget = 12; // soft cap across OSC1+2+3
     WavetableOscillator osc1, osc2, osc3;
     WavetableOscillator uniOsc1[maxUnison], uniOsc2[maxUnison], uniOsc3[maxUnison];
     int unisonVoices = 1;
@@ -139,6 +141,10 @@ private:
     float fm2to1=0, fm3to1=0, fm3to2=0, pm2to1=0, pm3to1=0, am2to1=0, rm2to1=0;
     float filterEnvAmt=0.5f, baseCutoff=8000;
     float osc1Level=0.7f, osc2Level=0.5f, osc3Level=0.4f;
+    bool uniFreqDirty = true;
+    float uniDetTbl1[maxUnison]{}, uniDetTbl2[maxUnison]{}, uniDetTbl3[maxUnison]{};
+    float uniPanTbl1[maxUnison]{}, uniPanTbl2[maxUnison]{}, uniPanTbl3[maxUnison]{};
+    int nUniEff1=1, nUniEff2=1, nUniEff3=1;
     float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;
     int filterRoute=0; // 0=All,1=O1,2=O2,3=O3,4=1+2,5=1+3,6=2+3
     juce::Random noiseRng;
