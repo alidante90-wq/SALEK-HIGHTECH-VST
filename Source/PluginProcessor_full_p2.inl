@@ -123,6 +123,20 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     }
     formantFilter.setMorph (g("formant_morph"));
     formantFilter.setAmount (g("formant_amt"));
+    resonator.setMix (g("res_mix"));
+    resonator.setDecay (g("res_decay"));
+    resonator.setBrightness (g("res_bright"));
+    resonator.setMaterial ((int) g("res_material"));
+    resonator.setFrequency (g("res_freq"));
+    spectralSmear.setMix (g("spectral_mix"));
+    spectralSmear.setAmount (g("spectral_amt"));
+    spectralSmear.setFreeze (g("spectral_freeze") > 0.5f);
+    mseg.setRateHz (g("mseg_rate"));
+    mseg.setLoop (g("mseg_loop") > 0.5f);
+    {
+        const float mv = mseg.processBlock (juce::jmax (1, numSamples)) * g("mseg_amount");
+        modMatrix.setSourceValue (salek::ModMatrix::Source::MSEG, mv);
+    }
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
     compressor.setMakeupDb(g("comp_gain"));
@@ -248,6 +262,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             if (ch > 1) buffer.setSample (1, i, R);
         }
     }
+    if (g ("res_mix") > 1e-4f)
+        resonator.process (buffer);
+    if (g ("spectral_mix") > 1e-4f)
+        spectralSmear.process (buffer);
     if (! bypassed ("eq_bypass"))
     {
         if (std::abs (g ("eq_low")) > 0.05f || std::abs (g ("eq_mid")) > 0.05f || std::abs (g ("eq_high")) > 0.05f)

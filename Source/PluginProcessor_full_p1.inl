@@ -67,7 +67,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
     F("macro1","Macro 1",0,1,0); F("macro2","Macro 2",0,1,0); F("macro3","Macro 3",0,1,0); F("macro4","Macro 4",0,1,0);
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
-    C("delay_mode","Delay Mode",{"Stereo","PingPong","Mono"},0);
+    C("delay_mode","Delay Mode",{"Stereo","PingPong","Mono","MultiTap"},0);
     F("delay_time_l","Delay Time L",20,900,280); F("delay_time_r","Delay Time R",20,900,320);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
     F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
@@ -85,6 +85,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("phaser_mix","Phaser Mix",0,1,0); F("phaser_rate","Phaser Rate",0.05f,8,0.4f); F("phaser_depth","Phaser Depth",0,1,0.6f);
     F("dist_mix","Dist Mix",0,1,0); F("dist_drive","Dist Drive",0,1,0.3f); F("dist_crush","Bitcrush",0,1,0);
     F("formant_morph","Formant",0,1,0); F("formant_amt","Formant Amt",0,1,0);
+    F("res_mix","Resonator",0,1,0); F("res_decay","Res Decay",0,1,0.7f); F("res_bright","Res Bright",0,1,0.6f);
+    C("res_material","Res Material",{"Metal","Glass","Steel","Cyber"},0);
+    F("res_freq","Res Freq",40,2000,220);
+    F("spectral_mix","Spectral",0,1,0); F("spectral_amt","Spec Amt",0,1,0.5f);
+    B("spectral_freeze","Spec Freeze",false);
+    F("mseg_rate","MSEG Rate",0.01f,20,1); F("mseg_amount","MSEG Amt",0,1,0);
+    B("mseg_loop","MSEG Loop",true);
     C("quality_mode","Quality",{"ECO","NORMAL","HIGH","ULTRA"},1);
     C("dist_mode","Dist Mode",{"Soft","Tube","Tape","HardClip","Shaper","Fold","Asym","Rect","Crush","Down","Digital","Metal","Neuro","Hitech"},0);
     F("bassify","Bassify",0,1,0);
@@ -158,6 +165,9 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     phaser.prepare(sr, spb);
     distortion.prepare(sr, spb);
     formantFilter.prepare(sr);
+    resonator.prepare(sr, spb);
+    spectralSmear.prepare(sr);
+    mseg.prepare(sr); mseg.loadADSRShape();
     magic.prepare(sr, spb);
     granular.prepare(sr);
     arpeggiator.prepare(sr);

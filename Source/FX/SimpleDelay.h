@@ -32,8 +32,8 @@ public:
     void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
     void setWow (float w) noexcept { wowAmt = juce::jlimit (0.f, 1.f, w); }
-    /** 0 Stereo, 1 PingPong, 2 Mono */
-    void setMode (int m) noexcept { mode = juce::jlimit (0, 2, m); }
+    /** 0 Stereo, 1 PingPong, 2 Mono, 3 MultiTap */
+    void setMode (int m) noexcept { mode = juce::jlimit (0, 3, m); }
 
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
@@ -63,8 +63,24 @@ public:
 
             wowPhase += 0.0007f;
             const float wow = 1.f + wowAmt * 0.015f * std::sin (wowPhase * 6.283185f);
-            float dL = readFrac (bufL, delaySamplesL * wow);
-            float dR = readFrac (bufR, delaySamplesR * (2.f - wow));
+            float dL, dR;
+            if (mode == 3) // Multi-tap: 4 taps on L/R spread
+            {
+                dL = 0.f; dR = 0.f;
+                const float taps[4] = { 1.f, 1.37f, 1.71f, 2.15f };
+                const float gains[4] = { 1.f, 0.7f, 0.5f, 0.35f };
+                for (int t = 0; t < 4; ++t)
+                {
+                    dL += readFrac (bufL, delaySamplesL * taps[t] * wow) * gains[t];
+                    dR += readFrac (bufR, delaySamplesR * taps[t] * (2.f - wow)) * gains[t];
+                }
+                dL *= 0.55f; dR *= 0.55f;
+            }
+            else
+            {
+                dL = readFrac (bufL, delaySamplesL * wow);
+                dR = readFrac (bufR, delaySamplesR * (2.f - wow));
+            }
 
             lpL += tone * (dL - lpL);
             lpR += tone * (dR - lpR);

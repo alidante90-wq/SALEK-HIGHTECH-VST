@@ -25,6 +25,7 @@ public:
         Macro3,
         Macro4,
         Random,
+        MSEG,
         NumSources
     };
 
@@ -69,7 +70,7 @@ public:
     static const char* sourceName (Source s)
     {
         static const char* n[] = {
-            "LFO1","LFO2","LFO3","ENV","VEL","MW",
+            "LFO1","LFO2","LFO3","ENV","VEL","MW","MAC1","MAC2","MAC3","MAC4","RND","MSEG",
             "MAC1","MAC2","MAC3","MAC4","RND"
         };
         int i = (int) s;

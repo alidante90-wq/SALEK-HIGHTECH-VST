@@ -93,6 +93,9 @@ private:
     salek::SimplePhaser phaser;
     salek::SimpleDistortion distortion;
     salek::shae::FormantFilter formantFilter;
+    salek::shae::Resonator resonator;
+    salek::shae::SpectralSmear spectralSmear;
+    salek::shae::MSEG mseg;
     salek::MagicEngine magic;
     salek::GranularOscillator granular;
     salek::Arpeggiator arpeggiator;

@@ -293,5 +293,201 @@ struct Oversampler2x
     float zUpL = 0, zUpR = 0, zDnL = 0, zDnR = 0;
 };
 
+
+/** Karplus-ish / metal-glass resonator (exciter in, body out) */
+struct Resonator
+{
+    void prepare (double sampleRate, int maxBlock = 512) noexcept
+    {
+        sr = sampleRate > 0 ? sampleRate : 44100.0;
+        const int n = juce::jmax (64, (int) (sr * 0.05)); // ~50ms max
+        buf.assign ((size_t) n, 0.f);
+        pos = 0;
+        filterZ = 0.f;
+    }
+    void setFrequency (float hz) noexcept
+    {
+        hz = juce::jlimit (40.f, 4000.f, hz);
+        delaySamps = juce::jlimit (2.f, (float) buf.size() - 2.f, (float) (sr / hz));
+    }
+    void setDecay (float d) noexcept { decay = juce::jlimit (0.8f, 0.9995f, 0.85f + d * 0.149f); }
+    void setBrightness (float b) noexcept { bright = juce::jlimit (0.1f, 0.95f, b); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    /** 0 metal 1 glass 2 steel 3 cyber */
+    void setMaterial (int m) noexcept { material = juce::jlimit (0, 3, m); }
+
+    void process (juce::AudioBuffer<float>& buffer) noexcept
+    {
+        if (mix < 1e-4f || buf.empty()) return;
+        const int n = buffer.getNumSamples();
+        const int ch = buffer.getNumChannels();
+        const int bs = (int) buf.size();
+        float fb = decay;
+        if (material == 1) fb *= 0.998f; // glass longer
+        if (material == 3) fb *= 0.992f; // cyber shorter metallic
+
+        for (int i = 0; i < n; ++i)
+        {
+            float in = buffer.getSample (0, i);
+            if (ch > 1) in = 0.5f * (in + buffer.getSample (1, i));
+
+            float rp = (float) pos - delaySamps;
+            while (rp < 0.f) rp += (float) bs;
+            int i0 = ((int) rp) % bs;
+            int i1 = (i0 + 1) % bs;
+            float frac = rp - std::floor (rp);
+            float y = buf[(size_t) i0] * (1.f - frac) + buf[(size_t) i1] * frac;
+
+            // damping LP
+            filterZ += bright * (y - filterZ);
+            y = filterZ;
+            if (material == 2) // steel: extra harmonic grit
+                y = fastTanh (y * 1.4f);
+            if (material == 3)
+                y = y + 0.15f * std::sin (y * 9.f);
+
+            buf[(size_t) pos] = in * 0.35f + y * fb;
+            pos = (pos + 1) % bs;
+
+            float outL = buffer.getSample (0, i) * (1.f - mix) + y * mix;
+            buffer.setSample (0, i, flushDenormal (outL));
+            if (ch > 1)
+            {
+                float outR = buffer.getSample (1, i) * (1.f - mix) + y * mix * 0.96f;
+                buffer.setSample (1, i, flushDenormal (outR));
+            }
+        }
+    }
+
+    double sr = 44100.0;
+    std::vector<float> buf;
+    int pos = 0;
+    float delaySamps = 100.f, decay = 0.97f, bright = 0.6f, mix = 0.f, filterZ = 0.f;
+    int material = 0;
+};
+
+/** Lightweight spectral smear: parallel tuned comb stack (no FFT, realtime-safe) */
+struct SpectralSmear
+{
+    static constexpr int kCombs = 6;
+    void prepare (double sampleRate) noexcept
+    {
+        sr = sampleRate > 0 ? sampleRate : 44100.0;
+        for (int i = 0; i < kCombs; ++i)
+        {
+            const int n = juce::jmax (32, (int) (sr * 0.03 / (i + 1)));
+            comb[i].assign ((size_t) n, 0.f);
+            cpos[i] = 0;
+        }
+    }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setAmount (float a) noexcept { amount = juce::jlimit (0.f, 1.f, a); }
+    void setFreeze (bool f) noexcept { freeze = f; }
+
+    void process (juce::AudioBuffer<float>& buffer) noexcept
+    {
+        if (mix < 1e-4f) return;
+        const int n = buffer.getNumSamples();
+        const int ch = buffer.getNumChannels();
+        for (int i = 0; i < n; ++i)
+        {
+            float inL = buffer.getSample (0, i);
+            float inR = ch > 1 ? buffer.getSample (1, i) : inL;
+            float mono = 0.5f * (inL + inR);
+            float wet = 0.f;
+            for (int c = 0; c < kCombs; ++c)
+            {
+                auto& b = comb[c];
+                const int len = (int) b.size();
+                if (len < 2) continue;
+                int p = cpos[c] % len;
+                float o = b[(size_t) p];
+                if (! freeze)
+                    b[(size_t) p] = mono + o * (0.55f + amount * 0.35f);
+                cpos[c] = (p + 1) % len;
+                wet += o;
+            }
+            wet *= (1.f / (float) kCombs);
+            wet = fastTanh (wet * (1.f + amount));
+            buffer.setSample (0, i, inL * (1.f - mix) + wet * mix);
+            if (ch > 1)
+                buffer.setSample (1, i, inR * (1.f - mix) + wet * mix * 0.97f);
+        }
+    }
+
+    double sr = 44100.0;
+    std::vector<float> comb[kCombs];
+    int cpos[kCombs] {};
+    float mix = 0.f, amount = 0.5f;
+    bool freeze = false;
+};
+
+/** Multi-segment envelope (MSEG) — up to 8 points, looping optional */
+struct MSEG
+{
+    static constexpr int maxPts = 8;
+    void prepare (double sampleRate) noexcept { sr = sampleRate > 0 ? sampleRate : 44100.0; phase = 0; }
+    void reset() noexcept { phase = 0; }
+    void setRateHz (float hz) noexcept { rate = juce::jlimit (0.01f, 40.f, hz); }
+    void setLoop (bool l) noexcept { loop = l; }
+    void setPoint (int i, float t, float v) noexcept
+    {
+        if (i < 0 || i >= maxPts) return;
+        ptsT[i] = juce::jlimit (0.f, 1.f, t);
+        ptsV[i] = juce::jlimit (-1.f, 1.f, v);
+        nPts = juce::jmax (nPts, i + 1);
+    }
+    void setNumPoints (int n) noexcept { nPts = juce::jlimit (2, maxPts, n); }
+
+    float processBlock (int numSamples) noexcept
+    {
+        const double inc = (double) rate / sr;
+        float v = eval ((float) phase);
+        phase += inc * (double) juce::jmax (1, numSamples);
+        if (loop)
+        {
+            while (phase >= 1.0) phase -= 1.0;
+        }
+        else if (phase > 1.0) { phase = 1.0; v = ptsV[juce::jmax (0, nPts - 1)]; }
+        return v;
+    }
+
+    float eval (float t) const noexcept
+    {
+        if (nPts < 2) return 0.f;
+        t = juce::jlimit (0.f, 1.f, t);
+        // find segment
+        for (int i = 0; i < nPts - 1; ++i)
+        {
+            float t0 = ptsT[i], t1 = ptsT[i + 1];
+            if (t1 <= t0) t1 = t0 + 1e-4f;
+            if (t >= t0 && t <= t1)
+            {
+                float f = (t - t0) / (t1 - t0);
+                // smoothstep
+                f = f * f * (3.f - 2.f * f);
+                return ptsV[i] + (ptsV[i + 1] - ptsV[i]) * f;
+            }
+        }
+        return ptsV[nPts - 1];
+    }
+
+    void loadADSRShape() noexcept
+    {
+        nPts = 4;
+        ptsT[0] = 0.f;   ptsV[0] = 0.f;
+        ptsT[1] = 0.15f; ptsV[1] = 1.f;
+        ptsT[2] = 0.4f;  ptsV[2] = 0.55f;
+        ptsT[3] = 1.f;   ptsV[3] = 0.f;
+    }
+
+    double sr = 44100.0, phase = 0;
+    float rate = 1.f;
+    float ptsT[maxPts] { 0, 0.33f, 0.66f, 1.f };
+    float ptsV[maxPts] { 0, 1.f, 0.5f, 0.f };
+    int nPts = 4;
+    bool loop = true;
+};
+
 } // namespace shae
 } // namespace salek
