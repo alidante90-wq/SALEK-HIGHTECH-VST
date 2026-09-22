@@ -444,6 +444,54 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     {
         #include "PluginEditorMagic.inl"
+
+    // SEQ → Magic trigger row (2x7): fire magic modes from sequencer page
+    {
+        static const char* names[14] = {
+            "VOID","STAB","WARP","SLICE","DRONE","ACID","GLASS",
+            "CRASH","ECHO","PSY","LOOP","NOISE","ALIEN","TORO"
+        };
+        for (int i = 0; i < 14; ++i)
+        {
+            auto* b = seqMagicBtns.add (new juce::TextButton (names[i]));
+            b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
+            b->setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+            seqTab.addAndMakeVisible (b);
+            b->onClick = [this, i]
+            {
+                // Mirror Magic combo behaviour
+                const int modes[14] = { 4,0,3,5,0,6,2,7,2,3,0,8,3,1 };
+                const float xs[14]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f,0.88f };
+                const float ys[14]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f,0.92f };
+                if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+                { pa->beginChangeGesture(); pa->setValueNotifyingHost (1.f); pa->endChangeGesture(); }
+                if (auto* pm = dynamic_cast<juce::AudioParameterChoice*> (processor.getAPVTS().getParameter ("magic_mode")))
+                { pm->beginChangeGesture(); pm->setValueNotifyingHost (pm->convertTo0to1 ((float) modes[i])); pm->endChangeGesture(); }
+                auto setF = [this] (const char* id, float v) {
+                    if (auto* p = processor.getAPVTS().getParameter (id)) {
+                        p->beginChangeGesture();
+                        p->setValueNotifyingHost (p->convertTo0to1 (v));
+                        p->endChangeGesture();
+                    }
+                };
+                setF ("magic_x", xs[i]); setF ("magic_y", ys[i]);
+                processor.getMagic().setMode (modes[i]);
+                processor.getMagic().setXY (xs[i], ys[i]);
+                processor.getMagic().setActive (true);
+            };
+        }
+        // Magic OFF + latch row helpers
+        seqMagicOff.setButtonText ("MAGIC OFF");
+        seqMagicOff.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a1020));
+        seqMagicOff.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
+        seqTab.addAndMakeVisible (seqMagicOff);
+        seqMagicOff.onClick = [this] {
+            if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
+            { pa->beginChangeGesture(); pa->setValueNotifyingHost (0.f); pa->endChangeGesture(); }
+            processor.getMagic().setActive (false);
+        };
+    }
+
     // Explicit X/Y knobs (also LFO-modulatable)
     {
         const auto C = juce::Colour (0xff00e8ff);

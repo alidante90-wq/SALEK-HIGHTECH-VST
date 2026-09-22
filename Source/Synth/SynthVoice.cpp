@@ -155,14 +155,28 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
 
         const float env = adsr.getNextSample();
         const float lfoVal = lfo.process();
-        const float modCutoff = baseCutoff * std::pow (2.0f, (env * filterEnvAmt + lfoVal) * 3.0f - 1.5f);
+        // Filter-env opens relative to base; keep closed when base is near min
+        float modCutoff = baseCutoff * std::pow (2.0f, (env * filterEnvAmt + lfoVal * 0.5f) * 2.5f);
+        modCutoff = juce::jlimit (10.f, 20000.f, modCutoff);
         cutoffSmoother.setTarget (modCutoff);
-        filter.setCutoff (cutoffSmoother.getNext());
-        float mid = filter.process (0.5f * (thruL + thruR));
-        float side = 0.5f * (thruL - thruR) * 1.15f;
-        mid = std::tanh (mid * 1.25f);
-        float sampleL = mid + side + dryL;
-        float sampleR = mid - side + dryR;
+        const float cutHz = cutoffSmoother.getNext();
+        filter.setCutoff (cutHz);
+        // Process L/R independently so stereo NEVER bypasses the filter
+        float fL = filter.process (thruL);
+        float fR = filter.process (thruR);
+        // Extra close attenuation for LP-family when cutoff is very low
+        if (cutHz < 80.f)
+        {
+            const float close = cutHz / 80.f; // 0 at 0Hz .. 1 at 80Hz
+            const float close2 = close * close;
+            fL *= close2;
+            fR *= close2;
+        }
+        fL = std::tanh (fL * 1.15f);
+        fR = std::tanh (fR * 1.15f);
+        float sampleL = fL + dryL;
+        float sampleR = fR + dryR;
+        // Hard mute if all levels essentially off (noise/sub included)
         const float g = env * currentVelocity * 0.42f;
         sampleL *= g;
         sampleR *= g;

@@ -204,17 +204,17 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             if (oscMon1 != nullptr)
             {
                 auto r = getLocalArea (oscMon1.get(), oscMon1->getLocalBounds());
-                drawIcon (0, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+                drawIcon (0, juce::Rectangle<int> (r.getX() + 2, r.getY() + 1, 32, 32));
             }
             if (oscMon2 != nullptr)
             {
                 auto r = getLocalArea (oscMon2.get(), oscMon2->getLocalBounds());
-                drawIcon (1, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+                drawIcon (1, juce::Rectangle<int> (r.getX() + 2, r.getY() + 1, 32, 32));
             }
             if (oscMon3 != nullptr)
             {
                 auto r = getLocalArea (oscMon3.get(), oscMon3->getLocalBounds());
-                drawIcon (2, juce::Rectangle<int> (r.getX() + 4, r.getY() + 2, 24, 24));
+                drawIcon (2, juce::Rectangle<int> (r.getX() + 2, r.getY() + 1, 32, 32));
             }
             if (filterTab.isShowing())
             {

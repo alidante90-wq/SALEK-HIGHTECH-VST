@@ -46,7 +46,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
     p.push_back (std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{"filter_cutoff",1}, "Cutoff",
-        juce::NormalisableRange<float>(20.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
+        juce::NormalisableRange<float>(10.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
     F("filter_reso","Reso",0,1,0.25f);
     F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
     C("filter_mode","F Mode",{

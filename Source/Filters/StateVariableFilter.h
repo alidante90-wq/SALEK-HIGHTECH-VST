@@ -56,7 +56,7 @@ public:
 
     void setCutoff (float hz) noexcept
     {
-        cutoff = juce::jlimit (20.0f, static_cast<float> (sr * 0.45), hz);
+        cutoff = juce::jlimit (10.0f, static_cast<float> (sr * 0.45), hz);
         update();
     }
 
