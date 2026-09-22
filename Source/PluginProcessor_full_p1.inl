@@ -84,7 +84,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("input_mix","Input Mix",0,1,0);
     F("phaser_mix","Phaser Mix",0,1,0); F("phaser_rate","Phaser Rate",0.05f,8,0.4f); F("phaser_depth","Phaser Depth",0,1,0.6f);
     F("dist_mix","Dist Mix",0,1,0); F("dist_drive","Dist Drive",0,1,0.3f); F("dist_crush","Bitcrush",0,1,0);
-    C("dist_mode","Dist Mode",{"Tube","Sat","Hard","Fold","Bit","Rect"},0);
+    F("formant_morph","Formant",0,1,0); F("formant_amt","Formant Amt",0,1,0);
+    C("quality_mode","Quality",{"ECO","NORMAL","HIGH","ULTRA"},1);
+    C("dist_mode","Dist Mode",{"Soft","Tube","Tape","HardClip","Shaper","Fold","Asym","Rect","Crush","Down","Digital","Metal","Neuro","Hitech"},0);
     F("bassify","Bassify",0,1,0);
     B("chorus_bypass","Chorus Bypass",false);
     B("delay_bypass","Delay Bypass",false);
@@ -155,6 +157,7 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     spatial.prepare(sr, spb);
     phaser.prepare(sr, spb);
     distortion.prepare(sr, spb);
+    formantFilter.prepare(sr);
     magic.prepare(sr, spb);
     granular.prepare(sr);
     arpeggiator.prepare(sr);

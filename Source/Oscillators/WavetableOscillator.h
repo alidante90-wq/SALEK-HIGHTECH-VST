@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "../Wavetables/WavetableData.h"
+#include "../DSP/SHAE.h"
 
 namespace salek {
 
@@ -44,6 +45,15 @@ public:
         }
 
         float sample = wavetable->getSample (tablePos, float (p));
+        // SHAE anti-alias assist: PolyBLEP residual when phase near discontinuity (bright tables)
+        if (tablePos > 0.45f && fold < 0.05f)
+        {
+            const float dt = (float) juce::jmin (0.5, phaseInc);
+            float t = float (p);
+            float blep = shae::polyBLEP (t, dt);
+            // mix small correction — reduces harsh digital edges on bright frames
+            sample -= blep * (tablePos - 0.45f) * 0.35f;
+        }
 
         // Wavefold — soft onset, glassy mid, aggressive high (professional response)
         if (fold > 1e-4f) {

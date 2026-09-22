@@ -10,6 +10,7 @@
 #include "FX/SimplePhaser.h"
 #include "FX/SimpleDistortion.h"
 #include "FX/MagicEngine.h"
+#include "DSP/SHAE.h"
 #include "Oscillators/GranularOscillator.h"
 #include "Sequencer/Arpeggiator.h"
 #include "Sequencer/StepSequencer.h"
@@ -77,7 +78,7 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void applyParamsToEngine();
+    void applyParamsToEngine (int numSamples = 64);
     void initFactoryPresets();
     void loadFactoryPreset (int index);
 
@@ -91,6 +92,7 @@ private:
     salek::SimpleSpatial spatial;
     salek::SimplePhaser phaser;
     salek::SimpleDistortion distortion;
+    salek::shae::FormantFilter formantFilter;
     salek::MagicEngine magic;
     salek::GranularOscillator granular;
     salek::Arpeggiator arpeggiator;

@@ -1,5 +1,5 @@
 
-void SalekHightechAudioProcessor::applyParamsToEngine()
+void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
 {
     auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
     float o1l = juce::jlimit(0.f,1.f, g("osc1_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Level)*0.5f);
@@ -117,6 +117,12 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     phaser.setMix(juce::jlimit(0.f,1.f,g("phaser_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::PhaserMix)*0.5f)); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(juce::jlimit(0.f,1.f,g("dist_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f)); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));
+    {
+        const int q = (int) g("quality_mode");
+        distortion.setOversample (q >= 2); // HIGH/ULTRA
+    }
+    formantFilter.setMorph (g("formant_morph"));
+    formantFilter.setAmount (g("formant_amt"));
     compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
     compressor.setMakeupDb(g("comp_gain"));
@@ -143,7 +149,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    applyParamsToEngine();
+    applyParamsToEngine (buffer.getNumSamples());
     keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
 
     juce::MidiBuffer routed;
@@ -228,6 +234,20 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
     if (! bypassed ("phaser_bypass") && g ("phaser_mix") > 1e-4f)  phaser.process (buffer);
     if (! bypassed ("dist_bypass") && g ("dist_mix") > 1e-4f)      distortion.process (buffer);
+    // Formant / vocal (SALEK signature)
+    if (g ("formant_amt") > 1e-4f)
+    {
+        const int ns = buffer.getNumSamples();
+        const int ch = buffer.getNumChannels();
+        for (int i = 0; i < ns; ++i)
+        {
+            float L = buffer.getSample (0, i);
+            float R = ch > 1 ? buffer.getSample (1, i) : L;
+            formantFilter.process (L, R);
+            buffer.setSample (0, i, L);
+            if (ch > 1) buffer.setSample (1, i, R);
+        }
+    }
     if (! bypassed ("eq_bypass"))
     {
         if (std::abs (g ("eq_low")) > 0.05f || std::abs (g ("eq_mid")) > 0.05f || std::abs (g ("eq_high")) > 0.05f)
@@ -266,16 +286,18 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     float gain = apvts.getRawParameterValue("master_gain")->load();
     const float drive = apvts.getRawParameterValue("master_drive")->load();
     const float gMul = gain * (0.85f + drive * 0.1f);
-    // Soft-clip master (clean loudness, no digital harshness)
+    // SHAE Master Core: DC block → soft clip → ceiling
+    static float dcL = 0.f, dcR = 0.f;
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
         auto* d = buffer.getWritePointer (ch);
+        float& dc = (ch == 0 ? dcL : dcR);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float x = d[i] * gMul;
-            // Modern soft clip — smooth, less digital edge
+            dc += 0.0005f * (x - dc); // slow DC tracker
+            x -= dc;
             x = std::tanh (x * (0.88f + drive * 0.5f));
-            // gentle ceiling
             const float ax = std::abs (x);
             if (ax > 0.85f)
                 x = std::copysign (0.85f + 0.13f * std::tanh ((ax - 0.85f) * 5.f), x);
