@@ -98,7 +98,46 @@ public:
 
     void timerCallback() override { if (! isShowing()) return; anim += 0.1f; repaint(); }
 
+
+    // Drag horizontally on the monitor to scrub TABLE (wavetable frame morph 0..1)
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        if (apvts == nullptr) return;
+        dragTable (e);
+    }
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (apvts == nullptr) return;
+        dragTable (e);
+    }
+    void mouseDoubleClick (const juce::MouseEvent&) override
+    {
+        // snap to classic frames: 0 sine, 0.25 tri, 0.5 square-ish, 0.75 saw-ish
+        if (apvts == nullptr) return;
+        const char* ids[] = { "osc1_table", "osc2_table", "osc3_table" };
+        if (auto* p = apvts->getParameter (ids[osc]))
+        {
+            static float snaps[4] = { 0.f, 0.25f, 0.5f, 0.75f };
+            snapIdx = (snapIdx + 1) % 4;
+            p->beginChangeGesture();
+            p->setValueNotifyingHost (p->convertTo0to1 (snaps[snapIdx]));
+            p->endChangeGesture();
+        }
+    }
+
 private:
+    void dragTable (const juce::MouseEvent& e)
+    {
+        const char* ids[] = { "osc1_table", "osc2_table", "osc3_table" };
+        if (auto* p = apvts->getParameter (ids[osc]))
+        {
+            float t = juce::jlimit (0.f, 1.f, e.position.x / (float) juce::jmax (1, getWidth()));
+            p->beginChangeGesture();
+            p->setValueNotifyingHost (p->convertTo0to1 (t));
+            p->endChangeGesture();
+        }
+    }
+    int snapIdx = 0;
     juce::AudioProcessorValueTreeState* apvts = nullptr;
     int osc = 0;
     float anim = 0.f;

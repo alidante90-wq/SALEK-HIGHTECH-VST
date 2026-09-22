@@ -26,15 +26,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     auto B = [&](const char* id, const char* n, bool d) {
         p.push_back (std::make_unique<juce::AudioParameterBool>(juce::ParameterID{id,1}, n, d)); };
 
-    F("osc1_level","OSC1 Level",0,1,0.7f); F("osc2_level","OSC2 Level",0,1,0.5f); F("osc3_level","OSC3 Level",0,1,0.4f);
-    F("osc1_table","OSC1 Table",0,1,0); F("osc2_table","OSC2 Table",0,1,0.33f); F("osc3_table","OSC3 Table",0,1,0.66f);
+    F("osc1_level","OSC1 Level",0,1,0.85f); F("osc2_level","OSC2 Level",0,1,0.0f); F("osc3_level","OSC3 Level",0,1,0.0f);
+    F("osc1_table","OSC1 Table",0,1,0); F("osc2_table","OSC2 Table",0,1,0); F("osc3_table","OSC3 Table",0,1,0);
     F("osc1_warp","OSC1 Warp",0,1,0); F("osc2_warp","OSC2 Warp",0,1,0); F("osc3_warp","OSC3 Warp",0,1,0);
     F("osc1_fold","OSC1 Fold",0,1,0); F("osc2_fold","OSC2 Fold",0,1,0); F("osc3_fold","OSC3 Fold",0,1,0);
     F("osc1_drive","OSC1 Drive",0,1,0); F("osc2_drive","OSC2 Drive",0,1,0); F("osc3_drive","OSC3 Drive",0,1,0);
     F("osc1_phase","OSC1 Phase",0,1,0); F("osc2_phase","OSC2 Phase",0,1,0); F("osc3_phase","OSC3 Phase",0,1,0);
     F("osc1_rand","OSC1 Rand",0,1,0); F("osc2_rand","OSC2 Rand",0,1,0); F("osc3_rand","OSC3 Rand",0,1,0);
     F("osc1_pan","OSC1 Pan",0,1,0.5f); F("osc2_pan","OSC2 Pan",0,1,0.5f); F("osc3_pan","OSC3 Pan",0,1,0.5f);
-    I("osc1_octave","OSC1 Oct",-3,3,0); I("osc2_octave","OSC2 Oct",-3,3,0); I("osc3_octave","OSC3 Oct",-3,3,-1);
+    I("osc1_octave","OSC1 Oct",-3,3,0); I("osc2_octave","OSC2 Oct",-3,3,0); I("osc3_octave","OSC3 Oct",-3,3,0);
     I("osc1_semi","OSC1 Semi",-12,12,0); I("osc2_semi","OSC2 Semi",-12,12,0); I("osc3_semi","OSC3 Semi",-12,12,0);
     F("osc1_fine","OSC1 Fine",-100,100,0); F("osc2_fine","OSC2 Fine",-100,100,0); F("osc3_fine","OSC3 Fine",-100,100,0);
     F("osc1_detune","OSC1 Detune",-50,50,0); F("osc2_detune","OSC2 Detune",-50,50,0); F("osc3_detune","OSC3 Detune",-50,50,0);
@@ -46,9 +46,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("pm_2to1","PM 2to1",0,1,0); F("rm_2to1","RM 2to1",0,1,0); F("am_2to1","AM 2to1",0,1,0);
     p.push_back (std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{"filter_cutoff",1}, "Cutoff",
-        juce::NormalisableRange<float>(10.0f, 20000.0f, 0.1f, 0.3f), 8000.0f));
-    F("filter_reso","Reso",0,1,0.25f);
-    F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.4f);
+        juce::NormalisableRange<float>(10.0f, 20000.0f, 0.1f, 0.3f), 12000.0f));
+    F("filter_reso","Reso",0,1,0.0f);
+    F("filter_drive","F Drive",0,1,0); F("filter_env","F Env",0,1,0.0f);
     C("filter_mode","F Mode",{
         "LP12","LP24","HP12","HP24","BP","Notch","Peak","AllPass",
         "AcidLP","Ladder","Comb","Formant","BandRej","LoShelf","HiShelf","PhaserN",
@@ -57,13 +57,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     // Stronger low-end skew so short A/D/R (plucks, dubstep hits) are easy to dial
     Fs("amp_attack","Attack",0.0005f,4.0f,0.18f,0.005f);
     Fs("amp_decay","Decay",0.003f,6.0f,0.22f,0.12f);
-    F("amp_sustain","Sustain",0,1,0.7f);
+    F("amp_sustain","Sustain",0,1,1.0f);
     Fs("amp_release","Release",0.003f,10.0f,0.20f,0.22f);
-    F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.5f);
+    F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.0f);
     C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
-    F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.5f);
+    F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.0f);
     C("lfo2_wave","LFO2 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
-    F("lfo3_rate","LFO3 Rate",0.01f,30,2.f); F("lfo3_amount","LFO3 Amt",0,1,0.5f);
+    F("lfo3_rate","LFO3 Rate",0.01f,30,2.f); F("lfo3_amount","LFO3 Amt",0,1,0.0f);
     C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
     F("macro1","Macro 1",0,1,0); F("macro2","Macro 2",0,1,0); F("macro3","Macro 3",0,1,0); F("macro4","Macro 4",0,1,0);
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
@@ -75,7 +75,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
-    F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,1); F("comp_gain","Comp Gain",-12,24,0);
+    F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,0); F("comp_gain","Comp Gain",-12,24,0);
     F("comp_depth","Comp Depth",0,1,0.55f); F("comp_attack","Comp Attack",0.5f,50,8); F("comp_release","Comp Release",10,300,80);
     F("comp_thr_lo","Comp Thr LO",-60,0,-18); F("comp_thr_mid","Comp Thr MID",-60,0,-12); F("comp_thr_hi","Comp Thr HI",-60,0,-8);
     F("eq_low","EQ Low",-12,12,0); F("eq_mid","EQ Mid",-12,12,0); F("eq_high","EQ High",-12,12,0);

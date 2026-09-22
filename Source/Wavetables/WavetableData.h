@@ -51,7 +51,7 @@ struct WavetableFrame
 class Wavetable
 {
 public:
-    static constexpr int maxFrames = 64;
+    static constexpr int maxFrames = 128;
 
     Wavetable() { generateDefaultTables(); }
 
