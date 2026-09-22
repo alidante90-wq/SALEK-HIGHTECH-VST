@@ -54,6 +54,7 @@ juce_add_binary_data(SalekBinaryAssets SOURCES
 
 target_sources(SALEK_HIGHTECH PRIVATE
     Source/PluginProcessor.cpp
+    Source/License/SalekLicense.cpp
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
     Source/PluginEditor.h

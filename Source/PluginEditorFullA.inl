@@ -61,6 +61,33 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (keyboard);
     // VBlank disabled — was causing 5-10 FPS lag with heavy BG paint
     // Animation driven by timer only at 12 Hz
+    
+    // Early-access license gate (artists need SALEK code bound to Machine ID)
+    juce::MessageManager::callAsync ([this]
+    {
+        if (processor.isEngineUnlocked())
+            return;
+        const auto mid = processor.getMachineIdForLicense();
+        juce::AlertWindow w ("GITI Early Access",
+                             "This build is locked.\n\nMachine ID:\n" + mid
+                             + "\n\nSend this ID to SALEK HIGHTECH and enter the access code.",
+                             juce::AlertWindow::WarningIcon);
+        w.addTextEditor ("code", "", "Access code (SALEK-XXXX-XXXX-XXXX)");
+        w.addButton ("Activate", 1, juce::KeyPress (juce::KeyPress::returnKey));
+        w.addButton ("Later", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+        if (w.runModalLoop() == 1)
+        {
+            auto code = w.getTextEditorContents ("code");
+            auto err = processor.tryLicenseActivate (code);
+            if (err.isNotEmpty())
+                juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::WarningIcon,
+                    "Activation failed", err);
+            else
+                juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::InfoIcon,
+                    "Activated", "GITI unlocked on this machine.");
+        }
+    });
+
     startTimerHz (3); // lighter UI refresh
 
     setLookAndFeel (&lnf);

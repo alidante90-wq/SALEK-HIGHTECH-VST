@@ -187,6 +187,13 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    if (! SalekLicense::isLicensed())
+    {
+        // Early-access lock: silence until valid code for this machine
+        buffer.clear();
+        return;
+    }
+
     juce::ScopedNoDenormals noDenormals;
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());

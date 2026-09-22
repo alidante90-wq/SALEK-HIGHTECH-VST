@@ -31,6 +31,10 @@ public:
     void releaseResources() override {}
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    bool isEngineUnlocked() const;
+    juce::String getMachineIdForLicense() const;
+    juce::String tryLicenseActivate (const juce::String& code);
+
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
