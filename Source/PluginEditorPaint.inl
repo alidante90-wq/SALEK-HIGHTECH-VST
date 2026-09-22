@@ -335,31 +335,5 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         }
 
 
-    // ========== ICON OVERLAY HEADER / PRESET (precise atlas coords) ==========
-    {
-        auto drawBtnIcon = [&] (juce::Component& c, SalekAssets::IconId id)
-        {
-            if (! c.isVisible() || c.getWidth() < 4) return;
-            auto img = SalekAssets::loadIcon (id);
-            if (! img.isValid()) return;
-            auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (3.f);
-            g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
-        };
-        using IC = SalekAssets::IconId;
-        // Preset bar
-        drawBtnIcon (prevPreset,    IC::Glide);       // prev
-        drawBtnIcon (nextPreset,    IC::Portamento);  // next
-        drawBtnIcon (initBtn,       IC::Transpose);   // init
-        drawBtnIcon (savePresetBtn, IC::Master);      // save-ish
-        drawBtnIcon (loadPresetBtn, IC::Wavetable);   // load-ish
-        drawBtnIcon (bankBtn,       IC::Seq);         // bank / patterns
-        // Header tools
-        drawBtnIcon (inspireBtn,    IC::Randomize);
-        drawBtnIcon (modSrcLfo1,    IC::Lfo);
-        drawBtnIcon (modSrcLfo2,    IC::LfoRandom);
-        drawBtnIcon (modSrcLfo3,    IC::LfoSync);
-        drawBtnIcon (bgSwapBtn,     IC::FrameMorph);
-        drawBtnIcon (charCycleBtn,  IC::Osc1);
-    }
 
 }

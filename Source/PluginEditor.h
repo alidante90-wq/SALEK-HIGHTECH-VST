@@ -8,6 +8,7 @@
 #include "UI/OscShapeMonitor.h"
 
 #include "PluginEditorLookAndFeel.inl"
+#include "AssetsData.h"
 #include "PluginEditorFxLfo.inl"
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
@@ -338,6 +339,8 @@ private:
     juce::Array<PresetRow> presetRows;
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
+    void applyButtonIcon (juce::TextButton& btn, SalekAssets::IconId id);
+    void layoutButtonIcons();
     void assignModToParam (const juce::String& paramId, float amount = 0.5f);
     void tryAssignModAt (juce::Point<int> editorPos, float amount, const juce::ModifierKeys& mods);
     void mouseUp (const juce::MouseEvent& e) override;

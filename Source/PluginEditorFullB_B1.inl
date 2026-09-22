@@ -138,17 +138,20 @@ void SalekHightechAudioProcessorEditor::resized()
     modSrcLfo3.setBounds (header.removeFromRight (46).reduced (2, 10));
     modSrcLfo2.setBounds (header.removeFromRight (46).reduced (2, 10));
     modSrcLfo1.setBounds (header.removeFromRight (46).reduced (2, 10));
-    modSrcLfo1.setButtonText ("LFO1");
-    modSrcLfo2.setButtonText ("LFO2");
-    modSrcLfo3.setButtonText ("LFO3");
     modSrcLfo1.setTooltip ("LFO1 — drag to knob");
     modSrcLfo2.setTooltip ("LFO2 — drag to knob");
     modSrcLfo3.setTooltip ("LFO3 — drag to knob");
-    bgSwapBtn.setButtonText ("BG");
     bgSwapBtn.setTooltip ("Swap background");
-    charCycleBtn.setButtonText ("MODEL");
     charCycleBtn.setTooltip ("Cycle character model");
-    inspireBtn.setButtonText ("RAND");
+    {
+        using IC = SalekAssets::IconId;
+        applyButtonIcon (modSrcLfo1, IC::Lfo);
+        applyButtonIcon (modSrcLfo2, IC::LfoRandom);
+        applyButtonIcon (modSrcLfo3, IC::LfoSync);
+        applyButtonIcon (bgSwapBtn, IC::FrameMorph);
+        applyButtonIcon (charCycleBtn, IC::Osc1);
+        applyButtonIcon (inspireBtn, IC::Randomize);
+    }
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
@@ -168,6 +171,7 @@ void SalekHightechAudioProcessorEditor::resized()
     masterGainSlider.toFront (false);
     themeBox.toFront (false);
     langToggle.toFront (false);
+    layoutButtonIcons();
     if (presetTab.isVisible())
     {
         presetTab.toFront (false);

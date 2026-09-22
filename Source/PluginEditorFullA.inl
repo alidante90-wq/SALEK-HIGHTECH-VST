@@ -1,3 +1,51 @@
+
+void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, SalekAssets::IconId id)
+{
+    auto img = SalekAssets::loadIcon (id);
+    for (int i = btn.getNumChildComponents(); --i >= 0; )
+    {
+        if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
+        {
+            btn.removeChildComponent (ic);
+            delete ic;
+        }
+    }
+
+    btn.setButtonText ({});
+    btn.setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
+    btn.setColour (juce::TextButton::textColourOnId, juce::Colours::transparentBlack);
+
+    if (! img.isValid())
+    {
+        btn.setButtonText ("•");
+        return;
+    }
+    auto* ic = new juce::ImageComponent();
+    ic->setImage (img);
+    ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+    ic->setInterceptsMouseClicks (false, false);
+    btn.addAndMakeVisible (ic);
+    ic->setBounds (btn.getLocalBounds().reduced (3));
+    ic->toFront (false);
+}
+
+void SalekHightechAudioProcessorEditor::layoutButtonIcons()
+{
+    auto layoutOne = [] (juce::TextButton& btn)
+    {
+        for (int i = 0; i < btn.getNumChildComponents(); ++i)
+            if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
+            {
+                ic->setBounds (btn.getLocalBounds().reduced (3));
+                ic->toFront (false);
+            }
+    };
+    layoutOne (prevPreset); layoutOne (nextPreset); layoutOne (initBtn);
+    layoutOne (savePresetBtn); layoutOne (loadPresetBtn); layoutOne (bankBtn);
+    layoutOne (inspireBtn); layoutOne (modSrcLfo1); layoutOne (modSrcLfo2); layoutOne (modSrcLfo3);
+    layoutOne (bgSwapBtn); layoutOne (charCycleBtn);
+}
+
 SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p),
       keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
@@ -29,7 +77,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoOverlay.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (logoOverlay);
 
-    inspireBtn.setButtonText ("RAND");
+    applyButtonIcon (inspireBtn, SalekAssets::IconId::Randomize);
     inspireBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0530));
     inspireBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
     inspireBtn.setTooltip ("Randomize in current style (genre-aware)");
@@ -394,18 +442,21 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         loadPresetBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
         bankBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff201040));
         bankBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffaa00));
-        savePresetBtn.setButtonText ("SAVE");
-        loadPresetBtn.setButtonText ("LOAD");
-        bankBtn.setButtonText ("BANK");
-        prevPreset.setButtonText ("<");
-        nextPreset.setButtonText (">");
-        initBtn.setButtonText ("INIT");
         savePresetBtn.setTooltip ("Save preset");
         loadPresetBtn.setTooltip ("Load preset");
         bankBtn.setTooltip ("Bank");
         initBtn.setTooltip ("Init");
         prevPreset.setTooltip ("Previous preset");
         nextPreset.setTooltip ("Next preset");
+        {
+            using IC = SalekAssets::IconId;
+            applyButtonIcon (prevPreset, IC::Glide);
+            applyButtonIcon (nextPreset, IC::Portamento);
+            applyButtonIcon (initBtn, IC::Transpose);
+            applyButtonIcon (savePresetBtn, IC::Master);
+            applyButtonIcon (loadPresetBtn, IC::Wavetable);
+            applyButtonIcon (bankBtn, IC::Seq);
+        }
         prevPreset.onClick = [this] {
             int i = processor.getCurrentProgram();
             if (i > 0) processor.setCurrentProgram (i - 1);
@@ -582,7 +633,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     charCycleBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
     charCycleBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
-    charCycleBtn.setButtonText ("MODEL");
+    applyButtonIcon (charCycleBtn, SalekAssets::IconId::Osc1);
     charCycleBtn.setTooltip ("Change character model (left panel) — does NOT change background");
     charCycleBtn.onClick = [this]
     {
