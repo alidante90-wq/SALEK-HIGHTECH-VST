@@ -518,6 +518,32 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
+        addKnob (seqTab, "seq_magic_depth", "SEQ→MAGIC", C);
+        // Seq magic target is a choice — attach via combo if present
+        if (auto* p = processor.getAPVTS().getParameter ("seq_magic_target"))
+        {
+            seqMagicTargetBox.addItemList ({"Off","Magic X","Magic Y","Magic XY","Magic Amt"}, 1);
+            seqMagicTargetBox.setSelectedItemIndex ((int) p->convertFrom0to1 (p->getValue()), juce::dontSendNotification);
+            seqTab.addAndMakeVisible (seqMagicTargetBox);
+            seqMagicTargetBox.onChange = [this, p]
+            {
+                const int idx = seqMagicTargetBox.getSelectedItemIndex();
+                p->beginChangeGesture();
+                p->setValueNotifyingHost (p->convertTo0to1 ((float) idx));
+                p->endChangeGesture();
+                // auto-enable magic when targeting
+                if (idx > 0)
+                {
+                    if (auto* mo = processor.getAPVTS().getParameter ("magic_on"))
+                    {
+                        mo->beginChangeGesture();
+                        mo->setValueNotifyingHost (1.f);
+                        mo->endChangeGesture();
+                    }
+                    processor.getMagic().setActive (true);
+                }
+            };
+        }
         // Extra voice colour — registered last so indices of FX/MOD stay stable
         addKnob (envTab, "glide", "GLIDE", C);
         addKnob (envTab, "poly_voices", "VOICES", M);

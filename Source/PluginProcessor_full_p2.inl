@@ -79,7 +79,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     auto setLfo = [] (salek::LFO& lfo, float rate, float amt, int wave)
     {
         lfo.setRate (rate);
-        lfo.setAmount (1.0f);
+        lfo.setAmount (1.0f); // amplitude applied outside via * g(amount)
         static const salek::LFO::Wave waves[] = {
             salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
             salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
@@ -99,6 +99,22 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);
+    // Env1 approx from note activity (MIDI/seq gate)
+    {
+        static float envApprox = 0.f;
+        const bool gate = stepSequencer.getCurrentStep() >= 0 && stepSequencer.getCurrentMod() >= 0.f
+                          ? (apvts.getRawParameterValue ("seq_on")->load() > 0.5f)
+                          : false;
+        // Prefer amp envelope proxy via master activity peak
+        static float peak = 0.f;
+        // slow fall — matrix still gets a usable ENV source
+        envApprox *= 0.985f;
+        if (apvts.getRawParameterValue ("seq_on")->load() > 0.5f)
+            envApprox = juce::jmax (envApprox, stepSequencer.getCurrentMod());
+        envApprox = juce::jlimit (0.f, 1.f, envApprox);
+        modMatrix.setSourceValue (salek::ModMatrix::Source::Env1, envApprox);
+        juce::ignoreUnused (gate, peak);
+    }
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro1, g("macro1") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
@@ -155,24 +171,45 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
         const float mv = mseg.processBlock (juce::jmax (1, numSamples)) * g("mseg_amount");
         modMatrix.setSourceValue (salek::ModMatrix::Source::MSEG, mv);
     }
-    compressor.setThresholdDb(g("comp_threshold")); compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
+    compressor.setRatio(g("comp_ratio")); compressor.setMix(g("comp_mix"));
     compressor.setDepth(g("comp_depth")); compressor.setAttackMs(g("comp_attack")); compressor.setReleaseMs(g("comp_release"));
     compressor.setMakeupDb(g("comp_gain"));
-    // Independent LO / MID / HI thresholds (overrides global offsets when set)
+    // Per-band thresholds (explicit LO/MID/HI)
     compressor.setBandThresholdDb (0, g("comp_thr_lo"));
     compressor.setBandThresholdDb (1, g("comp_thr_mid"));
     compressor.setBandThresholdDb (2, g("comp_thr_hi"));
+    // Also push global for makeup/display consistency
+    compressor.setThresholdDb(g("comp_threshold"));
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
 
     magic.setMode ((int) g("magic_mode"));
     {
-        float mx = juce::jlimit (0.f, 1.f, g("magic_x") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicX) * 0.5f);
-        float my = juce::jlimit (0.f, 1.f, g("magic_y") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicY) * 0.5f);
+        float mx = g("magic_x") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicX) * 0.5f;
+        float my = g("magic_y") + modMatrix.getModulation (salek::ModMatrix::Dest::MagicY) * 0.5f;
+        // SEQ → Magic modulation (step.modValue drives selected target)
+        const int seqMag = (int) g("seq_magic_target");
+        if (seqMag > 0 && g("seq_on") > 0.5f)
+        {
+            const float depth = g("seq_magic_depth");
+            const float sm = stepSequencer.getCurrentMod(); // typically 0..1
+            const float bipolar = sm * 2.f - 1.f;
+            if (seqMag == 1 || seqMag == 3) mx += bipolar * depth;
+            if (seqMag == 2 || seqMag == 3) my += bipolar * depth;
+            if (seqMag == 4) // intensity → force active + scale XY toward corner
+            {
+                mx = mx * (1.f - depth) + sm * depth;
+                my = my * (1.f - depth) + sm * depth;
+                magic.setActive (true);
+            }
+        }
+        mx = juce::jlimit (0.f, 1.f, mx);
+        my = juce::jlimit (0.f, 1.f, my);
         magic.setXY (mx, my);
     }
-    magic.setActive (g("magic_on") > 0.5f);
+    if (g("seq_magic_target") != 4.f)
+        magic.setActive (g("magic_on") > 0.5f || (g("seq_on") > 0.5f && g("seq_magic_target") > 0.5f));
 }
 
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)

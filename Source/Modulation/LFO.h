@@ -148,8 +148,9 @@ public:
     {
         if (numSamples <= 1)
             return process();
-        // multi-step for S&H / chaos correctness on short blocks; full step on long
-        if (numSamples <= 16)
+        // S&H / Chaos / SmoothRnd need per-sample steps for correct holds
+        if (wave == Wave::SAndH || wave == Wave::Chaos || wave == Wave::SmoothRnd
+            || numSamples <= 32)
         {
             float v = 0.f;
             for (int i = 0; i < numSamples; ++i)
@@ -158,7 +159,7 @@ public:
         }
         float v = process();
         phase += phaseInc * (double) (numSamples - 1);
-        phase -= std::floor (phase);
+        while (phase >= 1.0) phase -= 1.0;
         return v;
     }
 

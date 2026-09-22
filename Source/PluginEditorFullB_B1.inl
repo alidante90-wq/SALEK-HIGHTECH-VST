@@ -599,6 +599,8 @@ void SalekHightechAudioProcessorEditor::resized()
             auto magicStrip = bounds.removeFromBottom (64).reduced (2, 1);
             seqMagicOff.setBounds (magicStrip.removeFromRight (72).reduced (2));
             seqMagicOff.setVisible (true);
+            seqMagicTargetBox.setBounds (magicStrip.removeFromRight (110).reduced (2));
+            seqMagicTargetBox.setVisible (true);
             auto row1 = magicStrip.removeFromTop (30);
             auto row2 = magicStrip;
             const int n = seqMagicBtns.size();

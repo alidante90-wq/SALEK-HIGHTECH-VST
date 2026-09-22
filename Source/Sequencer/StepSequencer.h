@@ -59,6 +59,10 @@ public:
         return steps[static_cast<size_t> (juce::jlimit (0, NumSteps - 1, i))];
     }
 
+    void setStepMod (int i, float v) noexcept
+    {
+        getStep(i).modValue = juce::jlimit (0.f, 1.f, v);
+    }
     int getCurrentStep() const noexcept { return currentStep; }
     float getCurrentMod() const noexcept { return currentMod; }
 
@@ -128,7 +132,8 @@ public:
             steps[static_cast<size_t>(i)].accent = false;
             steps[static_cast<size_t>(i)].gate = 0.7f;
             steps[static_cast<size_t>(i)].probability = 1.0f;
-            steps[static_cast<size_t>(i)].modValue = 0.0f;
+            // Default ramp so SEQ→Magic is audible out of the box
+            steps[static_cast<size_t>(i)].modValue = (float) i / (float) juce::jmax (1, NumSteps - 1);
         }
         currentStep = 0;
         samplesUntilNext = 0.0;
