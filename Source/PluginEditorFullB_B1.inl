@@ -155,8 +155,29 @@ void SalekHightechAudioProcessorEditor::resized()
         const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() * 2 / 5));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
+        logoOverlay.setInterceptsMouseClicks (false, false);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
+    // Header controls above logo for clicks + visibility
+    inspireBtn.toFront (false);
+    modSrcLfo1.toFront (false);
+    modSrcLfo2.toFront (false);
+    modSrcLfo3.toFront (false);
+    bgSwapBtn.toFront (false);
+    charCycleBtn.toFront (false);
+    masterGainSlider.toFront (false);
+    themeBox.toFront (false);
+    langToggle.toFront (false);
+    if (presetTab.isVisible())
+    {
+        presetTab.toFront (false);
+        prevPreset.toFront (false);
+        nextPreset.toFront (false);
+        initBtn.toFront (false);
+        savePresetBtn.toFront (false);
+        loadPresetBtn.toFront (false);
+        bankBtn.toFront (false);
+    }
     }
 
     // Keep drop targets aligned with knob sliders
