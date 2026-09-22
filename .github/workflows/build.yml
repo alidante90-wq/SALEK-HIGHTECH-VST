@@ -47,4 +47,6 @@ jobs:
         with:
           name: SALEK-HIGHTECH-Build
           path: SALEK-HIGHTECH-Build.zip
+          retention-days: 7
+          compression-level: 6
           if-no-files-found: error

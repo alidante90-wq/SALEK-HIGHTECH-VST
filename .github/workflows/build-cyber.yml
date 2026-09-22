@@ -61,6 +61,8 @@ jobs:
         with:
           name: SALEK-HIGHTECH-Cyber-Windows
           path: SALEK-HIGHTECH-Cyber-Windows.zip
+          retention-days: 7
+          compression-level: 6
           if-no-files-found: error
 
   summary:

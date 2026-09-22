@@ -63,4 +63,6 @@ jobs:
         with:
           name: SALEK_HIGHTECH_V2_VST3
           path: SALEK_HIGHTECH_V2_VST3.zip
+          retention-days: 7
+          compression-level: 6
           if-no-files-found: error
