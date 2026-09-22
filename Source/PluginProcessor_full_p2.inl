@@ -45,7 +45,12 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     synthEngine.setPm2to1(g("pm_2to1")); synthEngine.setRm2to1(g("rm_2to1")); synthEngine.setAm2to1(g("am_2to1"));
     float cut = g("filter_cutoff");
     float reso = g("filter_reso");
-    // Smart macros: 1=Bright 2=Space 3=Destroy 4=Width
+    // Smart macros (hardwired semantic + matrix sources):
+    //   Macro1 BRIGHT  → filter cutoff/reso open
+    //   Macro2 SPACE   → delay/reverb mix scale
+    //   Macro3 DESTROY → distortion mix/drive/crush
+    //   Macro4 WIDTH   → chorus mix scale
+    // All four also feed ModMatrix as bipolar sources for free routing
     const float mBright = g("macro1");
     const float mSpace  = g("macro2");
     const float mDest   = g("macro3");
@@ -131,7 +136,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     reverb.setMode ((int) g("reverb_mode"));
     reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
     phaser.setMix(juce::jlimit(0.f,1.f,g("phaser_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::PhaserMix)*0.5f)); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
-    distortion.setMix(g("dist_mix")); distortion.setDrive(juce::jlimit(0.f,1.f,g("dist_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f)); distortion.setBitcrush(g("dist_crush"));
+    distortion.setMix(juce::jlimit(0.f,1.f, g("dist_mix") * (0.2f + destScale * 0.8f) + destScale * 0.15f));
+    distortion.setDrive(juce::jlimit(0.f,1.f, g("dist_drive") + destScale * 0.55f + modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f));
+    distortion.setBitcrush(juce::jlimit(0.f,1.f, g("dist_crush") + destScale * 0.25f));
     distortion.setMode ((int) g("dist_mode"));
     {
         const int q = (int) g("quality_mode");
