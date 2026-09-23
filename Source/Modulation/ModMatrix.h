@@ -201,6 +201,62 @@ public:
     }
 
     const std::array<Route, MaxRoutes>& getRoutes() const noexcept { return routes; }
+
+    float getRouteAmount (Source src, Dest dst) const noexcept
+    {
+        for (const auto& r : routes)
+            if (r.active && r.source == src && r.dest == dst)
+                return r.amount;
+        return 0.f;
+    }
+
+    bool hasRoute (Source src, Dest dst) const noexcept
+    {
+        return std::abs (getRouteAmount (src, dst)) > 1.0e-5f;
+    }
+
+    void setRouteAmount (Source src, Dest dst, float amount) noexcept
+    {
+        amount = juce::jlimit (-1.f, 1.f, amount);
+        if (std::abs (amount) < 1.0e-5f)
+        {
+            removeRoute (src, dst);
+            return;
+        }
+        addRoute (src, dst, amount);
+    }
+
+    /** Persist only active routes. Kept separate from APVTS so old presets remain valid. */
+    void writeState (juce::XmlElement& parent) const
+    {
+        auto* node = parent.createNewChildElement ("MOD_MATRIX");
+        for (const auto& r : routes)
+        {
+            if (! r.active) continue;
+            auto* route = node->createNewChildElement ("ROUTE");
+            route->setAttribute ("src", (int) r.source);
+            route->setAttribute ("dst", (int) r.dest);
+            route->setAttribute ("amount", r.amount);
+        }
+    }
+
+    void readState (const juce::XmlElement& parent) noexcept
+    {
+        clear();
+        if (auto* node = parent.getChildByName ("MOD_MATRIX"))
+        {
+            forEachXmlChildElementWithTagName (*node, route, "ROUTE")
+            {
+                const int src = route->getIntAttribute ("src", -1);
+                const int dst = route->getIntAttribute ("dst", -1);
+                const float amount = (float) route->getDoubleAttribute ("amount", 0.0);
+                if (src >= 0 && src < (int) Source::NumSources
+                    && dst >= 0 && dst < (int) Dest::NumDests)
+                    addRoute ((Source) src, (Dest) dst, amount);
+            }
+        }
+        finalizeBlock();
+    }
     Route& getRoute (int i) noexcept { return routes[static_cast<size_t>(juce::jlimit(0, MaxRoutes-1, i))]; }
 
     int countActiveRoutes() const noexcept
