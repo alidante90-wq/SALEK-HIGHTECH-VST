@@ -14,6 +14,8 @@ public:
         bufR.assign ((size_t) maxS, 0.f);
         writePos = 0;
         lpL = lpR = 0.f;
+        mixSmooth.reset (sr, 0.02);
+        mixSmooth.setCurrentAndTargetValue (0.f);
     }
 
     void setTimeMs (float ms) noexcept
@@ -30,15 +32,15 @@ public:
         targetDelayR = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
     }
     void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); mixSmooth.setTargetValue (mix); }
     void setWow (float w) noexcept { wowAmt = juce::jlimit (0.f, 1.f, w); }
     /** 0 Stereo, 1 PingPong, 2 Mono, 3 MultiTap */
     void setMode (int m) noexcept { mode = juce::jlimit (0, 3, m); }
 
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
-        if (mix < 1e-4f) return;
-        const float wet = std::sqrt (mix); // more audible at mid settings
+        if (mix < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) return;
+        const float wet = std::sqrt (juce::jlimit (0.f, 1.f, mixSmooth.getCurrentValue())); // more audible at mid settings
         const float dry = 1.f - wet * 0.85f;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
@@ -53,6 +55,9 @@ public:
 
         for (int i = 0; i < n; ++i)
         {
+            const float mixNow = mixSmooth.getNextValue();
+            const float wetNow = std::sqrt (juce::jlimit (0.f, 1.f, mixNow));
+            const float dryNow = 1.f - wetNow * 0.85f;
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             if (mode == 2) // Mono: average input
@@ -87,8 +92,8 @@ public:
             dL = lpL;
             dR = lpR;
 
-            buffer.setSample (0, i, inL * dry + dL * wet);
-            if (ch > 1) buffer.setSample (1, i, inR * dry + dR * wet);
+            buffer.setSample (0, i, inL * dryNow + dL * wetNow);
+            if (ch > 1) buffer.setSample (1, i, inR * dryNow + dR * wetNow);
 
             if (mode == 1) // PingPong: cross feedback
             {
@@ -131,6 +136,7 @@ private:
     float delaySamplesL = 300.f, delaySamplesR = 320.f;
     float targetDelayL = 300.f, targetDelayR = 320.f;
     float feedback = 0.3f, mix = 0.f;
+    juce::SmoothedValue<float> mixSmooth { 0.f };
     float wowAmt = 0.12f, wowPhase = 0.f;
     float lpL = 0.f, lpR = 0.f;
     int mode = 0;
