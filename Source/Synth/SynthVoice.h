@@ -29,9 +29,14 @@ public:
         cutoffSmoother.reset(baseCutoff); cutoffSmoother.setTimeMs(5.f, sr);
     }
     void startNote(int note, float vel, juce::SynthesiserSound*, int) override {
+        const bool wasActive = isVoiceActive() && isNoteOn;
         currentMidiNote = note; currentVelocity = vel; isNoteOn = true;
-        osc1.reset(); osc2.reset(); osc3.reset();
-        for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].reset(); uniOsc2[u].reset(); uniOsc3[u].reset(); }
+        glideActive = wasActive && glideAmt > 0.0001f;
+        if (! glideActive)
+        {
+            osc1.reset(); osc2.reset(); osc3.reset();
+            for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].reset(); uniOsc2[u].reset(); uniOsc3[u].reset(); }
+        }
         // Random phase on note-on so repeated notes don't phase-lock ("دیییو دیییو")
         auto rnd = [] (float amt) {
             if (amt < 1e-4f) return 0.f;
