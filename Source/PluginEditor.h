@@ -295,6 +295,9 @@ private:
     bool uiLangFa = false;
     LfoShapeEditor lfoShapeEditor;
     juce::ComboBox lfo1WaveBox, lfo2WaveBox, lfo3WaveBox;
+    juce::ComboBox lfo1SyncBox, lfo2SyncBox, lfo3SyncBox;
+    juce::ToggleButton lfo1Bipolar { "BIP" }, lfo2Bipolar { "BIP" }, lfo3Bipolar { "BIP" };
+    juce::ToggleButton lfo1Retrigger { "RET" }, lfo2Retrigger { "RET" }, lfo3Retrigger { "RET" };
     juce::ComboBox lfoShapeBank; // 32 preset shapes
     juce::ComboBox lfoPointsBox; // 8 / 16 / 32 editable vertices
     juce::TextButton lfoPresetSine { "SIN" }, lfoPresetTri { "TRI" }, lfoPresetSaw { "SAW" },
