@@ -1,4 +1,4 @@
-name: SALEK HIGHTECH V2 Build
+name: GITI BY SALEK HIGHTECH Build
 
 on:
   workflow_dispatch:
@@ -49,18 +49,18 @@ jobs:
                   Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1
           Write-Host "VST3: $($vst3.FullName)"
           Write-Host "EXE:  $($exe.FullName)"
-          if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\SALEK HIGHTECH.vst3" }
-          if ($exe)  { Copy-Item $exe.FullName "package\SALEK HIGHTECH.exe" }
+          if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3" }
+          if ($exe)  { Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe" }
           if (-not (Get-ChildItem package -ErrorAction SilentlyContinue)) {
             Write-Error "No artifacts found"
             Get-ChildItem -Path build-v2 -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
             exit 1
           }
-          Compress-Archive -Path "package\*" -DestinationPath "SALEK_HIGHTECH_V2_VST3.zip" -Force
+          Compress-Archive -Path "package\*" -DestinationPath "GITI_BY_SALEK_HIGHTECH_VST3.zip" -Force
 
       - name: Upload VST3 package
         uses: actions/upload-artifact@v4
         with:
-          name: SALEK_HIGHTECH_V2_VST3
-          path: SALEK_HIGHTECH_V2_VST3.zip
+          name: GITI_BY_SALEK_HIGHTECH_VST3
+          path: GITI_BY_SALEK_HIGHTECH_VST3.zip
           if-no-files-found: error
