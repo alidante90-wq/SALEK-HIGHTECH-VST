@@ -1,4 +1,4 @@
-# SALEK HIGHTECH
+# GITI BY GITI BY SALEK HIGHTECH
 
 **Persian Cyber Anime • ISATIS Engine**
 
@@ -9,7 +9,7 @@ Professional JUCE 8 **VST3 + Standalone** wavetable synthesizer for Windows.
 - Hyper-realistic Anime Persian Cyber style
 - 3D-inspired knobs + holographic panels
 - Central psychedelic mandala / sonic core visualizer
-- **SALEK HIGHTECH** large top-left branding
+- **GITI BY SALEK HIGHTECH** large top-left branding
 - **ISATIS** large bottom-right branding
 - Persian logo «سالک» with geometric frame
 - Neon cyan / magenta / gold palette
