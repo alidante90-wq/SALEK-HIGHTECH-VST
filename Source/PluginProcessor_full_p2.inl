@@ -194,8 +194,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    applyParamsToEngine (buffer.getNumSamples());
-    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
+    // Capture performance MIDI before applying modulation so velocity/mod-wheel are current for this block.
     for (const auto metadata : midi)
     {
         const auto msg = metadata.getMessage();
@@ -204,6 +203,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         else if (msg.isController() && msg.getControllerNumber() == 1)
             modWheelValue = msg.getControllerValue() / 127.f;
     }
+
+    applyParamsToEngine (buffer.getNumSamples());
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
 
     juce::MidiBuffer routed;
     routed.addEvents (midi, 0, buffer.getNumSamples(), 0);
@@ -261,7 +263,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     const float bassify = apvts.getRawParameterValue("bassify")->load();
     if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
-        static float lp1L = 0.f, lp1R = 0.f, lp2L = 0.f, lp2R = 0.f;
         const float a1 = 0.04f + bassify * 0.06f;
         const float a2 = 0.12f + bassify * 0.10f;
         const float amount = bassify;
@@ -269,9 +270,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
-            lp1L += a1 * (L - lp1L); lp1R += a1 * (R - lp1R);
-            lp2L += a2 * (lp1L - lp2L); lp2R += a2 * (lp1R - lp2R);
-            float sub = 0.5f * (lp2L + lp2R);
+            bassLp1L += a1 * (L - bassLp1L); bassLp1R += a1 * (R - bassLp1R);
+            bassLp2L += a2 * (bassLp1L - bassLp2L); bassLp2R += a2 * (bassLp1R - bassLp2R);
+            float sub = 0.5f * (bassLp2L + bassLp2R);
             float grit = amount * 0.4f;
             sub = sub + grit * sub * sub * (sub >= 0.f ? 1.f : -1.f);
             sub = std::tanh (sub * (1.2f + amount * 1.6f));
@@ -302,6 +303,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         reverb.setMix (rMix);
         reverb.setSize (g ("reverb_size"));
         reverb.setDecay (g ("reverb_decay"));
+        reverb.setDamping (g ("reverb_damping"));
         reverb.setMode ((int) g ("reverb_mode"));
 
         const float cMix = juce::jlimit (0.f, 1.f, g ("chorus_mix") * widthScale);
@@ -403,8 +405,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     const float drive = apvts.getRawParameterValue("master_drive")->load();
     const float gMul = gain * (0.85f + drive * 0.1f);
     // SHAE Master Core: DC block → mono bass → soft clip → ceiling
-    static float dcL = 0.f, dcR = 0.f;
-    static float lpL = 0.f, lpR = 0.f;
     const float bassC = 0.08f; // ~120Hz @ 48k one-pole
     const int nS = buffer.getNumSamples();
     const int nCh = buffer.getNumChannels();
@@ -419,11 +419,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             dcL += 0.0005f * (xL - dcL); xL -= dcL;
             dcR += 0.0005f * (xR - dcR); xR -= dcR;
             // Mono low end (stable club/system compatibility)
-            lpL += bassC * (xL - lpL);
-            lpR += bassC * (xR - lpR);
-            float midBass = 0.5f * (lpL + lpR);
-            float hiL = xL - lpL;
-            float hiR = xR - lpR;
+            masterLpL += bassC * (xL - masterLpL);
+            masterLpR += bassC * (xR - masterLpR);
+            float midBass = 0.5f * (masterLpL + masterLpR);
+            float hiL = xL - masterLpL;
+            float hiR = xR - masterLpR;
             xL = midBass + hiL;
             xR = midBass + hiR;
             xL = salek::shae::softClipComp (xL, drive * 0.6f);
@@ -466,16 +466,15 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
 
     {
-        static float hpL = 0.f, hpR = 0.f;
-        const float coeff = 0.08f;
+            const float coeff = 0.08f;
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
-            hpL += coeff * ((L - hpL));
-            hpR += coeff * ((R - hpR));
-            float airL = (L - hpL) * 0.18f;
-            float airR = (R - hpR) * 0.18f;
+            airHpL += coeff * ((L - airHpL));
+            airHpR += coeff * ((R - airHpR));
+            float airL = (L - airHpL) * 0.18f;
+            float airR = (R - airHpR) * 0.18f;
             buffer.setSample (0, i, L + airL);
             if (buffer.getNumChannels() > 1)
                 buffer.setSample (1, i, R + airR);
