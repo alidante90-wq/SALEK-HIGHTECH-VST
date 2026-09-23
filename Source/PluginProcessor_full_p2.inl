@@ -124,11 +124,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     // push smart macros into FX (non-destructive scale)
     if (auto* p = apvts.getParameter ("delay_mix"))
         juce::ignoreUnused (p);
-    // runtime scale in render path:
-    // stored as members for voice/FX - apply on buffer FX stage below
-    const float spaceScale = 0.15f + mSpace * 0.85f;
-    const float destScale  = mDest;
-    const float widthScale = 0.3f + mWidth * 0.7f;
+    // Smart macro scales are applied in processBlock's FX stage.
     cut *= std::pow(2.0f, modMatrix.getModulation(salek::ModMatrix::Dest::FilterCutoff) * 1.0f);
     synthEngine.setFilterCutoff(juce::jlimit(20.f, 20000.f, cut));
     synthEngine.setFilterResonance(juce::jlimit(0.f,1.f, g("filter_reso")+modMatrix.getModulation(salek::ModMatrix::Dest::FilterReso)*0.5f));
@@ -286,6 +282,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                 buffer.setSample (1, i, R * dryKeep + wet);
         }
     }
+
+    // Smart macro scales for the FX render stage.
+    const float spaceScale = 0.15f + g ("macro2") * 0.85f;
+    const float destScale  = juce::jlimit (0.f, 1.f, g ("macro3"));
+    const float widthScale = 0.3f + juce::jlimit (0.f, 1.f, g ("macro4")) * 0.7f;
 
     // ---- Push all FX params (UI knobs were never wired → delay/reverb silent) ----
     {
