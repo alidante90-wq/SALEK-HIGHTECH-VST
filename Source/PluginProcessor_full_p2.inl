@@ -318,6 +318,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
+    // SHAE final safety stage: DC blocking + finite-value protection + conservative ceiling.
+    shaeSafety.process (buffer);
+
     float peak = 0.f;
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
         peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
