@@ -188,7 +188,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         modCutoff = juce::jlimit (10.f, 20000.f, modCutoff);
         cutoffSmoother.setTarget (modCutoff);
         const float cutHz = cutoffSmoother.getNext();
-        filter.setCutoff (cutHz);
+        filterL.setCutoff (cutHz);
+        filterR.setCutoff (cutHz);
         // Process L/R independently so stereo NEVER bypasses the filter
         float fL = filterL.process (thruL);
         float fR = filterR.process (thruR);
