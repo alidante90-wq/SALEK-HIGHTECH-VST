@@ -149,6 +149,16 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     compressor.setBandThresholdDb (2, g("comp_thr_hi"));
     // Also push global for makeup/display consistency
     compressor.setThresholdDb(g("comp_threshold"));
+    compressor.setRatio(g("comp_ratio"));
+    compressor.setMix(g("comp_mix"));
+    compressor.setDepth(g("comp_depth"));
+    compressor.setAttackMs(g("comp_attack"));
+    compressor.setReleaseMs(g("comp_release"));
+    compressor.setMakeupDb(g("comp_gain"));
+    // Band thresholds are optional overrides; the main threshold remains the fallback.
+    compressor.setBandThresholdDb(0, g("comp_thr_lo"));
+    compressor.setBandThresholdDb(1, g("comp_thr_mid"));
+    compressor.setBandThresholdDb(2, g("comp_thr_hi"));
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
@@ -318,6 +328,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         distortion.setDrive (juce::jlimit (0.f, 1.f, g ("dist_drive") * (0.5f + destScale)));
         distortion.setBitcrush (g ("dist_crush"));
         distortion.setMode ((int) g ("dist_mode"));
+        distortion.setOversample (g ("quality_mode") >= 2.f);
 
         formantFilter.setMorph (g ("formant_morph"));
         formantFilter.setAmount (g ("formant_amt"));
