@@ -344,10 +344,23 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         eq.setHighGainDb (g ("eq_high"));
     }
 
+    // Capture actual post-stage peaks for honest UI metering (no decorative fake waveform level).
+    auto captureFx = [&] (int index)
+    {
+        float peak = 0.f;
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+            peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
+        if (index >= 0 && index < 8) fxPeaks[(size_t) index].store (juce::jlimit (0.f, 1.f, peak));
+    };
+    for (auto& p : fxPeaks) p.store (0.f);
+
     // Mix=0 early-out saves a lot with 2+ instances in FL
     if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
+    captureFx (0);
     if (! bypassed ("phaser_bypass") && g ("phaser_mix") > 1e-4f)  phaser.process (buffer);
+    captureFx (6);
     if (! bypassed ("dist_bypass") && g ("dist_mix") > 1e-4f)      distortion.process (buffer);
+    captureFx (7);
     // Formant / vocal (SALEK signature)
     if (g ("formant_amt") > 1e-4f)
     {
@@ -371,9 +384,13 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (std::abs (g ("eq_low")) > 0.05f || std::abs (g ("eq_mid")) > 0.05f || std::abs (g ("eq_high")) > 0.05f)
             eq.process (buffer);
     }
+    captureFx (5);
     if (! bypassed ("comp_bypass") && g ("comp_mix") > 1e-4f)    compressor.process (buffer);
+    captureFx (4);
     if (! bypassed ("delay_bypass") && g ("delay_mix") > 1e-4f)   delay.process (buffer);
+    captureFx (1);
     if (! bypassed ("reverb_bypass") && g ("reverb_mix") > 1e-4f) reverb.process (buffer);
+    captureFx (2);
     {
         const float az = std::abs (g ("spatial_azim"));
         const float ds = g ("spatial_dist");
