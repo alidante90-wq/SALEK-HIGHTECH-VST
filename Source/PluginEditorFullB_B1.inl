@@ -519,6 +519,10 @@ void SalekHightechAudioProcessorEditor::resized()
         auto bankRow = r.removeFromTop (24);
         lfoPointsBox.setBounds (bankRow.removeFromRight (90).reduced (2));
         lfoShapeBank.setBounds (bankRow.reduced (2));
+        auto syncRow = r.removeFromTop (24);
+        lfo1SyncBox.setBounds (syncRow.removeFromLeft (syncRow.getWidth() / 3).reduced (2));
+        lfo2SyncBox.setBounds (syncRow.removeFromLeft (syncRow.getWidth() / 2).reduced (2));
+        lfo3SyncBox.setBounds (syncRow.reduced (2));
         auto copyRow = r.removeFromTop (22);
         const int cw = copyRow.getWidth() / 9;
         lfoCopyTo1.setBounds (copyRow.removeFromLeft (cw).reduced (1));
@@ -530,11 +534,20 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoLoadB.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoSaveC.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoLoadC.setBounds (copyRow.reduced (1));
-        auto knobArea = r.removeFromBottom (96);
+        auto toggleRow = r.removeFromBottom (24);
+        const int tw = toggleRow.getWidth() / 6;
+        juce::ToggleButton* bip[] = { &lfo1Bipolar, &lfo2Bipolar, &lfo3Bipolar };
+        juce::ToggleButton* ret[] = { &lfo1Retrigger, &lfo2Retrigger, &lfo3Retrigger };
+        for (int i = 0; i < 3; ++i)
         {
-            const char* lids[] = { "lfo_rate","lfo_amount","lfo2_rate","lfo2_amount","lfo3_rate","lfo3_amount" };
-            const int lfoCw = juce::jmax (1, knobArea.getWidth() / 6);
-            for (int i = 0; i < 6; ++i)
+            bip[i]->setBounds (toggleRow.getX() + i * tw, toggleRow.getY(), tw - 2, toggleRow.getHeight());
+            ret[i]->setBounds (toggleRow.getX() + (i + 3) * tw, toggleRow.getY(), tw - 2, toggleRow.getHeight());
+        }
+        auto knobArea = r.removeFromBottom (112);
+        {
+            const char* lids[] = { "lfo_rate","lfo_amount","lfo_phase","lfo2_rate","lfo2_amount","lfo2_phase","lfo3_rate","lfo3_amount","lfo3_phase" };
+            const int lfoCw = juce::jmax (1, knobArea.getWidth() / 9);
+            for (int i = 0; i < 9; ++i)
             {
                 Knob* k = nullptr;
                 for (auto& kk : knobs)
