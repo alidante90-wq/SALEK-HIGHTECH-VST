@@ -34,7 +34,7 @@ public:
         {
             apL[i].assign ((size_t) maxAP, 0.f);
             apR[i].assign ((size_t) maxAP, 0.f);
-            apPos[i] = 0;
+            apPosL[i] = apPosR[i] = 0;
             apLen[i] = maxAP / 2;
         }
         // early reflections taps
@@ -134,8 +134,8 @@ public:
                     pos = (p + 1) % len;
                     return bufOut - in * g;
                 };
-                wetL = ap (apL[a], apPos[a], wetL);
-                wetR = ap (apR[a], apPos[a], wetR);
+                wetL = ap (apL[a], apPosL[a], wetL);
+                wetR = ap (apR[a], apPosR[a], wetR);
             }
 
             // mode coloration
@@ -211,7 +211,7 @@ private:
     std::array<std::vector<float>, kCombs> combL, combR;
     std::array<std::vector<float>, kAPs>   apL, apR;
     std::array<int, kCombs> combPos {}, combLen {};
-    std::array<int, kAPs>   apPos {}, apLen {};
+    std::array<int, kAPs>   apPosL {}, apPosR {}, apLen {};
     std::array<float, kCombs> dampL {}, dampR {};
 
     std::vector<float> earlyBuf;
