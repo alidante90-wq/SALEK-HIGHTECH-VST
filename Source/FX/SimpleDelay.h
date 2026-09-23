@@ -42,8 +42,6 @@ public:
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
         if (mixSmooth.getTargetValue() < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) return;
-        const float wet = std::sqrt (mix); // more audible at mid settings
-        const float dry = 1.f - wet * 0.85f;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
         const int bs = (int) bufL.size();
@@ -100,8 +98,8 @@ public:
 
             if (mode == 1) // PingPong: cross feedback
             {
-                bufL[(size_t) writePos] = inL + dR * feedback;
-                bufR[(size_t) writePos] = inR + dL * feedback;
+                bufL[(size_t) writePos] = inL + dR * fbNow;
+                bufR[(size_t) writePos] = inR + dL * fbNow;
             }
             else if (mode == 2) // Mono: shared
             {
@@ -114,7 +112,7 @@ public:
             {
                 const float cross = fbNow * 0.12f;
                 bufL[(size_t) writePos] = inL + dL * (fbNow - cross) + dR * cross;
-                bufR[(size_t) writePos] = inR + dR * (feedback - cross) + dL * cross;
+                bufR[(size_t) writePos] = inR + dR * (fbNow - cross) + dL * cross;
             }
 
             writePos = (writePos + 1) % bs;
