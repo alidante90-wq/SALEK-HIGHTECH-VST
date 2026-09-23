@@ -5,10 +5,18 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
 
     // ---- Modulation sources first (then O(1) dest lookup) ----
     {
-        auto setLfo = [] (salek::LFO& lfo, float rate, int wave)
+        auto setLfo = [] (salek::LFO& lfo, float rate, int wave, int syncMode, float phase, bool bipolar, bool retrigger, double bpm)
         {
-            lfo.setRate (rate);
+            // Musical divisions are derived from host BPM; FREE keeps the existing Hz control.
+            static const double beats[] = { 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0, 2.0, 4.0, 8.0 };
+            double hz = juce::jlimit (0.01, 40.0, (double) rate);
+            if (syncMode > 0 && syncMode < 11 && bpm > 1.0)
+                hz = 60.0 / (bpm * beats[syncMode]);
+            lfo.setRate ((float) hz);
             lfo.setAmount (1.0f);
+            lfo.setPhaseOffset (phase);
+            lfo.setBipolar (bipolar);
+            lfo.setRetrigger (retrigger);
             static const salek::LFO::Wave waves[] = {
                 salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
                 salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
@@ -17,9 +25,14 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
             };
             lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
         };
-        setLfo (lfo1, g("lfo_rate"),  (int) g("lfo_wave"));
-        setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"));
-        setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"));
+                double bpm = 120.0;
+        if (auto* ph = getPlayHead())
+            if (auto pos = ph->getPosition())
+                if (pos->getBpm().hasValue())
+                    bpm = juce::jlimit (20.0, 300.0, *pos->getBpm());
+        setLfo (lfo1, g("lfo_rate"),  (int) g("lfo_wave"), (int) g("lfo_sync"),  g("lfo_phase"),  g("lfo_bipolar") > 0.5f,  g("lfo_retrigger") > 0.5f,  bpm);
+        setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"), (int) g("lfo2_sync"), g("lfo2_phase"), g("lfo2_bipolar") > 0.5f, g("lfo2_retrigger") > 0.5f, bpm);
+        setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"), (int) g("lfo3_sync"), g("lfo3_phase"), g("lfo3_bipolar") > 0.5f, g("lfo3_retrigger") > 0.5f, bpm);
         const int ns = juce::jmax (1, numSamples);
         modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, lfo1.processBlock (ns) * g("lfo_amount"));
         modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, lfo2.processBlock (ns) * g("lfo2_amount"));
@@ -199,7 +212,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         const auto msg = metadata.getMessage();
         if (msg.isNoteOn())
+        {
             lastNoteVelocity = msg.getFloatVelocity();
+            lfo1.noteOnReset(); lfo2.noteOnReset(); lfo3.noteOnReset();
+        }
         else if (msg.isController() && msg.getControllerNumber() == 1)
             modWheelValue = msg.getControllerValue() / 127.f;
     }
