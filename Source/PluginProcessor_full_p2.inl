@@ -302,6 +302,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         reverb.setMix (rMix);
         reverb.setSize (g ("reverb_size"));
         reverb.setDecay (g ("reverb_decay"));
+        reverb.setDamping (g ("reverb_damping"));
         reverb.setMode ((int) g ("reverb_mode"));
 
         const float cMix = juce::jlimit (0.f, 1.f, g ("chorus_mix") * widthScale);
