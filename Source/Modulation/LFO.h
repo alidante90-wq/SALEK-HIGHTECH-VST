@@ -10,10 +10,13 @@ public:
     static constexpr int NumShapes = 32;
 
     void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
-    void reset() noexcept { phase=0; lastSH=0; }
+    void reset() noexcept { phase=0; lastSH=0; lastSH2=0; smoothValue=0.f; chaosState=0.317f; }
     void setRate(float hz) noexcept { rate=juce::jlimit(0.01f,40.f,hz); phaseInc=double(rate)/sr; }
     void setWave(Wave w) noexcept { wave=w; }
     void setAmount(float a) noexcept { amount=juce::jlimit(0.f,1.f,a); }
+    void setSmoothing (float s) noexcept { smoothing = juce::jlimit (0.f, 0.999f, s); }
+    void setPhaseOffset (float p) noexcept { phaseOffset = p - std::floor (p); }
+    float getRate() const noexcept { return rate; }
     void setCustomPoint (int i, float v) noexcept
     {
         if (i >= 0 && i < TableSize)
@@ -86,21 +89,22 @@ public:
     }
 
     float process() noexcept {
-        float v=0, p=float(phase);
+        float v=0, p=float(phase + phaseOffset);
+        if (p >= 1.f) p -= std::floor (p);
         switch(wave){
             case Wave::Sine: v=std::sin(p*juce::MathConstants<float>::twoPi); break;
             case Wave::Triangle: v=1-4*std::abs(p-0.5f); break;
             case Wave::Saw: v=2*p-1; break;
             case Wave::Square: v=p<0.5f?1.f:-1.f; break;
             case Wave::SAndH:
-                if(phase<phaseInc) lastSH=juce::Random::getSystemRandom().nextFloat()*2-1;
+                if(phase<phaseInc) lastSH = nextRandomBipolar();
                 v=lastSH; break;
             case Wave::SmoothRnd:
             {
                 if (phase < phaseInc)
                 {
                     lastSH2 = lastSH;
-                    lastSH = juce::Random::getSystemRandom().nextFloat()*2-1;
+                    lastSH = nextRandomBipolar();
                 }
                 float frac = (float) (phase / juce::jmax (1e-9, phaseInc));
                 frac = juce::jlimit (0.f, 1.f, frac);
@@ -139,8 +143,11 @@ public:
                 break;
             }
         }
-        phase+=phaseInc; if(phase>=1) phase-=1;
-        return v*amount;
+        phase+=phaseInc; if(phase>=1) phase-=std::floor(phase);
+        const float target = v * amount;
+        if (smoothing > 0.f) smoothValue += (1.f - smoothing) * (target - smoothValue);
+        else smoothValue = target;
+        return smoothValue;
     }
 
     /** Advance LFO by whole audio block (fixes 1-sample-per-block bug = 500x too slow) */
@@ -166,7 +173,17 @@ public:
     float getPhase() const noexcept { return (float) phase; }
 
 private:
+    float nextRandomBipolar() noexcept
+    {
+        rngState ^= rngState << 13;
+        rngState ^= rngState >> 17;
+        rngState ^= rngState << 5;
+        return ((rngState & 0x00ffffffu) / 16777215.0f) * 2.f - 1.f;
+    }
+
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;
+    float smoothing = 0.f, phaseOffset = 0.f, smoothValue = 0.f;
+    uint32_t rngState = 0x6d2b79f5u;
     Wave wave=Wave::Sine;
     std::array<float, TableSize> customTable {};
 };
