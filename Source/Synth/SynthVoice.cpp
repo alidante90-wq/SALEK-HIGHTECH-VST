@@ -30,7 +30,6 @@ void SynthVoice::updateGlideFrequencies() noexcept
     osc2.setFrequency (glideHz2);
     osc3.setFrequency (glideHz3);
 }
-}
 
 void SynthVoice::refreshUnisonTuning() noexcept
 {
