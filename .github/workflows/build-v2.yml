@@ -40,13 +40,17 @@ jobs:
         shell: pwsh
         run: cmake --build build-v2 --config Release --parallel
 
+      - name: Run SHAE self-test
+        shell: pwsh
+        run: cmake --build build-v2 --config Release --target GITI_SHAE_SELFTEST --parallel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & "build-v2\\GITI_SHAE_SELFTEST_artefacts\\Release\\GITI SHAE Self Test.exe"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Package
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package | Out-Null
           $vst3 = Get-ChildItem -Path build-v2 -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
           $exe  = Get-ChildItem -Path build-v2 -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
-                  Where-Object { $_.Name -notmatch "cmake|ninja|juce" } | Select-Object -First 1
+                  Where-Object { $_.Name -eq "GITI BY SALEK HIGHTECH.exe" } | Select-Object -First 1
           Write-Host "VST3: $($vst3.FullName)"
           Write-Host "EXE:  $($exe.FullName)"
           if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3" }
