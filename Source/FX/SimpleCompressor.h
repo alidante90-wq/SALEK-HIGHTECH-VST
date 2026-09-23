@@ -54,7 +54,7 @@ public:
             float r = ch > 1 ? buffer.getSample (1, i) : l;
             const float detector = juce::jmax (1.0e-6f, 0.5f * (std::abs (l) + std::abs (r)));
 
-            const float coeff = detector > env ? attackCoeff : releaseCoeff;
+            const float coeff = detector > env ? atkCoeff : releaseCoeff;
             env += coeff * (detector - env);
 
             const float levelDb = juce::Decibels::gainToDecibels (env, -120.0f);
