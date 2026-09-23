@@ -16,6 +16,7 @@
 #include "Modulation/ModMatrix.h"
 #include "Modulation/LFO.h"
 #include "UI/VisualFifo.h"
+#include "SHAE/SHAECore.h"
 #include <map>
 #include <vector>
 #include <atomic>
@@ -100,6 +101,7 @@ private:
     juce::MidiKeyboardState keyboardState;
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
+    shae::SafetyStage shaeSafety;
 
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
     std::vector<FactoryPreset> factoryPresets;
