@@ -34,7 +34,7 @@
     const char* allFx[] = {
         "chorus_mix","chorus_rate","chorus_depth",
         "delay_mix","delay_time","delay_fb","delay_time_l","delay_time_r",
-        "reverb_mix","reverb_size","reverb_decay",
+        "reverb_mix","reverb_size","reverb_decay","reverb_damping",
         "bassify","spatial_azim","spatial_dist","spatial_size","spatial_elev",
         "comp_threshold","comp_ratio","comp_mix","comp_depth","comp_gain","comp_attack","comp_release",
         "comp_thr_lo","comp_thr_mid","comp_thr_hi",
@@ -63,7 +63,7 @@
         // row0
         { 0, { "chorus_mix", "chorus_rate", "chorus_depth", nullptr, nullptr, nullptr }, 3, 0 },
         { 1, { "delay_mix", "delay_time", "delay_fb", "delay_time_l", "delay_time_r", nullptr }, 5, 3 },
-        { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr, nullptr, nullptr }, 3, 1 },
+        { 2, { "reverb_mix", "reverb_size", "reverb_decay", "reverb_damping", nullptr, nullptr }, 4, 1 },
         // row1
         { 3, { "bassify", "spatial_azim", "spatial_dist", "spatial_size", "spatial_elev", nullptr }, 5, 0 },
         { 4, { "comp_mix", "comp_threshold", "comp_ratio", "comp_gain", "comp_attack", "comp_release" }, 6, 0 },
