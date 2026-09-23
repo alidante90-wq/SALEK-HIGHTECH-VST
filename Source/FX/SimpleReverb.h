@@ -68,8 +68,6 @@ public:
         if (mode == 2) fbBase = 0.50f; // Plate
         if (mode == 3) fbBase = 0.48f; // Chamber
         if (mode == 4) fbBase = 0.58f; // Spring
-        const float decayNow = decaySmooth.getTargetValue();
-        const float fb = juce::jlimit (0.15f, 0.97f, fbBase * (0.35f + decayNow * 0.75f));
 
         // early reflection gain
         const float earlyG = 0.35f + size * 0.25f;
