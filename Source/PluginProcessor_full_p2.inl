@@ -513,6 +513,7 @@ void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destDa
     root.setAttribute ("program", currentProgram);
     if (auto ap = apvts.copyState().createXml())
         root.addChildElement (new juce::XmlElement (*ap));
+    modMatrix.writeState (root);
     copyXmlToBinary (root, destData);
 }
 void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -523,6 +524,7 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
         {
             if (auto* ap = xml->getChildByName (apvts.state.getType()))
                 apvts.replaceState (juce::ValueTree::fromXml (*ap));
+            modMatrix.readState (*xml);
             const int prog = xml->getIntAttribute ("program", -1);
             if (prog >= 0 && prog < (int) factoryPresets.size())
                 currentProgram = prog;
@@ -530,6 +532,7 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
         else if (xml->hasTagName (apvts.state.getType()))
         {
             apvts.replaceState (juce::ValueTree::fromXml (*xml));
+            modMatrix.clear();
         }
     }
 }
