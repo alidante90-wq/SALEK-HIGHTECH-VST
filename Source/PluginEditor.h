@@ -247,6 +247,7 @@ private:
     std::unique_ptr<LfoDisplay> lfoDisplay;
     std::unique_ptr<ModMatrixPanel> matrixPanel;
     std::unique_ptr<OpenGLGridBackdrop> glBackdrop;
+    std::unique_ptr<juce::AlertWindow> licenseWindow;
     std::unique_ptr<SonicCoreGL> sonicCore;
     std::unique_ptr<OscShapeMonitor> oscMon1, oscMon2, oscMon3;
     juce::VBlankAttachment vblank;
