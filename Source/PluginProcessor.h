@@ -58,6 +58,7 @@ public:
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
     float getOutputPeak() const { return outputPeak.load(); }
+    float getFxPeak (int index) const noexcept { return (index >= 0 && index < 8) ? fxPeaks[(size_t) index].load() : 0.f; }
     float getFxPeak (int index) const noexcept
     {
         if (index < 0 || index >= (int) fxPeaks.size()) return 0.f;
