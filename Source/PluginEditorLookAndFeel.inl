@@ -32,6 +32,102 @@ public:
         setColour(juce::ScrollBar::thumbColourId, juce::Colour(0xff00e8ff).withAlpha(0.55f));
     }
 
+    void drawButtonText (juce::Graphics& g, juce::TextButton& button,
+                          bool, bool) override
+    {
+        const auto t = button.getButtonText().trim().toUpperCase();
+        const auto area = button.getLocalBounds().toFloat().reduced (4.f);
+        const auto accent = button.findColour (juce::TextButton::textColourOffId);
+        g.setColour (accent.withAlpha (0.95f));
+
+        // Compact icon language for navigation / utility controls.
+        // Text remains in the component for accessibility/tooltips, but the
+        // visible control is an icon so the top bar and preset browser stay clean.
+        juce::Path p;
+        const auto c = area.getCentre();
+        const float s = juce::jmin (area.getWidth(), area.getHeight()) * 0.28f;
+
+        if (t == "<" || t == "PREV")
+        {
+            p.startNewSubPath (c.x + s, c.y - s * 1.25f);
+            p.lineTo (c.x - s, c.y);
+            p.lineTo (c.x + s, c.y + s * 1.25f);
+            g.strokePath (p, juce::PathStrokeType (2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+        else if (t == ">" || t == "NEXT")
+        {
+            p.startNewSubPath (c.x - s, c.y - s * 1.25f);
+            p.lineTo (c.x + s, c.y);
+            p.lineTo (c.x - s, c.y + s * 1.25f);
+            g.strokePath (p, juce::PathStrokeType (2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+        else if (t == "INIT")
+        {
+            g.drawEllipse (c.x - s, c.y - s, 2.f * s, 2.f * s, 1.7f);
+            g.drawLine (c.x, c.y - s * 0.55f, c.x, c.y + s * 0.55f, 1.8f);
+            g.drawLine (c.x - s * 0.55f, c.y, c.x + s * 0.55f, c.y, 1.8f);
+        }
+        else if (t == "SAVE")
+        {
+            auto rr = juce::Rectangle<float> (c.x - s, c.y - s, 2.f*s, 2.f*s);
+            g.drawRoundedRectangle (rr, 2.f, 1.7f);
+            g.fillRect (c.x - s * 0.55f, c.y - s * 0.78f, s * 1.1f, s * 0.42f);
+            g.drawLine (c.x - s * 0.55f, c.y + s * 0.15f, c.x + s * 0.55f, c.y + s * 0.15f, 1.5f);
+        }
+        else if (t == "LOAD")
+        {
+            g.drawRoundedRectangle (c.x - s, c.y - s * 0.7f, 2.f*s, s * 1.5f, 2.f, 1.7f);
+            p.startNewSubPath (c.x, c.y + s * 0.65f);
+            p.lineTo (c.x, c.y - s * 0.15f);
+            p.startNewSubPath (c.x - s * 0.4f, c.y + s * 0.15f);
+            p.lineTo (c.x, c.y - s * 0.25f);
+            p.lineTo (c.x + s * 0.4f, c.y + s * 0.15f);
+            g.strokePath (p, juce::PathStrokeType (1.8f));
+        }
+        else if (t == "BANK")
+        {
+            g.drawRoundedRectangle (c.x - s * 1.15f, c.y - s * 0.75f, s * 2.3f, s * 1.5f, 2.f, 1.5f);
+            g.drawLine (c.x - s * 0.65f, c.y - s * 0.25f, c.x + s * 0.65f, c.y - s * 0.25f, 1.4f);
+            g.drawLine (c.x - s * 0.65f, c.y + s * 0.25f, c.x + s * 0.65f, c.y + s * 0.25f, 1.4f);
+        }
+        else if (t == "INSPIRE")
+        {
+            for (int i = 0; i < 8; ++i)
+            {
+                const float a = juce::MathConstants<float>::twoPi * (float) i / 8.f;
+                g.drawLine (c.x + std::cos(a)*s*0.35f, c.y + std::sin(a)*s*0.35f,
+                            c.x + std::cos(a)*s*1.15f, c.y + std::sin(a)*s*1.15f, 1.5f);
+            }
+            g.fillEllipse (c.x - s*0.35f, c.y - s*0.35f, s*0.7f, s*0.7f);
+        }
+        else if (t == "BG")
+        {
+            g.drawRoundedRectangle (c.x-s*1.1f,c.y-s*0.75f,s*2.2f,s*1.5f,2.f,1.5f);
+            g.fillEllipse (c.x-s*0.55f,c.y-s*0.35f,s*0.38f,s*0.38f);
+            p.startNewSubPath(c.x-s*0.9f,c.y+s*0.5f);
+            p.lineTo(c.x-s*0.1f,c.y-s*0.05f);
+            p.lineTo(c.x+s*0.25f,c.y+s*0.3f);
+            p.lineTo(c.x+s*0.95f,c.y-s*0.45f);
+            g.strokePath(p,juce::PathStrokeType(1.5f));
+        }
+        else if (t == "CHAR" || t == "MODEL")
+        {
+            g.drawEllipse (c.x-s*0.45f,c.y-s*0.9f,s*0.9f,s*0.9f,1.5f);
+            g.drawRoundedRectangle(c.x-s*0.75f,c.y,s*1.5f,s*0.9f,3.f,1.5f);
+        }
+        else if (t == "BYP")
+        {
+            g.drawEllipse (c.x-s,c.y-s,2.f*s,2.f*s,1.5f);
+            g.drawLine(c.x,c.y-s*0.75f,c.x,c.y+s*0.1f,2.f);
+        }
+        else
+        {
+            // Keep compact labels such as LFO1 / ARP / SEQ readable.
+            g.setFont (juce::FontOptions (juce::jmin (11.f, area.getHeight()*0.42f), juce::Font::bold));
+            g.drawText (button.getButtonText(), area.toNearestInt(), juce::Justification::centred);
+        }
+    }
+
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
         float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override
     {
