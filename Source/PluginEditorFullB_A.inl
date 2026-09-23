@@ -126,10 +126,6 @@ void SalekHightechAudioProcessorEditor::timerCallback()
             if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
             return d;
         };
-        fxMonitors[0]->setLevel (g ("chorus_mix"));
-        fxMonitors[1]->setLevel (g ("delay_mix"));
-        fxMonitors[2]->setLevel (g ("reverb_mix"));
-        fxMonitors[3]->setLevel (g ("bassify"));
         fxMonitors[4]->setLevel (g ("comp_mix"));
         fxMonitors[4]->bindCompressor (&processor.getCompressor());
         {
@@ -141,8 +137,6 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         }
         fxMonitors[5]->setLevel (juce::jmax (std::abs (g ("eq_low")), std::abs (g ("eq_mid")), std::abs (g ("eq_high"))) / 12.f);
         fxMonitors[5]->setEqBands (g ("eq_low") / 12.f, g ("eq_mid") / 12.f, g ("eq_high") / 12.f);
-        fxMonitors[6]->setLevel (g ("phaser_mix"));
-        fxMonitors[7]->setLevel (g ("dist_mix"));
         for (auto* m : fxMonitors) if (m) m->repaint();
     }
     // NEVER full-editor repaint every tick — was freezing multi-instance FL
