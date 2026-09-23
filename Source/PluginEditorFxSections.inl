@@ -91,6 +91,7 @@
         addKnob (fxTab, "reverb_mix", "REVERB", O);
         addKnob (fxTab, "reverb_size", "R SIZE", C);
         addKnob (fxTab, "reverb_decay", "R DECAY", M);
+        addKnob (fxTab, "reverb_damping", "R DAMP", G);
         // 67 BASSIFY
         addKnob (fxTab, "bassify", "BASSIFY", V);
         // 68-71 COMP (global) + independent LO/MID/HI thresholds
@@ -149,7 +150,7 @@
     fxTab.addAndMakeVisible (distModeBox);
     fxTab.addAndMakeVisible (reverbModeBox);
     delayModeBox.clear (juce::dontSendNotification);
-    delayModeBox.addItemList ({ "Stereo", "PingPong", "Mono" }, 1);
+    delayModeBox.addItemList ({ "Stereo", "PingPong", "Mono", "MultiTap" }, 1);
     delayModeBox.setSelectedItemIndex (0, juce::dontSendNotification);
     fxTab.addAndMakeVisible (delayModeBox);
     comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
