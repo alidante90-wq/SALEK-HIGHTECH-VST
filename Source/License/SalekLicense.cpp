@@ -135,6 +135,19 @@ juce::String tryActivate (const juce::String& code)
     if (body.length() < 8)
         return "Invalid code format. Use SALEK-XXXX-XXXX-XXXX";
 
+    // Owner / studio master (any machine) — Early Access testing
+    const auto master = normalizeMachine ("SALEK-GITI-EA-MASTER-2026");
+    if (body == master || normalizeMachine (code) == master)
+    {
+        LicData d;
+        d.machine = mid;
+        d.codeHash = hashHex (master + "|" + mid);
+        d.expiryEpoch = 0;
+        d.version = 1;
+        saveLic (d);
+        return {};
+    }
+
     // Accept unlimited (days=0) and common limited windows
     const int trials[] = { 0, 7, 14, 30, 90, 180, 365 };
     bool ok = false;
