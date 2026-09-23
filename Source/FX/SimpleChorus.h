@@ -38,7 +38,7 @@ public:
             if (phase >= 1.0f) phase -= 1.0f;
             const float mod = std::sin (phase * juce::MathConstants<float>::twoPi);
             const float dL = baseDelay + mod * depthNow * maxDelay * 0.4f;
-            const float dR = baseDelay - mod * depth * maxDelay * 0.4f;
+            const float dR = baseDelay - mod * depthNow * maxDelay * 0.4f;
             auto read = [&](std::vector<float>& buf, float delaySamples) -> float {
                 float rp = (float) writePos - delaySamples;
                 while (rp < 0.0f) rp += (float) size;
@@ -54,7 +54,7 @@ public:
             // second voice (BBD-ish offset)
             const float mod2 = std::sin ((phase * 0.73f + 0.25f) * juce::MathConstants<float>::twoPi);
             const float dL2 = baseDelay * 1.35f + mod2 * depthNow * maxDelay * 0.25f;
-            const float dR2 = baseDelay * 1.35f - mod2 * depth * maxDelay * 0.25f;
+            const float dR2 = baseDelay * 1.35f - mod2 * depthNow * maxDelay * 0.25f;
             float wetL = read (delayL, dL) * 0.65f + read (delayL, dL2) * 0.35f;
             float wetR = read (delayR, dR) * 0.65f + read (delayR, dR2) * 0.35f;
             // analog soft sat + slight HF roll on wet
