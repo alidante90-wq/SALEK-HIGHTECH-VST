@@ -40,12 +40,14 @@ public:
         // early reflections taps
         earlyBuf.assign ((size_t) juce::jmax (256, (int) (0.1 * sr)), 0.f);
         earlyPos = 0;
+        mixSmooth.reset (sr, 0.03);
+        mixSmooth.setCurrentAndTargetValue (0.f);
         updateLengths();
     }
 
     void setSize (float s) noexcept { size = juce::jlimit (0.f, 1.f, s); updateLengths(); }
     void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); mixSmooth.setTargetValue (mix); }
     void setDamping (float d) noexcept { damping = juce::jlimit (0.f, 1.f, d); }
     void setMode (int m) noexcept
     {
@@ -55,8 +57,7 @@ public:
 
     void process (juce::AudioBuffer<float>& buffer)
     {
-        if (mix < 1e-4f) return;
-        const float wet = std::sqrt (mix); // more audible at mid settings
+        if (mix < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) return; // more audible at mid settings
         const float dry = 1.f - wet * 0.85f;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
@@ -77,6 +78,9 @@ public:
 
         for (int i = 0; i < n; ++i)
         {
+            const float mixNow = mixSmooth.getNextValue();
+            const float wet = std::sqrt (juce::jlimit (0.f, 1.f, mixNow));
+            const float dry = 1.f - wet * 0.85f;
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             float mono = 0.5f * (inL + inR);
@@ -208,6 +212,7 @@ private:
 
     double sr = 44100.0;
     float size = 0.5f, decay = 0.55f, mix = 0.f, damping = 0.35f;
+    juce::SmoothedValue<float> mixSmooth { 0.f };
     int mode = 0;
 
     std::array<std::vector<float>, kCombs> combL, combR;
