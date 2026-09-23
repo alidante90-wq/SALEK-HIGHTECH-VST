@@ -51,7 +51,7 @@
 
     struct Mod {
         int labelIdx;
-        const char* ids[4];
+        const char* ids[6];
         int count;
         int modeKind;
     };
