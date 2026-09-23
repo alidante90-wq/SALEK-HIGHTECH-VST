@@ -14,6 +14,10 @@ public:
         bufR.assign ((size_t) maxS, 0.f);
         writePos = 0;
         lpL = lpR = 0.f;
+        mixSmooth.reset (sr, 0.008);
+        feedbackSmooth.reset (sr, 0.008);
+        mixSmooth.setCurrentAndTargetValue (0.f);
+        feedbackSmooth.setCurrentAndTargetValue (0.3f);
     }
 
     void setTimeMs (float ms) noexcept
@@ -29,15 +33,15 @@ public:
     {
         targetDelayR = juce::jlimit (1.f, float (sr * 1.8), ms * 0.001f * float (sr));
     }
-    void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
+    void setFeedback (float fb) noexcept { feedback = juce::jlimit (0.f, 0.95f, fb); feedbackSmooth.setTargetValue (feedback); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); mixSmooth.setTargetValue (mix); }
     void setWow (float w) noexcept { wowAmt = juce::jlimit (0.f, 1.f, w); }
     /** 0 Stereo, 1 PingPong, 2 Mono, 3 MultiTap */
     void setMode (int m) noexcept { mode = juce::jlimit (0, 3, m); }
 
     void process (juce::AudioBuffer<float>& buffer) noexcept
     {
-        if (mix < 1e-4f) return;
+        if (mixSmooth.getTargetValue() < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) return;
         const float wet = std::sqrt (mix); // more audible at mid settings
         const float dry = 1.f - wet * 0.85f;
         const int n = buffer.getNumSamples();
@@ -53,6 +57,10 @@ public:
 
         for (int i = 0; i < n; ++i)
         {
+            const float mixNow = juce::jlimit (0.f, 1.f, mixSmooth.getNextValue());
+            const float wet = std::sqrt (mixNow);
+            const float dry = 1.f - wet * 0.85f;
+            const float fbNow = feedbackSmooth.getNextValue();
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             if (mode == 2) // Mono: average input
@@ -104,8 +112,8 @@ public:
             }
             else // Stereo: light cross
             {
-                const float cross = feedback * 0.12f;
-                bufL[(size_t) writePos] = inL + dL * (feedback - cross) + dR * cross;
+                const float cross = fbNow * 0.12f;
+                bufL[(size_t) writePos] = inL + dL * (fbNow - cross) + dR * cross;
                 bufR[(size_t) writePos] = inR + dR * (feedback - cross) + dL * cross;
             }
 
@@ -131,6 +139,7 @@ private:
     float delaySamplesL = 300.f, delaySamplesR = 320.f;
     float targetDelayL = 300.f, targetDelayR = 320.f;
     float feedback = 0.3f, mix = 0.f;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> mixSmooth, feedbackSmooth;
     float wowAmt = 0.12f, wowPhase = 0.f;
     float lpL = 0.f, lpR = 0.f;
     int mode = 0;
