@@ -2,7 +2,7 @@ name: Build SALEK HIGHTECH VST3
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, salek-pro-engine-ui-v2 ]
   workflow_dispatch:
 
 jobs:
