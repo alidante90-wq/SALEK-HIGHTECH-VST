@@ -1,4 +1,4 @@
-# GITI BY GITI BY SALEK HIGHTECH
+# GITI BY SALEK HIGHTECH
 
 **Persian Cyber Anime • ISATIS Engine**
 
@@ -15,7 +15,7 @@ Professional JUCE 8 **VST3 + Standalone** wavetable synthesizer for Windows.
 - Neon cyan / magenta / gold palette
 - OpenGL visualizers + live meters
 
-## Features (real DSP)
+## Features (real DSP + SHAE)\n\nSHAE (SALEK HIGHTECH AUDIO ENGINE) is integrated into the existing synthesis path. It provides realtime-safe finite-value protection, DC blocking, parameter smoothing, adaptive high-frequency anti-alias filtering around nonlinear oscillator stages, and eight macro modulation sources without replacing the existing UI or preset architecture.
 
 - 3 wavetable oscillators (morph, warp, fold, drive)
 - Cross-mod: FM / PM / AM / RM
