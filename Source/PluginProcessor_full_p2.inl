@@ -155,10 +155,15 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
     compressor.setAttackMs(g("comp_attack"));
     compressor.setReleaseMs(g("comp_release"));
     compressor.setMakeupDb(g("comp_gain"));
-    // Band thresholds are optional overrides; the main threshold remains the fallback.
-    compressor.setBandThresholdDb(0, g("comp_thr_lo"));
-    compressor.setBandThresholdDb(1, g("comp_thr_mid"));
-    compressor.setBandThresholdDb(2, g("comp_thr_hi"));
+    // Band thresholds are optional overrides. Keep the global threshold functional
+    // when the three band parameters are still at their factory defaults.
+    const float loThr = g("comp_thr_lo"), midThr = g("comp_thr_mid"), hiThr = g("comp_thr_hi");
+    if (std::abs(loThr + 18.f) > 1.0e-4f || std::abs(midThr + 12.f) > 1.0e-4f || std::abs(hiThr + 8.f) > 1.0e-4f)
+    {
+        compressor.setBandThresholdDb(0, loThr);
+        compressor.setBandThresholdDb(1, midThr);
+        compressor.setBandThresholdDb(2, hiThr);
+    }
     eq.setLowGainDb(g("eq_low")); eq.setMidGainDb(g("eq_mid")); eq.setHighGainDb(g("eq_high"));
     spatial.setAzimuth(g("spatial_azim")); spatial.setDistance(g("spatial_dist"));
     spatial.setSize(g("spatial_size")); spatial.setElevation(g("spatial_elev"));
