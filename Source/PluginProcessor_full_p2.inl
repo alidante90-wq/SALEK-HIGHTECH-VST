@@ -103,6 +103,10 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro2, g("macro2") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro3, g("macro3") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro4, g("macro4") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro5, g("macro5") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro6, g("macro6") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro7, g("macro7") * 2.f - 1.f);
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Macro8, g("macro8") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
         juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
     delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
