@@ -10,6 +10,7 @@ public:
     FxMonitor() { startTimerHz (12); }
     void setKind (Kind k) { kind = k; }
     void setLevel (float v) { level = juce::jlimit (0.f, 1.f, v); }
+    void bindMeterSource (std::function<float()> fn) { meterSource = std::move (fn); }
     void setAccent (juce::Colour c) { accent = c; }
     void setBandGR (float lo, float mid, float hi)
     {
@@ -189,7 +190,14 @@ public:
         g.setColour (accent.withAlpha (0.25f));
         g.fillRect (plot.getRight() - 4.f, plot.getBottom() - bh, 3.f, bh);
     }
-    void timerCallback() override { phase += 0.08f + level * 0.1f; repaint(); }
+    void timerCallback() override
+    {
+        if (meterSource)
+            level = juce::jlimit (0.f, 1.f, meterSource());
+        else
+            phase += 0.08f + level * 0.1f;
+        repaint();
+    }
 
 private:
     void setBandFromX (float x, juce::Rectangle<float> plot)
@@ -213,6 +221,7 @@ private:
     juce::RangedAudioParameter* thrParam = nullptr;
     salek::SimpleCompressor* comp = nullptr;
     juce::Colour accent { 0xff00e8ff };
+    std::function<float()> meterSource;
 };
 
 /** Editable LFO shape — freehand paint (Serum 2 style)
