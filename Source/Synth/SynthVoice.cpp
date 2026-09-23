@@ -4,10 +4,32 @@ namespace salek {
 
 void SynthVoice::updateFrequencies()
 {
-    osc1.setFrequency (noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine));
-    osc2.setFrequency (noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine));
-    osc3.setFrequency (noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine));
+    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine);
+    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine);
+    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine);
+    if (! glideActive)
+    {
+        glideHz1 = f1; glideHz2 = f2; glideHz3 = f3;
+        osc1.setFrequency (f1); osc2.setFrequency (f2); osc3.setFrequency (f3);
+    }
     uniFreqDirty = true;
+}
+
+void SynthVoice::updateGlideFrequencies() noexcept
+{
+    if (! glideActive || glideAmt <= 0.0001f) return;
+    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine);
+    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine);
+    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine);
+    const float timeMs = 4.0f + glideAmt * 196.0f;
+    const float a = 1.0f - std::exp (-1.0f / (0.001f * timeMs * (float) currentSampleRate));
+    glideHz1 += a * (f1 - glideHz1);
+    glideHz2 += a * (f2 - glideHz2);
+    glideHz3 += a * (f3 - glideHz3);
+    osc1.setFrequency (glideHz1);
+    osc2.setFrequency (glideHz2);
+    osc3.setFrequency (glideHz3);
+}
 }
 
 void SynthVoice::refreshUnisonTuning() noexcept
@@ -77,6 +99,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
 
     for (int i = 0; i < numSamples; ++i)
     {
+        updateGlideFrequencies();
         if (! adsr.isActive() && ! isNoteOn)
         {
             clearCurrentNote();
@@ -219,6 +242,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
     {
         clearCurrentNote();
         isNoteOn = false;
+        glideActive = false;
     }
 }
 
