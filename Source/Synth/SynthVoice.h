@@ -109,6 +109,7 @@ public:
 
 private:
     void updateFrequencies();
+    void updateGlideFrequencies() noexcept;
     void refreshUnisonTuning() noexcept;
     float noteToHz(int note, int oct, int semi, float fine) const {
         return PersianScale::noteToHz (note, oct, semi, fine, scaleMode, koronCents, scaleRoot);
@@ -146,6 +147,8 @@ private:
     float uniPanTbl1[maxUnison]{}, uniPanTbl2[maxUnison]{}, uniPanTbl3[maxUnison]{};
     int nUniEff1=1, nUniEff2=1, nUniEff3=1;
     float noiseLevel=0.f, subLevel=0.f, glideAmt=0.f;
+    float glideHz1=440.f, glideHz2=440.f, glideHz3=440.f;
+    bool glideActive=false;
     int filterRoute=0; // 0=All,1=O1,2=O2,3=O3,4=1+2,5=1+3,6=2+3
     juce::Random noiseRng;
     float subPhase=0.f;
