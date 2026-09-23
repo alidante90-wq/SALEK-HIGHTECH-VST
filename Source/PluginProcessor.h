@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <atomic>
+#include <array>
 
 class SalekHightechAudioProcessor : public juce::AudioProcessor
 {
