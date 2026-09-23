@@ -66,8 +66,8 @@ public:
 
             // RMS-ish stereo-linked detector. Squared envelope is smoother and
             // cheaper than a block RMS while remaining responsive to transients.
-            const float detector = 0.5f * (l + r);
-            const float sq = detector * detector;
+            const float detectorSq = 0.5f * (l * l + r * r);
+            const float sq = detectorSq;
             const float coeff = sq > envSquared ? atkCoeff : releaseCoeff;
             envSquared += coeff * (sq - envSquared);
             const float env = std::sqrt (juce::jmax (1.0e-12f, envSquared));
@@ -80,7 +80,8 @@ public:
 
             const float targetGain = juce::Decibels::decibelsToGain (targetGainDb);
             // Fast internal smoothing prevents zippering/pumping without lookahead.
-            gainSmooth += 0.12f * (targetGain - gainSmooth);
+            const float gainCoeff = targetGain < gainSmooth ? atkGainCoeff : relGainCoeff;
+            gainSmooth += gainCoeff * (targetGain - gainSmooth);
 
             const float wetGain = gainSmooth * makeup;
             const float outL = l * wetGain;
@@ -102,12 +103,14 @@ private:
         const float sampleRate = (float) juce::jmax (1.0, sr);
         atkCoeff = 1.0f - std::exp (-1.0f / (0.001f * attackMs * sampleRate));
         releaseCoeff = 1.0f - std::exp (-1.0f / (0.001f * releaseMs * sampleRate));
+        atkGainCoeff = 1.0f - std::exp (-1.0f / (0.001f * juce::jmax (0.5f, attackMs * 0.55f) * sampleRate));
+        relGainCoeff = 1.0f - std::exp (-1.0f / (0.001f * juce::jmax (5.0f, releaseMs * 0.75f) * sampleRate));
     }
 
     double sr = 44100.0;
     float thresholdDb = -12.0f, ratio = 4.0f, mix = 0.0f, depth = 1.0f, makeupDb = 0.0f;
     float attackMs = 8.0f, releaseMs = 80.0f;
-    float atkCoeff = 0.02f, releaseCoeff = 0.001f;
+    float atkCoeff = 0.02f, releaseCoeff = 0.001f, atkGainCoeff = 0.02f, relGainCoeff = 0.001f;
     float envSquared = 0.0f, gainSmooth = 1.0f, gainReductionDb = 0.0f;
     std::array<float, 3> bandThrDb { -18.0f, -12.0f, -8.0f }, grMeter {};
 };
