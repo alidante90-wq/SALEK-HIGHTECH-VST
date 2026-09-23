@@ -2,6 +2,9 @@ name: GITI BY SALEK HIGHTECH Build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - giti-by-salek-hightech
 
 permissions:
   contents: read
