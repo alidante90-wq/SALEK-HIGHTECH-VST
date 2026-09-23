@@ -9,6 +9,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
         {
             lfo.setRate (rate);
             lfo.setAmount (1.0f);
+            lfo.setSmoothing (0.08f);
             static const salek::LFO::Wave waves[] = {
                 salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
                 salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
