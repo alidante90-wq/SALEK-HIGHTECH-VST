@@ -65,3 +65,31 @@ private:
     float y1L = 0.0f, y1R = 0.0f;
 };
 }
+
+
+namespace shae
+{
+/** Realtime-safe bipolar soft saturation utility for SHAE stages. */
+inline float softClip (float x, float drive = 1.0f) noexcept
+{
+    const float d = juce::jmax (0.001f, drive);
+    return std::tanh (x * d) / std::tanh (d);
+}
+
+/** Simple one-pole parameter smoother suitable for audio-rate control targets. */
+class ParameterSmoother
+{
+public:
+    void prepare (double sampleRate, float timeMs, float initial) noexcept
+    {
+        current = target = initial;
+        const float t = juce::jmax (0.1f, timeMs) * 0.001f;
+        coeff = std::exp (-1.0f / (float) (sampleRate * t));
+    }
+    void setTarget (float v) noexcept { target = v; }
+    float next() noexcept { current = target + coeff * (current - target); return current; }
+    float getCurrent() const noexcept { return current; }
+private:
+    float current = 0.f, target = 0.f, coeff = 0.f;
+};
+}
