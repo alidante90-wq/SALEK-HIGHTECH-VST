@@ -15,13 +15,15 @@ public:
         delayL.assign ((size_t) size, 0.0f);
         delayR.assign ((size_t) size, 0.0f);
         writePos = 0; phase = 0.0f;
+        mixSmooth.reset (sr, 0.02);
+        mixSmooth.setCurrentAndTargetValue (0.f);
     }
     void setRate (float hz) noexcept { rate = juce::jlimit (0.05f, 5.0f, hz); }
     void setDepth (float d) noexcept { depth = juce::jlimit (0.0f, 1.0f, d); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.0f, 1.0f, m); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.0f, 1.0f, m); mixSmooth.setTargetValue (mix); }
     void process (juce::AudioBuffer<float>& buffer)
     {
-        if (mix < 1e-4f || delayL.empty()) return;
+        if ((mix < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) || delayL.empty()) return;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
         const int size = (int) delayL.size();
@@ -29,6 +31,7 @@ public:
         const float baseDelay = maxDelay * 0.35f;
         for (int i = 0; i < n; ++i)
         {
+            const float mixNow = mixSmooth.getNextValue();
             phase += rate / (float) sr;
             if (phase >= 1.0f) phase -= 1.0f;
             const float mod = std::sin (phase * juce::MathConstants<float>::twoPi);
@@ -55,14 +58,15 @@ public:
             // analog soft sat + slight HF roll on wet
             wetL = std::tanh (wetL * 1.2f);
             wetR = std::tanh (wetR * 1.2f);
-            buffer.setSample (0, i, inL * (1.0f - mix) + wetL * mix);
-            if (ch > 1) buffer.setSample (1, i, inR * (1.0f - mix) + wetR * mix);
+            buffer.setSample (0, i, inL * (1.0f - mixNow) + wetL * mixNow);
+            if (ch > 1) buffer.setSample (1, i, inR * (1.0f - mixNow) + wetR * mixNow);
             writePos = (writePos + 1) % size;
         }
     }
 private:
     double sr = 44100.0;
     float rate = 0.35f, depth = 0.5f, mix = 0.0f, phase = 0.0f;
+    juce::SmoothedValue<float> mixSmooth { 0.f };
     std::vector<float> delayL, delayR;
     int writePos = 0;
 };
