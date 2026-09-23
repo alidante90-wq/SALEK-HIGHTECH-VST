@@ -15,7 +15,7 @@ public:
         updatePhaseInc();
     }
 
-    void reset() noexcept { phase = 0.0; dcState = 0.0f; analogPhase = 0.0; }
+    void reset() noexcept { phase = 0.0; dcState = 0.0f; analogPhase = 0.0; aaState = 0.0f; }
 
     void setFrequency(float hz) noexcept { frequency = juce::jmax(0.f, hz); updatePhaseInc(); }
     void setWavetable(const Wavetable* wt) noexcept { wavetable = wt; }
@@ -49,10 +49,14 @@ public:
         phase = wrapPhase (phase + inc);
         float sample = sum / static_cast<float> (os);
 
-        // Very small one-pole DC removal prevents asymmetric waveshapers and
-        // aggressive FM from accumulating offset between later filter stages.
+        // DC protection plus adaptive post-nonlinear low-pass. This is deliberately
+        // frequency-aware: clean low notes remain open, while high notes and strong
+        // fold/drive are gently band-limited before reaching the voice filter.
         dcState += 0.001f * (sample - dcState);
         sample -= dcState;
+
+        const float aaFc = shae::antiAliasCutoff (frequency, static_cast<float> (sr), nonLinear > 0.01f);
+        sample = shae::onePoleLowpass (sample, aaState, aaFc, static_cast<float> (sr));
 
         return shae::safeSample (sample * level * am, 0.995f);
     }
@@ -124,6 +128,6 @@ private:
     const Wavetable* wavetable = nullptr;
     double sr = 44100.0, phase = 0.0, phaseInc = 0.0, analogPhase = 0.0;
     float frequency = 440.f, tablePos = 0.f, level = 1.f, phaseOffset = 0.f, detuneCents = 0.f;
-    float warp = 0.f, fold = 0.f, drive = 0.f, dcState = 0.f;
+    float warp = 0.f, fold = 0.f, drive = 0.f, dcState = 0.f, aaState = 0.f;
 };
 } // namespace salek
