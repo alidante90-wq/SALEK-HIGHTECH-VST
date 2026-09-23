@@ -165,6 +165,7 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     arpeggiator.setEnabled (false);
     stepSequencer.setEnabled (false);
     visualFifo.prepare ((int) sr * 2);
+    shaeSafety.prepare (sr, 2);
     lfo1.prepare (sr); lfo2.prepare (sr); lfo3.prepare (sr);
 }
 
