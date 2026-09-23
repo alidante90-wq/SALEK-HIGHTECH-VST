@@ -112,6 +112,11 @@ private:
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
 
+    // Per-instance DSP state; static state would leak audio history between plugin instances.
+    float bassLp1L = 0.f, bassLp1R = 0.f, bassLp2L = 0.f, bassLp2R = 0.f;
+    float dcL = 0.f, dcR = 0.f, masterLpL = 0.f, masterLpR = 0.f;
+    float airHpL = 0.f, airHpR = 0.f;
+
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
     std::vector<FactoryPreset> factoryPresets;
     int currentProgram = 0;
