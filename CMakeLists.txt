@@ -107,3 +107,14 @@ add_custom_command(TARGET GITI_BY_SALEK_HIGHTECH POST_BUILD
         "$<TARGET_FILE_DIR:GITI_BY_SALEK_HIGHTECH>/Assets"
     COMMENT "Copy Assets beside plugin binary"
 )
+
+
+# Lightweight SHAE verification target. It exercises only the realtime-safe core;
+# it does not alter the plugin/standalone product target.
+juce_add_console_app(GITI_SHAE_SELFTEST PRODUCT_NAME "GITI SHAE Self Test")
+target_sources(GITI_SHAE_SELFTEST PRIVATE Source/Tests/SHAESelfTest.cpp)
+target_link_libraries(GITI_SHAE_SELFTEST PRIVATE
+    juce::juce_audio_basics
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags
+)
