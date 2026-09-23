@@ -76,10 +76,10 @@ public:
         if (mode == 2) fbBase = 0.50f; // Plate
         if (mode == 3) fbBase = 0.48f; // Chamber
         if (mode == 4) fbBase = 0.58f; // Spring
-        const float fb = juce::jlimit (0.15f, 0.94f, fbBase * (0.42f + decay * 0.68f));
+        const float fb = juce::jlimit (0.15f, 0.94f, fbBase * (0.38f + decay * 0.72f));
 
         // damping coeff: 0 = bright, 1 = dark (more LP in feedback)
-        const float dampAmt = 0.1f + damping * 0.85f;
+        const float dampAmt = 0.08f + damping * 0.82f;
 
         // early reflection gain
         const float earlyG = 0.35f + size * 0.25f;
@@ -169,7 +169,7 @@ public:
             wetR = mid - side;
 
             // Blend early + body; slight wet boost so mix knob is more audible
-            const float wetBoost = 1.15f;
+            const float wetBoost = 1.28f;
             wetL = (wetL + early * earlyG) * wetBoost;
             wetR = (wetR + early * earlyG * 0.92f) * wetBoost;
             buffer.setSample (0, i, inL * (1.f - mix) + wetL * mix);
