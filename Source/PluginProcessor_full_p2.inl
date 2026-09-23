@@ -107,8 +107,13 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro6, g("macro6") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro7, g("macro7") * 2.f - 1.f);
     modMatrix.setSourceValue (salek::ModMatrix::Source::Macro8, g("macro8") * 2.f - 1.f);
-    modMatrix.setSourceValue (salek::ModMatrix::Source::Random,
-        juce::Random::getSystemRandom().nextFloat() * 2.f - 1.f);
+    // Realtime-safe deterministic random source: no global RNG, lock, or allocation in audio callback.
+    static thread_local uint32_t shaeRandState = 0x9E3779B9u;
+    shaeRandState ^= shaeRandState << 13;
+    shaeRandState ^= shaeRandState >> 17;
+    shaeRandState ^= shaeRandState << 5;
+    const float shaeRandom = (static_cast<float> (shaeRandState & 0x00FFFFFFu) / 16777215.0f) * 2.0f - 1.0f;
+    modMatrix.setSourceValue (salek::ModMatrix::Source::Random, shaeRandom);
     delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
     delay.setTimeMsL(g("delay_time_l") > 1.f ? g("delay_time_l") : g("delay_time"));
     delay.setTimeMsR(g("delay_time_r") > 1.f ? g("delay_time_r") : g("delay_time") * 1.07f);
