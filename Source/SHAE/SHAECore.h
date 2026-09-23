@@ -5,9 +5,36 @@
 
 namespace shae
 {
-/** Lightweight realtime-safe output safety stage used by GITI.
-    No heap allocation, locks, filesystem or external proprietary DSP.
-*/
+enum class Quality : int { Eco = 1, Normal = 2, High = 4, Ultra = 8 };
+
+inline float softClip (float x, float drive = 1.0f) noexcept
+{
+    const float d = juce::jmax (0.001f, drive);
+    return std::tanh (x * d) / std::tanh (d);
+}
+
+inline float safeSample (float x, float ceiling = 0.995f) noexcept
+{
+    if (!std::isfinite (x)) return 0.0f;
+    return juce::jlimit (-ceiling, ceiling, x);
+}
+
+class ParameterSmoother
+{
+public:
+    void prepare (double sampleRate, float timeMs, float initial) noexcept
+    {
+        current = target = initial;
+        const float t = juce::jmax (0.1f, timeMs) * 0.001f;
+        coeff = std::exp (-1.0f / static_cast<float> (juce::jmax (1.0, sampleRate * t)));
+    }
+    void setTarget (float v) noexcept { target = v; }
+    float next() noexcept { current = target + coeff * (current - target); return current; }
+    float getCurrent() const noexcept { return current; }
+private:
+    float current = 0.f, target = 0.f, coeff = 0.f;
+};
+
 class SafetyStage
 {
 public:
@@ -25,71 +52,24 @@ public:
         const int n = buffer.getNumSamples();
         const int chs = buffer.getNumChannels();
         if (chs <= 0 || n <= 0) return;
-
-        auto processChannel = [this, n] (float* d, float& x1, float& y1) noexcept
+        auto run = [this, n] (float* d, float& x1, float& y1) noexcept
         {
             for (int i = 0; i < n; ++i)
             {
-                float x = d[i];
-                if (!std::isfinite (x)) x = 0.0f;
-
-                // First-order DC blocker: y[n] = x[n]-x[n-1] + a*y[n-1]
+                const float x = safeSample (d[i], 8.0f);
                 const float y = x - x1 + hpA * y1;
-                x1 = x;
-                y1 = y;
-
-                // Never allow a NaN/Inf or an out-of-range sample to escape.
-                float z = std::isfinite (y) ? y : 0.0f;
-                const float a = std::abs (z);
-                if (a > 0.97f)
-                    z = std::copysign (0.97f + 0.025f * std::tanh ((a - 0.97f) * 8.0f), z);
-                d[i] = juce::jlimit (-0.995f, 0.995f, z);
+                x1 = x; y1 = std::isfinite (y) ? y : 0.0f;
+                d[i] = safeSample (std::tanh (y * 0.12f) / 0.12f, 0.995f);
             }
         };
-
-        processChannel (buffer.getWritePointer (0), x1L, y1L);
-        if (chs > 1)
-            processChannel (buffer.getWritePointer (1), x1R, y1R);
+        run (buffer.getWritePointer (0), x1L, y1L);
+        if (chs > 1) run (buffer.getWritePointer (1), x1R, y1R);
         for (int ch = 2; ch < chs; ++ch)
-        {
-            auto* d = buffer.getWritePointer (ch);
             for (int i = 0; i < n; ++i)
-                if (!std::isfinite (d[i])) d[i] = 0.0f;
-        }
+                buffer.setSample (ch, i, safeSample (buffer.getSample (ch, i)));
     }
-
 private:
     double fs = 44100.0;
-    float hpA = 0.997f;
-    float x1L = 0.0f, x1R = 0.0f;
-    float y1L = 0.0f, y1R = 0.0f;
-};
-}
-
-
-namespace shae
-{
-/** Realtime-safe bipolar soft saturation utility for SHAE stages. */
-inline float softClip (float x, float drive = 1.0f) noexcept
-{
-    const float d = juce::jmax (0.001f, drive);
-    return std::tanh (x * d) / std::tanh (d);
-}
-
-/** Simple one-pole parameter smoother suitable for audio-rate control targets. */
-class ParameterSmoother
-{
-public:
-    void prepare (double sampleRate, float timeMs, float initial) noexcept
-    {
-        current = target = initial;
-        const float t = juce::jmax (0.1f, timeMs) * 0.001f;
-        coeff = std::exp (-1.0f / (float) (sampleRate * t));
-    }
-    void setTarget (float v) noexcept { target = v; }
-    float next() noexcept { current = target + coeff * (current - target); return current; }
-    float getCurrent() const noexcept { return current; }
-private:
-    float current = 0.f, target = 0.f, coeff = 0.f;
+    float hpA = 0.997f, x1L = 0.f, x1R = 0.f, y1L = 0.f, y1R = 0.f;
 };
 }
