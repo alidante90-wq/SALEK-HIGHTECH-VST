@@ -126,7 +126,11 @@ void SalekHightechAudioProcessorEditor::timerCallback()
             if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
             return d;
         };
-        fxMonitors[4]->setLevel (g ("comp_mix"));
+        fxMonitors[0]->setLevel (processor.getFxPeak (0));
+        fxMonitors[1]->setLevel (processor.getFxPeak (1));
+        fxMonitors[2]->setLevel (processor.getFxPeak (2));
+        fxMonitors[3]->setLevel (g ("bassify"));
+        fxMonitors[4]->setLevel (processor.getFxPeak (4));
         fxMonitors[4]->bindCompressor (&processor.getCompressor());
         {
             auto& c = processor.getCompressor();
