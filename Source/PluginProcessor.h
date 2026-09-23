@@ -57,6 +57,11 @@ public:
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
     juce::MidiKeyboardState& getKeyboardState() { return keyboardState; }
     float getOutputPeak() const { return outputPeak.load(); }
+    float getFxPeak (int index) const noexcept
+    {
+        if (index < 0 || index >= (int) fxPeaks.size()) return 0.f;
+        return fxPeaks[(size_t) index].load();
+    }
     VisualFifo& getVisualFifo() { return visualFifo; }
     salek::StepSequencer& getStepSequencer() { return stepSequencer; }
     salek::Arpeggiator& getArpeggiator() { return arpeggiator; }
@@ -111,6 +116,7 @@ private:
     juce::MidiKeyboardState keyboardState;
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
+    std::array<std::atomic<float>, 8> fxPeaks {};
 
     // Per-instance DSP state; static state would leak audio history between plugin instances.
     float bassLp1L = 0.f, bassLp1R = 0.f, bassLp2L = 0.f, bassLp2R = 0.f;
