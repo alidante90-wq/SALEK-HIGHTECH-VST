@@ -24,6 +24,10 @@ public:
         Macro2,
         Macro3,
         Macro4,
+        Macro5,
+        Macro6,
+        Macro7,
+        Macro8,
         Random,
         NumSources
     };
@@ -70,7 +74,7 @@ public:
     {
         static const char* n[] = {
             "LFO1","LFO2","LFO3","ENV","VEL","MW",
-            "MAC1","MAC2","MAC3","MAC4","RND"
+            "MAC1","MAC2","MAC3","MAC4","MAC5","MAC6","MAC7","MAC8","RND"
         };
         int i = (int) s;
         return (i >= 0 && i < (int) Source::NumSources) ? n[i] : "?";
