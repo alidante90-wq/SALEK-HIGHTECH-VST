@@ -133,9 +133,9 @@
         lfo3Retrigger.setTooltip ("Reset LFO phase on MIDI note-on");
 
         // Phase controls are host-automatable and share the existing knob renderer.
-        addKnob (lfoTab, "lfo_phase", "LFO1 PH", C);
-        addKnob (lfoTab, "lfo2_phase", "LFO2 PH", M);
-        addKnob (lfoTab, "lfo3_phase", "LFO3 PH", O);
+        addKnob (lfoTab, "lfo_phase", "LFO1 PH", juce::Colour (0xff00e8ff));
+        addKnob (lfoTab, "lfo2_phase", "LFO2 PH", juce::Colour (0xffff2d9b));
+        addKnob (lfoTab, "lfo3_phase", "LFO3 PH", juce::Colour (0xff39ff14));
 
         // Apply custom shape to any LFO (reuse on other destinations via matrix)
         auto styleCopy = [] (juce::TextButton& b, juce::Colour c)
