@@ -70,7 +70,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     C("delay_mode","Delay Mode",{"Stereo","PingPong","Mono","MultiTap"},0);
     F("delay_time_l","Delay Time L",20,900,280); F("delay_time_r","Delay Time R",20,900,320);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
-    F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
+    F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f); F("reverb_damping","Reverb Damping",0,1,0.35f);
     C("reverb_mode","Reverb Mode",{"Room","Hall","Plate","Chamber","Spring"},0);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
