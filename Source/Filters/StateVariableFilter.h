@@ -79,6 +79,8 @@ public:
 
     float process (float x) noexcept
     {
+        if (!std::isfinite (x)) x = 0.0f;
+        x = juce::jlimit (-8.0f, 8.0f, x);
         // Pre-drive (stronger / more saturated for Acid & Ladder)
         float preDrive = drive;
         if (mode == Mode::AcidLP)
@@ -216,7 +218,7 @@ public:
             y *= boost;
         }
         y = std::tanh (y * (1.15f + drive * 0.8f));
-        return y;
+        return std::isfinite (y) ? juce::jlimit (-2.0f, 2.0f, y) : 0.0f;
     }
 
 private:
@@ -226,8 +228,8 @@ private:
         const float v3 = x - i2;
         const float v1 = aa1 * i1 + aa2 * v3;
         const float v2 = i2 + aa2 * i1 + aa3 * v3;
-        i1 = 2.0f * v1 - i1;
-        i2 = 2.0f * v2 - i2;
+        i1 = juce::jlimit (-8.0f, 8.0f, 2.0f * v1 - i1);
+        i2 = juce::jlimit (-8.0f, 8.0f, 2.0f * v2 - i2);
         v1last = v1;
         v2last = v2;
         // secondary last for stage B tracked when using ic1b
