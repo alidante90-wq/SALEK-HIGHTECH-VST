@@ -70,7 +70,7 @@ public:
         const float fb = juce::jlimit (0.15f, 0.97f, fbBase * (0.35f + decay * 0.75f));
 
         // damping coeff: 0 = bright, 1 = dark (more LP in feedback)
-        const float dampAmt = 0.1f + damping * 0.85f;
+        const float dampAmt = 0.035f + damping * 0.93f;
 
         // early reflection gain
         const float earlyG = 0.35f + size * 0.25f;
