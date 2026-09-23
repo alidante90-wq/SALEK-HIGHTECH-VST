@@ -9,7 +9,7 @@ public:
     static constexpr int TableSize = 32;
     static constexpr int NumShapes = 32;
 
-    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
+    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; phaseInc=double(rate)/sr; if (! tableInitialised) loadPresetShape(0); }
     void reset() noexcept { phase=0; lastSH=0; }
     void setRate(float hz) noexcept { rate=juce::jlimit(0.01f,40.f,hz); phaseInc=double(rate)/sr; }
     void setWave(Wave w) noexcept { wave=w; }
@@ -83,7 +83,11 @@ public:
             }
             customTable[(size_t) i] = juce::jlimit (-1.f, 1.f, v);
         }
+        tableInitialised = true;
     }
+
+    void setPhase (float p) noexcept { phase = juce::jlimit (0.f, 0.999999f, p); }
+    float getAmount() const noexcept { return amount; }
 
     float process() noexcept {
         float v=0, p=float(phase);
@@ -169,5 +173,6 @@ private:
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;
     Wave wave=Wave::Sine;
     std::array<float, TableSize> customTable {};
+    bool tableInitialised = false;
 };
 }
