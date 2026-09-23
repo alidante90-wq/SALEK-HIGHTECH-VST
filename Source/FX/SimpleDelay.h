@@ -105,7 +105,7 @@ public:
             {
                 const float monoIn = 0.5f * (inL + inR);
                 const float monoD = 0.5f * (dL + dR);
-                bufL[(size_t) writePos] = monoIn + monoD * feedback;
+                bufL[(size_t) writePos] = monoIn + monoD * fbNow;
                 bufR[(size_t) writePos] = bufL[(size_t) writePos];
             }
             else // Stereo: light cross
