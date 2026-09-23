@@ -491,12 +491,36 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     juce::XmlElement root ("SALEK_STATE");
-    root.setAttribute ("version", 1);
+    root.setAttribute ("version", 2);
     root.setAttribute ("program", currentProgram);
+
     if (auto ap = apvts.copyState().createXml())
         root.addChildElement (new juce::XmlElement (*ap));
+
+    // Mod-matrix routes and custom LFO tables are DSP state, not APVTS parameters.
+    auto* matrixXml = root.createNewChildElement ("MOD_MATRIX");
+    for (const auto& route : modMatrix.getRoutes())
+        if (route.active)
+        {
+            auto* x = matrixXml->createNewChildElement ("ROUTE");
+            x->setAttribute ("src", (int) route.source);
+            x->setAttribute ("dst", (int) route.dest);
+            x->setAttribute ("amount", (double) route.amount);
+        }
+
+    auto* lfoXml = root.createNewChildElement ("LFO_TABLES");
+    const salek::LFO* lfos[] = { &lfo1, &lfo2, &lfo3 };
+    for (int li = 0; li < 3; ++li)
+    {
+        auto* x = lfoXml->createNewChildElement ("LFO");
+        x->setAttribute ("index", li);
+        for (int i = 0; i < salek::LFO::TableSize; ++i)
+            x->setAttribute ("p" + juce::String (i), (double) lfos[li]->getCustomPoint (i));
+    }
+
     copyXmlToBinary (root, destData);
 }
+
 void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
@@ -505,6 +529,29 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
         {
             if (auto* ap = xml->getChildByName (apvts.state.getType()))
                 apvts.replaceState (juce::ValueTree::fromXml (*ap));
+
+            modMatrix.clear();
+            if (auto* mx = xml->getChildByName ("MOD_MATRIX"))
+                for (auto* x : mx->getChildIterator())
+                    if (x->hasTagName ("ROUTE"))
+                        modMatrix.addRoute (
+                            (salek::ModMatrix::Source) juce::jlimit (0, (int) salek::ModMatrix::Source::NumSources - 1, x->getIntAttribute ("src", 0)),
+                            (salek::ModMatrix::Dest) juce::jlimit (0, (int) salek::ModMatrix::Dest::NumDests - 1, x->getIntAttribute ("dst", 0)),
+                            (float) x->getDoubleAttribute ("amount", 0.0));
+
+            if (auto* lx = xml->getChildByName ("LFO_TABLES"))
+            {
+                salek::LFO* lfos[] = { &lfo1, &lfo2, &lfo3 };
+                for (auto* x : lx->getChildIterator())
+                {
+                    if (! x->hasTagName ("LFO")) continue;
+                    const int li = juce::jlimit (0, 2, x->getIntAttribute ("index", 0));
+                    for (int i = 0; i < salek::LFO::TableSize; ++i)
+                        lfos[li]->setCustomPoint (i, (float) x->getDoubleAttribute (
+                            "p" + juce::String (i), lfos[li]->getCustomPoint (i)));
+                }
+            }
+
             const int prog = xml->getIntAttribute ("program", -1);
             if (prog >= 0 && prog < (int) factoryPresets.size())
                 currentProgram = prog;
