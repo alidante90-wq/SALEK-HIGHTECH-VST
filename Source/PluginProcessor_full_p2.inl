@@ -449,8 +449,8 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         {
             float xL = L[i] * gMul;
             float xR = R[i] * gMul;
-            dcL += 0.0005f * (xL - dcL); xL -= dcL;
-            dcR += 0.0005f * (xR - dcR); xR -= dcR;
+            masterDcL += 0.0005f * (xL - masterDcL); xL -= masterDcL;
+            masterDcR += 0.0005f * (xR - masterDcR); xR -= masterDcR;
             // Mono low end (stable club/system compatibility)
             masterLpL += bassC * (xL - masterLpL);
             masterLpR += bassC * (xR - masterLpR);
