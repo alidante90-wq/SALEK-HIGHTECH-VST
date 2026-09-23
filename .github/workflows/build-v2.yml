@@ -45,7 +45,11 @@ jobs:
 
       - name: Run SHAE self-test
         shell: pwsh
-        run: cmake --build build-v2 --config Release --target GITI_SHAE_SELFTEST --parallel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & "build-v2\\GITI_SHAE_SELFTEST_artefacts\\Release\\GITI SHAE Self Test.exe"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: |
+          $test = Get-ChildItem -Path build-v2 -Recurse -Filter "GITI SHAE Self Test.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $test) { Write-Error "SHAE self-test executable not found"; exit 1 }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Package
         shell: pwsh
