@@ -21,14 +21,20 @@ void SynthVoice::updateGlideFrequencies() noexcept
     const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine);
     const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine);
     const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine);
-    const float timeMs = 4.0f + glideAmt * 196.0f;
-    const float a = 1.0f - std::exp (-1.0f / (0.001f * timeMs * (float) currentSampleRate));
+    const float a = glideCoeff;
     glideHz1 += a * (f1 - glideHz1);
     glideHz2 += a * (f2 - glideHz2);
     glideHz3 += a * (f3 - glideHz3);
     osc1.setFrequency (glideHz1);
     osc2.setFrequency (glideHz2);
     osc3.setFrequency (glideHz3);
+}
+
+void SynthVoice::updateGlideCoefficient() noexcept
+{
+    const float timeMs = 4.0f + glideAmt * 196.0f;
+    const float sr = (float) juce::jmax (1.0, currentSampleRate);
+    glideCoeff = 1.0f - std::exp (-1.0f / (0.001f * timeMs * sr));
 }
 
 void SynthVoice::refreshUnisonTuning() noexcept
