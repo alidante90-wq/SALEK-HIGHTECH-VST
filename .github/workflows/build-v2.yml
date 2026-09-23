@@ -46,7 +46,7 @@ jobs:
       - name: Run SHAE self-test
         shell: pwsh
         run: |
-          $test = Get-ChildItem -Path build-v2 -Recurse -Filter "GITI SHAE Self Test.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $test = Get-ChildItem -Path build-v2 -Recurse -Filter "GITI_SHAE_SELFTEST.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $test) { Write-Error "SHAE self-test executable not found"; exit 1 }
           & $test.FullName
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
