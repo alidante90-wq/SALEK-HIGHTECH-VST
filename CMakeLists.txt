@@ -21,7 +21,7 @@ juce_add_plugin(GITI_BY_SALEK_HIGHTECH
     PLUGIN_MANUFACTURER_CODE Salk
     PLUGIN_CODE Sht8
     FORMATS VST3 Standalone
-    PRODUCT_NAME "SALEK HIGHTECH"
+    PRODUCT_NAME "GITI BY SALEK HIGHTECH"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -78,6 +78,7 @@ target_sources(GITI_BY_SALEK_HIGHTECH PRIVATE
     Source/Sequencer/Arpeggiator.h
     Source/Sequencer/StepSequencer.h
     Source/DSP/SmoothedValue.h
+    Source/SHAE/SHAECore.h
     Source/UI/ModMatrixPanel.h
 )
 
