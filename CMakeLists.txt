@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SALEK_HIGHTECH VERSION 0.8.0)
+project(GITI_BY_SALEK_HIGHTECH VERSION 0.9.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ else()
     FetchContent_MakeAvailable(JUCE)
 endif()
 
-juce_add_plugin(SALEK_HIGHTECH
+juce_add_plugin(GITI_BY_SALEK_HIGHTECH
     COMPANY_NAME "Salek"
     PLUGIN_MANUFACTURER_CODE Salk
     PLUGIN_CODE Sht8
@@ -31,7 +31,7 @@ juce_add_plugin(SALEK_HIGHTECH
     VST3_CATEGORIES "Instrument Synth"
 )
 
-juce_generate_juce_header(SALEK_HIGHTECH)
+juce_generate_juce_header(GITI_BY_SALEK_HIGHTECH)
 
 juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/bg_isatis.jpg"
@@ -52,7 +52,7 @@ juce_add_binary_data(SalekBinaryAssets SOURCES
     "Source/Assets/char_white_suit.png"
 )
 
-target_sources(SALEK_HIGHTECH PRIVATE
+target_sources(GITI_BY_SALEK_HIGHTECH PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
@@ -81,28 +81,28 @@ target_sources(SALEK_HIGHTECH PRIVATE
     Source/UI/ModMatrixPanel.h
 )
 
-target_include_directories(SALEK_HIGHTECH PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
+target_include_directories(GITI_BY_SALEK_HIGHTECH PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
 
-target_compile_definitions(SALEK_HIGHTECH PUBLIC
+target_compile_definitions(GITI_BY_SALEK_HIGHTECH PUBLIC
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
 )
 
-target_link_libraries(SALEK_HIGHTECH
+target_link_libraries(GITI_BY_SALEK_HIGHTECH
     PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_opengl SalekBinaryAssets
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags
 )
 
 if (MSVC)
-    target_compile_options(SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj /utf-8)
+    target_compile_options(GITI_BY_SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj /utf-8)
 endif()
 
 # Copy Assets next to plugin so character PNGs load at runtime
-add_custom_command(TARGET SALEK_HIGHTECH POST_BUILD
+add_custom_command(TARGET GITI_BY_SALEK_HIGHTECH POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/Source/Assets"
-        "$<TARGET_FILE_DIR:SALEK_HIGHTECH>/Assets"
+        "$<TARGET_FILE_DIR:GITI_BY_SALEK_HIGHTECH>/Assets"
     COMMENT "Copy Assets beside plugin binary"
 )
