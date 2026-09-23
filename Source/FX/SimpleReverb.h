@@ -43,7 +43,7 @@ public:
         updateLengths();
     }
 
-    void setSize (float s) noexcept { size = juce::jlimit (0.f, 1.f, s); updateLengths(); }
+    void setSize (float s) noexcept { s = juce::jlimit (0.f, 1.f, s); if (std::abs (s - size) > 0.0005f) { size = s; updateLengths(); } }
     void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
     void setDamping (float d) noexcept { damping = juce::jlimit (0.f, 1.f, d); }
@@ -53,19 +53,30 @@ public:
         if (nm != mode) { mode = nm; updateLengths(); }
     }
 
-    void process (juce::AudioBuffer<float>& buffer)
+    void reset() noexcept
     {
-        if (mix < 1e-4f) return;
+        for (auto& b : combL) std::fill (b.begin(), b.end(), 0.f);
+        for (auto& b : combR) std::fill (b.begin(), b.end(), 0.f);
+        for (auto& b : apL) std::fill (b.begin(), b.end(), 0.f);
+        for (auto& b : apR) std::fill (b.begin(), b.end(), 0.f);
+        std::fill (earlyBuf.begin(), earlyBuf.end(), 0.f);
+        combPos.fill (0); apPosL.fill (0); apPosR.fill (0);
+        dampL.fill (0.f); dampR.fill (0.f); earlyPos = 0;
+    }
+
+    void process (juce::AudioBuffer<float>& buffer) noexcept
+    {
+        if (mix < 1e-4f || buffer.getNumChannels() == 0) return;
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
 
         // RT-ish feedback: decay 0→0.98 maps to stable fb
-        float fbBase = 0.55f;
+        float fbBase = 0.52f;
         if (mode == 1) fbBase = 0.62f; // Hall
         if (mode == 2) fbBase = 0.50f; // Plate
         if (mode == 3) fbBase = 0.48f; // Chamber
         if (mode == 4) fbBase = 0.58f; // Spring
-        const float fb = juce::jlimit (0.15f, 0.97f, fbBase * (0.35f + decay * 0.75f));
+        const float fb = juce::jlimit (0.15f, 0.94f, fbBase * (0.42f + decay * 0.68f));
 
         // damping coeff: 0 = bright, 1 = dark (more LP in feedback)
         const float dampAmt = 0.1f + damping * 0.85f;
