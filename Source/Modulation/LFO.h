@@ -11,7 +11,7 @@ public:
 
     void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
     void reset() noexcept { phase=0; lastSH=0; }
-    void setRate(float hz) noexcept { rate=juce::jlimit(0.01f,40.f,hz); phaseInc=double(rate)/sr; }
+    void setRate(float hz) noexcept { hz=juce::jlimit(0.01f,40.f,hz); if (std::abs(hz-rate)>0.0001f) { rate=hz; phaseInc=double(rate)/sr; } }
     void setWave(Wave w) noexcept { wave=w; }
     void setAmount(float a) noexcept { amount=juce::jlimit(0.f,1.f,a); }
     void setCustomPoint (int i, float v) noexcept
@@ -85,6 +85,15 @@ public:
         }
     }
 
+    void setRandomSeed (uint32_t seed) noexcept { randomState = seed ? seed : 0xA341316Cu; }
+    float nextRandom() noexcept
+    {
+        randomState ^= randomState << 13;
+        randomState ^= randomState >> 17;
+        randomState ^= randomState << 5;
+        return (float) (randomState & 0x00FFFFFFu) / 16777215.0f;
+    }
+
     float process() noexcept {
         float v=0, p=float(phase);
         switch(wave){
@@ -93,14 +102,14 @@ public:
             case Wave::Saw: v=2*p-1; break;
             case Wave::Square: v=p<0.5f?1.f:-1.f; break;
             case Wave::SAndH:
-                if(phase<phaseInc) lastSH=juce::Random::getSystemRandom().nextFloat()*2-1;
+                if(phase<phaseInc) lastSH=nextRandom()*2-1;
                 v=lastSH; break;
             case Wave::SmoothRnd:
             {
                 if (phase < phaseInc)
                 {
                     lastSH2 = lastSH;
-                    lastSH = juce::Random::getSystemRandom().nextFloat()*2-1;
+                    lastSH = nextRandom()*2-1;
                 }
                 float frac = (float) (phase / juce::jmax (1e-9, phaseInc));
                 frac = juce::jlimit (0.f, 1.f, frac);
@@ -147,6 +156,7 @@ public:
 
 private:
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;
+    uint32_t randomState = 0xA341316Cu;
     Wave wave=Wave::Sine;
     std::array<float, TableSize> customTable {};
 };
