@@ -117,6 +117,7 @@ private:
     juce::MidiKeyboardState keyboardState;
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
+    float masterDcL = 0.f, masterDcR = 0.f, masterLpL = 0.f, masterLpR = 0.f;
     std::array<std::atomic<float>, 8> fxPeaks {};
 
     // Per-instance DSP state; static state would leak audio history between plugin instances.
