@@ -285,6 +285,7 @@ private:
     int armedModSource = -1; // 0/1/2 = LFO1/2/3 for click-to-assign
     bool isModDragging = false; // true while dragging from LFO pill
     juce::Slider masterGainSlider;
+    juce::Slider reverbDampingHidden; // backing control for the new FX parameter
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> masterGainAtt;
     juce::TextButton langToggle { "EN" };   // EN <-> FA
     int charPortraitIdx = 8;
