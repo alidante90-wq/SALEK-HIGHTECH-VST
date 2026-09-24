@@ -44,14 +44,14 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         // ONLY place for model strip: above keyboard (never over knobs)
-        auto bottom = full.removeFromBottom (64 + 70);
-        auto strip = bottom.removeFromTop (70).reduced (4, 2);
-        // dark bar so models readable
-        modelStripBounds = strip;
-        modelStripTitle.setBounds (strip.removeFromTop (14));
-        modelStripTitle.setVisible (true);
-        modelStripTitle.toFront (false);
-        const int n = modelStrip.size();
+        auto bottom = full.removeFromBottom (64);
+        auto strip = juce::Rectangle<int>();
+        // Character carousel removed from the keyboard area: the selected hero is now shown only in the large left panel.
+        modelStripBounds = {};
+        modelStripTitle.setBounds (0, 0, 0, 0);
+        modelStripTitle.setVisible (false);
+        for (auto* ic : modelStrip) if (ic) { ic->setBounds (0, 0, 0, 0); ic->setVisible (false); }
+        const int n = 0;
         if (n > 0)
         {
             const int cell = juce::jmax (12, strip.getWidth() / n);
@@ -77,7 +77,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.50f)); // half presets, half model
+        const int presetH = juce::jmax (170, (int) ((leftStrip.getHeight() - logoPad) * 0.42f)); // compact browser, larger hero model
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -144,7 +144,7 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() * 2 / 5));
+        const int lw = juce::jmin (820, juce::jmax (440, header.getWidth() * 3 / 5));
         const int lh = header.getHeight() - 2;
         logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
         logoOverlay.toFront (false);
@@ -219,7 +219,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
         // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
         envTab.setBounds (b.removeFromBottom (130));
-        filterTab.setBounds (b.removeFromRight (180));
+        filterTab.setBounds (b.removeFromRight (220));
         auto oscFull = b;
         oscTab.setBounds (oscFull);
         oscTab.setVisible (true);
