@@ -83,6 +83,6 @@ void SalekHightechAudioProcessorEditor::applyUiLanguage()
     magicPsychBtn.setButtonText ("PSY");
     magicHold.setButtonText ("HOLD");
     for (int i = 0; i < 8; ++i)
-        fxBypass[i].setButtonText ("BYP");
+        fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("⏻"));
     repaint();
 }
