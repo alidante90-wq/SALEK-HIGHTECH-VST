@@ -86,7 +86,8 @@ public:
     void setOsc3Unison(int v,float d,float s){uniVoices3=juce::jlimit(1,maxUnison,v); uniDet3=d; uniSpr3=s; uniFreqDirty=true;}
     void setFm2to1(float v){fm2to1=v;} void setFm3to1(float v){fm3to1=v;} void setFm3to2(float v){fm3to2=v;}
     void setPm2to1(float v){pm2to1=v;} void setPm3to1(float v){pm3to1=v;} void setAm2to1(float v){am2to1=v;} void setRm2to1(float v){rm2to1=v;}
-    void setFilterCutoff(float) {} void setFilterBaseCutoff(float hz){baseCutoff=hz; filterL.setCutoff(hz); filterR.setCutoff(hz);}
+    void setFilterCutoff(float hz){ baseCutoff=juce::jlimit(10.f,20000.f,hz); filterL.setCutoff(baseCutoff); filterR.setCutoff(baseCutoff); }
+    void setFilterBaseCutoff(float hz){ setFilterCutoff(hz); }
     void setFilterResonance(float r){filterL.setResonance(r); filterR.setResonance(r);} void setFilterDrive(float d){filterL.setDrive(d); filterR.setDrive(d);}
     void setFilterMode(int m){ filterL.setModeIndex (m); filterR.setModeIndex (m); }
     void setFilterEnvAmt(float a){filterEnvAmt=a;}
