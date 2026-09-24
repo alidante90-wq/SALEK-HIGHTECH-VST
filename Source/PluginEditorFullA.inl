@@ -219,8 +219,13 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         auto im = SalekAssets::loadCharPortrait (i);
         if (im.isValid())
         {
+            // Normalize portrait height so small source PNGs do not disappear in the model strip.
+            const int targetH = 104;
+            if (im.getHeight() != targetH)
+                im = im.rescaled (juce::jmax (1, im.getWidth() * targetH / juce::jmax (1, im.getHeight())),
+                                  targetH, juce::Graphics::highResamplingQuality);
             ic->setImage (im);
-            ic->setImagePlacement (juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom | juce::RectanglePlacement::onlyReduceInSize);
+            ic->setImagePlacement (juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom);
         }
         ic->setInterceptsMouseClicks (true, false);
         addAndMakeVisible (ic);
