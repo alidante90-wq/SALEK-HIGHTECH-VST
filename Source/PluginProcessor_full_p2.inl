@@ -208,6 +208,27 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer routed;
     routed.addEvents (midi, 0, buffer.getNumSamples(), 0);
 
+    // --- Host transport sync (DAW play/stop + tempo) ---
+    bool hostPlaying = true;
+    double hostBpm = 120.0;
+    double hostPpq = -1.0;
+    if (auto* ph = getPlayHead())
+    {
+        if (auto pos = ph->getPosition())
+        {
+            hostPlaying = pos->getIsPlaying().orFallback (false);
+            if (auto b = pos->getBpm())
+                hostBpm = *b;
+            if (auto ppq = pos->getPpqPosition())
+                hostPpq = *ppq;
+        }
+    }
+    stepSequencer.setBpm (hostBpm);
+    arpeggiator.setBpm (hostBpm);
+    stepSequencer.setTransportPlaying (hostPlaying);
+    arpeggiator.setTransportPlaying (hostPlaying);
+    stepSequencer.setHostPpq (hostPpq);
+
     const bool seqOn = apvts.getRawParameterValue("seq_on")->load() > 0.5f;
     const bool arpOn = apvts.getRawParameterValue("arp_on")->load() > 0.5f;
     stepSequencer.setEnabled (seqOn);

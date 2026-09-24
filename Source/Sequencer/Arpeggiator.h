@@ -36,6 +36,12 @@ public:
     void setOctaves (int o) noexcept { octaves = juce::jlimit (1, 4, o); }
     void setGate (float g) noexcept { gate = juce::jlimit (0.05f, 1.0f, g); }
     void setEnabled (bool e) noexcept { enabled = e; if (!e) heldNotes.clear(); }
+    void setTransportPlaying (bool playing) noexcept
+    {
+        if (transportPlaying && ! playing)
+            transportStop = true;
+        transportPlaying = playing;
+    }
 
     void noteOn (int note, float velocity)
     {
@@ -56,13 +62,14 @@ public:
 
     void process (int numSamples, juce::MidiBuffer& outMidi)
     {
-        if (! enabled || pattern.empty())
+        if (! enabled || pattern.empty() || ! transportPlaying || transportStop)
         {
             if (currentPlaying >= 0)
             {
                 outMidi.addEvent (juce::MidiMessage::noteOff (1, currentPlaying), 0);
                 currentPlaying = -1;
             }
+            transportStop = false;
             return;
         }
 
@@ -140,6 +147,8 @@ private:
 
     double sr = 44100.0;
     double bpm = 175.0;
+    bool transportPlaying = true;
+    bool transportStop = false;
     int rateDivisor = 4;
     int samplesPerStep = 1000;
     int sampleCounter = 0;
