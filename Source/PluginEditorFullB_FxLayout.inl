@@ -33,8 +33,8 @@
     // hide all known FX knobs first
     const char* allFx[] = {
         "chorus_mix","chorus_rate","chorus_depth",
-        "delay_mix","delay_time","delay_fb",
-        "reverb_mix","reverb_size","reverb_decay",
+        "delay_mix","delay_time","delay_time_l","delay_time_r","delay_fb","delay_tone",
+        "reverb_mix","reverb_size","reverb_decay","reverb_damp",
         "bassify",
         "comp_threshold","comp_ratio","comp_mix","comp_depth","comp_gain","comp_attack","comp_release",
         "comp_thr_lo","comp_thr_mid","comp_thr_hi",
@@ -58,8 +58,8 @@
     const Mod mods[8] = {
         { 5, { "eq_low", "eq_mid", "eq_high", nullptr }, 3, 0 },
         { 4, { "comp_mix","comp_threshold","comp_ratio","comp_attack","comp_release","comp_gain" }, 6, 0 },
-        { 2, { "reverb_mix", "reverb_size", "reverb_decay", nullptr }, 3, 1 },
-        { 1, { "delay_mix",  "delay_time_l","delay_time_r", "delay_fb" }, 4, 3 },
+        { 2, { "reverb_mix", "reverb_size", "reverb_decay", "reverb_damp" }, 4, 1 },
+        { 1, { "delay_mix",  "delay_time", "delay_fb", "delay_tone" }, 4, 3 },
         { 7, { "dist_mix", "dist_drive", "dist_crush", nullptr }, 3, 2 },
         { 0, { "chorus_mix", "chorus_rate", "chorus_depth", nullptr }, 3, 0 },
         { 3, { "bassify", "spatial_azim", "spatial_dist", "spatial_size" }, 4, 0 },

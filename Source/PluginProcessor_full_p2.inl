@@ -23,6 +23,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc1Rand(g("osc1_rand")); synthEngine.setOsc2Rand(g("osc2_rand")); synthEngine.setOsc3Rand(g("osc3_rand"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
     synthEngine.setOsc1Semi((int)g("osc1_semi")); synthEngine.setOsc2Semi((int)g("osc2_semi")); synthEngine.setOsc3Semi((int)g("osc3_semi"));
+    synthEngine.setOsc1CoarsePitch((int)g("osc1_coarse")); synthEngine.setOsc2CoarsePitch((int)g("osc2_coarse")); synthEngine.setOsc3CoarsePitch((int)g("osc3_coarse"));
     synthEngine.setUnison((int)g("unison_voices"));
     synthEngine.setUnisonDetune(g("unison_detune"));
     synthEngine.setUnisonSpread(g("unison_spread"));
@@ -115,14 +116,14 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     const float shaeRandom = (static_cast<float> (shaeRandState & 0x00FFFFFFu) / 16777215.0f) * 2.0f - 1.0f;
     modMatrix.setSourceValue (salek::ModMatrix::Source::Random, shaeRandom);
     delay.setMix(juce::jlimit(0.f,1.f,g("delay_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::DelayMix)*0.5f));
-    delay.setTimeMsL(g("delay_time_l") > 1.f ? g("delay_time_l") : g("delay_time"));
-    delay.setTimeMsR(g("delay_time_r") > 1.f ? g("delay_time_r") : g("delay_time") * 1.07f);
+    delay.setTimeMs(g ("delay_time"));
     delay.setFeedback(g("delay_fb"));
+    delay.setTone(g ("delay_tone"));
     delay.setMode((int) g("delay_mode"));
     chorus.setMix(juce::jlimit(0.f,1.f,g("chorus_mix")*widthScale+modMatrix.getModulation(salek::ModMatrix::Dest::ChorusMix)*0.5f)); chorus.setRate(g("chorus_rate")); chorus.setDepth(g("chorus_depth"));
     reverb.setMix(juce::jlimit(0.f,1.f,g("reverb_mix")*spaceScale+modMatrix.getModulation(salek::ModMatrix::Dest::ReverbMix)*0.5f)); reverb.setSize(g("reverb_size")); reverb.setDecay(g("reverb_decay"));
     reverb.setMode ((int) g("reverb_mode"));
-    reverb.setDamping (0.2f + (1.f - g("reverb_size")) * 0.45f + (1.f - g("reverb_decay")) * 0.2f);
+    reverb.setDamping (g ("reverb_damp"));
     phaser.setMix(juce::jlimit(0.f,1.f,g("phaser_mix")+modMatrix.getModulation(salek::ModMatrix::Dest::PhaserMix)*0.5f)); phaser.setRate(g("phaser_rate")); phaser.setDepth(g("phaser_depth"));
     distortion.setMix(g("dist_mix")); distortion.setDrive(juce::jlimit(0.f,1.f,g("dist_drive")+modMatrix.getModulation(salek::ModMatrix::Dest::DistDrive)*0.5f)); distortion.setBitcrush(g("dist_crush"));
     distortion.setMode ((int) g("dist_mode"));

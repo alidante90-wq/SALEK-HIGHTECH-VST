@@ -17,13 +17,13 @@ Professional JUCE 8 **VST3 + Standalone** wavetable synthesizer for Windows.
 
 ## Features (real DSP + SHAE)\n\nSHAE (SALEK HIGHTECH AUDIO ENGINE) is integrated into the existing synthesis path. It provides realtime-safe finite-value protection, DC blocking, parameter smoothing, adaptive high-frequency anti-alias filtering around nonlinear oscillator stages, and eight macro modulation sources without replacing the existing UI or preset architecture.
 
-- 3 wavetable oscillators (morph, warp, fold, drive)
+- 3 wavetable oscillators (morph, warp, fold, drive) with independent ±48-semitone coarse pitch
 - Cross-mod: FM / PM / AM / RM
 - Unison 1–7 with detune + stereo spread
 - Virus-inspired SVF filter + drive
 - ADSR + filter env
 - LFO + macros
-- FX control room: EQ → Compressor → Reverb → Delay → Distortion, with live meters and module power switches; chorus, phaser, bass, and spatial tools remain available
+- FX control room: EQ → Compressor → Reverb → Delay → Distortion, with live meters and module power switches; reverb damping and delay tone are directly controllable, with smooth parameter changes and calibrated decay; chorus, phaser, bass, and spatial tools remain available
 - Arpeggiator + 16-step sequencer with rate, octave, gate, pattern length, swing, and per-step velocity/gate/pitch/accent
 - Factory banks organized into BASS, LEAD, SYNTH, PLUCK, PAD, ATMOSPHERE, and FX families
 - MIDI keyboard plus computer-keyboard chromatic row (`Z` through `/`); `[` and `]` shift octaves, and the default row begins at C2

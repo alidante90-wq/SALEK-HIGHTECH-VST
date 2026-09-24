@@ -267,6 +267,7 @@ void SalekHightechAudioProcessorEditor::resized()
             const char* idsDrive[3] = { "osc1_drive", "osc2_drive", "osc3_drive" };
             const char* idsOct[3]   = { "osc1_octave", "osc2_octave", "osc3_octave" };
             const char* idsSemi[3]  = { "osc1_semi", "osc2_semi", "osc3_semi" };
+            const char* idsCoarse[3] = { "osc1_coarse", "osc2_coarse", "osc3_coarse" };
             const char* idsUni[3]   = { "osc1_unison", "osc2_unison", "osc3_unison" };
             const char* idsDet[3]   = { "osc1_udet", "osc2_udet", "osc3_udet" };
             const char* idsSpr[3]   = { "osc1_uspread", "osc2_uspread", "osc3_uspread" };
@@ -290,9 +291,11 @@ void SalekHightechAudioProcessorEditor::resized()
                 placeId (row2.removeFromLeft (row2.getWidth() / 2).reduced (3), idsWarp[c]);
                 placeId (row2.reduced (3), idsFold[c]);
                 auto row3 = col.removeFromTop (rowH);
-                placeId (row3.removeFromLeft (row3.getWidth() / 3).reduced (2), idsDrive[c]);
-                placeId (row3.removeFromLeft (row3.getWidth() / 2).reduced (2), idsOct[c]);
-                placeId (row3.reduced (2), idsSemi[c]);
+                const int pitchCellW = row3.getWidth() / 4;
+                placeId (row3.removeFromLeft (pitchCellW).reduced (2), idsDrive[c]);
+                placeId (row3.removeFromLeft (pitchCellW).reduced (2), idsOct[c]);
+                placeId (row3.removeFromLeft (pitchCellW).reduced (2), idsSemi[c]);
+                placeId (row3.reduced (2), idsCoarse[c]);
                 auto uniRow = col.removeFromTop (rowH);
                 const int uw = uniRow.getWidth() / 3;
                 placeId (uniRow.removeFromLeft (uw).reduced (2), idsUni[c]);

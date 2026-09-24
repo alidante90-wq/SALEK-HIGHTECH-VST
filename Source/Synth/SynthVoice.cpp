@@ -4,9 +4,9 @@ namespace salek {
 
 void SynthVoice::updateFrequencies()
 {
-    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine);
-    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine);
-    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine);
+    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi + osc1Coarse, osc1Fine);
+    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi + osc2Coarse, osc2Fine);
+    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi + osc3Coarse, osc3Fine);
     if (! glideActive)
     {
         glideHz1 = f1; glideHz2 = f2; glideHz3 = f3;
@@ -18,9 +18,9 @@ void SynthVoice::updateFrequencies()
 void SynthVoice::updateGlideFrequencies() noexcept
 {
     if (! glideActive || glideAmt <= 0.0001f) return;
-    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi, osc1Fine);
-    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi, osc2Fine);
-    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi, osc3Fine);
+    const float f1 = noteToHz (currentMidiNote, osc1Octave, osc1Semi + osc1Coarse, osc1Fine);
+    const float f2 = noteToHz (currentMidiNote, osc2Octave, osc2Semi + osc2Coarse, osc2Fine);
+    const float f3 = noteToHz (currentMidiNote, osc3Octave, osc3Semi + osc3Coarse, osc3Fine);
     const float a = glideCoeff;
     glideHz1 += a * (f1 - glideHz1);
     glideHz2 += a * (f2 - glideHz2);
@@ -60,7 +60,7 @@ void SynthVoice::refreshUnisonTuning() noexcept
     nUniEff3 = osc3Level > 1e-5f ? v3 : 0;
 
     auto fill = [&] (int n, float detAmt, float spr, float* detTbl, float* panTbl,
-                     WavetableOscillator* oscs, int oct, int semi, float fine)
+                     WavetableOscillator* oscs, int oct, int semi, int coarse, float fine)
     {
         for (int u = 0; u < maxUnison; ++u)
         {
@@ -74,12 +74,12 @@ void SynthVoice::refreshUnisonTuning() noexcept
             detTbl[u] = det;
             panTbl[u] = pan;
             if (u < n)
-                oscs[u].setFrequency (noteToHz (currentMidiNote, oct, semi, fine + det));
+                oscs[u].setFrequency (noteToHz (currentMidiNote, oct, semi + coarse, fine + det));
         }
     };
-    fill (nUniEff1, uniDet1, uniSpr1, uniDetTbl1, uniPanTbl1, uniOsc1, osc1Octave, osc1Semi, osc1Fine);
-    fill (nUniEff2, uniDet2 * 0.9f, uniSpr2, uniDetTbl2, uniPanTbl2, uniOsc2, osc2Octave, osc2Semi, osc2Fine);
-    fill (nUniEff3, uniDet3 * 0.85f, uniSpr3, uniDetTbl3, uniPanTbl3, uniOsc3, osc3Octave, osc3Semi, osc3Fine);
+    fill (nUniEff1, uniDet1, uniSpr1, uniDetTbl1, uniPanTbl1, uniOsc1, osc1Octave, osc1Semi, osc1Coarse, osc1Fine);
+    fill (nUniEff2, uniDet2 * 0.9f, uniSpr2, uniDetTbl2, uniPanTbl2, uniOsc2, osc2Octave, osc2Semi, osc2Coarse, osc2Fine);
+    fill (nUniEff3, uniDet3 * 0.85f, uniSpr3, uniDetTbl3, uniPanTbl3, uniOsc3, osc3Octave, osc3Semi, osc3Coarse, osc3Fine);
     uniFreqDirty = false;
 }
 

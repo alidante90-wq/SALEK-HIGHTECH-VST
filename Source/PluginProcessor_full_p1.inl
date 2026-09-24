@@ -36,6 +36,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("osc1_pan","OSC1 Pan",0,1,0.5f); F("osc2_pan","OSC2 Pan",0,1,0.5f); F("osc3_pan","OSC3 Pan",0,1,0.5f);
     I("osc1_octave","OSC1 Oct",-3,3,0); I("osc2_octave","OSC2 Oct",-3,3,0); I("osc3_octave","OSC3 Oct",-3,3,0);
     I("osc1_semi","OSC1 Semi",-12,12,0); I("osc2_semi","OSC2 Semi",-12,12,0); I("osc3_semi","OSC3 Semi",-12,12,0);
+    I("osc1_coarse","OSC1 Coarse Pitch",-48,48,0); I("osc2_coarse","OSC2 Coarse Pitch",-48,48,0); I("osc3_coarse","OSC3 Coarse Pitch",-48,48,0);
     F("osc1_fine","OSC1 Fine",-100,100,0); F("osc2_fine","OSC2 Fine",-100,100,0); F("osc3_fine","OSC3 Fine",-100,100,0);
     F("osc1_detune","OSC1 Detune",-50,50,0); F("osc2_detune","OSC2 Detune",-50,50,0); F("osc3_detune","OSC3 Detune",-50,50,0);
     I("unison_voices","Unison",1,7,1); F("unison_detune","Uni Detune",0,50,12); F("unison_spread","Uni Spread",0,1,0.7f);
@@ -67,11 +68,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
     F("macro1","Macro 1",0,1,0); F("macro2","Macro 2",0,1,0); F("macro3","Macro 3",0,1,0); F("macro4","Macro 4",0,1,0);
     F("macro5","Macro 5",0,1,0); F("macro6","Macro 6",0,1,0); F("macro7","Macro 7",0,1,0); F("macro8","Macro 8",0,1,0);
-    F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f);
+    F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f); F("delay_tone","Delay Tone",0,1,0.72f);
     C("delay_mode","Delay Mode",{"Stereo","PingPong","Mono"},0);
     F("delay_time_l","Delay Time L",20,900,280); F("delay_time_r","Delay Time R",20,900,320);
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
-    F("reverb_mix","Reverb Mix",0,1,0.20f); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
+    F("reverb_mix","Reverb Mix",0,1,0.20f); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f); F("reverb_damp","Reverb Damping",0,1,0.35f);
     C("reverb_mode","Reverb Mode",{"Room","Hall","Plate","Chamber","Spring"},0);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1); F("arp_gate","Arp Gate",0.05f,1.0f,0.72f);
