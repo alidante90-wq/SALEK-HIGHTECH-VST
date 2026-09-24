@@ -47,12 +47,25 @@ void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, 
         btn.setButtonText ("•");
         return;
     }
+    juce::Colour accent (0xffffd700);
+    if (id == SalekAssets::IconId::LfoRandom || id == SalekAssets::IconId::Distortion)
+        accent = juce::Colour (0xffff2d9b);
+    else if (id == SalekAssets::IconId::LfoSync || id == SalekAssets::IconId::Randomize)
+        accent = juce::Colour (0xff39ff14);
+    else if (id == SalekAssets::IconId::Filter1 || id == SalekAssets::IconId::Filter2 || id == SalekAssets::IconId::Filter3)
+        accent = juce::Colour (0xff00e8ff);
+
+    auto* tile = new SalekIcon3DTile (accent);
+    btn.addAndMakeVisible (tile);
+    tile->setBounds (btn.getLocalBounds().reduced (1));
+
     auto* ic = new juce::ImageComponent();
     ic->setImage (img);
     ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
     ic->setInterceptsMouseClicks (false, false);
     btn.addAndMakeVisible (ic);
-    ic->setBounds (btn.getLocalBounds().reduced (3));
+    ic->setBounds (btn.getLocalBounds().reduced (5));
+    ic->toFront (false);
     ic->toFront (false);
 }
 
