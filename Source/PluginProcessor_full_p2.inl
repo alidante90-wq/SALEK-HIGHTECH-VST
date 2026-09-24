@@ -298,6 +298,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             if (buffer.getNumChannels() > 1)
                 buffer.setSample (1, i, R * dryKeep + wet);
         }
+        captureFx (3);
     }
 
     // Smart macro scales for the FX render stage.
