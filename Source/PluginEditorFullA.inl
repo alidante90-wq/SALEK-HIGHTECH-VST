@@ -71,7 +71,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     for (int i = 0; i < 10; ++i)
     {
         auto* ic = new juce::ImageComponent ("model" + juce::String (i));
-        auto im = SalekAssets::loadCharPortrait (i);
+        auto im = SalekAssets::loadCharPortrait (i, 160, 240); // thumbnail size keeps multi-instance RAM low
         if (im.isValid())
         {
             ic->setImage (im);
@@ -528,13 +528,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto M = juce::Colour (0xffff2d9b);
         const auto O = juce::Colour (0xff39ff14);
         const auto G = juce::Colour (0xff7c4dff);
-        addKnob (seqTab, "arp_rate", "ARP RATE", C);
-        addKnob (seqTab, "arp_octaves", "ARP OCT", M);
+        // Four focused sequencer controls; ARP keeps its independent DSP defaults.
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
-        addKnob (seqTab, "arp_gate", "ARP GATE", O);
-        addKnob (seqTab, "arp_swing", "ARP SWING", G);
-        addKnob (seqTab, "seq_length", "STEPS", C);
-        addKnob (seqTab, "seq_swing", "SWING", M);
+        addKnob (seqTab, "seq_length", "SEQ STEPS", C);
+        addKnob (seqTab, "seq_swing", "SEQ SWING", M);
         addKnob (seqTab, "seq_gate", "SEQ GATE", O);
         // Extra voice colour — registered last so indices of FX/MOD stay stable
         addKnob (envTab, "glide", "GLIDE", C);

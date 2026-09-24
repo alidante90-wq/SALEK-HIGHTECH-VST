@@ -5,7 +5,12 @@
 class OscShapeMonitor : public juce::Component, private juce::Timer
 {
 public:
-    OscShapeMonitor() { startTimerHz (5); }
+    OscShapeMonitor() { }
+    void visibilityChanged() override
+    {
+        if (isShowing()) startTimerHz (25);
+        else stopTimer();
+    }
 
     void setAPVTS (juce::AudioProcessorValueTreeState* s) { apvts = s; }
     void setOscIndex (int i) { osc = juce::jlimit (0, 2, i); }

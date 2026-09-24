@@ -3,7 +3,7 @@ void SalekHightechAudioProcessorEditor::refreshCharCache()
     // Downscale once — full-res PNGs destroy UI FPS
     auto loadScaled = [] (int idx, int maxH) -> juce::Image
     {
-        auto src = SalekAssets::loadCharPortrait (idx);
+        auto src = SalekAssets::loadCharPortrait (idx, 480, 720);
         if (! src.isValid()) return {};
         if (src.getHeight() <= maxH) return src;
         const int h = maxH;

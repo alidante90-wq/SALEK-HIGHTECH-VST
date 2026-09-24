@@ -616,15 +616,9 @@ void SalekHightechAudioProcessorEditor::resized()
         };
         auto controls = top.reduced (4, 1);
         const int controlWidth = controls.getWidth() / 4;
-        const char* arpIds[] = { "arp_rate", "arp_octaves", "arp_gate", "arp_swing" };
         const char* seqIds[] = { "seq_rate", "seq_length", "seq_swing", "seq_gate" };
-        auto arpRow = controls.removeFromTop (controls.getHeight() / 2);
-        auto seqRow = controls;
         for (int i = 0; i < 4; ++i)
-        {
-            placeSeqKnob ({ arpRow.getX() + i * controlWidth, arpRow.getY(), controlWidth, arpRow.getHeight() }, arpIds[i]);
-            placeSeqKnob ({ seqRow.getX() + i * controlWidth, seqRow.getY(), controlWidth, seqRow.getHeight() }, seqIds[i]);
-        }
+            placeSeqKnob ({ controls.getX() + i * controlWidth, controls.getY(), controlWidth, controls.getHeight() }, seqIds[i]);
         // 2 rows of Magic trigger buttons under seq strip
         {
             auto magicStrip = bounds.removeFromBottom (64).reduced (2, 1);
