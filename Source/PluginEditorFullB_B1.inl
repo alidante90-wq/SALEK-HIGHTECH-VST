@@ -44,11 +44,11 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         // ONLY place for model strip: above keyboard (never over knobs)
-        auto bottom = full.removeFromBottom (64 + 70);
-        auto strip = bottom.removeFromTop (70).reduced (4, 2);
+        auto bottom = full.removeFromBottom (64 + 88);
+        auto strip = bottom.removeFromTop (88).reduced (4, 2);
         // dark bar so models readable
         modelStripBounds = strip;
-        modelStripTitle.setBounds (strip.removeFromTop (14));
+        modelStripTitle.setBounds (strip.removeFromTop (16));
         modelStripTitle.setVisible (true);
         modelStripTitle.toFront (false);
         const int n = modelStrip.size();
@@ -252,7 +252,8 @@ void SalekHightechAudioProcessorEditor::resized()
         {
         // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
         envTab.setBounds (b.removeFromBottom (130));
-        filterTab.setBounds (b.removeFromRight (180));
+        const int filterW = juce::jlimit (240, 320, b.getWidth() / 4);
+        filterTab.setBounds (b.removeFromRight (filterW));
         auto oscFull = b;
         oscTab.setBounds (oscFull);
         oscTab.setVisible (true);
@@ -268,7 +269,7 @@ void SalekHightechAudioProcessorEditor::resized()
         // SALEK icons over OSC / FILTER headers
         if (tabSectionIcons.size() >= 5)
         {
-            const int ih = 28;
+            const int ih = 32;
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, ih);
@@ -310,9 +311,9 @@ void SalekHightechAudioProcessorEditor::resized()
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, oa.getHeight()).reduced (2, 2);
-                auto monH = juce::jlimit (36, 56, col.getHeight() / 5);
+                auto monH = juce::jlimit (52, 76, col.getHeight() / 5);
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
-                shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
+                shapes[c]->setBounds (col.removeFromTop (22).reduced (1));
 
                 // Equal rows so knobs stay readable
                 const int rowH = juce::jmax (48, col.getHeight() / 5);
@@ -341,7 +342,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (48).reduced (2));
+                filterDisplay->setBounds (fr.removeFromTop (92).reduced (2));
             auto modeRow = fr.removeFromTop (20);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
