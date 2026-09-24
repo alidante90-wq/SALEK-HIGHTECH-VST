@@ -107,20 +107,47 @@ void SalekHightechAudioProcessorEditor::timerCallback()
 {
     static int ticks = 0;
     ++ticks;
-    // Layout settle once (was 6 full resized — expensive)
-    if (ticks == 1 || ticks == 3)
+    // Layout settle once only
+    if (ticks == 2)
         resized();
-    else if ((ticks % 60) == 0)
+    else if ((ticks % 250) == 0) // ~5s at 50Hz
     {
         if (tabs.getCurrentTabIndex() == 0
             && (oscTab.getWidth() < 50 || oscTab.getHeight() < 50 || mainTab.getWidth() < 100))
             resized();
     }
-    animPhase += 0.02f;
 
-    // Only refresh FX meters when FX tab is visible (big multi-instance win)
+    // Smooth animation clock (~50Hz)
+    animPhase += 0.045f;
+    phaseLights += 0.06f;
+
     const int tab = tabs.getCurrentTabIndex();
-    if (tab == 3 && fxMonitors.size() >= 8)
+
+    // --- Selective ~50 FPS: repaint only live surfaces, not full chrome every frame ---
+    // Background neon morph: ~12.5 FPS (enough for glow, cheap)
+    if ((ticks % 4) == 0)
+        repaint (getLocalBounds().removeFromTop (110)); // header strip only
+
+    // Active tab content at full rate
+    if (tab == 0) // MAIN — osc monitors + filter curve
+    {
+        if (oscMon1) oscMon1->repaint();
+        if (oscMon2) oscMon2->repaint();
+        if (oscMon3) oscMon3->repaint();
+        filterTab.repaint();
+        envTab.repaint();
+    }
+    else if (tab == 1) // MOD
+    {
+        if (matrixPanel) matrixPanel->repaint();
+        modTab.repaint();
+    }
+    else if (tab == 2) // LFO
+    {
+        if (lfoDisplay) lfoDisplay->repaint();
+        lfoShapeEditor.repaint();
+    }
+    else if (tab == 3 && fxMonitors.size() >= 8) // FX meters
     {
         auto g = [&](const char* id, float d=0.f) -> float {
             if (auto* p = processor.getAPVTS().getRawParameterValue (id)) return p->load();
@@ -145,10 +172,20 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         fxMonitors[7]->setLevel (g ("dist_mix"));
         for (auto* m : fxMonitors) if (m) m->repaint();
     }
-    // NEVER full-editor repaint every tick — was freezing multi-instance FL
-    // Light pulse only for mod source glow
-    // Pulse LFO pills only when armed
-    if (armedModSource >= 0 && (ticks % 4) == 0)
+    else if (tab == 4) // MAGIC
+    {
+        if (magicPad) magicPad->repaint();
+    }
+    else if (tab == 5) // SEQ
+    {
+        seqTab.repaint();
+    }
+
+    // Model strip / keyboard idle glow — half rate
+    if ((ticks % 2) == 0 && modelStrip.size() > 0)
+        for (auto* m : modelStrip) if (m) m->repaint();
+
+    if (armedModSource >= 0)
     {
         if (armedModSource == 0) modSrcLfo1.repaint();
         if (armedModSource == 1) modSrcLfo2.repaint();

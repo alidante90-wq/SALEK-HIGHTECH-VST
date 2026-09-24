@@ -274,7 +274,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         licenseWindow->enterModalState (true);
     });
 
-    startTimerHz (3); // lighter UI refresh
+    startTimerHz (50); // target ~50 FPS selective refresh
 
     setLookAndFeel (&lnf);
     logoImg   = SalekAssets::loadLogoGiti();

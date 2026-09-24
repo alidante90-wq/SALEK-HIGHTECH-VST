@@ -7,7 +7,7 @@ class FxMonitor : public juce::Component, private juce::Timer
 {
 public:
     enum Kind { Chorus, Delay, Reverb, Master, Comp, EQ, Phaser, Dist };
-    FxMonitor() { startTimerHz (12); }
+    FxMonitor() { startTimerHz (30); }
     void setKind (Kind k) { kind = k; }
     void setLevel (float v) { level = juce::jlimit (0.f, 1.f, v); }
     void setAccent (juce::Colour c) { accent = c; }
