@@ -66,7 +66,6 @@ void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, 
     btn.addAndMakeVisible (ic);
     ic->setBounds (btn.getLocalBounds().reduced (5));
     ic->toFront (false);
-    ic->toFront (false);
 }
 
 void SalekHightechAudioProcessorEditor::layoutButtonIcons()
@@ -74,11 +73,15 @@ void SalekHightechAudioProcessorEditor::layoutButtonIcons()
     auto layoutOne = [] (juce::TextButton& btn)
     {
         for (int i = 0; i < btn.getNumChildComponents(); ++i)
+        {
+            if (auto* tile = dynamic_cast<SalekIcon3DTile*> (btn.getChildComponent (i)))
+                tile->setBounds (btn.getLocalBounds().reduced (1));
             if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
             {
-                ic->setBounds (btn.getLocalBounds().reduced (3));
+                ic->setBounds (btn.getLocalBounds().reduced (5));
                 ic->toFront (false);
             }
+        }
     };
     layoutOne (prevPreset); layoutOne (nextPreset); layoutOne (initBtn);
     layoutOne (savePresetBtn); layoutOne (loadPresetBtn); layoutOne (bankBtn);
