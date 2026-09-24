@@ -214,13 +214,15 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     double hostPpq = -1.0;
     if (auto* ph = getPlayHead())
     {
-        if (auto pos = ph->getPosition())
+        // Compatible with JUCE CurrentPositionInfo (works on MSVC / JUCE 8)
+        juce::AudioPlayHead::CurrentPositionInfo cpi;
+        if (ph->getCurrentPosition (cpi))
         {
-            hostPlaying = pos->getIsPlaying().orFallback (false);
-            if (auto b = pos->getBpm())
-                hostBpm = *b;
-            if (auto ppq = pos->getPpqPosition())
-                hostPpq = *ppq;
+            hostPlaying = cpi.isPlaying;
+            if (cpi.bpm > 1.0)
+                hostBpm = cpi.bpm;
+            if (cpi.ppqPosition >= 0.0)
+                hostPpq = cpi.ppqPosition;
         }
     }
     stepSequencer.setBpm (hostBpm);
