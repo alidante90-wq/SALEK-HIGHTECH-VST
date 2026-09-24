@@ -156,7 +156,8 @@ void SalekHightechAudioProcessorEditor::layoutButtonIcons()
         for (int i = 0; i < btn.getNumChildComponents(); ++i)
             if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
             {
-                ic->setBounds (btn.getLocalBounds().reduced (3));
+                ic->setBounds (btn.getLocalBounds().reduced (2));
+                ic->setVisible (true);
                 ic->toFront (false);
             }
     };
@@ -164,6 +165,15 @@ void SalekHightechAudioProcessorEditor::layoutButtonIcons()
     layoutOne (savePresetBtn); layoutOne (loadPresetBtn); layoutOne (bankBtn);
     layoutOne (inspireBtn); layoutOne (modSrcLfo1); layoutOne (modSrcLfo2); layoutOne (modSrcLfo3);
     layoutOne (bgSwapBtn); layoutOne (charCycleBtn);
+    // LFO shape + target row
+    layoutOne (lfoPresetSine); layoutOne (lfoPresetTri); layoutOne (lfoPresetSaw);
+    layoutOne (lfoPresetSqr); layoutOne (lfoPresetPulse); layoutOne (lfoPresetExp);
+    layoutOne (lfoPresetLog); layoutOne (lfoPresetBell); layoutOne (lfoPresetWob);
+    layoutOne (lfoPresetChaos); layoutOne (lfoPresetGate); layoutOne (lfoPresetCustom);
+    layoutOne (lfoCopyTo1); layoutOne (lfoCopyTo2); layoutOne (lfoCopyTo3);
+    layoutOne (lfoSaveA); layoutOne (lfoLoadA);
+    layoutOne (lfoSaveB); layoutOne (lfoLoadB);
+    layoutOne (lfoSaveC); layoutOne (lfoLoadC);
 }
 
 SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHightechAudioProcessor& p)

@@ -504,14 +504,20 @@ void SalekHightechAudioProcessorEditor::resized()
 
         auto r = lfoTab.getLocalBounds().reduced (6);
         if (lfoDisplay != nullptr) lfoDisplay->setBounds (r.removeFromTop (56).reduced (1));
-        auto presetRow = r.removeFromTop (24);
+        auto presetRow = r.removeFromTop (36); // taller for wave icons
         const int bw = presetRow.getWidth() / 12;
         juce::TextButton* presets[] = {
             &lfoPresetSine, &lfoPresetTri, &lfoPresetSaw, &lfoPresetSqr,
             &lfoPresetPulse, &lfoPresetExp, &lfoPresetLog, &lfoPresetBell,
             &lfoPresetWob, &lfoPresetChaos, &lfoPresetGate, &lfoPresetCustom
         };
-        for (auto* b : presets) b->setBounds (presetRow.removeFromLeft (bw).reduced (1));
+        for (auto* b : presets)
+        {
+            b->setButtonText ({});
+            b->setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
+            b->setBounds (presetRow.removeFromLeft (bw).reduced (1));
+        }
+        layoutButtonIcons(); // fix icon child size after bounds
         auto waveRow = r.removeFromTop (24);
         lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (2));
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));
