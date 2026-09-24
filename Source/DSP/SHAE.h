@@ -48,7 +48,7 @@ inline float fastTanh (float x) noexcept
 /** Soft clip with approximate gain compensation */
 inline float softClipComp (float x, float drive) noexcept
 {
-    const float g = 1.f + drive * 4.f;
+    const float g = 1.f + drive * 3.2f; // smoother, less harsh than 4x
     const float y = fastTanh (x * g);
     // compensate average gain so drive ≠ automatic loudness
     const float comp = 1.f / (0.75f + 0.25f * fastTanh (g * 0.5f));

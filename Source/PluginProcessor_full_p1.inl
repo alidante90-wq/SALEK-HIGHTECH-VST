@@ -72,7 +72,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     F("chorus_mix","Chorus Mix",0,1,0); F("chorus_rate","Chorus Rate",0.05f,5,0.35f); F("chorus_depth","Chorus Depth",0,1,0.5f);
     F("reverb_mix","Reverb Mix",0,1,0); F("reverb_size","Reverb Size",0,1,0.5f); F("reverb_decay","Reverb Decay",0.1f,0.95f,0.55f);
     C("reverb_mode","Reverb Mode",{"Room","Hall","Plate","Chamber","Spring"},0);
-    F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.8f);
+    F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.55f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
     C("seq_magic_target","Seq→Magic",{"Off","Magic X","Magic Y","Magic XY","Magic Amt"},0);

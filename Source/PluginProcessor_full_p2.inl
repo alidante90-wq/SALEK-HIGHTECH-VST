@@ -284,9 +284,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
 
     // Smart macro scales for the FX render stage.
-    const float spaceScale = 0.15f + g ("macro2") * 0.85f;
+    const float spaceScale = 1.f + g ("macro2") * 0.35f; // 1.0..1.35 — knob mix fully audible
     const float destScale  = juce::jlimit (0.f, 1.f, g ("macro3"));
-    const float widthScale = 0.3f + juce::jlimit (0.f, 1.f, g ("macro4")) * 0.7f;
+    const float widthScale = 1.f + juce::jlimit (0.f, 1.f, g ("macro4")) * 0.25f;
 
     // ---- Push all FX params (UI knobs were never wired → delay/reverb silent) ----
     {
@@ -401,7 +401,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
     const float drive = apvts.getRawParameterValue("master_drive")->load();
-    const float gMul = gain * (0.85f + drive * 0.1f);
+    const float gMul = gain * (0.58f + drive * 0.08f); // headroom — volume was too hot
     // SHAE Master Core: DC block → mono bass → soft clip → ceiling
     static float dcL = 0.f, dcR = 0.f;
     static float lpL = 0.f, lpR = 0.f;
@@ -429,10 +429,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             xL = salek::shae::softClipComp (xL, drive * 0.6f);
             xR = salek::shae::softClipComp (xR, drive * 0.6f);
             const float aL = std::abs (xL), aR = std::abs (xR);
-            if (aL > 0.88f) xL = std::copysign (0.88f + 0.1f * std::tanh ((aL - 0.88f) * 5.f), xL);
-            if (aR > 0.88f) xR = std::copysign (0.88f + 0.1f * std::tanh ((aR - 0.88f) * 5.f), xR);
-            L[i] = juce::jlimit (-0.97f, 0.97f, xL);
-            R[i] = juce::jlimit (-0.97f, 0.97f, xR);
+            if (aL > 0.82f) xL = std::copysign (0.82f + 0.12f * std::tanh ((aL - 0.82f) * 4.f), xL);
+            if (aR > 0.82f) xR = std::copysign (0.82f + 0.12f * std::tanh ((aR - 0.82f) * 4.f), xR);
+            L[i] = juce::jlimit (-0.95f, 0.95f, xL);
+            R[i] = juce::jlimit (-0.95f, 0.95f, xR);
         }
     }
     else if (nCh == 1)
