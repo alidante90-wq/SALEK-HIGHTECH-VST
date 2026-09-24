@@ -25,6 +25,8 @@ public:
         // double-frame
         g.setColour (accent.withAlpha (0.55f));
         g.drawRoundedRectangle (r, 7.f, 1.6f);
+        g.setColour (accent.withAlpha (0.16f));
+        g.drawRoundedRectangle (r.reduced (4.f), 5.f, 1.0f);
         g.setColour (accent.withAlpha (0.18f));
         g.drawRoundedRectangle (r.reduced (2.5f), 5.5f, 1.0f);
 
@@ -81,7 +83,7 @@ public:
         g.fillPath (fill);
 
         g.setColour (accent.withAlpha (0.95f));
-        g.strokePath (wave, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.strokePath (wave, juce::PathStrokeType (2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
         float scan = std::fmod (anim * 0.18f, 1.f);
         float sx = plot.getX() + scan * plot.getWidth();
@@ -123,9 +125,50 @@ public:
         }
         dragTable (e);
     }
+    void mouseUp (const juce::MouseEvent& e) override
+    {
+        if (! e.mods.isPopupMenu()) return;
+        juce::PopupMenu menu;
+        menu.addItem (1, "Sine");
+        menu.addItem (2, "Triangle");
+        menu.addItem (3, "Square");
+        menu.addItem (4, "Saw");
+        menu.addSeparator();
+        menu.addItem (5, "Randomize frame");
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this),
+            [this] (int result)
+            {
+                if (apvts == nullptr || result == 0) return;
+                if (result == 5)
+                {
+                    if (auto* p = apvts->getParameter (tableId()))
+                    {
+                        p->beginChangeGesture();
+                        p->setValueNotifyingHost (juce::Random::getSystemRandom().nextFloat());
+                        p->endChangeGesture();
+                    }
+                    return;
+                }
+                const float v[] = { 0.f, 0.25f, 0.5f, 0.75f };
+                if (auto* p = apvts->getParameter (tableId()))
+                {
+                    p->beginChangeGesture();
+                    p->setValueNotifyingHost (p->convertTo0to1 (v[result - 1]));
+                    p->endChangeGesture();
+                }
+            });
+    }
+
+    const char* tableId() const noexcept
+    {
+        static const char* ids[] = { "osc1_table", "osc2_table", "osc3_table" };
+        return ids[osc];
+    }
+
     void mouseDoubleClick (const juce::MouseEvent&) override
     {
-        // snap to classic frames: 0 sine, 0.25 tri, 0.5 square-ish, 0.75 saw-ish
+        // Double-click cycles classic frames: sine → triangle → square → saw.
+
         if (apvts == nullptr) return;
         const char* ids[] = { "osc1_table", "osc2_table", "osc3_table" };
         if (auto* p = apvts->getParameter (ids[osc]))
