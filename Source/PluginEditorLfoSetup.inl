@@ -40,7 +40,6 @@
             sh.b->setButtonText (sh.label);
             sh.b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a30));
             sh.b->setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
-            sh.b->setFont (juce::FontOptions (9.5f, juce::Font::bold));
             lfoTab.addAndMakeVisible (*sh.b);
         }
 
