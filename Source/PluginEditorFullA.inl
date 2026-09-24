@@ -156,7 +156,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             if (e.eventComponent == &ed->modSrcLfo1 || e.eventComponent == &ed->modSrcLfo2
                 || e.eventComponent == &ed->modSrcLfo3)
                 return;
-            auto pos = e.getEventRelativeTo (ed).getPosition();
+            const auto pos = ed->currentMousePositionInEditor();
             float amt = 0.5f;
             if (e.mods.isShiftDown()) amt = 1.0f;
             if (e.mods.isAltDown()) amt = -0.5f;
@@ -217,12 +217,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             ed->armedModSource = src;
             ed->isModDragging = true;
             ed->setMouseCursor (juce::MouseCursor::CopyingCursor);
-            // Also try JUCE DnD for targets that implement DragAndDropTarget
-            if (! ed->isDragAndDropActive())
-            {
-                juce::String desc = "SALEK_LFO" + juce::String (src);
-                ed->startDragging (desc, e.eventComponent);
-            }
+            // Keep mouse capture until release; several DAWs let their drag manager
+            // steal it. The release is routed against the current screen pointer.
+
         }
         void mouseUp (const juce::MouseEvent& e) override
         {
@@ -833,6 +830,12 @@ void SalekHightechAudioProcessorEditor::tryAssignModAt (juce::Point<int> editorP
     }
 }
 
+juce::Point<int> SalekHightechAudioProcessorEditor::currentMousePositionInEditor() const
+{
+    const auto screen = juce::Desktop::getInstance().getMainMouseSource().getScreenPosition().roundToInt();
+    return getLocalPoint (nullptr, screen);
+}
+
 void SalekHightechAudioProcessorEditor::mouseDrag (const juce::MouseEvent& e)
 {
     juce::AudioProcessorEditor::mouseDrag (e);
@@ -842,7 +845,7 @@ void SalekHightechAudioProcessorEditor::mouseUp (const juce::MouseEvent& e)
     // Fallback: if LFO armed and release over a knob, assign (even without DnD target hit)
     if (armedModSource >= 0 && e.mouseWasDraggedSinceMouseDown())
     {
-        auto pos = e.getEventRelativeTo (this).getPosition();
+        auto pos = currentMousePositionInEditor();
         float amt = 0.5f;
         if (e.mods.isShiftDown()) amt = 1.0f;
         if (e.mods.isAltDown()) amt = -0.5f;
