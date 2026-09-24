@@ -25,11 +25,22 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
     g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f)); g.drawRoundedRectangle (r, 6.0f, 1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float pos=gval("osc1_table",0.f);
-    juce::Path wave; const int N=64;
-    for(int i=0;i<N;++i){ float t=(float)i/(N-1); float y=std::sin(t*juce::MathConstants<float>::twoPi*(1.f+pos*4.f));
-        float px=r.getX()+8+t*(r.getWidth()-16); float py=r.getCentreY()-y*(r.getHeight()*0.35f);
+    float warp=gval("osc1_warp",0.f), fold=gval("osc1_fold",0.f);
+    g.setColour(juce::Colour(0xffffd700).withAlpha(0.75f));
+    g.setFont(juce::FontOptions (9.f, juce::Font::bold));
+    g.drawText("WT  " + juce::String(pos,2) + "   WARP " + juce::String(warp,2) + "   FOLD " + juce::String(fold,2),
+               r.removeFromTop(14).toNearestInt(), juce::Justification::centredLeft);
+    auto plot=r.reduced(7.f,3.f);
+    juce::Path wave; const int N=96;
+    for(int i=0;i<N;++i){
+        float t=(float)i/(N-1);
+        float ph=t*juce::MathConstants<float>::twoPi*(1.f+pos*4.f);
+        float y=std::sin(ph);
+        y=std::tanh(y*(1.f+fold*4.f));
+        y=std::copysign(std::pow(std::abs(y),juce::jlimit(0.35f,1.0f,1.0f-warp*0.55f)),y);
+        float px=plot.getX()+t*plot.getWidth(); float py=plot.getCentreY()-y*(plot.getHeight()*0.42f);
         if(i==0)wave.startNewSubPath(px,py); else wave.lineTo(px,py);}
-    g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(wave, juce::PathStrokeType(1.5f));
+    g.setColour(juce::Colour(0xff00e8ff)); g.strokePath(wave, juce::PathStrokeType(1.8f));
 }
 
 #include "PluginEditorVisualizers.inl"
