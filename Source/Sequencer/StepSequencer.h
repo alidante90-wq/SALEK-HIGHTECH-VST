@@ -39,6 +39,9 @@ public:
         rateDivisor = juce::jlimit (1, 16, div);
         updateTiming();
     }
+    void setSwing (float s) noexcept { swing = juce::jlimit (0.f, 1.f, s); }
+    void setGateScale (float g) noexcept { gateScale = juce::jlimit (0.05f, 1.f, g); }
+    void setNumSteps (int n) noexcept { numStepsActive = juce::jlimit (8, NumSteps, n); }
 
     /** DAW transport: only advance while host is playing. */
     void setTransportPlaying (bool playing) noexcept
@@ -114,8 +117,9 @@ public:
         if (usePpqSync && hostPpq >= 0.0)
         {
             const double stepsPerBeat = 4.0 * (double) juce::jmax (1, rateDivisor);
-            const int targetStep = ((int) std::floor (hostPpq * stepsPerBeat)) % NumSteps;
-            const int safeStep = (targetStep + NumSteps) % NumSteps;
+            const int nAct = juce::jmax (1, numStepsActive);
+            const int targetStep = ((int) std::floor (hostPpq * stepsPerBeat)) % nAct;
+            const int safeStep = (targetStep + nAct) % nAct;
 
             // Gate handling across block
             for (int i = 0; i < numSamples; ++i)
@@ -153,7 +157,7 @@ public:
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, note, vel), 0);
                     currentNote = note;
                     pendingNoteOff = note;
-                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate));
+                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate * gateScale));
                 }
             }
             return;
@@ -182,7 +186,7 @@ public:
                     currentNote = -1;
                     pendingNoteOff = -1;
                 }
-                currentStep = (currentStep + 1) % NumSteps;
+                currentStep = (currentStep + 1) % juce::jmax (1, numStepsActive);
                 samplesUntilNext += samplesPerStep;
 
                 auto& st = steps[static_cast<size_t> (currentStep)];
@@ -195,7 +199,7 @@ public:
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, note, vel), i);
                     currentNote = note;
                     pendingNoteOff = note;
-                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate));
+                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate * gateScale));
                 }
             }
         }
@@ -246,6 +250,9 @@ private:
     bool hasRoot = false;
     bool enabled = false;
     float currentMod = 0.0f;
+    float swing = 0.f;
+    float gateScale = 0.85f;
+    int numStepsActive = 16;
     bool transportPlaying = true; // true until host reports stop
     bool stopRequested = false;
     bool usePpqSync = false;

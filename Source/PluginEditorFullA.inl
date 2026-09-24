@@ -47,7 +47,7 @@ void SalekHightechAudioProcessorEditor::paintOverChildren (juce::Graphics& g)
         if (! c.isShowing() || c.getWidth() < 8) return;
         auto img = SalekAssets::loadIcon (id);
         if (! img.isValid()) return;
-        auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (4.f);
+        auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (2.f);
         g.setOpacity (1.f);
         g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
     };
@@ -793,8 +793,13 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto G = juce::Colour (0xff7c4dff);
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
-        addKnob (seqTab, "seq_rate", "SEQ RATE", O);
-        addKnob (seqTab, "seq_magic_depth", "SEQ→MAGIC", C);
+        addKnob (seqTab, "arp_gate", "ARP GATE", O);
+        addKnob (seqTab, "arp_direction", "ARP DIR", G);
+        addKnob (seqTab, "seq_rate", "SEQ RATE", G);
+        addKnob (seqTab, "seq_swing", "SWING", C);
+        addKnob (seqTab, "seq_gate", "SEQ GATE", M);
+        addKnob (seqTab, "seq_steps", "STEPS", O);
+        addKnob (seqTab, "seq_magic_depth", "SEQ→MAGIC", G);
         // Seq magic target is a choice — attach via combo if present
         if (auto* p = processor.getAPVTS().getParameter ("seq_magic_target"))
         {

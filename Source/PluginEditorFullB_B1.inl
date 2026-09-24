@@ -127,7 +127,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (96); // logo prominence (I WANT)
+    auto header = full.removeFromTop (120); // bigger SALEK logo
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -155,9 +155,9 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (640, juce::jmax (360, header.getWidth() * 2 / 5));
-        const int lh = header.getHeight() - 2;
-        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY(), lw, lh);
+        const int lw = juce::jmin (760, juce::jmax (480, header.getWidth() * 1 / 2));
+        const int lh = header.getHeight() - 0;
+        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 2, lw, lh + 4);
         logoOverlay.setInterceptsMouseClicks (false, false);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
@@ -628,12 +628,13 @@ void SalekHightechAudioProcessorEditor::resized()
     // SEQ
     {
         auto bounds = seqTab.getLocalBounds().reduced (6);
-        auto top = bounds.removeFromTop (88);
-        auto toggles = top.removeFromLeft (120);
+        auto top = bounds.removeFromTop (120);
+        auto toggles = top.removeFromLeft (100);
         arpOn.setBounds (toggles.removeFromTop (36).reduced (2));
         seqOn.setBounds (toggles.removeFromTop (36).reduced (2));
-        const int seqKnobStart = juce::jmax (0, (int) knobs.size() - 7);
-        place (top.reduced (4), knobs, seqKnobStart, 3, 3);
+        // Last 8 knobs are SEQ/ARP (rate/oct/gate/swing/steps/magic...)
+        const int seqKnobStart = juce::jmax (0, (int) knobs.size() - 9);
+        place (top.reduced (2), knobs, seqKnobStart, 9, 5); // more SEQ/ARP knobs
         // 2 rows of Magic trigger buttons under seq strip
         {
             auto magicStrip = bounds.removeFromBottom (64).reduced (2, 1);

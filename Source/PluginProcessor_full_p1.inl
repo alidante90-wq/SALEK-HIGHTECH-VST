@@ -74,7 +74,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     C("reverb_mode","Reverb Mode",{"Room","Hall","Plate","Chamber","Spring"},0);
     F("master_drive","Master Drive",0,1,0); F("master_gain","Master Gain",0,1,0.55f);
     B("arp_on","Arp On",false); I("arp_rate","Arp Rate",1,16,4); I("arp_octaves","Arp Oct",1,4,1);
+    F("arp_gate","Arp Gate",0.05f,1,0.7f);
+    I("arp_direction","Arp Dir",0,3,0); // 0 Up 1 Down 2 UpDown 3 Random
     B("seq_on","Seq On",false); I("seq_rate","Seq Rate",1,8,4);
+    F("seq_swing","Seq Swing",0,1,0);
+    F("seq_gate","Seq Gate",0.05f,1,0.85f);
+    I("seq_steps","Seq Steps",8,16,16);
     C("seq_magic_target","Seq→Magic",{"Off","Magic X","Magic Y","Magic XY","Magic Amt"},0);
     F("seq_magic_depth","Seq Magic Depth",0,1,0.7f);
     F("comp_threshold","Comp Thresh",-40,0,-12); F("comp_ratio","Comp Ratio",1,20,4); F("comp_mix","Comp Mix",0,1,0); F("comp_gain","Comp Gain",-12,24,0);

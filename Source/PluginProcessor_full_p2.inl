@@ -239,6 +239,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (seqOn)
     {
         stepSequencer.setRateDivisor ((int) apvts.getRawParameterValue("seq_rate")->load());
+        stepSequencer.setSwing (apvts.getRawParameterValue("seq_swing")->load());
+        stepSequencer.setGateScale (apvts.getRawParameterValue("seq_gate")->load());
+        stepSequencer.setNumSteps ((int) apvts.getRawParameterValue("seq_steps")->load());
         for (const auto metadata : midi)
         {
             const auto msg = metadata.getMessage();
