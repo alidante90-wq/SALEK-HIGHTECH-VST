@@ -129,12 +129,8 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         repaint (getLocalBounds().removeFromTop (110)); // header strip only
 
     // Active tab: only live widgets (never whole-tab repaint — FL multi-instance)
-    if (tab == 0) // MAIN
-    {
-        if (oscMon1) oscMon1->repaint();
-        if (oscMon2) oscMon2->repaint();
-        if (oscMon3) oscMon3->repaint();
-    }
+    // MAIN osc monitors self-timer at 25Hz when visible — no double repaint
+    if (tab == 0) { /* oscMon* own timer */ }
     else if (tab == 1) // MOD
     {
         if (matrixPanel) matrixPanel->repaint();

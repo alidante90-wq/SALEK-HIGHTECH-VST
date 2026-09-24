@@ -332,7 +332,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     for (int i = 0; i < 10; ++i)
     {
         auto* ic = new juce::ImageComponent ("model" + juce::String (i));
-        auto im = SalekAssets::loadCharPortrait (i);
+        auto im = SalekAssets::loadCharPortrait (i, 160, 240); // strip thumbs — low RAM
         if (im.isValid())
         {
             ic->setImage (im);

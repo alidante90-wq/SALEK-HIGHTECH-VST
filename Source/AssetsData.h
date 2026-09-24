@@ -293,41 +293,44 @@ inline juce::Image loadCharPinkDead()
     return fromDisk ({ "char_pink_dead.png" });
 }
 
-/** 10 character models (binary + disk fallback) */
-inline juce::Image loadCharPortrait (int index = 0)
+/** Downscale large UI bitmaps to save RAM (keeps aspect). */
+inline juce::Image downscaleMax (juce::Image img, int maxW, int maxH)
 {
-    // Prefer binary-embedded loaders first
+    if (! img.isValid()) return {};
+    const int w = img.getWidth(), h = img.getHeight();
+    if (w <= maxW && h <= maxH) return img;
+    const float sx = (float) maxW / (float) juce::jmax (1, w);
+    const float sy = (float) maxH / (float) juce::jmax (1, h);
+    const float s = juce::jmin (sx, sy);
+    const int nw = juce::jmax (1, (int) std::round ((float) w * s));
+    const int nh = juce::jmax (1, (int) std::round ((float) h * s));
+    return img.rescaled (nw, nh, juce::Graphics::mediumResamplingQuality);
+}
+
+/** One character model only (never decode the whole bank). */
+inline juce::Image loadCharPortrait (int index = 0, int maxW = 480, int maxH = 720)
+{
     auto loadBin = [] (const char* res) -> juce::Image {
-        auto im = fromBinaryName (res);
-        return im;
+        return fromBinaryName (res);
     };
-    juce::Image imgs[] = {
-        loadCharToronowla(),
-        loadCharNeonStreet(),
-        loadCharPinkDead(),
-        loadBin ("char_apron_png"),
-        loadBin ("char_catgirl_png"),
-        loadBin ("char_cyber_white_png"),
-        loadBin ("char_foxgirl_png"),
-        loadBin ("char_gun_png"),
-        loadBin ("char_purple_latex_png"),
-        loadBin ("char_white_suit_png"),
-        loadCharApron(),
-        loadCharCatgirl(),
-        loadCharCyber(),
-        loadCharFox(),
-        loadCharGun(),
-        loadCharPurple(),
-        loadCharWhite()
-    };
-    const int n = (int) (sizeof (imgs) / sizeof (imgs[0]));
-    // skip invalid by walking
-    for (int k = 0; k < n; ++k)
+    // Fixed order of 10 slots used by model strip
+    const int i = ((index % 10) + 10) % 10;
+    juce::Image img;
+    switch (i)
     {
-        auto& im = imgs[(index + k) % n];
-        if (im.isValid()) return im;
+        case 0: img = loadCharToronowla(); break;
+        case 1: img = loadCharNeonStreet(); break;
+        case 2: img = loadCharPinkDead(); break;
+        case 3: img = loadBin ("char_apron_png"); if (!img.isValid()) img = loadCharApron(); break;
+        case 4: img = loadBin ("char_catgirl_png"); if (!img.isValid()) img = loadCharCatgirl(); break;
+        case 5: img = loadBin ("char_cyber_white_png"); if (!img.isValid()) img = loadCharCyber(); break;
+        case 6: img = loadBin ("char_foxgirl_png"); if (!img.isValid()) img = loadCharFox(); break;
+        case 7: img = loadBin ("char_gun_png"); if (!img.isValid()) img = loadCharGun(); break;
+        case 8: img = loadBin ("char_purple_latex_png"); if (!img.isValid()) img = loadCharPurple(); break;
+        case 9: img = loadBin ("char_white_suit_png"); if (!img.isValid()) img = loadCharWhite(); break;
+        default: break;
     }
-    return {};
+    return downscaleMax (img, maxW, maxH);
 }
 
 inline juce::Image loadHero() { return loadBgIsatis(); }

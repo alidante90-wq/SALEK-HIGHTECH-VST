@@ -5,7 +5,12 @@
 class OscShapeMonitor : public juce::Component, private juce::Timer
 {
 public:
-    OscShapeMonitor() { startTimerHz (5); }
+    OscShapeMonitor() { /* timer starts when visible */ }
+    void visibilityChanged() override
+    {
+        if (isShowing()) startTimerHz (25); // smooth when on MAIN
+        else stopTimer();
+    }
 
     void setAPVTS (juce::AudioProcessorValueTreeState* s) { apvts = s; }
     void setOscIndex (int i) { osc = juce::jlimit (0, 2, i); }
@@ -59,7 +64,7 @@ public:
         }
 
         juce::Path wave, fill;
-        const int N = 96;
+        const int N = 64; // lighter path
         for (int i = 0; i < N; ++i)
         {
             float t = (float) i / (float) (N - 1);
