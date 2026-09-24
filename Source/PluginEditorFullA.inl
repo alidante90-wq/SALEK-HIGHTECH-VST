@@ -114,7 +114,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         modHookListeners.push_back (std::unique_ptr<juce::MouseListener> (hook));
     }
 
-    charPortraitIdx = 8; // white-hair / purple latex style default
+    charPortraitIdx = 5; // startup hero: the white/cyan cyber model from the carousel
     refreshCharCache();
     // face.png removed (was ~2MB) — BGs only
     lianImg   = SalekAssets::loadBgIsatis();
