@@ -135,9 +135,9 @@ void SalekHightechAudioProcessorEditor::resized()
     masterGainSlider.setBounds (header.removeFromRight (40).reduced (2));
     // Compact LFO sources (horizontal strip, always visible)
     // LFO sources — drag sources (Vital-style)
-    modSrcLfo3.setBounds (header.removeFromRight (46).reduced (2, 10));
-    modSrcLfo2.setBounds (header.removeFromRight (46).reduced (2, 10));
-    modSrcLfo1.setBounds (header.removeFromRight (46).reduced (2, 10));
+    modSrcLfo3.setBounds (header.removeFromRight (56).reduced (2, 8));
+    modSrcLfo2.setBounds (header.removeFromRight (56).reduced (2, 8));
+    modSrcLfo1.setBounds (header.removeFromRight (56).reduced (2, 8));
     modSrcLfo1.setButtonText ("LFO1");
     modSrcLfo2.setButtonText ("LFO2");
     modSrcLfo3.setButtonText ("LFO3");
@@ -373,7 +373,7 @@ void SalekHightechAudioProcessorEditor::resized()
             for (int i = 0; i < 3; ++i)
             {
                 auto* ic = tabSectionIcons[8 + i];
-                ic->setBounds (top.removeFromLeft (32).reduced (2));
+                ic->setBounds (top.removeFromLeft (42).reduced (2));
                 if (ic->getParentComponent() != &modTab)
                     modTab.addAndMakeVisible (*ic);
                 ic->setVisible (true);
@@ -457,7 +457,7 @@ void SalekHightechAudioProcessorEditor::resized()
         // LFO tab icons (LFO / SYNC / RND)
         if (tabSectionIcons.size() >= 8)
         {
-            auto top = lfoTab.getLocalBounds().removeFromTop (32).reduced (4, 2);
+            auto top = lfoTab.getLocalBounds().removeFromTop (42).reduced (4, 2);
             for (int i = 0; i < 3; ++i)
             {
                 auto* ic = tabSectionIcons[5 + i];
