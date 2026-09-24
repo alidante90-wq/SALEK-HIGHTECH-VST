@@ -276,6 +276,16 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         return 0.f;
     };
    
+    // Capture actual post-stage peaks for honest UI metering (no decorative fake waveform level).
+    auto captureFx = [&] (int index)
+    {
+        float peak = 0.f;
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+            peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
+        if (index >= 0 && index < 8) fxPeaks[(size_t) index].store (juce::jlimit (0.f, 1.f, peak));
+    };
+    for (auto& p : fxPeaks) p.store (0.f);
+
     const float bassify = apvts.getRawParameterValue("bassify")->load();
     if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
@@ -360,16 +370,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         eq.setMidGainDb (g ("eq_mid"));
         eq.setHighGainDb (g ("eq_high"));
     }
-
-    // Capture actual post-stage peaks for honest UI metering (no decorative fake waveform level).
-    auto captureFx = [&] (int index)
-    {
-        float peak = 0.f;
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-            peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
-        if (index >= 0 && index < 8) fxPeaks[(size_t) index].store (juce::jlimit (0.f, 1.f, peak));
-    };
-    for (auto& p : fxPeaks) p.store (0.f);
 
     // Mix=0 early-out saves a lot with 2+ instances in FL
     if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
