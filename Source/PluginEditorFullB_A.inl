@@ -128,24 +128,22 @@ void SalekHightechAudioProcessorEditor::timerCallback()
     if ((ticks % 4) == 0)
         repaint (getLocalBounds().removeFromTop (110)); // header strip only
 
-    // Active tab content at full rate
-    if (tab == 0) // MAIN — osc monitors + filter curve
+    // Active tab: only live widgets (never whole-tab repaint — FL multi-instance)
+    if (tab == 0) // MAIN
     {
         if (oscMon1) oscMon1->repaint();
         if (oscMon2) oscMon2->repaint();
         if (oscMon3) oscMon3->repaint();
-        filterTab.repaint();
-        envTab.repaint();
     }
     else if (tab == 1) // MOD
     {
         if (matrixPanel) matrixPanel->repaint();
-        modTab.repaint();
     }
-    else if (tab == 2) // LFO
+    else if (tab == 2) // LFO — shape editor only if user is drawing (half rate ok)
     {
         if (lfoDisplay) lfoDisplay->repaint();
-        lfoShapeEditor.repaint();
+        if ((ticks % 2) == 0)
+            lfoShapeEditor.repaint();
     }
     else if (tab == 3 && fxMonitors.size() >= 8) // FX meters
     {
@@ -172,18 +170,7 @@ void SalekHightechAudioProcessorEditor::timerCallback()
         fxMonitors[7]->setLevel (g ("dist_mix"));
         for (auto* m : fxMonitors) if (m) m->repaint();
     }
-    else if (tab == 4) // MAGIC
-    {
-        if (magicPad) magicPad->repaint();
-    }
-    else if (tab == 5) // SEQ
-    {
-        seqTab.repaint();
-    }
-
-    // Model strip / keyboard idle glow — half rate
-    if ((ticks % 2) == 0 && modelStrip.size() > 0)
-        for (auto* m : modelStrip) if (m) m->repaint();
+    // MAGIC / SEQ: no idle full-tab paint (grid has own timer)
 
     if (armedModSource >= 0)
     {
