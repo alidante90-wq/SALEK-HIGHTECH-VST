@@ -37,11 +37,34 @@
         };
         for (auto& sh : shapes)
         {
-            sh.b->setButtonText (sh.label);
-            sh.b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a30));
-            sh.b->setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+            sh.b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff0a0618));
+            sh.b->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff1a2050));
+            sh.b->setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
             lfoTab.addAndMakeVisible (*sh.b);
         }
+        // Real waveform glyphs (not ugly text squares)
+        applyButtonImage (lfoPresetSine,  makeWaveIcon (0));
+        applyButtonImage (lfoPresetTri,   makeWaveIcon (1));
+        applyButtonImage (lfoPresetSaw,   makeWaveIcon (2));
+        applyButtonImage (lfoPresetSqr,   makeWaveIcon (3));
+        applyButtonImage (lfoPresetPulse, makeWaveIcon (4));
+        applyButtonImage (lfoPresetExp,   makeWaveIcon (5));
+        applyButtonImage (lfoPresetLog,   makeWaveIcon (6));
+        applyButtonImage (lfoPresetBell,  makeWaveIcon (7));
+        applyButtonImage (lfoPresetWob,   makeWaveIcon (8));
+        applyButtonImage (lfoPresetChaos, makeWaveIcon (9));
+        applyButtonImage (lfoPresetGate,  makeWaveIcon (10));
+        applyButtonImage (lfoPresetCustom,makeWaveIcon (11));
+        // L1 L2 L3 target buttons — atlas LFO icons
+        applyButtonIcon (lfoCopyTo1, SalekAssets::IconId::Lfo);
+        applyButtonIcon (lfoCopyTo2, SalekAssets::IconId::LfoRandom);
+        applyButtonIcon (lfoCopyTo3, SalekAssets::IconId::LfoSync);
+        applyButtonIcon (lfoSaveA, SalekAssets::IconId::Master);
+        applyButtonIcon (lfoLoadA, SalekAssets::IconId::Wavetable);
+        applyButtonIcon (lfoSaveB, SalekAssets::IconId::Master);
+        applyButtonIcon (lfoLoadB, SalekAssets::IconId::Wavetable);
+        applyButtonIcon (lfoSaveC, SalekAssets::IconId::Master);
+        applyButtonIcon (lfoLoadC, SalekAssets::IconId::Wavetable);
 
         auto loadShape = [this] (int preset)
         {

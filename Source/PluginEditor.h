@@ -342,6 +342,7 @@ private:
     void rebuildPresetRows();
     Knob& addKnob(juce::Component& parent, const char* id, const char* label, juce::Colour c);
     void applyButtonIcon (juce::TextButton& btn, SalekAssets::IconId id);
+    void applyButtonImage (juce::TextButton& btn, juce::Image img);
     void layoutButtonIcons();
     void assignModToParam (const juce::String& paramId, float amount = 0.5f);
     void tryAssignModAt (juce::Point<int> editorPos, float amount, const juce::ModifierKeys& mods);

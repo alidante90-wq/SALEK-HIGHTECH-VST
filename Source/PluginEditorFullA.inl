@@ -23,8 +23,101 @@ void SalekHightechAudioProcessorEditor::paintOverChildren (juce::Graphics& g)
     drawOn (modSrcLfo3, IC::LfoSync);
     drawOn (bgSwapBtn, IC::FrameMorph);
     drawOn (charCycleBtn, IC::Osc1);
+    // LFO tab shape + target icons always crisp on top
+    if (tabs.getCurrentTabIndex() == 2)
+    {
+        drawOn (lfoCopyTo1, IC::Lfo);
+        drawOn (lfoCopyTo2, IC::LfoRandom);
+        drawOn (lfoCopyTo3, IC::LfoSync);
+        auto waveOn = [&] (juce::Component& c, int kind)
+        {
+            if (! c.isShowing() || c.getWidth() < 8) return;
+            auto img = makeWaveIcon (kind, 64);
+            auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (3.f);
+            g.setOpacity (1.f);
+            g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        };
+        waveOn (lfoPresetSine, 0);
+        waveOn (lfoPresetTri, 1);
+        waveOn (lfoPresetSaw, 2);
+        waveOn (lfoPresetSqr, 3);
+        waveOn (lfoPresetPulse, 4);
+        waveOn (lfoPresetExp, 5);
+        waveOn (lfoPresetLog, 6);
+        waveOn (lfoPresetBell, 7);
+        waveOn (lfoPresetWob, 8);
+        waveOn (lfoPresetChaos, 9);
+        waveOn (lfoPresetGate, 10);
+        waveOn (lfoPresetCustom, 11);
+    }
 }
 
+
+
+static juce::Image makeWaveIcon (int kind, int size = 64)
+{
+    juce::Image img (juce::Image::ARGB, size, size, true);
+    juce::Graphics g (img);
+    g.fillAll (juce::Colours::transparentBlack);
+    juce::Path p;
+    const float mid = size * 0.5f;
+    const float amp = size * 0.28f;
+    const float pad = size * 0.12f;
+    const int N = 48;
+    for (int i = 0; i < N; ++i)
+    {
+        float t = (float) i / (float) (N - 1);
+        float x = pad + t * (size - 2.f * pad);
+        float y = mid;
+        const float ph = t * juce::MathConstants<float>::twoPi;
+        switch (kind)
+        {
+            case 0: y = mid - amp * std::sin (ph); break; // sine
+            case 1: y = mid - amp * (2.f * std::abs (2.f * (t - std::floor (t + 0.5f))) - 1.f); break; // tri
+            case 2: y = mid - amp * (2.f * t - 1.f); break; // saw
+            case 3: y = mid - amp * (t < 0.5f ? 1.f : -1.f); break; // sqr
+            case 4: y = mid - amp * (t < 0.25f ? 1.f : -1.f); break; // pulse
+            case 5: y = mid - amp * (1.f - std::exp (-3.f * t)); break; // exp
+            case 6: y = mid - amp * std::log (1.f + 8.f * t) / std::log (9.f); break; // log-ish
+            case 7: y = mid - amp * std::exp (-8.f * (t - 0.5f) * (t - 0.5f)); break; // bell
+            case 8: y = mid - amp * std::sin (ph * 3.f) * (0.5f + 0.5f * std::sin (ph)); break; // wob
+            case 9: y = mid - amp * (std::sin (ph * 5.f) * 0.6f + ((int)(t*7)%2 ? 0.4f : -0.3f)); break; // chaos
+            case 10: y = mid - amp * (t < 0.5f ? (t < 0.15f ? 1.f : 0.f) : 0.f); break; // gate
+            default: y = mid - amp * std::sin (ph * 2.f); break; // draw/custom
+        }
+        if (i == 0) p.startNewSubPath (x, y);
+        else p.lineTo (x, y);
+    }
+    g.setColour (juce::Colour (0xff00e8ff));
+    g.strokePath (p, juce::PathStrokeType (2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.35f));
+    g.drawRoundedRectangle (img.getBounds().toFloat().reduced (2.f), 6.f, 1.2f);
+    return img;
+}
+
+
+void SalekHightechAudioProcessorEditor::applyButtonImage (juce::TextButton& btn, juce::Image img)
+{
+    for (int i = btn.getNumChildComponents(); --i >= 0; )
+    {
+        if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
+        {
+            btn.removeChildComponent (ic);
+            delete ic;
+        }
+    }
+    btn.setButtonText ({});
+    btn.setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
+    btn.setColour (juce::TextButton::textColourOnId, juce::Colours::transparentBlack);
+    if (! img.isValid()) { btn.setButtonText ("•"); return; }
+    auto* ic = new juce::ImageComponent();
+    ic->setImage (img);
+    ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+    ic->setInterceptsMouseClicks (false, false);
+    btn.addAndMakeVisible (ic);
+    ic->setBounds (btn.getLocalBounds().reduced (2));
+    ic->toFront (false);
+}
 
 void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, SalekAssets::IconId id)
 {
