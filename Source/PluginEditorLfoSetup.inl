@@ -103,6 +103,40 @@
             { lfoShapeTarget = 2; lfoShapeEditor.setLfo (&processor.getLfo3()); lfoShapeEditor.syncFromLfo(); }
         };
 
+        // Production timing / modulation controls. These are real APVTS attachments, not visual-only switches.
+        const juce::StringArray syncItems { "FREE","1/32","1/16T","1/16","1/8T","1/8","1/4T","1/4","1/2","1 BAR","2 BAR" };
+        addCombo (lfoTab, lfo1SyncBox, "lfo_sync", syncItems);
+        addCombo (lfoTab, lfo2SyncBox, "lfo2_sync", syncItems);
+        addCombo (lfoTab, lfo3SyncBox, "lfo3_sync", syncItems);
+        const auto setupToggle = [this] (juce::ToggleButton& b, const char* id, juce::Colour c)
+        {
+            b.setColour (juce::ToggleButton::textColourId, c);
+            b.setColour (juce::ToggleButton::tickColourId, c);
+            b.setColour (juce::ToggleButton::tickColourId, c);
+            lfoTab.addAndMakeVisible (b);
+            btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.getAPVTS(), id, b));
+        };
+        setupToggle (lfo1Bipolar, "lfo_bipolar", juce::Colour (0xff00e8ff));
+        setupToggle (lfo2Bipolar, "lfo2_bipolar", juce::Colour (0xffff2d9b));
+        setupToggle (lfo3Bipolar, "lfo3_bipolar", juce::Colour (0xff39ff14));
+        setupToggle (lfo1Retrigger, "lfo_retrigger", juce::Colour (0xff00e8ff));
+        setupToggle (lfo2Retrigger, "lfo2_retrigger", juce::Colour (0xffff2d9b));
+        setupToggle (lfo3Retrigger, "lfo3_retrigger", juce::Colour (0xff39ff14));
+        lfo1SyncBox.setTooltip ("LFO1: free Hz or host-tempo division");
+        lfo2SyncBox.setTooltip ("LFO2: free Hz or host-tempo division");
+        lfo3SyncBox.setTooltip ("LFO3: free Hz or host-tempo division");
+        lfo1Bipolar.setTooltip ("BIPOLAR: -1..+1 modulation. Off = 0..+1.");
+        lfo2Bipolar.setTooltip ("BIPOLAR: -1..+1 modulation. Off = 0..+1.");
+        lfo3Bipolar.setTooltip ("BIPOLAR: -1..+1 modulation. Off = 0..+1.");
+        lfo1Retrigger.setTooltip ("Reset LFO phase on MIDI note-on");
+        lfo2Retrigger.setTooltip ("Reset LFO phase on MIDI note-on");
+        lfo3Retrigger.setTooltip ("Reset LFO phase on MIDI note-on");
+
+        // Phase controls are host-automatable and share the existing knob renderer.
+        addKnob (lfoTab, "lfo_phase", "LFO1 PH", juce::Colour (0xff00e8ff));
+        addKnob (lfoTab, "lfo2_phase", "LFO2 PH", juce::Colour (0xffff2d9b));
+        addKnob (lfoTab, "lfo3_phase", "LFO3 PH", juce::Colour (0xff39ff14));
+
         // Apply custom shape to any LFO (reuse on other destinations via matrix)
         auto styleCopy = [] (juce::TextButton& b, juce::Colour c)
         {

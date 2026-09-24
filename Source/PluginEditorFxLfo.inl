@@ -10,6 +10,7 @@ public:
     FxMonitor() { startTimerHz (12); }
     void setKind (Kind k) { kind = k; }
     void setLevel (float v) { level = juce::jlimit (0.f, 1.f, v); }
+    void bindMeterSource (std::function<float()> fn) { meterSource = std::move (fn); }
     void setAccent (juce::Colour c) { accent = c; }
     void setBandGR (float lo, float mid, float hi)
     {
@@ -189,7 +190,14 @@ public:
         g.setColour (accent.withAlpha (0.25f));
         g.fillRect (plot.getRight() - 4.f, plot.getBottom() - bh, 3.f, bh);
     }
-    void timerCallback() override { phase += 0.08f + level * 0.1f; repaint(); }
+    void timerCallback() override
+    {
+        if (meterSource)
+            level = juce::jlimit (0.f, 1.f, meterSource());
+        else
+            phase += 0.08f + level * 0.1f;
+        repaint();
+    }
 
 private:
     void setBandFromX (float x, juce::Rectangle<float> plot)
@@ -213,6 +221,7 @@ private:
     juce::RangedAudioParameter* thrParam = nullptr;
     salek::SimpleCompressor* comp = nullptr;
     juce::Colour accent { 0xff00e8ff };
+    std::function<float()> meterSource;
 };
 
 /** Editable LFO shape — freehand paint (Serum 2 style)
@@ -283,7 +292,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.45f));
         g.drawRoundedRectangle (r, 8.f, 1.4f);
 
-        auto plot = r.reduced (8.f, 18.f);
+        auto plot = r.reduced (10.f, 20.f);
         const int AP = activePoints;
         // Grid matches active point density
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.10f));
@@ -322,7 +331,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.12f));
         g.fillPath (fill);
         g.setColour (juce::Colour (0xff00e8ff));
-        g.strokePath (wave, juce::PathStrokeType (2.2f));
+        g.strokePath (wave, juce::PathStrokeType (2.2f, juce::PathStrokeType::mitered, juce::PathStrokeType::butt));
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
@@ -402,21 +411,13 @@ private:
             v = std::round (v * 4.f) / 4.f;
             // Single-point edit only when Shift — clean corners, no smear
             writeActive (idx, v);
-            // Soft curve toward neighbors (Catmull-ish ease) for organic edges
-            if (idx > 0 && idx < AP - 1)
-            {
-                float prev = sampleAtActive (idx - 1);
-                float next = sampleAtActive (idx + 1);
-                // gentle ease on adjacent slots only
-                writeActive (idx - 1, prev * 0.85f + v * 0.15f);
-                writeActive (idx + 1, next * 0.85f + v * 0.15f);
-            }
+            // Shift is a hard grid edit: no neighbour smoothing, no hidden curve.
             lastIdx = idx;
             repaint();
             return;
         }
 
-        // Free draw: linear fill between last and current
+        // Free draw: strictly linear interpolation between points (no hidden curve).
         if (lastIdx < 0) writeActive (idx, v);
         else
         {
@@ -425,13 +426,19 @@ private:
             for (int i = a; i <= b; ++i)
             {
                 float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                // smoothstep curve between points
-                float s = tt * tt * (3.f - 2.f * tt);
+                float s = tt;
                 float pv = (lastIdx <= idx) ? va * (1.f - s) + v * s : v * (1.f - s) + va * s;
                 writeActive (i, pv);
             }
         }
         lastIdx = idx;
+        // Lock both endpoints exactly to the editable grid and keep them linear.
+        if (activePoints >= 2)
+        {
+            points[0] = juce::jlimit (-1.f, 1.f, points[0]);
+            points[N - 1] = juce::jlimit (-1.f, 1.f, points[N - 1]);
+        }
+        if (lfo) pushToLfo (*lfo);
         repaint();
     }
 };

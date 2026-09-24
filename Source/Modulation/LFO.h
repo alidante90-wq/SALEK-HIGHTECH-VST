@@ -9,11 +9,15 @@ public:
     static constexpr int TableSize = 32;
     static constexpr int NumShapes = 32;
 
-    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
+    void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; phaseInc=double(rate)/sr; if (! tableInitialised) loadPresetShape(0); }
     void reset() noexcept { phase=0; lastSH=0; }
     void setRate(float hz) noexcept { rate=juce::jlimit(0.01f,40.f,hz); phaseInc=double(rate)/sr; }
     void setWave(Wave w) noexcept { wave=w; }
     void setAmount(float a) noexcept { amount=juce::jlimit(0.f,1.f,a); }
+    void setBipolar(bool b) noexcept { bipolar = b; }
+    void setPhaseOffset(float p) noexcept { phaseOffset = juce::jlimit(0.f,1.f,p); }
+    void setRetrigger(bool r) noexcept { retrigger = r; }
+    void noteOnReset() noexcept { if (retrigger) reset(); }
     void setCustomPoint (int i, float v) noexcept
     {
         if (i >= 0 && i < TableSize)
@@ -83,10 +87,14 @@ public:
             }
             customTable[(size_t) i] = juce::jlimit (-1.f, 1.f, v);
         }
+        tableInitialised = true;
     }
 
+    void setPhase (float p) noexcept { phase = juce::jlimit (0.f, 0.999999f, p); }
+    float getAmount() const noexcept { return amount; }
+
     float process() noexcept {
-        float v=0, p=float(phase);
+        float v=0, p=float(phase + phaseOffset); p -= std::floor(p);
         switch(wave){
             case Wave::Sine: v=std::sin(p*juce::MathConstants<float>::twoPi); break;
             case Wave::Triangle: v=1-4*std::abs(p-0.5f); break;
@@ -140,7 +148,7 @@ public:
             }
         }
         phase+=phaseInc; if(phase>=1) phase-=1;
-        return v*amount;
+        return (bipolar ? v : (v * 0.5f + 0.5f)) * amount;
     }
 
     /** Advance LFO by whole audio block (fixes 1-sample-per-block bug = 500x too slow) */
@@ -169,5 +177,7 @@ private:
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;
     Wave wave=Wave::Sine;
     std::array<float, TableSize> customTable {};
+    bool tableInitialised = false;
+    float phaseOffset=0.f; bool bipolar=true; bool retrigger=true;
 };
 }

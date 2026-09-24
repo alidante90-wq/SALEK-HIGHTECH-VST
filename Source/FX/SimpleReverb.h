@@ -40,13 +40,15 @@ public:
         // early reflections taps
         earlyBuf.assign ((size_t) juce::jmax (256, (int) (0.1 * sr)), 0.f);
         earlyPos = 0;
+        mixSmooth.reset (sr, 0.012); decaySmooth.reset (sr, 0.02); dampingSmooth.reset (sr, 0.02);
+        mixSmooth.setCurrentAndTargetValue (0.f); decaySmooth.setCurrentAndTargetValue (decay); dampingSmooth.setCurrentAndTargetValue (damping);
         updateLengths();
     }
 
     void setSize (float s) noexcept { size = juce::jlimit (0.f, 1.f, s); updateLengths(); }
-    void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); }
-    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
-    void setDamping (float d) noexcept { damping = juce::jlimit (0.f, 1.f, d); }
+    void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); decaySmooth.setTargetValue (decay); }
+    void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); mixSmooth.setTargetValue (mix); }
+    void setDamping (float d) noexcept { damping = juce::jlimit (0.f, 1.f, d); dampingSmooth.setTargetValue (damping); }
     void setMode (int m) noexcept
     {
         int nm = juce::jlimit (0, 4, m);
@@ -55,9 +57,8 @@ public:
 
     void process (juce::AudioBuffer<float>& buffer)
     {
-        if (mix < 1e-4f) return;
-        const float wet = std::sqrt (mix); // more audible at mid settings
-        const float dry = 1.f - wet * 0.85f;
+        if (mixSmooth.getTargetValue() < 1e-4f && mixSmooth.getCurrentValue() < 1e-4f) return;
+        
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
 
@@ -67,16 +68,19 @@ public:
         if (mode == 2) fbBase = 0.50f; // Plate
         if (mode == 3) fbBase = 0.48f; // Chamber
         if (mode == 4) fbBase = 0.58f; // Spring
-        const float fb = juce::jlimit (0.15f, 0.97f, fbBase * (0.35f + decay * 0.75f));
-
-        // damping coeff: 0 = bright, 1 = dark (more LP in feedback)
-        const float dampAmt = 0.1f + damping * 0.85f;
 
         // early reflection gain
         const float earlyG = 0.35f + size * 0.25f;
 
         for (int i = 0; i < n; ++i)
         {
+            const float mixNow = mixSmooth.getNextValue();
+            const float decayNowSample = decaySmooth.getNextValue();
+            const float dampNow = dampingSmooth.getNextValue();
+            const float wet = std::sqrt (mixNow);
+            const float dry = 1.f - wet * 0.85f;
+            const float fb = juce::jlimit (0.15f, 0.97f, fbBase * (0.35f + decayNowSample * 0.75f));
+            const float dampAmt = 0.1f + dampNow * 0.85f;
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             float mono = 0.5f * (inL + inR);
@@ -208,6 +212,7 @@ private:
 
     double sr = 44100.0;
     float size = 0.5f, decay = 0.55f, mix = 0.f, damping = 0.35f;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> mixSmooth, decaySmooth, dampingSmooth;
     int mode = 0;
 
     std::array<std::vector<float>, kCombs> combL, combR;

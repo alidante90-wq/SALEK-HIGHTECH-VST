@@ -25,7 +25,7 @@ public:
     void prepareToPlay(double sr, int) {
         currentSampleRate = sr; osc1.prepare(sr); osc2.prepare(sr); osc3.prepare(sr);
         for (int u = 0; u < maxUnison; ++u) { uniOsc1[u].prepare(sr); uniOsc2[u].prepare(sr); uniOsc3[u].prepare(sr); }
-        filter.prepare(sr); lfo.prepare(sr); adsr.setSampleRate(sr); adsr.setParameters(adsrParams);
+        filterL.prepare(sr); filterR.prepare(sr); lfo.prepare(sr); adsr.setSampleRate(sr); adsr.setParameters(adsrParams);
         cutoffSmoother.reset(baseCutoff); cutoffSmoother.setTimeMs(5.f, sr);
     }
     void startNote(int note, float vel, juce::SynthesiserSound*, int) override {
@@ -86,9 +86,10 @@ public:
     void setOsc3Unison(int v,float d,float s){uniVoices3=juce::jlimit(1,maxUnison,v); uniDet3=d; uniSpr3=s; uniFreqDirty=true;}
     void setFm2to1(float v){fm2to1=v;} void setFm3to1(float v){fm3to1=v;} void setFm3to2(float v){fm3to2=v;}
     void setPm2to1(float v){pm2to1=v;} void setPm3to1(float v){pm3to1=v;} void setAm2to1(float v){am2to1=v;} void setRm2to1(float v){rm2to1=v;}
-    void setFilterCutoff(float) {} void setFilterBaseCutoff(float hz){baseCutoff=hz; filter.setCutoff(hz);}
-    void setFilterResonance(float r){filter.setResonance(r);} void setFilterDrive(float d){filter.setDrive(d);}
-    void setFilterMode(int m){ filter.setModeIndex (m); }
+    void setFilterCutoff(float hz){ baseCutoff=juce::jlimit(10.f,20000.f,hz); filterL.setCutoff(baseCutoff); filterR.setCutoff(baseCutoff); }
+    void setFilterBaseCutoff(float hz){ setFilterCutoff(hz); }
+    void setFilterResonance(float r){filterL.setResonance(r); filterR.setResonance(r);} void setFilterDrive(float d){filterL.setDrive(d); filterR.setDrive(d);}
+    void setFilterMode(int m){ filterL.setModeIndex (m); filterR.setModeIndex (m); }
     void setFilterEnvAmt(float a){filterEnvAmt=a;}
     void setNoiseLevel(float v){noiseLevel=juce::jlimit(0.f,1.f,v);}
     void setSubLevel(float v){subLevel=juce::jlimit(0.f,1.f,v);}
@@ -125,7 +126,7 @@ private:
     float uniDet1=12.f, uniDet2=12.f, uniDet3=12.f;
     float uniSpr1=0.7f, uniSpr2=0.7f, uniSpr3=0.7f;
     Wavetable sharedWavetable;
-    StateVariableFilter filter;
+    StateVariableFilter filterL, filterR;
     LFO lfo;
     SmoothedValue cutoffSmoother;
     double currentSampleRate = 44100;

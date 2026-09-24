@@ -102,6 +102,18 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
         g.fillRoundedRectangle (r, 8.f);
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.25f));
         g.drawRoundedRectangle (r, 8.f, 1.f);
+        // Selected model gets a clear visual state in the model strip.
+        const int nModels = modelStrip.size();
+        if (nModels > 0 && charPortraitIdx >= 0 && charPortraitIdx < nModels)
+        {
+            const float cell = r.getWidth() / (float) nModels;
+            auto sel = juce::Rectangle<float> (r.getX() + charPortraitIdx * cell + 1.f,
+                                               r.getY() + 16.f, cell - 2.f, r.getHeight() - 18.f);
+            g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.18f));
+            g.fillRoundedRectangle (sel, 7.f);
+            g.setColour (juce::Colour (0xffffd700).withAlpha (0.95f));
+            g.drawRoundedRectangle (sel, 7.f, 2.2f);
+        }
     }
 
     if (armedModSource >= 0)

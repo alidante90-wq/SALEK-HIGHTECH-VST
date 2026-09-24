@@ -47,12 +47,24 @@ void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, 
         btn.setButtonText ("•");
         return;
     }
+    juce::Colour accent (0xffffd700);
+    if (id == SalekAssets::IconId::LfoRandom || id == SalekAssets::IconId::Distortion)
+        accent = juce::Colour (0xffff2d9b);
+    else if (id == SalekAssets::IconId::LfoSync || id == SalekAssets::IconId::Randomize)
+        accent = juce::Colour (0xff39ff14);
+    else if (id == SalekAssets::IconId::Filter1 || id == SalekAssets::IconId::Filter2 || id == SalekAssets::IconId::Filter3)
+        accent = juce::Colour (0xff00e8ff);
+
+    auto* tile = new SalekIcon3DTile (accent);
+    btn.addAndMakeVisible (tile);
+    tile->setBounds (btn.getLocalBounds().reduced (1));
+
     auto* ic = new juce::ImageComponent();
     ic->setImage (img);
     ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
     ic->setInterceptsMouseClicks (false, false);
     btn.addAndMakeVisible (ic);
-    ic->setBounds (btn.getLocalBounds().reduced (3));
+    ic->setBounds (btn.getLocalBounds().reduced (5));
     ic->toFront (false);
 }
 
@@ -61,11 +73,15 @@ void SalekHightechAudioProcessorEditor::layoutButtonIcons()
     auto layoutOne = [] (juce::TextButton& btn)
     {
         for (int i = 0; i < btn.getNumChildComponents(); ++i)
+        {
+            if (auto* tile = dynamic_cast<SalekIcon3DTile*> (btn.getChildComponent (i)))
+                tile->setBounds (btn.getLocalBounds().reduced (1));
             if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
             {
-                ic->setBounds (btn.getLocalBounds().reduced (3));
+                ic->setBounds (btn.getLocalBounds().reduced (5));
                 ic->toFront (false);
             }
+        }
     };
     layoutOne (prevPreset); layoutOne (nextPreset); layoutOne (initBtn);
     layoutOne (savePresetBtn); layoutOne (loadPresetBtn); layoutOne (bankBtn);
@@ -219,8 +235,13 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         auto im = SalekAssets::loadCharPortrait (i);
         if (im.isValid())
         {
+            // Normalize portrait height so small source PNGs do not disappear in the model strip.
+            const int targetH = 104;
+            if (im.getHeight() != targetH)
+                im = im.rescaled (juce::jmax (1, im.getWidth() * targetH / juce::jmax (1, im.getHeight())),
+                                  targetH, juce::Graphics::highResamplingQuality);
             ic->setImage (im);
-            ic->setImagePlacement (juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom | juce::RectanglePlacement::onlyReduceInSize);
+            ic->setImagePlacement (juce::RectanglePlacement::xMid | juce::RectanglePlacement::yBottom);
         }
         ic->setInterceptsMouseClicks (true, false);
         addAndMakeVisible (ic);

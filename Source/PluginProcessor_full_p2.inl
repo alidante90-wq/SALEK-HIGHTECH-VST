@@ -5,10 +5,18 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
 
     // ---- Modulation sources first (then O(1) dest lookup) ----
     {
-        auto setLfo = [] (salek::LFO& lfo, float rate, int wave)
+        auto setLfo = [] (salek::LFO& lfo, float rate, int wave, int syncMode, float phase, bool bipolar, bool retrigger, double bpm)
         {
-            lfo.setRate (rate);
+            // Musical divisions are derived from host BPM; FREE keeps the existing Hz control.
+            static const double beats[] = { 0.0625, 0.125, 0.1875, 0.25, 0.375, 0.5, 0.75, 1.0, 2.0, 4.0, 8.0 };
+            double hz = juce::jlimit (0.01, 40.0, (double) rate);
+            if (syncMode > 0 && syncMode < 11 && bpm > 1.0)
+                hz = 60.0 / (bpm * beats[syncMode]);
+            lfo.setRate ((float) hz);
             lfo.setAmount (1.0f);
+            lfo.setPhaseOffset (phase);
+            lfo.setBipolar (bipolar);
+            lfo.setRetrigger (retrigger);
             static const salek::LFO::Wave waves[] = {
                 salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
                 salek::LFO::Wave::Square, salek::LFO::Wave::SAndH, salek::LFO::Wave::Custom,
@@ -17,9 +25,14 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int numSamples)
             };
             lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
         };
-        setLfo (lfo1, g("lfo_rate"),  (int) g("lfo_wave"));
-        setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"));
-        setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"));
+                double bpm = 120.0;
+        if (auto* ph = getPlayHead())
+            if (auto pos = ph->getPosition())
+                if (pos->getBpm().hasValue())
+                    bpm = juce::jlimit (20.0, 300.0, *pos->getBpm());
+        setLfo (lfo1, g("lfo_rate"),  (int) g("lfo_wave"), (int) g("lfo_sync"),  g("lfo_phase"),  g("lfo_bipolar") > 0.5f,  g("lfo_retrigger") > 0.5f,  bpm);
+        setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"), (int) g("lfo2_sync"), g("lfo2_phase"), g("lfo2_bipolar") > 0.5f, g("lfo2_retrigger") > 0.5f, bpm);
+        setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"), (int) g("lfo3_sync"), g("lfo3_phase"), g("lfo3_bipolar") > 0.5f, g("lfo3_retrigger") > 0.5f, bpm);
         const int ns = juce::jmax (1, numSamples);
         modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, lfo1.processBlock (ns) * g("lfo_amount"));
         modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, lfo2.processBlock (ns) * g("lfo2_amount"));
@@ -194,16 +207,21 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    applyParamsToEngine (buffer.getNumSamples());
-    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
+    // Capture performance MIDI before applying modulation so velocity/mod-wheel are current for this block.
     for (const auto metadata : midi)
     {
         const auto msg = metadata.getMessage();
         if (msg.isNoteOn())
+        {
             lastNoteVelocity = msg.getFloatVelocity();
+            lfo1.noteOnReset(); lfo2.noteOnReset(); lfo3.noteOnReset();
+        }
         else if (msg.isController() && msg.getControllerNumber() == 1)
             modWheelValue = msg.getControllerValue() / 127.f;
     }
+
+    applyParamsToEngine (buffer.getNumSamples());
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
 
     juce::MidiBuffer routed;
     routed.addEvents (midi, 0, buffer.getNumSamples(), 0);
@@ -258,10 +276,19 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         return 0.f;
     };
    
+    // Capture actual post-stage peaks for honest UI metering (no decorative fake waveform level).
+    auto captureFx = [&] (int index)
+    {
+        float peak = 0.f;
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+            peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, buffer.getNumSamples()));
+        if (index >= 0 && index < 8) fxPeaks[(size_t) index].store (juce::jlimit (0.f, 1.f, peak));
+    };
+    for (auto& p : fxPeaks) p.store (0.f);
+
     const float bassify = apvts.getRawParameterValue("bassify")->load();
     if (bassify > 1e-4f && ! bypassed ("bassify_bypass"))
     {
-        static float lp1L = 0.f, lp1R = 0.f, lp2L = 0.f, lp2R = 0.f;
         const float a1 = 0.04f + bassify * 0.06f;
         const float a2 = 0.12f + bassify * 0.10f;
         const float amount = bassify;
@@ -269,9 +296,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
-            lp1L += a1 * (L - lp1L); lp1R += a1 * (R - lp1R);
-            lp2L += a2 * (lp1L - lp2L); lp2R += a2 * (lp1R - lp2R);
-            float sub = 0.5f * (lp2L + lp2R);
+            bassLp1L += a1 * (L - bassLp1L); bassLp1R += a1 * (R - bassLp1R);
+            bassLp2L += a2 * (bassLp1L - bassLp2L); bassLp2R += a2 * (bassLp1R - bassLp2R);
+            float sub = 0.5f * (bassLp2L + bassLp2R);
             float grit = amount * 0.4f;
             sub = sub + grit * sub * sub * (sub >= 0.f ? 1.f : -1.f);
             sub = std::tanh (sub * (1.2f + amount * 1.6f));
@@ -281,6 +308,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             if (buffer.getNumChannels() > 1)
                 buffer.setSample (1, i, R * dryKeep + wet);
         }
+        captureFx (3);
     }
 
     // Smart macro scales for the FX render stage.
@@ -302,6 +330,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         reverb.setMix (rMix);
         reverb.setSize (g ("reverb_size"));
         reverb.setDecay (g ("reverb_decay"));
+        reverb.setDamping (g ("reverb_damping"));
         reverb.setMode ((int) g ("reverb_mode"));
 
         const float cMix = juce::jlimit (0.f, 1.f, g ("chorus_mix") * widthScale);
@@ -344,8 +373,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // Mix=0 early-out saves a lot with 2+ instances in FL
     if (! bypassed ("chorus_bypass") && g ("chorus_mix") > 1e-4f)  chorus.process (buffer);
+    captureFx (0);
     if (! bypassed ("phaser_bypass") && g ("phaser_mix") > 1e-4f)  phaser.process (buffer);
+    captureFx (6);
     if (! bypassed ("dist_bypass") && g ("dist_mix") > 1e-4f)      distortion.process (buffer);
+    captureFx (7);
     // Formant / vocal (SALEK signature)
     if (g ("formant_amt") > 1e-4f)
     {
@@ -369,9 +401,13 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (std::abs (g ("eq_low")) > 0.05f || std::abs (g ("eq_mid")) > 0.05f || std::abs (g ("eq_high")) > 0.05f)
             eq.process (buffer);
     }
+    captureFx (5);
     if (! bypassed ("comp_bypass") && g ("comp_mix") > 1e-4f)    compressor.process (buffer);
+    captureFx (4);
     if (! bypassed ("delay_bypass") && g ("delay_mix") > 1e-4f)   delay.process (buffer);
+    captureFx (1);
     if (! bypassed ("reverb_bypass") && g ("reverb_mix") > 1e-4f) reverb.process (buffer);
+    captureFx (2);
     {
         const float az = std::abs (g ("spatial_azim"));
         const float ds = g ("spatial_dist");
@@ -403,8 +439,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     const float drive = apvts.getRawParameterValue("master_drive")->load();
     const float gMul = gain * (0.85f + drive * 0.1f);
     // SHAE Master Core: DC block → mono bass → soft clip → ceiling
-    static float dcL = 0.f, dcR = 0.f;
-    static float lpL = 0.f, lpR = 0.f;
     const float bassC = 0.08f; // ~120Hz @ 48k one-pole
     const int nS = buffer.getNumSamples();
     const int nCh = buffer.getNumChannels();
@@ -416,14 +450,14 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         {
             float xL = L[i] * gMul;
             float xR = R[i] * gMul;
-            dcL += 0.0005f * (xL - dcL); xL -= dcL;
-            dcR += 0.0005f * (xR - dcR); xR -= dcR;
+            masterDcL += 0.0005f * (xL - masterDcL); xL -= masterDcL;
+            masterDcR += 0.0005f * (xR - masterDcR); xR -= masterDcR;
             // Mono low end (stable club/system compatibility)
-            lpL += bassC * (xL - lpL);
-            lpR += bassC * (xR - lpR);
-            float midBass = 0.5f * (lpL + lpR);
-            float hiL = xL - lpL;
-            float hiR = xR - lpR;
+            masterLpL += bassC * (xL - masterLpL);
+            masterLpR += bassC * (xR - masterLpR);
+            float midBass = 0.5f * (masterLpL + masterLpR);
+            float hiL = xL - masterLpL;
+            float hiR = xR - masterLpR;
             xL = midBass + hiL;
             xR = midBass + hiR;
             xL = salek::shae::softClipComp (xL, drive * 0.6f);
@@ -466,16 +500,15 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
 
     {
-        static float hpL = 0.f, hpR = 0.f;
-        const float coeff = 0.08f;
+            const float coeff = 0.08f;
         for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
             float L = buffer.getSample (0, i);
             float R = buffer.getNumChannels() > 1 ? buffer.getSample (1, i) : L;
-            hpL += coeff * ((L - hpL));
-            hpR += coeff * ((R - hpR));
-            float airL = (L - hpL) * 0.18f;
-            float airR = (R - hpR) * 0.18f;
+            airHpL += coeff * ((L - airHpL));
+            airHpR += coeff * ((R - airHpR));
+            float airL = (L - airHpL) * 0.18f;
+            float airR = (R - airHpR) * 0.18f;
             buffer.setSample (0, i, L + airL);
             if (buffer.getNumChannels() > 1)
                 buffer.setSample (1, i, R + airR);
@@ -492,12 +525,36 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     juce::XmlElement root ("SALEK_STATE");
-    root.setAttribute ("version", 1);
+    root.setAttribute ("version", 2);
     root.setAttribute ("program", currentProgram);
+
     if (auto ap = apvts.copyState().createXml())
         root.addChildElement (new juce::XmlElement (*ap));
+
+    // Mod-matrix routes and custom LFO tables are DSP state, not APVTS parameters.
+    auto* matrixXml = root.createNewChildElement ("MOD_MATRIX");
+    for (const auto& route : modMatrix.getRoutes())
+        if (route.active)
+        {
+            auto* x = matrixXml->createNewChildElement ("ROUTE");
+            x->setAttribute ("src", (int) route.source);
+            x->setAttribute ("dst", (int) route.dest);
+            x->setAttribute ("amount", (double) route.amount);
+        }
+
+    auto* lfoXml = root.createNewChildElement ("LFO_TABLES");
+    const salek::LFO* lfos[] = { &lfo1, &lfo2, &lfo3 };
+    for (int li = 0; li < 3; ++li)
+    {
+        auto* x = lfoXml->createNewChildElement ("LFO");
+        x->setAttribute ("index", li);
+        for (int i = 0; i < salek::LFO::TableSize; ++i)
+            x->setAttribute ("p" + juce::String (i), (double) lfos[li]->getCustomPoint (i));
+    }
+
     copyXmlToBinary (root, destData);
 }
+
 void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
@@ -506,6 +563,29 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
         {
             if (auto* ap = xml->getChildByName (apvts.state.getType()))
                 apvts.replaceState (juce::ValueTree::fromXml (*ap));
+
+            modMatrix.clear();
+            if (auto* mx = xml->getChildByName ("MOD_MATRIX"))
+                for (auto* x : mx->getChildIterator())
+                    if (x->hasTagName ("ROUTE"))
+                        modMatrix.addRoute (
+                            (salek::ModMatrix::Source) juce::jlimit (0, (int) salek::ModMatrix::Source::NumSources - 1, x->getIntAttribute ("src", 0)),
+                            (salek::ModMatrix::Dest) juce::jlimit (0, (int) salek::ModMatrix::Dest::NumDests - 1, x->getIntAttribute ("dst", 0)),
+                            (float) x->getDoubleAttribute ("amount", 0.0));
+
+            if (auto* lx = xml->getChildByName ("LFO_TABLES"))
+            {
+                salek::LFO* lfos[] = { &lfo1, &lfo2, &lfo3 };
+                for (auto* x : lx->getChildIterator())
+                {
+                    if (! x->hasTagName ("LFO")) continue;
+                    const int li = juce::jlimit (0, 2, x->getIntAttribute ("index", 0));
+                    for (int i = 0; i < salek::LFO::TableSize; ++i)
+                        lfos[li]->setCustomPoint (i, (float) x->getDoubleAttribute (
+                            "p" + juce::String (i), lfos[li]->getCustomPoint (i)));
+                }
+            }
+
             const int prog = xml->getIntAttribute ("program", -1);
             if (prog >= 0 && prog < (int) factoryPresets.size())
                 currentProgram = prog;

@@ -44,11 +44,11 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         // ONLY place for model strip: above keyboard (never over knobs)
-        auto bottom = full.removeFromBottom (64 + 70);
-        auto strip = bottom.removeFromTop (70).reduced (4, 2);
+        auto bottom = full.removeFromBottom (64 + 112);
+        auto strip = bottom.removeFromTop (88).reduced (4, 2);
         // dark bar so models readable
         modelStripBounds = strip;
-        modelStripTitle.setBounds (strip.removeFromTop (14));
+        modelStripTitle.setBounds (strip.removeFromTop (18));
         modelStripTitle.setVisible (true);
         modelStripTitle.toFront (false);
         const int n = modelStrip.size();
@@ -77,7 +77,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.50f)); // half presets, half model
+        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.47f)); // half presets, half model
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -97,14 +97,14 @@ void SalekHightechAudioProcessorEditor::resized()
         }
         auto pb = presetTab.getLocalBounds().reduced (2);
         // Two-line toolbar — bigger hit targets
-        auto row1 = pb.removeFromTop (28);
+        auto row1 = pb.removeFromTop (38);
         presetToggle.setBounds (row1.removeFromLeft (32).reduced (1, 1));
         if (! presetCollapsed)
         {
             prevPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
             nextPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
             initBtn.setBounds (row1.removeFromLeft (row1.getWidth()).reduced (1, 1));
-            auto row2 = pb.removeFromTop (28);
+            auto row2 = pb.removeFromTop (34);
             savePresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 3).reduced (1, 1));
             loadPresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 2).reduced (1, 1));
             bankBtn.setBounds (row2.reduced (1, 1));
@@ -252,7 +252,8 @@ void SalekHightechAudioProcessorEditor::resized()
         {
         // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
         envTab.setBounds (b.removeFromBottom (130));
-        filterTab.setBounds (b.removeFromRight (180));
+        const int filterW = juce::jlimit (300, 380, b.getWidth() / 3);
+        filterTab.setBounds (b.removeFromRight (filterW));
         auto oscFull = b;
         oscTab.setBounds (oscFull);
         oscTab.setVisible (true);
@@ -268,7 +269,7 @@ void SalekHightechAudioProcessorEditor::resized()
         // SALEK icons over OSC / FILTER headers
         if (tabSectionIcons.size() >= 5)
         {
-            const int ih = 28;
+            const int ih = 32;
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, ih);
@@ -310,9 +311,9 @@ void SalekHightechAudioProcessorEditor::resized()
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, oa.getHeight()).reduced (2, 2);
-                auto monH = juce::jlimit (36, 56, col.getHeight() / 5);
+                auto monH = juce::jlimit (52, 76, col.getHeight() / 5);
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
-                shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
+                shapes[c]->setBounds (col.removeFromTop (22).reduced (1));
 
                 // Equal rows so knobs stay readable
                 const int rowH = juce::jmax (48, col.getHeight() / 5);
@@ -341,7 +342,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (48).reduced (2));
+                filterDisplay->setBounds (fr.removeFromTop (112).reduced (2));
             auto modeRow = fr.removeFromTop (20);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
@@ -519,6 +520,10 @@ void SalekHightechAudioProcessorEditor::resized()
         auto bankRow = r.removeFromTop (24);
         lfoPointsBox.setBounds (bankRow.removeFromRight (90).reduced (2));
         lfoShapeBank.setBounds (bankRow.reduced (2));
+        auto syncRow = r.removeFromTop (24);
+        lfo1SyncBox.setBounds (syncRow.removeFromLeft (syncRow.getWidth() / 3).reduced (2));
+        lfo2SyncBox.setBounds (syncRow.removeFromLeft (syncRow.getWidth() / 2).reduced (2));
+        lfo3SyncBox.setBounds (syncRow.reduced (2));
         auto copyRow = r.removeFromTop (22);
         const int cw = copyRow.getWidth() / 9;
         lfoCopyTo1.setBounds (copyRow.removeFromLeft (cw).reduced (1));
@@ -530,11 +535,20 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoLoadB.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoSaveC.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoLoadC.setBounds (copyRow.reduced (1));
-        auto knobArea = r.removeFromBottom (96);
+        auto toggleRow = r.removeFromBottom (24);
+        const int tw = toggleRow.getWidth() / 6;
+        juce::ToggleButton* bip[] = { &lfo1Bipolar, &lfo2Bipolar, &lfo3Bipolar };
+        juce::ToggleButton* ret[] = { &lfo1Retrigger, &lfo2Retrigger, &lfo3Retrigger };
+        for (int i = 0; i < 3; ++i)
         {
-            const char* lids[] = { "lfo_rate","lfo_amount","lfo2_rate","lfo2_amount","lfo3_rate","lfo3_amount" };
-            const int lfoCw = juce::jmax (1, knobArea.getWidth() / 6);
-            for (int i = 0; i < 6; ++i)
+            bip[i]->setBounds (toggleRow.getX() + i * tw, toggleRow.getY(), tw - 2, toggleRow.getHeight());
+            ret[i]->setBounds (toggleRow.getX() + (i + 3) * tw, toggleRow.getY(), tw - 2, toggleRow.getHeight());
+        }
+        auto knobArea = r.removeFromBottom (112);
+        {
+            const char* lids[] = { "lfo_rate","lfo_amount","lfo_phase","lfo2_rate","lfo2_amount","lfo2_phase","lfo3_rate","lfo3_amount","lfo3_phase" };
+            const int lfoCw = juce::jmax (1, knobArea.getWidth() / 9);
+            for (int i = 0; i < 9; ++i)
             {
                 Knob* k = nullptr;
                 for (auto& kk : knobs)

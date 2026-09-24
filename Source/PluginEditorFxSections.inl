@@ -91,6 +91,7 @@
         addKnob (fxTab, "reverb_mix", "REVERB", O);
         addKnob (fxTab, "reverb_size", "R SIZE", C);
         addKnob (fxTab, "reverb_decay", "R DECAY", M);
+        addKnob (fxTab, "reverb_damping", "R DAMP", G);
         // 67 BASSIFY
         addKnob (fxTab, "bassify", "BASSIFY", V);
         // 68-71 COMP (global) + independent LO/MID/HI thresholds
