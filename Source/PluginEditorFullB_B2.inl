@@ -73,6 +73,7 @@ bool SalekHightechAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
         if (! computerKeyboardHeldNotes.contains (note))
         {
             computerKeyboardHeldNotes.add (note);
+            computerKeyboardHeldKeys.add (keyIndex);
             processor.getKeyboardState().noteOn (1, note, 0.92f);
         }
         return true;
@@ -86,15 +87,14 @@ bool SalekHightechAudioProcessorEditor::keyStateChanged (bool isKeyDown)
 {
     juce::ignoreUnused (isKeyDown);
     const juce::String keys = "zsxdcvgbhnjm,l.;/";
-    for (int i = computerKeyboardHeldNotes.size(); --i >= 0;)
+    for (int i = computerKeyboardHeldKeys.size(); --i >= 0;)
     {
-        const int note = computerKeyboardHeldNotes.getUnchecked (i);
-        const int index = note - computerKeyboardBase;
-        if (index < 0 || index >= keys.length()
-            || ! juce::KeyPress::isKeyCurrentlyDown (keys[index]))
+        const int index = computerKeyboardHeldKeys.getUnchecked (i);
+        if (index < 0 || index >= keys.length() || ! juce::KeyPress::isKeyCurrentlyDown (keys[index]))
         {
-            processor.getKeyboardState().noteOff (1, note, 0.0f);
+            processor.getKeyboardState().noteOff (1, computerKeyboardHeldNotes.getUnchecked (i), 0.0f);
             computerKeyboardHeldNotes.remove (i);
+            computerKeyboardHeldKeys.remove (i);
         }
     }
     if (keyboard.keyStateChanged (isKeyDown))
