@@ -234,7 +234,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
         float sampleL = fL + dryL;
         float sampleR = fR + dryR;
         // Hard mute if all levels essentially off (noise/sub included)
-        const float g = env * currentVelocity * 0.38f; // slightly softer headroom for modern stack
+        const float lowNoteLift = currentMidiNote < 36 ? 1.28f : (currentMidiNote < 48 ? 1.14f : 1.0f);
+        const float g = env * currentVelocity * 0.45f * lowNoteLift;
         sampleL *= g;
         sampleR *= g;
 

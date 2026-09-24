@@ -23,10 +23,10 @@ Professional JUCE 8 **VST3 + Standalone** wavetable synthesizer for Windows.
 - Virus-inspired SVF filter + drive
 - ADSR + filter env
 - LFO + macros
-- FX: Chorus → Delay → Reverb
-- Arpeggiator + 16-step sequencer
-- Factory presets
-- MIDI keyboard
+- FX control room: EQ → Compressor → Reverb → Delay → Distortion, with live meters and module power switches; chorus, phaser, bass, and spatial tools remain available
+- Arpeggiator + 16-step sequencer with rate, octave, gate, pattern length, swing, and per-step velocity/gate/pitch/accent
+- Factory banks organized into BASS, LEAD, SYNTH, PLUCK, PAD, ATMOSPHERE, and FX families
+- MIDI keyboard plus computer-keyboard chromatic row (`Z` through `/`); `[` and `]` shift octaves, and the default row begins at C2
 
 ## Tabs
 

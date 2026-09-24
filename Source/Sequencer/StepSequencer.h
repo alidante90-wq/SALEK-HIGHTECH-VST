@@ -40,6 +40,10 @@ public:
         updateTiming();
     }
 
+    void setPatternLength (int length) noexcept { patternLength = juce::jlimit (1, NumSteps, length); }
+    void setSwing (float amount) noexcept { swing = juce::jlimit (0.0f, 0.75f, amount); }
+    void setGate (float amount) noexcept { gateAmount = juce::jlimit (0.05f, 1.0f, amount); }
+
     bool isEnabled() const noexcept { return enabled; }
 
     void setEnabled (bool e) noexcept
@@ -97,8 +101,9 @@ public:
                     currentNote = -1;
                 }
 
-                currentStep = (currentStep + 1) % NumSteps;
-                samplesUntilNext += samplesPerStep;
+                currentStep = (currentStep + 1) % patternLength;
+                const bool oddStep = (currentStep & 1) != 0;
+                samplesUntilNext += samplesPerStep * (oddStep ? (1.0 - swing) : (1.0 + swing));
 
                 auto& st = steps[static_cast<size_t> (currentStep)];
                 currentMod = st.modValue;
@@ -110,7 +115,7 @@ public:
                     outMidi.addEvent (juce::MidiMessage::noteOn (1, note, vel), i);
                     currentNote = note;
                     pendingNoteOff = note;
-                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate));
+                    gateSamplesLeft = (int) (samplesPerStep * juce::jlimit (0.05f, 1.0f, st.gate * gateAmount));
                 }
             }
         }
@@ -151,6 +156,9 @@ private:
     double sr = 44100.0;
     double bpm = 120.0;
     int rateDivisor = 1;
+    int patternLength = NumSteps;
+    double swing = 0.0;
+    float gateAmount = 1.0f;
     double samplesPerStep = 5512.5;
     double samplesUntilNext = 0.0;
     int currentStep = 0;

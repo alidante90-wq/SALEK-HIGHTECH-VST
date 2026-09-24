@@ -166,6 +166,9 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (seqOn)
     {
         stepSequencer.setRateDivisor ((int) apvts.getRawParameterValue("seq_rate")->load());
+        stepSequencer.setPatternLength ((int) apvts.getRawParameterValue("seq_length")->load());
+        stepSequencer.setSwing (apvts.getRawParameterValue("seq_swing")->load());
+        stepSequencer.setGate (apvts.getRawParameterValue("seq_gate")->load());
         for (const auto metadata : midi)
         {
             const auto msg = metadata.getMessage();
@@ -178,6 +181,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         arpeggiator.setRateDivisor ((int) apvts.getRawParameterValue("arp_rate")->load());
         arpeggiator.setOctaves ((int) apvts.getRawParameterValue("arp_octaves")->load());
+        arpeggiator.setGate (apvts.getRawParameterValue("arp_gate")->load());
         juce::MidiBuffer arpIn;
         for (const auto metadata : routed)
         {

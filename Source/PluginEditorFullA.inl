@@ -518,6 +518,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         addKnob (seqTab, "arp_rate", "ARP RATE", C);
         addKnob (seqTab, "arp_octaves", "ARP OCT", M);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
+        addKnob (seqTab, "arp_gate", "ARP GATE", O);
+        addKnob (seqTab, "seq_length", "STEPS", C);
+        addKnob (seqTab, "seq_swing", "SWING", M);
+        addKnob (seqTab, "seq_gate", "SEQ GATE", O);
         // Extra voice colour — registered last so indices of FX/MOD stay stable
         addKnob (envTab, "glide", "GLIDE", C);
         addKnob (envTab, "poly_voices", "VOICES", M);
@@ -770,7 +774,7 @@ void SalekHightechAudioProcessorEditor::rebuildPresetRows()
             cats.add (cat);
     }
     // Prefer order matching mockup
-    const juce::StringArray preferred { "OTHER","KICK","BASS","ACID","LEAD","FM","PAD","RETRO","FX","SQUEEK","KEYS","PLUCK","ARP","SALEK","AMBIENT","USER" };
+    const juce::StringArray preferred { "OTHER","KICK","BASS","LEAD","SYNTH","PLUCK","PAD","ATMOSPHERE","FX","ACID","FM","RETRO","SQUEEK","KEYS","ARP","SALEK","AMBIENT","USER" };
     juce::StringArray ordered;
     for (auto& p : preferred)
         if (cats.contains (p, false)) ordered.add (p);

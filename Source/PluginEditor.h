@@ -334,6 +334,8 @@ private:
     juce::TextButton magicHold { "HOLD" };
     juce::Label magicHint;
     juce::MidiKeyboardComponent keyboard;
+    int computerKeyboardBase = 36; // computer-keyboard C2; convenient bass range
+    juce::Array<int> computerKeyboardHeldNotes;
     float phaseLights = 0.0f;
     float animPhase = 0.0f;
     juce::Colour themeAccent { 0xff00e8ff }, themeAccent2 { 0xffffd700 }, themePanelBg { 0xff0a0614 };

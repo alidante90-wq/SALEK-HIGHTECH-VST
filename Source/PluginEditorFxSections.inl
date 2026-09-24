@@ -64,9 +64,12 @@
         }
         fxTab.addAndMakeVisible (mon);
 
-        fxBypass[i].setButtonText ("BYP");
+        fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("⏻"));
         fxBypass[i].setClickingTogglesState (true);
         fxBypass[i].setColour (juce::ToggleButton::textColourId, monCols[i]);
+        fxBypass[i].setColour (juce::TextButton::buttonColourId, juce::Colour (0xff080b18));
+        fxBypass[i].setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff682033));
+        fxBypass[i].setTooltip ("Module power: illuminated means bypassed");
         fxTab.addAndMakeVisible (fxBypass[i]);
         btnAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
             processor.getAPVTS(), bypassIds[i], fxBypass[i]));

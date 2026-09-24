@@ -57,6 +57,26 @@ void SalekHightechAudioProcessorEditor::mouseWheelMove (const juce::MouseEvent& 
 // Computer keyboard → MIDI even while mouse is on knobs / other controls
 bool SalekHightechAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
 {
+    // A fixed chromatic piano row is predictable across hosts and starts in C2,
+    // so bass patches are immediately playable. [ and ] shift the whole row.
+    const juce::String keys = "zsxdcvgbhnjm,l.;/";
+    const auto ch = juce::CharacterFunctions::toLowerCase (key.getTextCharacter());
+    if (ch == '[' || ch == ']')
+    {
+        computerKeyboardBase = juce::jlimit (24, 84, computerKeyboardBase + (ch == '[' ? -12 : 12));
+        return true;
+    }
+    const int keyIndex = keys.indexOfChar (ch);
+    if (keyIndex >= 0)
+    {
+        const int note = juce::jlimit (0, 127, computerKeyboardBase + keyIndex);
+        if (! computerKeyboardHeldNotes.contains (note))
+        {
+            computerKeyboardHeldNotes.add (note);
+            processor.getKeyboardState().noteOn (1, note, 0.92f);
+        }
+        return true;
+    }
     if (keyboard.keyPressed (key))
         return true;
     return false;
@@ -64,6 +84,19 @@ bool SalekHightechAudioProcessorEditor::keyPressed (const juce::KeyPress& key)
 
 bool SalekHightechAudioProcessorEditor::keyStateChanged (bool isKeyDown)
 {
+    juce::ignoreUnused (isKeyDown);
+    const juce::String keys = "zsxdcvgbhnjm,l.;/";
+    for (int i = computerKeyboardHeldNotes.size(); --i >= 0;)
+    {
+        const int note = computerKeyboardHeldNotes.getUnchecked (i);
+        const int index = note - computerKeyboardBase;
+        if (index < 0 || index >= keys.length()
+            || ! juce::KeyPress::isKeyCurrentlyDown (keys[index]))
+        {
+            processor.getKeyboardState().noteOff (1, note, 0.0f);
+            computerKeyboardHeldNotes.remove (i);
+        }
+    }
     if (keyboard.keyStateChanged (isKeyDown))
         return true;
     return false;
