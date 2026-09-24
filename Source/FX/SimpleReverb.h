@@ -41,11 +41,10 @@ public:
         earlyBuf.assign ((size_t) juce::jmax (256, (int) (0.1 * sr)), 0.f);
         earlyPos = 0;
         updateLengths();
-        mixSmoothValue = mix;
     }
 
     void setSize (float s) noexcept { s = juce::jlimit (0.f, 1.f, s); if (std::abs (s - size) > 0.0005f) { size = s; updateLengths(); } }
-    void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); updateFeedback(); }
+    void setDecay (float d) noexcept { decay = juce::jlimit (0.05f, 0.98f, d); }
     void setMix (float m) noexcept { mix = juce::jlimit (0.f, 1.f, m); }
     void setDamping (float d) noexcept { damping = juce::jlimit (0.f, 1.f, d); }
     void setMode (int m) noexcept
@@ -71,17 +70,22 @@ public:
         const int n = buffer.getNumSamples();
         const int ch = buffer.getNumChannels();
 
-        // Translate decay to RT60, then derive stable feedback per delay line.
-        const float dampHz = juce::jmap (damping, 18000.0f, 900.0f);
-        const float dampAmt = 1.0f - std::exp (-2.0f * juce::MathConstants<float>::pi * dampHz / (float) sr);
+        // RT-ish feedback: decay 0→0.98 maps to stable fb
+        float fbBase = 0.52f;
+        if (mode == 1) fbBase = 0.62f; // Hall
+        if (mode == 2) fbBase = 0.50f; // Plate
+        if (mode == 3) fbBase = 0.48f; // Chamber
+        if (mode == 4) fbBase = 0.58f; // Spring
+        const float fb = juce::jlimit (0.15f, 0.94f, fbBase * (0.38f + decay * 0.72f));
+
+        // damping coeff: 0 = bright, 1 = dark (more LP in feedback)
+        const float dampAmt = 0.08f + damping * 0.82f;
 
         // early reflection gain
         const float earlyG = 0.35f + size * 0.25f;
-        const float mixSmooth = 1.0f - std::exp (-1.0f / (0.015f * (float) sr));
 
         for (int i = 0; i < n; ++i)
         {
-            mixSmoothValue += mixSmooth * (mix - mixSmoothValue);
             float inL = buffer.getSample (0, i);
             float inR = ch > 1 ? buffer.getSample (1, i) : inL;
             float mono = 0.5f * (inL + inR);
@@ -114,11 +118,11 @@ public:
                 dampL[c] += dampAmt * (oL - dampL[c]);
                 dampR[c] += dampAmt * (oR - dampR[c]);
 
-                const float sideL = inL - mono, sideR = inR - mono;
-                const float injL = mono + sideL * 0.32f + early * earlyG * ((c & 1) ? 0.14f : 0.20f);
-                const float injR = mono + sideR * 0.32f + early * earlyG * ((c & 1) ? 0.20f : 0.14f);
-                combL[c][(size_t) p] = injL + dampL[c] * combFeedback[c];
-                combR[c][(size_t) p] = injR + dampR[c] * combFeedback[c];
+                // slight L/R detune of input for width
+                float injL = mono + inL * 0.25f + early * earlyG * ((c & 1) ? 0.6f : 1.f);
+                float injR = mono + inR * 0.25f + early * earlyG * ((c & 1) ? 1.f : 0.6f);
+                combL[c][(size_t) p] = injL + dampL[c] * fb;
+                combR[c][(size_t) p] = injR + dampR[c] * fb;
                 combPos[c] = (p + 1) % len;
 
                 wetL += oL;
@@ -135,11 +139,11 @@ public:
                 auto ap = [&] (std::vector<float>& buf, int& pos, float x) -> float
                 {
                     int p = pos % len;
-                    const float delayed = buf[(size_t) p];
-                    const float out = delayed - g * x;
-                    buf[(size_t) p] = x + g * out;
+                    float bufOut = buf[(size_t) p];
+                    float in = x + bufOut * g;
+                    buf[(size_t) p] = in;
                     pos = (p + 1) % len;
-                    return out;
+                    return bufOut - in * g;
                 };
                 wetL = ap (apL[a], apPosL[a], wetL);
                 wetR = ap (apR[a], apPosR[a], wetR);
@@ -168,8 +172,8 @@ public:
             const float wetBoost = 1.28f;
             wetL = (wetL + early * earlyG) * wetBoost;
             wetR = (wetR + early * earlyG * 0.92f) * wetBoost;
-            buffer.setSample (0, i, inL * (1.f - mixSmoothValue) + wetL * mixSmoothValue);
-            if (ch > 1) buffer.setSample (1, i, inR * (1.f - mixSmoothValue) + wetR * mixSmoothValue);
+            buffer.setSample (0, i, inL * (1.f - mix) + wetL * mix);
+            if (ch > 1) buffer.setSample (1, i, inR * (1.f - mix) + wetR * mix);
         }
     }
 
@@ -209,17 +213,6 @@ private:
             int len = juce::jmax (8, (int) (apMs[mode][i] * 0.001f * scale * (float) sr));
             apLen[i] = juce::jmin (len, (int) apL[i].size());
         }
-        updateFeedback();
-    }
-
-    void updateFeedback() noexcept
-    {
-        const float rt60 = 0.25f + decay * decay * 8.0f;
-        for (int i = 0; i < kCombs; ++i)
-        {
-            const float delaySeconds = (float) juce::jmax (1, combLen[i]) / (float) sr;
-            combFeedback[i] = juce::jlimit (0.0f, 0.985f, std::pow (0.001f, delaySeconds / rt60));
-        }
     }
 
     double sr = 44100.0;
@@ -229,12 +222,10 @@ private:
     std::array<std::vector<float>, kCombs> combL, combR;
     std::array<std::vector<float>, kAPs>   apL, apR;
     std::array<int, kCombs> combPos {}, combLen {};
-    std::array<float, kCombs> combFeedback {};
     std::array<int, kAPs>   apPosL {}, apPosR {}, apLen {};
     std::array<float, kCombs> dampL {}, dampR {};
 
     std::vector<float> earlyBuf;
     int earlyPos = 0;
-    float mixSmoothValue = 0.0f;
 };
 }

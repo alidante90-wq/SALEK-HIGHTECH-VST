@@ -20,7 +20,6 @@ public:
     void setOsc1Pan (float v); void setOsc2Pan (float v); void setOsc3Pan (float v);
     void setOsc1Octave (int v); void setOsc2Octave (int v); void setOsc3Octave (int v);
     void setOsc1Semi (int v); void setOsc2Semi (int v); void setOsc3Semi (int v);
-    void setOsc1CoarsePitch (int v); void setOsc2CoarsePitch (int v); void setOsc3CoarsePitch (int v);
     void setOsc1Fine (float v); void setOsc2Fine (float v); void setOsc3Fine (float v);
     void setOsc1Detune (float v); void setOsc2Detune (float v); void setOsc3Detune (float v);
     void setOsc1Phase (float v); void setOsc2Phase (float v); void setOsc3Phase (float v);

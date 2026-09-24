@@ -43,9 +43,6 @@ void SynthEngine::setOsc3Octave (int v) { forEachVoice ([&] (SynthVoice& voice) 
 void SynthEngine::setOsc1Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Semi (v); }); }
 void SynthEngine::setOsc2Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Semi (v); }); }
 void SynthEngine::setOsc3Semi (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Semi (v); }); }
-void SynthEngine::setOsc1CoarsePitch (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1CoarsePitch (v); }); }
-void SynthEngine::setOsc2CoarsePitch (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2CoarsePitch (v); }); }
-void SynthEngine::setOsc3CoarsePitch (int v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3CoarsePitch (v); }); }
 void SynthEngine::setOsc1Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc1Fine (v); }); }
 void SynthEngine::setOsc2Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc2Fine (v); }); }
 void SynthEngine::setOsc3Fine (float v) { forEachVoice ([&] (SynthVoice& voice) { voice.setOsc3Fine (v); }); }

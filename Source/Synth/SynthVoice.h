@@ -66,7 +66,6 @@ public:
     void setOsc2Level(float v){const bool was=osc2Level>1e-5f; osc2Level=v; osc2.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc2[u].setLevel(v); if(was!=(v>1e-5f)) uniFreqDirty=true;} void setOsc3Level(float v){const bool was=osc3Level>1e-5f; osc3Level=v; osc3.setLevel(v); for(int u=0;u<maxUnison;++u)uniOsc3[u].setLevel(v); if(was!=(v>1e-5f)) uniFreqDirty=true;}
     void setOsc1Octave(int v){osc1Octave=v; updateFrequencies();} void setOsc2Octave(int v){osc2Octave=v; updateFrequencies();} void setOsc3Octave(int v){osc3Octave=v; updateFrequencies();}
     void setOsc1Semi(int v){osc1Semi=v; updateFrequencies();} void setOsc2Semi(int v){osc2Semi=v; updateFrequencies();} void setOsc3Semi(int v){osc3Semi=v; updateFrequencies();}
-    void setOsc1CoarsePitch(int v){osc1Coarse=juce::jlimit(-48,48,v); updateFrequencies();} void setOsc2CoarsePitch(int v){osc2Coarse=juce::jlimit(-48,48,v); updateFrequencies();} void setOsc3CoarsePitch(int v){osc3Coarse=juce::jlimit(-48,48,v); updateFrequencies();}
     void setOsc1Fine(float v){osc1Fine=v; updateFrequencies();} void setOsc2Fine(float v){osc2Fine=v; updateFrequencies();} void setOsc3Fine(float v){osc3Fine=v; updateFrequencies();}
     void setOsc1Detune(float v){osc1.setDetuneCents(v);} void setOsc2Detune(float v){osc2.setDetuneCents(v);} void setOsc3Detune(float v){osc3.setDetuneCents(v);}
     void setOsc1Warp(float v){osc1.setWarp(v); for(int u=0;u<maxUnison;++u)uniOsc1[u].setWarp(v);}
@@ -142,7 +141,6 @@ private:
     int scaleRoot = 60;
     int osc1Octave=0, osc2Octave=0, osc3Octave=-1;
     int osc1Semi=0, osc2Semi=0, osc3Semi=0;
-    int osc1Coarse=0, osc2Coarse=0, osc3Coarse=0;
     float osc1Fine=0, osc2Fine=0, osc3Fine=0;
     float osc1Phase=0, osc2Phase=0, osc3Phase=0;
     float osc1Rand=0, osc2Rand=0, osc3Rand=0;
