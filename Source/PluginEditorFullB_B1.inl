@@ -518,6 +518,7 @@ void SalekHightechAudioProcessorEditor::resized()
             b->setBounds (presetRow.removeFromLeft (bw).reduced (1));
         }
         layoutButtonIcons(); // fix icon child size after bounds
+        repaint();
         auto waveRow = r.removeFromTop (24);
         lfo1WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 3).reduced (2));
         lfo2WaveBox.setBounds (waveRow.removeFromLeft (waveRow.getWidth() / 2).reduced (2));

@@ -96,8 +96,18 @@ static juce::Image makeWaveIcon (int kind, int size = 64)
 }
 
 
+struct FitIconComp : public juce::ImageComponent
+{
+    void parentSizeChanged() override
+    {
+        if (auto* p = getParentComponent())
+            setBounds (p->getLocalBounds().reduced (2));
+    }
+};
+
 void SalekHightechAudioProcessorEditor::applyButtonImage (juce::TextButton& btn, juce::Image img)
 {
+
     for (int i = btn.getNumChildComponents(); --i >= 0; )
     {
         if (auto* ic = dynamic_cast<juce::ImageComponent*> (btn.getChildComponent (i)))
@@ -110,12 +120,13 @@ void SalekHightechAudioProcessorEditor::applyButtonImage (juce::TextButton& btn,
     btn.setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
     btn.setColour (juce::TextButton::textColourOnId, juce::Colours::transparentBlack);
     if (! img.isValid()) { btn.setButtonText ("•"); return; }
-    auto* ic = new juce::ImageComponent();
+    auto* ic = new FitIconComp();
     ic->setImage (img);
     ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
     ic->setInterceptsMouseClicks (false, false);
     btn.addAndMakeVisible (ic);
     ic->setBounds (btn.getLocalBounds().reduced (2));
+    ic->parentSizeChanged();
     ic->toFront (false);
 }
 
@@ -140,12 +151,13 @@ void SalekHightechAudioProcessorEditor::applyButtonIcon (juce::TextButton& btn, 
         btn.setButtonText ("•");
         return;
     }
-    auto* ic = new juce::ImageComponent();
+    auto* ic = new FitIconComp();
     ic->setImage (img);
     ic->setImagePlacement (juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
     ic->setInterceptsMouseClicks (false, false);
     btn.addAndMakeVisible (ic);
-    ic->setBounds (btn.getLocalBounds().reduced (3));
+    ic->setBounds (btn.getLocalBounds().reduced (2));
+    ic->parentSizeChanged();
     ic->toFront (false);
 }
 
