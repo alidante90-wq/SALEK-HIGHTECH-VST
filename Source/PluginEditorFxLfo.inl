@@ -425,7 +425,7 @@ private:
             return;
         }
 
-        // Free draw: linear fill between last and current
+        // Free draw: strictly linear interpolation between points (no hidden curve).
         if (lastIdx < 0) writeActive (idx, v);
         else
         {
@@ -434,13 +434,19 @@ private:
             for (int i = a; i <= b; ++i)
             {
                 float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                // smoothstep curve between points
-                float s = tt * tt * (3.f - 2.f * tt);
+                float s = tt;
                 float pv = (lastIdx <= idx) ? va * (1.f - s) + v * s : v * (1.f - s) + va * s;
                 writeActive (i, pv);
             }
         }
         lastIdx = idx;
+        // Keep both plot edges mathematically on the editable grid.
+        if (activePoints >= 2)
+        {
+            points[0] = juce::jlimit (-1.f, 1.f, points[0]);
+            points[N - 1] = juce::jlimit (-1.f, 1.f, points[N - 1]);
+        }
+        if (lfo) pushToLfo (*lfo);
         repaint();
     }
 };
