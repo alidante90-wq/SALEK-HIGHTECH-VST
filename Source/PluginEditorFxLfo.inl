@@ -322,7 +322,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.12f));
         g.fillPath (fill);
         g.setColour (juce::Colour (0xff00e8ff));
-        g.strokePath (wave, juce::PathStrokeType (2.2f));
+        g.strokePath (wave, juce::PathStrokeType (2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
@@ -425,8 +425,8 @@ private:
             for (int i = a; i <= b; ++i)
             {
                 float tt = (b == a) ? 1.f : (float) (i - a) / (float) (b - a);
-                // smoothstep curve between points
-                float s = tt * tt * (3.f - 2.f * tt);
+                // Linear interpolation keeps drawn edges genuinely straight; Shift remains the hard-corner/grid mode.
+                float s = tt;
                 float pv = (lastIdx <= idx) ? va * (1.f - s) + v * s : v * (1.f - s) + va * s;
                 writeActive (i, pv);
             }
