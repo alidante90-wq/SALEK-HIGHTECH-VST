@@ -128,6 +128,31 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
             case 2: case 3: yNorm = hp(); break;
             case 4: yNorm = bp(); break;
             case 5: case 12: case 15: yNorm = notch(); break;
+            case 16: // DiodeLP
+                yNorm = 0.35f + (lp() - 0.35f) * (0.8f + 0.35f * reso);
+                break;
+            case 17: // Sallen-Key
+                yNorm = 0.5f * lp() + 0.5f * (0.35f + peakH * 0.35f * std::exp (-dist * dist * qSharp));
+                break;
+            case 18: // Vocal
+                yNorm = 0.18f + peakH * 0.72f * std::exp (-dist * dist * qSharp)
+                      + peakH * 0.52f * std::exp (-(dist - 0.16f) * (dist - 0.16f) * qSharp);
+                break;
+            case 19: // RingMod
+                yNorm = 0.42f + 0.22f * std::sin (t * 26.f + reso * 5.f);
+                break;
+            case 20: // BandPass-Q
+                yNorm = 0.10f + peakH * 1.15f * std::exp (-dist * dist * (qSharp * 1.8f));
+                break;
+            case 21: // LP + HP parallel
+                yNorm = 0.5f * (lp() + hp());
+                break;
+            case 22: // Deep notch
+                yNorm = juce::jmax (0.03f, 0.50f - peakH * 1.15f * std::exp (-dist * dist * (qSharp * 1.35f)));
+                break;
+            case 23: // Wide shelf
+                yNorm = 0.5f + (t < norm ? 0.10f : -0.10f) + 0.18f * (1.f - reso);
+                break;
             case 6: yNorm = 0.35f + peakH * std::exp (-dist * dist * qSharp); break;
             case 10: // comb ripples
                 yNorm = 0.35f + 0.25f * std::sin (t * 40.f) * (0.4f + reso)
