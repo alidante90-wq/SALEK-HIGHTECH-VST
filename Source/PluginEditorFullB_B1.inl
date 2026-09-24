@@ -44,11 +44,11 @@ void SalekHightechAudioProcessorEditor::resized()
 
     {
         // ONLY place for model strip: above keyboard (never over knobs)
-        auto bottom = full.removeFromBottom (64 + 88);
+        auto bottom = full.removeFromBottom (64 + 112);
         auto strip = bottom.removeFromTop (88).reduced (4, 2);
         // dark bar so models readable
         modelStripBounds = strip;
-        modelStripTitle.setBounds (strip.removeFromTop (16));
+        modelStripTitle.setBounds (strip.removeFromTop (18));
         modelStripTitle.setVisible (true);
         modelStripTitle.toFront (false);
         const int n = modelStrip.size();
@@ -77,7 +77,7 @@ void SalekHightechAudioProcessorEditor::resized()
         auto leftStrip = full.removeFromLeft (presetW);
         const int logoPad = 8; // presets start near top of left strip
         // Preset ~32%, big character model gets remaining left column
-        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.50f)); // half presets, half model
+        const int presetH = juce::jmax (180, (int) ((leftStrip.getHeight() - logoPad) * 0.47f)); // half presets, half model
         presetTab.setBounds (leftStrip.getX(), leftStrip.getY() + logoPad, leftStrip.getWidth(), presetH);
         presetTab.toFront (false);
         // Character PNG slot under presets (always visible when not collapsed)
@@ -97,14 +97,14 @@ void SalekHightechAudioProcessorEditor::resized()
         }
         auto pb = presetTab.getLocalBounds().reduced (2);
         // Two-line toolbar — bigger hit targets
-        auto row1 = pb.removeFromTop (28);
+        auto row1 = pb.removeFromTop (38);
         presetToggle.setBounds (row1.removeFromLeft (32).reduced (1, 1));
         if (! presetCollapsed)
         {
             prevPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
             nextPreset.setBounds (row1.removeFromLeft (32).reduced (1, 1));
             initBtn.setBounds (row1.removeFromLeft (row1.getWidth()).reduced (1, 1));
-            auto row2 = pb.removeFromTop (28);
+            auto row2 = pb.removeFromTop (34);
             savePresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 3).reduced (1, 1));
             loadPresetBtn.setBounds (row2.removeFromLeft (row2.getWidth() / 2).reduced (1, 1));
             bankBtn.setBounds (row2.reduced (1, 1));
@@ -252,7 +252,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
         // ADSR strip taller so ATTACK/DECAY/SUSTAIN/RELEASE are visible
         envTab.setBounds (b.removeFromBottom (130));
-        const int filterW = juce::jlimit (240, 320, b.getWidth() / 4);
+        const int filterW = juce::jlimit (300, 380, b.getWidth() / 3);
         filterTab.setBounds (b.removeFromRight (filterW));
         auto oscFull = b;
         oscTab.setBounds (oscFull);
@@ -342,7 +342,7 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto fr = filterTab.getLocalBounds().reduced (3);
             if (filterDisplay != nullptr)
-                filterDisplay->setBounds (fr.removeFromTop (92).reduced (2));
+                filterDisplay->setBounds (fr.removeFromTop (112).reduced (2));
             auto modeRow = fr.removeFromTop (20);
             filterMode.setBounds (modeRow.removeFromLeft (modeRow.getWidth() / 2).reduced (1));
             filterRouteBox.setBounds (modeRow.reduced (1));
