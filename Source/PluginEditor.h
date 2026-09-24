@@ -11,6 +11,31 @@
 #include "AssetsData.h"
 #include "PluginEditorFxLfo.inl"
 
+class SalekIcon3DTile : public juce::Component
+{
+public:
+    explicit SalekIcon3DTile (juce::Colour c) : accent (c) { setInterceptsMouseClicks (false, false); }
+
+    void paint (juce::Graphics& g) override
+    {
+        auto r = getLocalBounds().toFloat().reduced (2.f);
+        g.setColour (juce::Colours::black.withAlpha (0.55f));
+        g.fillRoundedRectangle (r.translated (2.f, 3.f), 6.f);
+        juce::ColourGradient bg (juce::Colour (0xff241033), r.getX(), r.getY(),
+                                 juce::Colour (0xff08040f), r.getRight(), r.getBottom(), false);
+        g.setGradientFill (bg);
+        g.fillRoundedRectangle (r, 6.f);
+        g.setColour (accent.withAlpha (0.9f));
+        g.drawRoundedRectangle (r, 6.f, 1.4f);
+        g.setColour (accent.withAlpha (0.16f));
+        g.fillRoundedRectangle (r.reduced (2.5f), 4.5f);
+        g.setColour (juce::Colours::white.withAlpha (0.13f));
+        g.drawLine (r.getX() + 4.f, r.getY() + 2.5f, r.getRight() - 4.f, r.getY() + 2.5f, 1.f);
+    }
+private:
+    juce::Colour accent;
+};
+
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
     explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
