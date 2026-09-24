@@ -322,7 +322,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.12f));
         g.fillPath (fill);
         g.setColour (juce::Colour (0xff00e8ff));
-        g.strokePath (wave, juce::PathStrokeType (2.2f, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
+        g.strokePath (wave, juce::PathStrokeType (2.2f, juce::PathStrokeType::mitered, juce::PathStrokeType::butt));
 
         g.setColour (juce::Colour (0xffffd700));
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
@@ -402,15 +402,7 @@ private:
             v = std::round (v * 4.f) / 4.f;
             // Single-point edit only when Shift — clean corners, no smear
             writeActive (idx, v);
-            // Soft curve toward neighbors (Catmull-ish ease) for organic edges
-            if (idx > 0 && idx < AP - 1)
-            {
-                float prev = sampleAtActive (idx - 1);
-                float next = sampleAtActive (idx + 1);
-                // gentle ease on adjacent slots only
-                writeActive (idx - 1, prev * 0.85f + v * 0.15f);
-                writeActive (idx + 1, next * 0.85f + v * 0.15f);
-            }
+            // Do not soften adjacent vertices: Shift is the hard-corner / straight-edge tool.
             lastIdx = idx;
             repaint();
             return;
