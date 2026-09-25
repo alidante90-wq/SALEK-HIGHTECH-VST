@@ -135,18 +135,18 @@
 }
 
 
-// ---- 14 Magic combination presets (weird interesting blends) ----
+// ---- 13 Magic combination presets (TORO removed) ----
 {
-    static juce::TextButton magicCombo[14];
-    static const char* comboNames[14] = {
+    static juce::TextButton magicCombo[13];
+    static const char* comboNames[13] = {
         "VOID", "STAB", "WARP", "SLICE", "DRONE", "ACID", "GLASS",
-        "CRASH", "ECHOX", "PSY+X", "LOOPY", "NOISE", "ALIEN", "TORO"
+        "CRASH", "ECHOX", "PSY+X", "LOOPY", "NOISE", "ALIEN"
     };
     static bool combosInited = false;
     if (! combosInited)
     {
         combosInited = true;
-        for (int i = 0; i < 14; ++i)
+        for (int i = 0; i < 13; ++i)
         {
             magicCombo[i].setButtonText (comboNames[i]);
             magicCombo[i].setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
@@ -171,10 +171,10 @@
                     pa->endChangeGesture();
                 }
                 // 0 Loop 1 Glitch 2 Flange 3 Psy 4 Void 5 Slice 6 Acid 7 Crash 8 Noise
-                // VOID STAB WARP SLICE DRONE ACID GLASS CRASH ECHOX PSY+X LOOPY NOISE ALIEN TORO
-                const int modes[14] = { 4, 0, 3, 5, 0, 6, 2, 7, 2, 3, 0, 8, 3, 1 };
-                const float xs[14]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f,0.88f };
-                const float ys[14]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f,0.92f };
+                // VOID STAB WARP SLICE DRONE ACID GLASS CRASH ECHOX PSY+X LOOPY NOISE ALIEN
+                const int modes[13] = { 4, 0, 3, 5, 0, 6, 2, 7, 2, 3, 0, 8, 3 };
+                const float xs[13]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f };
+                const float ys[13]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f };
                 if (auto* pm = dynamic_cast<juce::AudioParameterChoice*> (processor.getAPVTS().getParameter ("magic_mode")))
                 {
                     pm->beginChangeGesture();
@@ -194,13 +194,12 @@
                 if (i == 9) { setP ("phaser_mix", 0.5f); setP ("chorus_mix", 0.3f); }
                 if (i == 11) { setP ("noise_level", 0.45f); setP ("dist_mix", 0.55f); }
                 if (i == 12) { setP ("fm_2to1", 0.7f); setP ("reverb_mix", 0.45f); }
-                if (i == 13) { setP ("osc1_fold", 0.55f); setP ("delay_mix", 0.4f); setP ("reverb_mix", 0.3f); }
                 if (magicPad != nullptr)
                     magicPad->setPosition (xs[i], ys[i], true);
             };
         }
     }
     // stash pointer for layout via component name
-    for (int i = 0; i < 14; ++i)
+    for (int i = 0; i < 13; ++i)
         magicCombo[i].setComponentID ("magicCombo" + juce::String (i));
 }

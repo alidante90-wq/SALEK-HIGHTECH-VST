@@ -458,11 +458,11 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     // SEQ → Magic trigger row (2x7): fire magic modes from sequencer page
     {
-        static const char* names[14] = {
+        static const char* names[13] = {
             "VOID","STAB","WARP","SLICE","DRONE","ACID","GLASS",
-            "CRASH","ECHO","PSY","LOOP","NOISE","ALIEN","TORO"
+            "CRASH","ECHO","PSY","LOOP","NOISE","ALIEN"
         };
-        for (int i = 0; i < 14; ++i)
+        for (int i = 0; i < 13; ++i)
         {
             auto* b = seqMagicBtns.add (new juce::TextButton (names[i]));
             b->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
@@ -470,10 +470,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
             seqTab.addAndMakeVisible (b);
             b->onClick = [this, i]
             {
-                // Mirror Magic combo behaviour
-                const int modes[14] = { 4,0,3,5,0,6,2,7,2,3,0,8,3,1 };
-                const float xs[14]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f,0.88f };
-                const float ys[14]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f,0.92f };
+                // Mirror Magic combo behaviour (TORO removed)
+                const int modes[13] = { 4,0,3,5,0,6,2,7,2,3,0,8,3 };
+                const float xs[13]  = { 0.85f,0.3f,0.7f,0.95f,0.2f,0.6f,0.4f,0.9f,0.55f,0.75f,0.35f,0.8f,0.65f };
+                const float ys[13]  = { 0.9f,0.5f,0.8f,0.7f,0.4f,0.85f,0.6f,0.95f,0.55f,0.9f,0.45f,0.75f,0.85f };
                 if (auto* pa = processor.getAPVTS().getParameter ("magic_on"))
                 { pa->beginChangeGesture(); pa->setValueNotifyingHost (1.f); pa->endChangeGesture(); }
                 if (auto* pm = dynamic_cast<juce::AudioParameterChoice*> (processor.getAPVTS().getParameter ("magic_mode")))
@@ -526,7 +526,11 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         const auto M = juce::Colour (0xffff2d9b);
         const auto O = juce::Colour (0xff39ff14);
         const auto G = juce::Colour (0xff7c4dff);
-        // Four focused sequencer controls; ARP keeps its independent DSP defaults.
+        // ARP + SEQ controls
+        addKnob (seqTab, "arp_rate", "ARP RATE", C);
+        addKnob (seqTab, "arp_octaves", "ARP OCT", M);
+        addKnob (seqTab, "arp_gate", "ARP GATE", O);
+        addKnob (seqTab, "arp_swing", "ARP SWING", G);
         addKnob (seqTab, "seq_rate", "SEQ RATE", O);
         addKnob (seqTab, "seq_length", "SEQ STEPS", C);
         addKnob (seqTab, "seq_swing", "SEQ SWING", M);

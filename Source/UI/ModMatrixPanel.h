@@ -31,7 +31,7 @@ public:
         const int ns = (int) salek::ModMatrix::Source::NumSources;
         const int nd = (int) salek::ModMatrix::Dest::NumDests;
 
-        g.setFont (juce::FontOptions (8.0f, juce::Font::bold));
+        g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
         for (int d = 0; d < nd; ++d)
         {
             auto cell = cellRect (-1, d);
@@ -56,7 +56,7 @@ public:
                 g.fillRect (label.getX() + 2, mid, 4.0f, fillH);
 
             g.setColour (juce::Colour (0xff00e8ff));
-            g.setFont (juce::FontOptions (8.5f, juce::Font::bold));
+            g.setFont (juce::FontOptions (9.5f, juce::Font::bold));
             g.drawText (salek::ModMatrix::sourceName ((salek::ModMatrix::Source) s),
                         label.toNearestInt().withTrimmedLeft (8), juce::Justification::centredLeft);
 
@@ -204,7 +204,7 @@ private:
     int selSrc = -1, selDst = -1;
     bool draggingStrip = false;
     float gridLeft = 52.f, gridTop = 22.f, cellW = 28.f, cellH = 22.f;
-    float stripH = 52.f;
+    float stripH = 36.f;
 
     juce::Rectangle<float> amountStrip() const
     {
@@ -218,10 +218,10 @@ private:
         auto area = getLocalBounds().toFloat().reduced (4.f, 2.f);
         area.removeFromTop (18.f);
         area.removeFromBottom (stripH + 4.f);
-        gridLeft = 52.f;
+        gridLeft = 64.f;
         gridTop = area.getY();
-        cellW = juce::jmax (18.f, (area.getWidth() - gridLeft) / (float) nd);
-        cellH = juce::jmax (14.f, area.getHeight() / (float) (ns + 1));
+        cellW = juce::jmax (22.f, (area.getWidth() - gridLeft) / (float) nd);
+        cellH = juce::jmax (18.f, area.getHeight() / (float) (ns + 1));
     }
 
     juce::Rectangle<float> cellRect (int s, int d) const

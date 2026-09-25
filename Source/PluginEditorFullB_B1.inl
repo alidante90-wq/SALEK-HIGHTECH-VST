@@ -389,7 +389,8 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         auto r = modTab.getLocalBounds().reduced (4);
-        auto right = r.removeFromRight (juce::jmin (300, r.getWidth() * 34 / 100));
+        // narrower right rail → matrix larger / less cramped
+        auto right = r.removeFromRight (juce::jmin (250, r.getWidth() * 28 / 100));
 
         // Only hide MOD-owned params (never touch osc/filter/env parents)
         static const char* modOnly[] = {
@@ -419,14 +420,19 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto* k = byId (id);
             if (k == nullptr) return;
-            k->name.setBounds (cell.removeFromBottom (14));
-            k->name.setJustificationType (juce::Justification::centred);
-            k->name.setFont (juce::FontOptions (10.f, juce::Font::bold));
-            k->name.setVisible (true);
-            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (40, cell.getWidth() - 8), 13);
+            // Tight stack: value under rotary, label flush under value (no big gap)
+            k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cell.getWidth() - 6), 11);
             k->s.setNumDecimalPlacesToDisplay (2);
-            k->s.setBounds (cell);
+            auto nameH = 12;
+            auto valH = 11;
+            auto knobArea = cell.withTrimmedBottom (nameH);
+            k->s.setBounds (knobArea);
             k->s.setVisible (true);
+            k->name.setBounds (cell.getX(), cell.getBottom() - nameH, cell.getWidth(), nameH);
+            k->name.setJustificationType (juce::Justification::centred);
+            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
+            k->name.setVisible (true);
+            juce::ignoreUnused (valH);
         };
 
         // FM block top of right rail (2 rows x 3 cols)
@@ -455,7 +461,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.reduced (2));
+            matrixPanel->setBounds (r.reduced (1));
     }
 
     // LFO
@@ -552,7 +558,7 @@ void SalekHightechAudioProcessorEditor::resized()
         // Combo presets strip bottom
         {
             auto row = r.removeFromBottom (52).reduced (2, 1);
-            const int n = 14;
+            const int n = 13;
             const int cw = juce::jmax (36, row.getWidth() / n);
             for (int i = 0; i < n; ++i)
                 if (auto* c = magicTab.findChildWithID ("magicCombo" + juce::String (i)))
@@ -595,7 +601,7 @@ void SalekHightechAudioProcessorEditor::resized()
     // SEQ
     {
         auto bounds = seqTab.getLocalBounds().reduced (6);
-        auto top = bounds.removeFromTop (116);
+        auto top = bounds.removeFromTop (150);
         auto toggles = top.removeFromLeft (120);
         arpOn.setBounds (toggles.removeFromTop (36).reduced (2));
         seqOn.setBounds (toggles.removeFromTop (36).reduced (2));
@@ -615,10 +621,17 @@ void SalekHightechAudioProcessorEditor::resized()
                 }
         };
         auto controls = top.reduced (4, 1);
-        const int controlWidth = controls.getWidth() / 4;
+        // Row1 ARP · Row2 SEQ
+        auto arpRow = controls.removeFromTop (controls.getHeight() / 2).reduced (0, 1);
+        auto seqRow = controls.reduced (0, 1);
+        const char* arpIds[] = { "arp_rate", "arp_octaves", "arp_gate", "arp_swing" };
         const char* seqIds[] = { "seq_rate", "seq_length", "seq_swing", "seq_gate" };
+        const int aw = juce::jmax (1, arpRow.getWidth() / 4);
+        const int sw = juce::jmax (1, seqRow.getWidth() / 4);
         for (int i = 0; i < 4; ++i)
-            placeSeqKnob ({ controls.getX() + i * controlWidth, controls.getY(), controlWidth, controls.getHeight() }, seqIds[i]);
+            placeSeqKnob ({ arpRow.getX() + i * aw, arpRow.getY(), aw, arpRow.getHeight() }, arpIds[i]);
+        for (int i = 0; i < 4; ++i)
+            placeSeqKnob ({ seqRow.getX() + i * sw, seqRow.getY(), sw, seqRow.getHeight() }, seqIds[i]);
         // 2 rows of Magic trigger buttons under seq strip
         {
             auto magicStrip = bounds.removeFromBottom (64).reduced (2, 1);
