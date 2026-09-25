@@ -389,8 +389,6 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         auto r = modTab.getLocalBounds().reduced (4);
-        // narrower right rail → matrix larger / less cramped
-        auto right = r.removeFromRight (juce::jmin (250, r.getWidth() * 28 / 100));
 
         // Only hide MOD-owned params (never touch osc/filter/env parents)
         static const char* modOnly[] = {
@@ -420,11 +418,9 @@ void SalekHightechAudioProcessorEditor::resized()
         {
             auto* k = byId (id);
             if (k == nullptr) return;
-            // Tight stack: value under rotary, label flush under value (no big gap)
             k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cell.getWidth() - 6), 11);
             k->s.setNumDecimalPlacesToDisplay (2);
-            auto nameH = 12;
-            auto valH = 11;
+            const int nameH = 12;
             auto knobArea = cell.withTrimmedBottom (nameH);
             k->s.setBounds (knobArea);
             k->s.setVisible (true);
@@ -432,25 +428,23 @@ void SalekHightechAudioProcessorEditor::resized()
             k->name.setJustificationType (juce::Justification::centred);
             k->name.setFont (juce::FontOptions (10.5f, juce::Font::bold));
             k->name.setVisible (true);
-            juce::ignoreUnused (valH);
         };
 
-        // FM block top of right rail (2 rows x 3 cols)
-        auto fmArea = right.removeFromTop (juce::jmax (160, right.getHeight() * 55 / 100)).reduced (4, 4);
+        // Bottom strip: FM (left) + macros (right) — matrix gets the rest (full width)
+        auto bottom = r.removeFromBottom (juce::jmax (110, r.getHeight() * 30 / 100)).reduced (2, 2);
+        auto fmArea = bottom.removeFromLeft (bottom.getWidth() * 58 / 100).reduced (4, 2);
         const char* fmIds[] = { "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1" };
         const int fmCols = 3, fmRows = 2;
-        const int cellW = fmArea.getWidth() / fmCols;
-        const int cellH = fmArea.getHeight() / fmRows;
+        const int cellW = juce::jmax (1, fmArea.getWidth() / fmCols);
+        const int cellH = juce::jmax (1, fmArea.getHeight() / fmRows);
         for (int i = 0; i < 6; ++i)
         {
             auto cell = juce::Rectangle<int> (
                 fmArea.getX() + (i % fmCols) * cellW,
-                fmArea.getY() + (i / fmCols) * cellH, cellW, cellH).reduced (5, 3);
+                fmArea.getY() + (i / fmCols) * cellH, cellW, cellH).reduced (4, 2);
             placeOne (cell, fmIds[i]);
         }
-
-        // Macros bottom of right rail — 4 equal columns
-        auto macroBand = right.reduced (4, 6);
+        auto macroBand = bottom.reduced (4, 2);
         const char* macIds[] = { "macro1","macro2","macro3","macro4" };
         const int cw = juce::jmax (1, macroBand.getWidth() / 4);
         for (int i = 0; i < 4; ++i)
@@ -461,7 +455,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
 
         if (matrixPanel != nullptr)
-            matrixPanel->setBounds (r.reduced (1));
+            matrixPanel->setBounds (r.reduced (2));
     }
 
     // LFO
