@@ -24,7 +24,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
     g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.4f)); g.drawRoundedRectangle (r, 6.0f, 1.f);
     auto gval=[&](const char* id,float d){if(auto*p=apvts.getRawParameterValue(id))return p->load();return d;};
     float pos=gval("osc1_table",0.f);
-    juce::Path wave; const int N=64;
+    juce::Path wave; const int N = juce::jlimit (48, 128, getWidth()); // adaptive
     for(int i=0;i<N;++i){ float t=(float)i/(N-1); float y=std::sin(t*juce::MathConstants<float>::twoPi*(1.f+pos*4.f));
         float px=r.getX()+8+t*(r.getWidth()-16); float py=r.getCentreY()-y*(r.getHeight()*0.35f);
         if(i==0)wave.startNewSubPath(px,py); else wave.lineTo(px,py);}
@@ -94,9 +94,10 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
     // 0 LP12 1 LP24 2 HP12 3 HP24 4 BP 5 Notch 6 Peak 7 AllPass
     // 8 Acid 9 Ladder 10 Comb 11 Formant 12 BandRej 13 LoShelf 14 HiShelf 15 PhaserN
 
-    for (int i = 0; i < 128; ++i)
+    const int Npts = juce::jlimit (64, 160, getWidth());
+    for (int i = 0; i < Npts; ++i)
     {
-        const float t = (float) i / 127.f;
+        const float t = (float) i / (float) juce::jmax (1, Npts - 1);
         const float x = plot.getX() + t * plot.getWidth();
         const float dist = t - norm;
         float yNorm = 0.42f;
@@ -193,7 +194,7 @@ inline void FilterCurveDisplay::paint (juce::Graphics& g) {
 
 class LfoDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
+    explicit LfoDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
     void paint (juce::Graphics& g) override {
         auto bounds = getLocalBounds().toFloat().reduced (2.f);
         g.setColour (juce::Colour (0xff0c0818)); g.fillRoundedRectangle (bounds, 8.f);
@@ -214,7 +215,7 @@ public:
             g.drawText (juce::String (labels[L]) + "  " + juce::String (rate, 2) + "Hz",
                         r.removeFromTop (14).toNearestInt(), juce::Justification::centred);
             auto plot = r.reduced (2.f, 2.f);
-            juce::Path curve; const int N = 64;
+            juce::Path curve; const int N = juce::jlimit (48, 128, getWidth());
             float spd = juce::jmax (0.05f, rate) * 0.15f;
             for (int i = 0; i < N; ++i)
             {

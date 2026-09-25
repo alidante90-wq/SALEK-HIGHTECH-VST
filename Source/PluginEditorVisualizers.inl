@@ -3,7 +3,7 @@
 
 class ScopeDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit ScopeDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (10); }
+    explicit ScopeDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (25); }
     void setFifo (VisualFifo* f) { visualFifo = f; }
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (1.f);
@@ -12,7 +12,7 @@ public:
         g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.15f));
         g.drawHorizontalLine ((int) r.getCentreY(), r.getX() + 2, r.getRight() - 2);
 
-        const int N = 96;
+        const int N = juce::jlimit (64, 160, getWidth());
         float samples[96];
         int got = 0;
         if (visualFifo != nullptr)
@@ -58,7 +58,7 @@ private:
 
 class SpectrumDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit SpectrumDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (8); }
+    explicit SpectrumDisplay (VisualFifo* fifo = nullptr) : visualFifo (fifo) { startTimerHz (15); }
     void setFifo (VisualFifo* f) { visualFifo = f; }
     void paint (juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced (1.f);
