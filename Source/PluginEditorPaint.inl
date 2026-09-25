@@ -154,15 +154,15 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     {
         auto slot = charSlotBounds.toFloat();
         // dark panel
-        g.setColour (juce::Colour (0xff06040e).withAlpha (0.72f));
+        g.setColour (juce::Colour (0xff04020c).withAlpha (0.82f));
         g.fillRoundedRectangle (slot, 12.f);
-        // multi-layer neon frame (cyan + magenta)
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.25f));
-        g.drawRoundedRectangle (slot.expanded (2.f), 14.f, 3.5f);
-        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.55f));
-        g.drawRoundedRectangle (slot, 12.f, 2.0f);
-        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.85f));
-        g.drawRoundedRectangle (slot.reduced (2.f), 10.f, 1.2f);
+        // multi-layer neon frame (brighter cyan + magenta glow)
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.45f));
+        g.drawRoundedRectangle (slot.expanded (4.f), 16.f, 5.0f);
+        g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.75f));
+        g.drawRoundedRectangle (slot.expanded (1.f), 13.f, 2.6f);
+        g.setColour (juce::Colour (0xff00e8ff).withAlpha (0.95f));
+        g.drawRoundedRectangle (slot.reduced (1.f), 11.f, 1.8f);
         // corner accents
         const float c = 14.f;
         g.setColour (juce::Colour (0xffff2d9b).withAlpha (0.9f));
@@ -310,7 +310,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             {
                 if (c.getWidth() < 10) return;
                 auto r = getLocalArea (&c, c.getLocalBounds()).toFloat().reduced (2.f);
-                g.setColour (juce::Colour (0xff0a0614).withAlpha (0.22f));
+                g.setColour (juce::Colour (0xff05010c).withAlpha (0.62f)); // darker MAIN glass — knobs readable
                 g.fillRoundedRectangle (r, 10.f);
                 g.setColour (col.withAlpha (0.45f + pulse * 0.15f));
                 g.drawRoundedRectangle (r, 10.f, 1.4f);

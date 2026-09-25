@@ -22,8 +22,21 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setOsc1Phase(g("osc1_phase")); synthEngine.setOsc2Phase(g("osc2_phase")); synthEngine.setOsc3Phase(g("osc3_phase"));
     synthEngine.setOsc1Rand(g("osc1_rand")); synthEngine.setOsc2Rand(g("osc2_rand")); synthEngine.setOsc3Rand(g("osc3_rand"));
     synthEngine.setOsc1Octave((int)g("osc1_octave")); synthEngine.setOsc2Octave((int)g("osc2_octave")); synthEngine.setOsc3Octave((int)g("osc3_octave"));
-    synthEngine.setOsc1Semi((int)g("osc1_semi")); synthEngine.setOsc2Semi((int)g("osc2_semi")); synthEngine.setOsc3Semi((int)g("osc3_semi"));
-    synthEngine.setOsc1CoarsePitch((int)g("osc1_coarse")); synthEngine.setOsc2CoarsePitch((int)g("osc2_coarse")); synthEngine.setOsc3CoarsePitch((int)g("osc3_coarse"));
+    {
+        const float s1m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc1Semi);
+        const float s2m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc2Semi);
+        const float s3m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc3Semi);
+        const float c1m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc1Coarse);
+        const float c2m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc2Coarse);
+        const float c3m = modMatrix.getModulation (salek::ModMatrix::Dest::Osc3Coarse);
+        // LFO ±1 → ±12 semitones / ±24 coarse
+        synthEngine.setOsc1Semi ((int) juce::jlimit (-12.f, 12.f, g("osc1_semi") + s1m * 12.f));
+        synthEngine.setOsc2Semi ((int) juce::jlimit (-12.f, 12.f, g("osc2_semi") + s2m * 12.f));
+        synthEngine.setOsc3Semi ((int) juce::jlimit (-12.f, 12.f, g("osc3_semi") + s3m * 12.f));
+        synthEngine.setOsc1CoarsePitch ((int) juce::jlimit (-48.f, 48.f, g("osc1_coarse") + c1m * 24.f));
+        synthEngine.setOsc2CoarsePitch ((int) juce::jlimit (-48.f, 48.f, g("osc2_coarse") + c2m * 24.f));
+        synthEngine.setOsc3CoarsePitch ((int) juce::jlimit (-48.f, 48.f, g("osc3_coarse") + c3m * 24.f));
+    }
     synthEngine.setUnison((int)g("unison_voices"));
     synthEngine.setUnisonDetune(g("unison_detune"));
     synthEngine.setUnisonSpread(g("unison_spread"));

@@ -67,6 +67,12 @@ public:
         Bassify,
         MagicX,
         MagicY,
+        Osc1Semi,
+        Osc2Semi,
+        Osc3Semi,
+        Osc1Coarse,
+        Osc2Coarse,
+        Osc3Coarse,
         NumDests
     };
 
@@ -87,7 +93,7 @@ public:
             "O1TBL","O2TBL","O3TBL","O1WRP","O2WRP","O3WRP",
             "O1FLD","O2FLD","O3FLD","FM21","FM31","PITCH","AMP",
             "O1PAN","O2PAN","O3PAN","O1DRV","O2DRV","O3DRV",
-            "DLYMX","REVMX","DIST","CHOR","FENV","PHSR","BASS","MAGX","MAGY"
+            "DLYMX","REVMX","DIST","CHOR","FENV","PHSR","BASS","MAGX","MAGY","O1SEMI","O2SEMI","O3SEMI","O1CRS","O2CRS","O3CRS"
         };
         int i = (int) d;
         return (i >= 0 && i < (int) Dest::NumDests) ? n[i] : "?";

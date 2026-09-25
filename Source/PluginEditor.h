@@ -302,7 +302,7 @@ private:
     juce::TextButton bgSwapBtn { "BG" }; // swap background art
     juce::TextButton inspireBtn { "INSPIRE" };
     juce::TextButton charCycleBtn { "CHAR" }; // cycle character overlay PNGs
-    juce::TextButton modSrcLfo1 { "LFO1" }, modSrcLfo2 { "LFO2" }, modSrcLfo3 { "LFO3" };
+    juce::TextButton modSrcLfo1 { "~L1" }, modSrcLfo2 { "~L2" }, modSrcLfo3 { "~L3" };
     int armedModSource = -1; // 0/1/2 = LFO1/2/3 for click-to-assign
     bool isModDragging = false; // true while dragging from LFO pill
     int layoutRecoveryTicks = 0;

@@ -125,10 +125,11 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     // Global LFO mod sources (Serum/Vital style) — visible all tabs
     auto styleModSrc = [this] (juce::TextButton& b, juce::Colour c, int src)
     {
-        b.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff12081c));
-        b.setColour (juce::TextButton::buttonOnColourId, c.withAlpha (0.55f));
-        b.setColour (juce::TextButton::textColourOffId, c);
+        b.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff0a0418));
+        b.setColour (juce::TextButton::buttonOnColourId, c.withAlpha (0.75f));
+        b.setColour (juce::TextButton::textColourOffId, c.brighter (0.15f));
         b.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
+        b.setColour (juce::ComboBox::outlineColourId, c);
         b.setClickingTogglesState (true);
         b.setTooltip ("Vital-style: arm " + b.getButtonText() + " → click knob | Shift=100% | Alt=invert | Ctrl=25% | Right-click=clear");
         b.onClick = [this, src, &b]
@@ -567,7 +568,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     addAndMakeVisible (charCycleBtn);
 
     // Collapse PRESET list only (hero stays visible)
-    presetToggle.setButtonText (juce::CharPointer_UTF8 ("â")); // ◀
+    presetToggle.setButtonText ("<<"); // collapse icon (preset menu)
     presetToggle.setClickingTogglesState (true);
     presetToggle.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0a2e));
     presetToggle.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff3a1060));
@@ -577,9 +578,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     presetToggle.onClick = [this]
     {
         presetCollapsed = presetToggle.getToggleState();
-        presetToggle.setButtonText (presetCollapsed
-            ? juce::CharPointer_UTF8 ("â¶")   // ▶
-            : juce::CharPointer_UTF8 ("â")); // ◀
+        presetToggle.setButtonText (presetCollapsed ? ">>" : "<<");
         resized();
         repaint();
     };
@@ -735,6 +734,12 @@ void SalekHightechAudioProcessorEditor::assignModToParam (const juce::String& pa
     else if (paramId == "bassify")       dest = D::Bassify;
     else if (paramId == "magic_x")       dest = D::MagicX;
     else if (paramId == "magic_y")       dest = D::MagicY;
+    else if (paramId == "osc1_semi")    dest = D::Osc1Semi;
+    else if (paramId == "osc2_semi")    dest = D::Osc2Semi;
+    else if (paramId == "osc3_semi")    dest = D::Osc3Semi;
+    else if (paramId == "osc1_coarse")  dest = D::Osc1Coarse;
+    else if (paramId == "osc2_coarse")  dest = D::Osc2Coarse;
+    else if (paramId == "osc3_coarse")  dest = D::Osc3Coarse;
     else if (paramId == "osc1_unison")   dest = D::Osc1Level;
     else if (paramId == "osc1_udet")     dest = D::Osc1Warp;
     else if (paramId == "osc1_uspread")  dest = D::Osc1Pan;

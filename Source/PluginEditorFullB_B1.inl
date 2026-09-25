@@ -148,9 +148,9 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (900, juce::jmax (500, header.getWidth() * 7 / 10));
-        const int lh = header.getHeight() + 10;
-        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 5, lw, lh);
+        const int lw = juce::jmin (980, juce::jmax (560, header.getWidth() * 3 / 4));
+        const int lh = header.getHeight() + 18;
+        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 10, lw, lh);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
     }
