@@ -48,6 +48,8 @@ public:
     void changeProgramName (int, const juce::String&) override {}
 
     void getStateInformation (juce::MemoryBlock& destData) override;
+    void appendExtraState (juce::XmlElement& parent);
+    void restoreExtraState (const juce::XmlElement& parent);
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
@@ -105,7 +107,7 @@ private:
     std::atomic<float> outputPeak { 0.f };
     shae::SafetyStage shaeSafety;
 
-    struct FactoryPreset { juce::String name; std::map<juce::String, float> values; };
+    struct FactoryPreset { juce::String name; std::map<juce::String, float> values; juce::String extraXml; };
     std::vector<FactoryPreset> factoryPresets;
     int currentProgram = 0;
 

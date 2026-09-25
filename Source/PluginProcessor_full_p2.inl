@@ -411,10 +411,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void SalekHightechAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     juce::XmlElement root ("SALEK_STATE");
-    root.setAttribute ("version", 1);
+    root.setAttribute ("version", 3);
     root.setAttribute ("program", currentProgram);
     if (auto ap = apvts.copyState().createXml())
         root.addChildElement (new juce::XmlElement (*ap));
+    appendExtraState (root); // SEQ pattern + MOD routes + LFO tables
     copyXmlToBinary (root, destData);
 }
 void SalekHightechAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -428,6 +429,7 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
             const int prog = xml->getIntAttribute ("program", -1);
             if (prog >= 0 && prog < (int) factoryPresets.size())
                 currentProgram = prog;
+            restoreExtraState (*xml);
         }
         else if (xml->hasTagName (apvts.state.getType()))
         {
@@ -435,6 +437,9 @@ void SalekHightechAudioProcessor::setStateInformation (const void* data, int siz
         }
     }
 }
+
+#include "PluginProcessorExtraState.inl"
+
 
 juce::AudioProcessorEditor* SalekHightechAudioProcessor::createEditor()
 {

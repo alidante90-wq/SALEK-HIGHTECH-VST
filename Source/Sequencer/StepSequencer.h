@@ -41,6 +41,7 @@ public:
     }
 
     void setPatternLength (int length) noexcept { patternLength = juce::jlimit (1, NumSteps, length); }
+    int getPatternLength() const noexcept { return patternLength; }
     void setSwing (float amount) noexcept { swing = juce::jlimit (0.0f, 0.75f, amount); }
     void setGate (float amount) noexcept { gateAmount = juce::jlimit (0.05f, 1.0f, amount); }
 

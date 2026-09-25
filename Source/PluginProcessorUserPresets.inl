@@ -44,6 +44,10 @@ void SalekHightechAudioProcessor::loadUserPresetsFromDisk()
                 if (id.isNotEmpty())
                     pr.values[id] = (float) pXml->getDoubleAttribute ("v");
             }
+            else if (pXml->hasTagName ("EXTRA"))
+            {
+                pr.extraXml = pXml->toString();
+            }
         }
 
         int found = -1;
@@ -51,7 +55,10 @@ void SalekHightechAudioProcessor::loadUserPresetsFromDisk()
             if (factoryPresets[(size_t) i].name == pr.name) { found = i; break; }
 
         if (found >= 0)
+        {
             factoryPresets[(size_t) found].values = std::move (pr.values);
+            factoryPresets[(size_t) found].extraXml = std::move (pr.extraXml);
+        }
         else
             factoryPresets.push_back (std::move (pr));
     }
@@ -73,6 +80,11 @@ void SalekHightechAudioProcessor::saveUserPresetsToDisk()
             auto* p = px->createNewChildElement ("PARAM");
             p->setAttribute ("id", kv.first);
             p->setAttribute ("value", (double) kv.second);
+        }
+        if (pr.extraXml.isNotEmpty())
+        {
+            if (auto parsed = juce::XmlDocument::parse (pr.extraXml))
+                px->addChildElement (parsed.release());
         }
     }
 
@@ -97,15 +109,22 @@ int SalekHightechAudioProcessor::saveCurrentAsUserPreset (const juce::String& na
                 vals[withId->paramID] = rp->convertFrom0to1 (rp->getValue());
     }
 
+    juce::XmlElement extraRoot ("EXTRA");
+    appendExtraState (extraRoot);
+    const juce::String extraStr = extraRoot.toString();
+
     int found = -1;
     for (int i = 0; i < (int) factoryPresets.size(); ++i)
         if (factoryPresets[(size_t) i].name == full) { found = i; break; }
 
     if (found >= 0)
+    {
         factoryPresets[(size_t) found].values = std::move (vals);
+        factoryPresets[(size_t) found].extraXml = extraStr;
+    }
     else
     {
-        factoryPresets.push_back ({ full, std::move (vals) });
+        factoryPresets.push_back ({ full, std::move (vals), extraStr });
         found = (int) factoryPresets.size() - 1;
     }
 
@@ -219,15 +238,26 @@ int SalekHightechAudioProcessor::importPresetFromFile (const juce::File& file)
             if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p))
                 rp->setValueNotifyingHost (rp->convertTo0to1 (kv.second));
 
+    // Import SEQ / MOD / LFO tables if present in file
+    if (xml != nullptr)
+        restoreExtraState (*xml);
+
+    juce::XmlElement extraRoot ("EXTRA");
+    appendExtraState (extraRoot);
+    const juce::String extraStr = extraRoot.toString();
+
     int found = -1;
     for (int i = 0; i < (int) factoryPresets.size(); ++i)
         if (factoryPresets[(size_t) i].name == pname) { found = i; break; }
 
     if (found >= 0)
+    {
         factoryPresets[(size_t) found].values = std::move (vals);
+        factoryPresets[(size_t) found].extraXml = extraStr;
+    }
     else
     {
-        factoryPresets.push_back ({ pname, std::move (vals) });
+        factoryPresets.push_back ({ pname, std::move (vals), extraStr });
         found = (int) factoryPresets.size() - 1;
     }
 

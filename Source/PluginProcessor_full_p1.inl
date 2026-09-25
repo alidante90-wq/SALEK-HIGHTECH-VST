@@ -138,6 +138,10 @@ void SalekHightechAudioProcessor::loadFactoryPreset(int index)
         if (auto* p = apvts.getParameter(kv.first))
             if (auto* rp = dynamic_cast<juce::RangedAudioParameter*>(p))
                 rp->setValueNotifyingHost(rp->convertTo0to1(kv.second));
+    // SEQ pattern + MOD routes + LFO custom shapes
+    if (factoryPresets[(size_t) index].extraXml.isNotEmpty())
+        if (auto extra = juce::XmlDocument::parse (factoryPresets[(size_t) index].extraXml))
+            restoreExtraState (*extra);
     keyboardState.allNotesOff (0);
     synthEngine.allNotesOff();
 }
@@ -167,7 +171,7 @@ void SalekHightechAudioProcessor::prepareToPlay(double sr, int spb)
     granular.prepare(sr);
     arpeggiator.prepare(sr);
     stepSequencer.prepare(sr);
-    stepSequencer.initDefaultPattern();
+    // Do NOT reset pattern here — would wipe saved SEQ on every prepare
     keyboardState.allNotesOff (0);
     synthEngine.allNotesOff();
     arpeggiator.setEnabled (false);
