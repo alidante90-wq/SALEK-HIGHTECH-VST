@@ -34,6 +34,31 @@ void SalekHightechAudioProcessorEditor::applyHeroFromTheme()
         themeAccent2 = juce::Colour (0xff00e8ff);
         themePanelBg = (id == 3) ? juce::Colour (0xff12081c) : juce::Colour (0xff0c0818);
     }
+
+    // Hue-shift every knob (and label) toward current theme accent
+    const float refH = juce::Colour (0xff00e8ff).getHue();
+    const float delta = themeAccent.getHue() - refH;
+    auto hueShift = [delta] (juce::Colour c) -> juce::Colour
+    {
+        float h = c.getHue() + delta;
+        if (h > 1.f) h -= 1.f;
+        if (h < 0.f) h += 1.f;
+        return juce::Colour::fromHSV (h,
+                                      juce::jlimit (0.35f, 1.f, c.getSaturation() * 1.05f),
+                                      juce::jlimit (0.45f, 1.f, c.getBrightness()),
+                                      c.getFloatAlpha());
+    };
+    for (auto& kk : knobs)
+    {
+        if (kk == nullptr) continue;
+        const auto shifted = hueShift (kk->baseCol);
+        kk->s.setColour (juce::Slider::rotarySliderFillColourId, shifted);
+        kk->name.setColour (juce::Label::textColourId, shifted.withMultipliedBrightness (0.9f));
+        kk->s.repaint();
+    }
+    lnf.setColour (juce::Slider::rotarySliderFillColourId, themeAccent);
+    lnf.setColour (juce::TextButton::textColourOffId, themeAccent);
+    lnf.setColour (juce::ComboBox::outlineColourId, themeAccent2);
     repaint();
 }
 

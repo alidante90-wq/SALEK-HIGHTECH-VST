@@ -114,6 +114,41 @@
             wireDivPath (lfo1DivBox, lfo1PathBox, "lfo_div", "lfo_path", juce::Colour (0xff00e8ff));
             wireDivPath (lfo2DivBox, lfo2PathBox, "lfo2_div", "lfo2_path", juce::Colour (0xffff2d9b));
             wireDivPath (lfo3DivBox, lfo3PathBox, "lfo3_div", "lfo3_path", juce::Colour (0xff39ff14));
+
+        // Rate knob active only in Hz Free; musical div locks rate (DSP uses div+BPM)
+        auto syncLfoRateEnabled = [this] (int which)
+        {
+            const char* divIds[]  = { "lfo_div",  "lfo2_div",  "lfo3_div" };
+            const char* rateIds[] = { "lfo_rate", "lfo2_rate", "lfo3_rate" };
+            which = juce::jlimit (0, 2, which);
+            int div = 0;
+            if (auto* p = processor.getAPVTS().getRawParameterValue (divIds[which]))
+                div = (int) p->load();
+            const bool freeHz = (div <= 0);
+            for (auto& kk : knobs)
+            {
+                if (kk == nullptr || kk->paramId != rateIds[which]) continue;
+                kk->s.setEnabled (freeHz);
+                kk->s.setAlpha (freeHz ? 1.0f : 0.38f);
+                kk->name.setAlpha (freeHz ? 1.0f : 0.45f);
+            }
+        };
+        lfo1DivBox.onChange = [this, syncLfoRateEnabled] {
+            syncLfoRateEnabled (0);
+        };
+        lfo2DivBox.onChange = [this, syncLfoRateEnabled] {
+            syncLfoRateEnabled (1);
+        };
+        lfo3DivBox.onChange = [this, syncLfoRateEnabled] {
+            syncLfoRateEnabled (2);
+        };
+        // Initial state after attachments may fire later — apply now
+        juce::MessageManager::callAsync ([this, syncLfoRateEnabled] {
+            syncLfoRateEnabled (0);
+            syncLfoRateEnabled (1);
+            syncLfoRateEnabled (2);
+        });
+
         }
 
 

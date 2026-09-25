@@ -3,6 +3,7 @@
     k->s.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 52, 14);
     k->s.setNumDecimalPlacesToDisplay (2);   // short numbers (fixes "هزار رقمی")
+    k->baseCol = c;
     k->s.setColour (juce::Slider::rotarySliderFillColourId, c);
     // Cleaner value text: max 2 decimals, strip trailing zeros
     k->s.textFromValueFunction = [] (double v)
