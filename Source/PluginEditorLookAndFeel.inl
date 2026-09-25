@@ -30,6 +30,34 @@ public:
         setColour(juce::PopupMenu::headerTextColourId, juce::Colour(0xff00e8ff));
         setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff0a0614));
         setColour(juce::ScrollBar::thumbColourId, juce::Colour(0xff00e8ff).withAlpha(0.55f));
+        // Unified type scale (readable, one family — no extra font loads)
+        setDefaultSansSerifTypefaceName (juce::Font::getDefaultSansSerifFontName());
+    }
+
+    static juce::Font salekFont (float h, bool bold = true)
+    {
+        return juce::Font (juce::FontOptions (h, bold ? juce::Font::bold : juce::Font::plain));
+    }
+
+    juce::Font getLabelFont (juce::Label&) override
+    {
+        return salekFont (11.0f, true);
+    }
+
+    juce::Font getTextButtonFont (juce::TextButton& b, int buttonHeight) override
+    {
+        juce::ignoreUnused (b);
+        return salekFont (juce::jlimit (10.0f, 13.0f, (float) buttonHeight * 0.42f), true);
+    }
+
+    juce::Font getComboBoxFont (juce::ComboBox&) override
+    {
+        return salekFont (12.0f, true);
+    }
+
+    juce::Font getPopupMenuFont() override
+    {
+        return salekFont (13.0f, false);
     }
 
     void drawButtonText (juce::Graphics& g, juce::TextButton& button,
@@ -123,7 +151,7 @@ public:
         else
         {
             // Keep compact labels such as LFO1 / ARP / SEQ readable.
-            g.setFont (juce::FontOptions (juce::jmin (11.f, area.getHeight()*0.42f), juce::Font::bold));
+            g.setFont (salekFont (juce::jlimit (10.f, 12.f, area.getHeight() * 0.45f), true));
             g.drawText (button.getButtonText(), area.toNearestInt(), juce::Justification::centred);
         }
     }

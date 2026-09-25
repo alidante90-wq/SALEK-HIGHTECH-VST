@@ -430,7 +430,7 @@ void SalekHightechAudioProcessorEditor::resized()
             k->s.setVisible (true);
             k->name.setBounds (cell.getX(), cell.getBottom() - nameH, cell.getWidth(), nameH);
             k->name.setJustificationType (juce::Justification::centred);
-            k->name.setFont (juce::FontOptions (9.5f, juce::Font::bold));
+            k->name.setFont (juce::FontOptions (10.5f, juce::Font::bold));
             k->name.setVisible (true);
             juce::ignoreUnused (valH);
         };

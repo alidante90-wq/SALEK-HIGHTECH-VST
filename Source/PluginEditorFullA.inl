@@ -649,7 +649,7 @@ SalekHightechAudioProcessorEditor::Knob& SalekHightechAudioProcessorEditor::addK
     atts.push_back (std::make_unique<SAtt> (processor.getAPVTS(), id, k->s));
     k->name.setText (label, juce::dontSendNotification);
     k->name.setJustificationType (juce::Justification::centred);
-    k->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    k->name.setFont (juce::FontOptions (10.5f, juce::Font::bold));
     k->name.setColour (juce::Label::textColourId, juce::Colour (0xffc0a0d0));
     parent.addAndMakeVisible (k->name);
 
