@@ -131,7 +131,7 @@ void SalekHightechAudioProcessorEditor::resized()
         }
     }
 
-    auto header = full.removeFromTop (96); // logo prominence (I WANT)
+    auto header = full.removeFromTop (140); // large SALEK logo band
     langToggle.setBounds (header.removeFromRight (36).reduced (2));
     themeBox.setBounds (header.removeFromRight (90).reduced (2));
     charCycleBtn.setBounds (header.removeFromRight (48).reduced (2));
@@ -148,9 +148,9 @@ void SalekHightechAudioProcessorEditor::resized()
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
     // Big logo dead-center of header strip (above tabs / osc monitors)
     {
-        const int lw = juce::jmin (980, juce::jmax (560, header.getWidth() * 3 / 4));
-        const int lh = header.getHeight() + 18;
-        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 10, lw, lh);
+        const int lw = juce::jmin (1100, juce::jmax (640, header.getWidth() * 88 / 100));
+        const int lh = header.getHeight() + 28;
+        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 14, lw, lh);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
     }
@@ -282,7 +282,7 @@ void SalekHightechAudioProcessorEditor::resized()
             for (int c = 0; c < 3; ++c)
             {
                 auto col = juce::Rectangle<int> (oa.getX() + c * (colW + gap), oa.getY(), colW, oa.getHeight()).reduced (2, 2);
-                auto monH = juce::jlimit (36, 56, col.getHeight() / 5);
+                auto monH = juce::jlimit (52, 78, col.getHeight() / 4); // taller scopes
                 if (mons[c] != nullptr) mons[c]->setBounds (col.removeFromTop (monH).reduced (1));
                 shapes[c]->setBounds (col.removeFromTop (18).reduced (1));
 

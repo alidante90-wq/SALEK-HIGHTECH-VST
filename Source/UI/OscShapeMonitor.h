@@ -5,14 +5,18 @@
 class OscShapeMonitor : public juce::Component, private juce::Timer
 {
 public:
-    OscShapeMonitor() { }
+    OscShapeMonitor() { startTimerHz (30); }
     void visibilityChanged() override
     {
-        if (isShowing()) startTimerHz (25);
+        if (isShowing()) startTimerHz (30);
         else stopTimer();
     }
+    void parentHierarchyChanged() override
+    {
+        if (isShowing()) startTimerHz (30);
+    }
 
-    void setAPVTS (juce::AudioProcessorValueTreeState* s) { apvts = s; }
+    void setAPVTS (juce::AudioProcessorValueTreeState* s) { apvts = s; startTimerHz (30); }
     void setOscIndex (int i) { osc = juce::jlimit (0, 2, i); }
     void setAccent (juce::Colour c) { accent = c; }
     void setTitle (const juce::String& t) { title = t; }
@@ -69,7 +73,7 @@ public:
         {
             float t = (float) i / (float) (N - 1);
             float harm = 1.f + table * 5.f;
-            float tw = t + warp * 0.38f * std::sin (t * juce::MathConstants<float>::twoPi);
+            float tw = t + warp * 0.38f * std::sin (t * juce::MathConstants<float>::twoPi + anim * 0.15f);
             float y = std::sin (tw * juce::MathConstants<float>::twoPi * harm);
             if (fold > 0.01f)
                 y = std::sin (y * juce::MathConstants<float>::pi * (1.f + fold * 2.2f));

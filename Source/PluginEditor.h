@@ -12,7 +12,7 @@
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
+    explicit WavetableDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -35,7 +35,7 @@ inline void WavetableDisplay::paint (juce::Graphics& g) {
 
 class AdsrDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
+    explicit AdsrDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (30); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -62,7 +62,7 @@ inline void AdsrDisplay::paint (juce::Graphics& g) {
 
 class FilterCurveDisplay : public juce::Component, private juce::Timer {
 public:
-    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (3); }
+    explicit FilterCurveDisplay (juce::AudioProcessorValueTreeState& s) : apvts (s) { startTimerHz (45); }
     void paint (juce::Graphics& g) override;
     void timerCallback() override { if (isShowing()) repaint(); }
 private:
@@ -350,10 +350,10 @@ private:
         void paint (juce::Graphics& g) override
         {
             if (! img.isValid()) return;
-            // Transparent — no panel behind logo (user request)
+            // Transparent — scale UP to fill overlay (user: much bigger logo)
             auto r = getLocalBounds().toFloat();
             g.setOpacity (1.f);
-            g.drawImage (img, r, juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+            g.drawImage (img, r, juce::RectanglePlacement::centred);
         }
     };
     LogoOverlayComp logoOverlay;
