@@ -5,7 +5,7 @@
 class OscShapeMonitor : public juce::Component, private juce::Timer
 {
 public:
-    OscShapeMonitor() { startTimerHz (30); }
+    OscShapeMonitor() { setOpaque (false); startTimerHz (30); }
     void visibilityChanged() override
     {
         if (isShowing()) startTimerHz (30);
@@ -67,33 +67,35 @@ public:
             fold  = gval (fid[osc], 0.f);
         }
 
+        // Adaptive resolution: denser when panel is wide (crisp), lighter when small
+        const int N = juce::jlimit (48, 160, (int) plot.getWidth());
         juce::Path wave, fill;
-        const int N = 96;
+        const float harm = 1.f + table * 5.f;
+        const float twoPi = juce::MathConstants<float>::twoPi;
         for (int i = 0; i < N; ++i)
         {
-            float t = (float) i / (float) (N - 1);
-            float harm = 1.f + table * 5.f;
-            float tw = t + warp * 0.38f * std::sin (t * juce::MathConstants<float>::twoPi + anim * 0.15f);
-            float y = std::sin (tw * juce::MathConstants<float>::twoPi * harm);
+            const float tt = (float) i / (float) (N - 1);
+            const float tw = tt + warp * 0.38f * std::sin (tt * twoPi + anim * 0.12f);
+            float y = std::sin (tw * twoPi * harm);
             if (fold > 0.01f)
                 y = std::sin (y * juce::MathConstants<float>::pi * (1.f + fold * 2.2f));
             y *= 0.88f;
-            float px = plot.getX() + t * plot.getWidth();
-            float py = plot.getCentreY() - y * plot.getHeight() * 0.44f;
+            const float px = plot.getX() + tt * plot.getWidth();
+            const float py = plot.getCentreY() - y * plot.getHeight() * 0.44f;
             if (i == 0) { wave.startNewSubPath (px, py); fill.startNewSubPath (px, plot.getBottom()); fill.lineTo (px, py); }
             else { wave.lineTo (px, py); fill.lineTo (px, py); }
         }
         fill.lineTo (plot.getRight(), plot.getBottom());
         fill.closeSubPath();
 
-        g.setColour (accent.withAlpha (0.12f));
+        g.setColour (accent.withAlpha (0.14f));
         g.fillPath (fill);
-
         g.setColour (accent.withAlpha (0.95f));
-        g.strokePath (wave, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.strokePath (wave, juce::PathStrokeType (juce::jlimit (1.4f, 2.2f, plot.getWidth() * 0.012f),
+                                                   juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        float scan = std::fmod (anim * 0.18f, 1.f);
-        float sx = plot.getX() + scan * plot.getWidth();
+        const float scan = std::fmod (anim * 0.18f, 1.f);
+        const float sx = plot.getX() + scan * plot.getWidth();
         g.setColour (accent.withAlpha (0.35f));
         g.drawVerticalLine ((int) sx, plot.getY(), plot.getBottom());
 
@@ -105,7 +107,13 @@ public:
                     juce::Justification::centredLeft);
     }
 
-    void timerCallback() override { if (! isShowing()) return; anim += 0.1f; repaint(); }
+    void timerCallback() override
+    {
+        if (! isShowing() || getWidth() < 8) return;
+        anim += 0.1f;
+        // Always refresh so TABLE/WARP/FOLD knob moves stay live
+        repaint();
+    }
 
 
     // Drag horizontally on the monitor to scrub TABLE (wavetable frame morph 0..1)
