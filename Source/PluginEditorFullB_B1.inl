@@ -504,6 +504,21 @@ void SalekHightechAudioProcessorEditor::resized()
         lfoLoadB.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoSaveC.setBounds (copyRow.removeFromLeft (cw).reduced (1));
         lfoLoadC.setBounds (copyRow.reduced (1));
+        // Rate division + path strip (1/4, 1/8… and Free/Retrig/Env/Note/Song)
+        auto syncRow = r.removeFromBottom (28).reduced (2, 1);
+        {
+            const int colW = juce::jmax (1, syncRow.getWidth() / 3);
+            juce::ComboBox* divs[3] = { &lfo1DivBox, &lfo2DivBox, &lfo3DivBox };
+            juce::ComboBox* paths[3] = { &lfo1PathBox, &lfo2PathBox, &lfo3PathBox };
+            for (int i = 0; i < 3; ++i)
+            {
+                auto col = juce::Rectangle<int> (syncRow.getX() + i * colW, syncRow.getY(), colW, syncRow.getHeight()).reduced (2, 0);
+                divs[i]->setBounds (col.removeFromLeft (col.getWidth() / 2).reduced (1));
+                paths[i]->setBounds (col.reduced (1));
+                divs[i]->setVisible (true);
+                paths[i]->setVisible (true);
+            }
+        }
         auto knobArea = r.removeFromBottom (96);
         {
             const char* lids[] = { "lfo_rate","lfo_amount","lfo2_rate","lfo2_amount","lfo3_rate","lfo3_amount" };

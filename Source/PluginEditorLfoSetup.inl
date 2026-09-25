@@ -90,6 +90,33 @@
         comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
             processor.getAPVTS(), "lfo3_wave", lfo3WaveBox));
 
+        // Musical rate division + path (Free / Retrig / Env / Note / Song)
+        {
+            auto divItems = juce::StringArray { "Hz Free", "1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/64" };
+            auto pathItems = juce::StringArray { "Free", "Retrig", "Env", "Note", "Song" };
+            auto wireDivPath = [&] (juce::ComboBox& div, juce::ComboBox& path, const char* divId, const char* pathId, juce::Colour col)
+            {
+                div.clear (juce::dontSendNotification);
+                path.clear (juce::dontSendNotification);
+                div.addItemList (divItems, 1);
+                path.addItemList (pathItems, 1);
+                div.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff12081c));
+                path.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff12081c));
+                div.setColour (juce::ComboBox::textColourId, col);
+                path.setColour (juce::ComboBox::textColourId, col);
+                lfoTab.addAndMakeVisible (div);
+                lfoTab.addAndMakeVisible (path);
+                comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+                    processor.getAPVTS(), divId, div));
+                comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+                    processor.getAPVTS(), pathId, path));
+            };
+            wireDivPath (lfo1DivBox, lfo1PathBox, "lfo_div", "lfo_path", juce::Colour (0xff00e8ff));
+            wireDivPath (lfo2DivBox, lfo2PathBox, "lfo2_div", "lfo2_path", juce::Colour (0xffff2d9b));
+            wireDivPath (lfo3DivBox, lfo3PathBox, "lfo3_div", "lfo3_path", juce::Colour (0xff39ff14));
+        }
+
+
         lfo1WaveBox.onChange = [this] {
             if (lfo1WaveBox.getSelectedItemIndex() == 5)
             { lfoShapeTarget = 0; lfoShapeEditor.setLfo (&processor.getLfo1()); lfoShapeEditor.syncFromLfo(); }

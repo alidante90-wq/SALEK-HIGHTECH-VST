@@ -62,10 +62,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout SalekHightechAudioProcessor:
     Fs("amp_release","Release",0.003f,10.0f,0.20f,0.22f);
     F("lfo_rate","LFO1 Rate",0.01f,30,1); F("lfo_amount","LFO1 Amt",0,1,0.0f);
     C("lfo_wave","LFO1 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
+    C("lfo_div","LFO1 Div",{"Hz Free","1/1","1/2","1/4","1/8","1/16","1/32","1/64"},0);
+    C("lfo_path","LFO1 Path",{"Free","Retrig","Env","Note","Song"},0);
     F("lfo2_rate","LFO2 Rate",0.01f,30,0.5f); F("lfo2_amount","LFO2 Amt",0,1,0.0f);
     C("lfo2_wave","LFO2 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
+    C("lfo2_div","LFO2 Div",{"Hz Free","1/1","1/2","1/4","1/8","1/16","1/32","1/64"},0);
+    C("lfo2_path","LFO2 Path",{"Free","Retrig","Env","Note","Song"},0);
     F("lfo3_rate","LFO3 Rate",0.01f,30,2.f); F("lfo3_amount","LFO3 Amt",0,1,0.0f);
     C("lfo3_wave","LFO3 Wave",{"Sine","Triangle","Saw","Square","S&H","Custom","SmoothRnd","Chaos","Pulse","Exp","Sine3","SoftSq"},0);
+    C("lfo3_div","LFO3 Div",{"Hz Free","1/1","1/2","1/4","1/8","1/16","1/32","1/64"},0);
+    C("lfo3_path","LFO3 Path",{"Free","Retrig","Env","Note","Song"},0);
     F("macro1","Macro 1",0,1,0); F("macro2","Macro 2",0,1,0); F("macro3","Macro 3",0,1,0); F("macro4","Macro 4",0,1,0);
     F("macro5","Macro 5",0,1,0); F("macro6","Macro 6",0,1,0); F("macro7","Macro 7",0,1,0); F("macro8","Macro 8",0,1,0);
     F("delay_mix","Delay Mix",0,1,0); F("delay_time","Delay Time",50,800,280); F("delay_fb","Delay FB",0,0.95f,0.35f); F("delay_tone","Delay Tone",0,1,0.72f);

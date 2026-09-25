@@ -153,6 +153,8 @@ public:
     }
 
     float getPhase() const noexcept { return (float) phase; }
+    void resetPhase() noexcept { phase = 0.0; }
+    void setPhase01 (double p) noexcept { phase = p - std::floor (p); if (phase < 0) phase += 1.0; }
 
 private:
     double sr=44100, phase=0, phaseInc=0; float rate=1, amount=0, lastSH=0, lastSH2=0, chaosState=0.3f;

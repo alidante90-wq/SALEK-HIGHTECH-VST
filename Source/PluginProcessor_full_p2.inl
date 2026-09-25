@@ -90,9 +90,18 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setScaleMode((int)g("scale_mode"));
     synthEngine.setKoronCents(g("koron_cents"));
 
-    auto setLfo = [] (salek::LFO& lfo, float rate, float amt, int wave)
+    auto rateFromDiv = [] (float freeHz, int divIdx, double bpm) -> float
     {
-        lfo.setRate (rate);
+        if (divIdx <= 0 || bpm < 1.0) return freeHz;
+        // cycles per beat: 1/1=0.25, 1/2=0.5, 1/4=1, 1/8=2, ...
+        static const float cpb[] = { 0.f, 0.25f, 0.5f, 1.f, 2.f, 4.f, 8.f, 16.f };
+        divIdx = juce::jlimit (0, 7, divIdx);
+        return (float) (bpm / 60.0 * (double) cpb[divIdx]);
+    };
+    const double bpmNow = (hostBpm > 1.0 ? hostBpm : 120.0);
+    auto setLfo = [&] (salek::LFO& lfo, float freeHz, float amt, int wave, int divIdx)
+    {
+        lfo.setRate (rateFromDiv (freeHz, divIdx, bpmNow));
         lfo.setAmount (1.0f);
         static const salek::LFO::Wave waves[] = {
             salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
@@ -103,9 +112,9 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
         lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
         juce::ignoreUnused (amt);
     };
-    setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"));
-    setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"));
-    setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"));
+    setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"), (int) g("lfo_div"));
+    setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"), (int) g("lfo2_div"));
+    setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"), (int) g("lfo3_div"));
 
     float v1 = lfo1.process() * g("lfo_amount");
     float v2 = lfo2.process() * g("lfo2_amount");
@@ -166,7 +175,52 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // Host transport for LFO song-sync + musical divisions
+    if (auto* ph = getPlayHead())
+    {
+        if (auto pos = ph->getPosition())
+        {
+            if (auto bpm = pos->getBpm())
+                hostBpm = *bpm > 1.0 ? *bpm : hostBpm;
+            if (auto ppq = pos->getPpqPosition())
+                hostPpq = *ppq;
+        }
+    }
+
     applyParamsToEngine();
+
+    // LFO path modes: Retrig / Song phase lock
+    {
+        auto g = [&] (const char* id) -> float {
+            if (auto* p = apvts.getRawParameterValue (id)) return p->load();
+            return 0.f;
+        };
+        const int path1 = (int) g ("lfo_path");
+        const int path2 = (int) g ("lfo2_path");
+        const int path3 = (int) g ("lfo3_path");
+        const int div1 = (int) g ("lfo_div");
+        const int div2 = (int) g ("lfo2_div");
+        const int div3 = (int) g ("lfo3_div");
+        auto songPhase = [&] (int divIdx) -> double {
+            if (divIdx <= 0) return -1.0;
+            static const float beatsPerCycle[] = { 0.f, 4.f, 2.f, 1.f, 0.5f, 0.25f, 0.125f, 0.0625f };
+            divIdx = juce::jlimit (1, 7, divIdx);
+            const double bpc = (double) beatsPerCycle[divIdx];
+            if (bpc <= 0.0) return 0.0;
+            return std::fmod (hostPpq / bpc, 1.0);
+        };
+        if (path1 == 4) { auto sp = songPhase (div1); if (sp >= 0.0) lfo1.setPhase01 (sp); }
+        if (path2 == 4) { auto sp = songPhase (div2); if (sp >= 0.0) lfo2.setPhase01 (sp); }
+        if (path3 == 4) { auto sp = songPhase (div3); if (sp >= 0.0) lfo3.setPhase01 (sp); }
+        for (const auto meta : midi)
+        {
+            if (! meta.getMessage().isNoteOn()) continue;
+            if (path1 == 1) lfo1.resetPhase();
+            if (path2 == 1) lfo2.resetPhase();
+            if (path3 == 1) lfo3.resetPhase();
+        }
+    }
+
     keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
 
     const bool seqOn = apvts.getRawParameterValue("seq_on")->load() > 0.5f;

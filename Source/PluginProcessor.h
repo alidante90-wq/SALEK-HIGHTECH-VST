@@ -77,6 +77,8 @@ public:
     int getNumUserPresets() const;
 
 private:
+    double hostBpm = 120.0;
+    double hostPpq = 0.0;
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void applyParamsToEngine();
     void initFactoryPresets();
