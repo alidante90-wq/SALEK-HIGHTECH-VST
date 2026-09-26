@@ -82,7 +82,7 @@ private:
     double hostBpm = 120.0;
     double hostPpq = 0.0;
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void applyParamsToEngine();
+    void applyParamsToEngine (int blockSamples = 64);
     void initFactoryPresets();
     void loadFactoryPreset (int index);
 

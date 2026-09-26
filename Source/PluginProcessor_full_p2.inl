@@ -1,5 +1,5 @@
 
-void SalekHightechAudioProcessor::applyParamsToEngine()
+void SalekHightechAudioProcessor::applyParamsToEngine (int blockSamples)
 {
     auto g = [&](const char* id) -> float { if (auto* p = apvts.getRawParameterValue(id)) return p->load(); return 0.f; };
     float o1l = juce::jlimit(0.f,1.f, g("osc1_level") + modMatrix.getModulation(salek::ModMatrix::Dest::Osc1Level)*0.5f);
@@ -90,18 +90,29 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
     synthEngine.setScaleMode((int)g("scale_mode"));
     synthEngine.setKoronCents(g("koron_cents"));
 
+    auto choiceIdx = [&] (const char* id) -> int
+    {
+        if (auto* ch = dynamic_cast<juce::AudioParameterChoice*> (apvts.getParameter (id)))
+            return ch->getIndex();
+        if (auto* p = apvts.getRawParameterValue (id))
+            return (int) std::lround ((double) p->load());
+        return 0;
+    };
+    // Musical LFO rate: Hz = BPM/60 * cyclesPerBeat
+    // 1/1→¼c/b  1/2→½  1/4→1  1/8→2  1/16→4  1/32→8  1/64→16
     auto rateFromDiv = [] (float freeHz, int divIdx, double bpm) -> float
     {
-        if (divIdx <= 0 || bpm < 1.0) return freeHz;
-        // cycles per beat: 1/1=0.25, 1/2=0.5, 1/4=1, 1/8=2, ...
+        if (divIdx <= 0) return juce::jlimit (0.01f, 80.f, freeHz);
+        if (bpm < 20.0) bpm = 120.0;
         static const float cpb[] = { 0.f, 0.25f, 0.5f, 1.f, 2.f, 4.f, 8.f, 16.f };
         divIdx = juce::jlimit (0, 7, divIdx);
-        return (float) (bpm / 60.0 * (double) cpb[divIdx]);
+        return juce::jlimit (0.01f, 80.f, (float) (bpm / 60.0 * (double) cpb[divIdx]));
     };
     const double bpmNow = (hostBpm > 1.0 ? hostBpm : 120.0);
-    auto setLfo = [&] (salek::LFO& lfo, float freeHz, float amt, int wave, int divIdx)
+    auto setLfo = [&] (salek::LFO& lfo, float freeHz, int wave, int divIdx)
     {
-        lfo.setRate (rateFromDiv (freeHz, divIdx, bpmNow));
+        const float hz = rateFromDiv (freeHz, divIdx, bpmNow);
+        lfo.setRate (hz);
         lfo.setAmount (1.0f);
         static const salek::LFO::Wave waves[] = {
             salek::LFO::Wave::Sine, salek::LFO::Wave::Triangle, salek::LFO::Wave::Saw,
@@ -110,15 +121,16 @@ void SalekHightechAudioProcessor::applyParamsToEngine()
             salek::LFO::Wave::Exp, salek::LFO::Wave::Sine3, salek::LFO::Wave::SoftSquare
         };
         lfo.setWave (waves[juce::jlimit (0, 11, wave)]);
-        juce::ignoreUnused (amt);
     };
-    setLfo (lfo1, g("lfo_rate"), g("lfo_amount"), (int) g("lfo_wave"), (int) g("lfo_div"));
-    setLfo (lfo2, g("lfo2_rate"), g("lfo2_amount"), (int) g("lfo2_wave"), (int) g("lfo2_div"));
-    setLfo (lfo3, g("lfo3_rate"), g("lfo3_amount"), (int) g("lfo3_wave"), (int) g("lfo3_div"));
+    const int d1 = choiceIdx ("lfo_div"), d2 = choiceIdx ("lfo2_div"), d3 = choiceIdx ("lfo3_div");
+    setLfo (lfo1, g("lfo_rate"), (int) g("lfo_wave"), d1);
+    setLfo (lfo2, g("lfo2_rate"), (int) g("lfo2_wave"), d2);
+    setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"), d3);
 
-    float v1 = lfo1.process() * g("lfo_amount");
-    float v2 = lfo2.process() * g("lfo2_amount");
-    float v3 = lfo3.process() * g("lfo3_amount");
+    const int nAdv = juce::jmax (1, blockSamples);
+    float v1 = lfo1.process (nAdv) * g("lfo_amount");
+    float v2 = lfo2.process (nAdv) * g("lfo2_amount");
+    float v3 = lfo3.process (nAdv) * g("lfo3_amount");
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);
@@ -187,7 +199,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-    applyParamsToEngine();
+    applyParamsToEngine (buffer.getNumSamples());
 
     // LFO path modes: Retrig / Song phase lock
     {

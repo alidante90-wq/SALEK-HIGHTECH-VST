@@ -11,7 +11,10 @@ public:
 
     void prepare(double sampleRate){ sr=sampleRate>0?sampleRate:44100; phase=0; loadPresetShape(0); }
     void reset() noexcept { phase=0; lastSH=0; }
-    void setRate(float hz) noexcept { hz=juce::jlimit(0.01f,40.f,hz); if (std::abs(hz-rate)>0.0001f) { rate=hz; phaseInc=double(rate)/sr; } }
+    void setRate(float hz) noexcept {
+        rate = juce::jlimit (0.01f, 80.f, hz);
+        phaseInc = (sr > 1.0) ? (double) rate / sr : 0.0;
+    }
     void setWave(Wave w) noexcept { wave=w; }
     void setAmount(float a) noexcept { amount=juce::jlimit(0.f,1.f,a); }
     void setCustomPoint (int i, float v) noexcept
@@ -94,7 +97,7 @@ public:
         return (float) (randomState & 0x00FFFFFFu) / 16777215.0f;
     }
 
-    float process() noexcept {
+    float process (int numSamples = 1) noexcept {
         float v=0, p=float(phase);
         switch(wave){
             case Wave::Sine: v=std::sin(p*juce::MathConstants<float>::twoPi); break;
@@ -148,8 +151,11 @@ public:
                 break;
             }
         }
-        phase+=phaseInc; if(phase>=1) phase-=1;
-        return v*amount;
+        const int n = juce::jmax (1, numSamples);
+        phase += phaseInc * (double) n;
+        while (phase >= 1.0) phase -= 1.0;
+        while (phase < 0.0) phase += 1.0;
+        return v * amount;
     }
 
     float getPhase() const noexcept { return (float) phase; }
