@@ -12,7 +12,9 @@ public:
         setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xff2a1840));
         setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff00e8ff));
         setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colour(0xffffffff));
-        setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xffa090c0));
+        setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xffc8b8e8));
+        setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colour(0xffffffff));
+        setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff00e8ff));
         setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff0a0614));
         setColour(juce::ListBox::outlineColourId, juce::Colour(0xff1a1030));
         setColour(juce::ComboBox::outlineColourId, juce::Colour(0xffff00aa));
@@ -41,7 +43,7 @@ public:
 
     juce::Font getLabelFont (juce::Label&) override
     {
-        return salekFont (11.0f, true);
+        return salekFont (11.5f, true);
     }
 
     juce::Font getTextButtonFont (juce::TextButton& b, int buttonHeight) override

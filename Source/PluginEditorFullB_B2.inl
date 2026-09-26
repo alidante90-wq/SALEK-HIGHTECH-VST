@@ -140,18 +140,101 @@ bool SalekHightechAudioProcessorEditor::keyStateChanged (bool isKeyDown)
 
 void SalekHightechAudioProcessorEditor::applyUiLanguage()
 {
-    tabs.setTabName (0, "MAIN");
-    tabs.setTabName (1, "MOD");
-    tabs.setTabName (2, "LFO");
-    tabs.setTabName (3, "FX");
-    tabs.setTabName (4, "MAGIC");
-    tabs.setTabName (5, "SEQ");
+    // Cache original English knob labels once
+    struct EnCache {
+        static std::map<juce::String, juce::String>& map (SalekHightechAudioProcessorEditor& ed)
+        {
+            static std::map<juce::String, juce::String> m;
+            static bool init = false;
+            if (! init)
+            {
+                for (auto& kk : ed.knobs)
+                    if (kk != nullptr)
+                        m[kk->paramId] = kk->name.getText();
+                init = true;
+            }
+            return m;
+        }
+    };
+    auto& enLabels = EnCache::map (*this);
+
+    auto faFor = [] (const juce::String& id) -> juce::String
+    {
+        // Iranian Persian (fa-IR) production terms — not Arabic
+        if (id.contains ("cutoff")) return juce::CharPointer_UTF8 ("\xda\xa9\xd8\xa7\xd8\xaa\xe2\x80\x8c\xd8\xa7\xd9\x81");
+        if (id.contains ("reso"))   return juce::CharPointer_UTF8 ("\xd8\xb1\xd8\xb2\xd9\x88");
+        if (id.contains ("attack")) return juce::CharPointer_UTF8 ("\xd8\xa7\xd8\xaa\xda\xa9");
+        if (id.contains ("decay"))  return juce::CharPointer_UTF8 ("\xd8\xaf\xdb\x8c\xda\xa9\xdb\x8c");
+        if (id.contains ("sustain"))return juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd8\xb3\xd8\xaa\xdb\x8c\xd9\x86");
+        if (id.contains ("release"))return juce::CharPointer_UTF8 ("\xd8\xb1\xdb\x8c\xd9\x84\xdb\x8c\xd8\xb2");
+        if (id.contains ("_rate") || id.endsWith ("rate")) return juce::CharPointer_UTF8 ("\xd8\xb1\xdb\x8c\xd8\xaa");
+        if (id.contains ("amount")) return juce::CharPointer_UTF8 ("\xd9\x85\xdb\x8c\xd8\xb2\xd8\xa7\xd9\x86");
+        if (id.contains ("drive"))  return juce::CharPointer_UTF8 ("\xd8\xaf\xd8\xb1\xd8\xa7\xdb\x8c\xd9\x88");
+        if (id.contains ("warp"))   return juce::CharPointer_UTF8 ("\xd9\x88\xd8\xa7\xd8\xb1\xd9\xbe");
+        if (id.contains ("fold"))   return juce::CharPointer_UTF8 ("\xd9\x81\xd9\x88\xd9\x84\xd8\xaf");
+        if (id.contains ("semi"))   return juce::CharPointer_UTF8 ("\xd9\x86\xdb\x8c\xd9\x85");
+        if (id.contains ("coarse") || id.contains ("pitch") && id.contains ("crs")) return juce::CharPointer_UTF8 ("\xd8\xae\xd8\xb4\xd9\x86");
+        if (id.contains ("unison") || id == "uni") return juce::CharPointer_UTF8 ("\xdb\x8c\xd9\x88\xd9\x86\xdb\x8c");
+        if (id.contains ("detune") || id.contains ("det")) return juce::CharPointer_UTF8 ("\xd8\xaf\xd8\xaa\xdb\x8c\xd9\x88\xd9\x86");
+        if (id.contains ("pan"))    return juce::CharPointer_UTF8 ("\xd9\xbe\xd9\x86");
+        if (id.contains ("mix"))    return juce::CharPointer_UTF8 ("\xd9\x85\xdb\x8c\xda\xa9\xd8\xb3");
+        if (id.contains ("glide"))  return juce::CharPointer_UTF8 ("\xda\xaf\xd9\x84\xd8\xa7\xdb\x8c\xd8\xaf");
+        if (id.contains ("noise"))  return juce::CharPointer_UTF8 ("\xd9\x86\xd9\x88\xdb\x8c\xd8\xb2");
+        if (id.contains ("sub"))    return juce::CharPointer_UTF8 ("\xd8\xb3\xd8\xa7\xd8\xa8");
+        if (id.contains ("table"))  return juce::CharPointer_UTF8 ("\xd8\xac\xd8\xaf\xd9\x88\xd9\x84");
+        if (id.contains ("level") || id.contains ("lvl")) return juce::CharPointer_UTF8 ("\xd9\x84\xd9\x88\xd9\x84");
+        if (id.contains ("filter")) return juce::CharPointer_UTF8 ("\xd9\x81\xdb\x8c\xd9\x84\xd8\xaa\xd8\xb1");
+        return {};
+    };
+
+    if (uiLangFa)
+    {
+        tabs.setTabName (0, juce::CharPointer_UTF8 ("\xd8\xa7\xd8\xb5\xd9\x84\xdb\x8c"));
+        tabs.setTabName (1, juce::CharPointer_UTF8 ("\xd9\x85\xd8\xa7\xd8\xaf"));
+        tabs.setTabName (2, "LFO");
+        tabs.setTabName (3, juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x81\xda\xa9\xd8\xaa"));
+        tabs.setTabName (4, juce::CharPointer_UTF8 ("\xd9\x85\xd8\xac\xdb\x8c\xda\xa9"));
+        tabs.setTabName (5, juce::CharPointer_UTF8 ("\xd8\xb3\xda\xa9\xd9\x88\xd8\xa6\xd9\x86\xd8\xb3"));
+        magicHold.setButtonText (juce::CharPointer_UTF8 ("\xd9\x86\xda\xaf\xd9\x87\xe2\x80\x8c\xd8\xaf\xd8\xa7\xd8\xb1"));
+        savePresetBtn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xb0\xd8\xae\xdb\x8c\xd8\xb1\xd9\x87"));
+        loadPresetBtn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xa8\xd8\xa7\xd8\xb1\xda\xaf\xd8\xb0\xd8\xa7\xd8\xb1\xdb\x8c"));
+        initBtn.setButtonText (juce::CharPointer_UTF8 ("\xd8\xa7\xd9\x88\xd9\x84\xdb\x8c\xd9\x87"));
+        langToggle.setButtonText (juce::CharPointer_UTF8 ("\xd9\x81\xd8\xa7"));
+        for (auto& kk : knobs)
+        {
+            if (kk == nullptr) continue;
+            auto fa = faFor (kk->paramId);
+            kk->name.setText (fa.isNotEmpty() ? fa : kk->name.getText(), juce::dontSendNotification);
+            kk->name.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+        }
+    }
+    else
+    {
+        tabs.setTabName (0, "MAIN");
+        tabs.setTabName (1, "MOD");
+        tabs.setTabName (2, "LFO");
+        tabs.setTabName (3, "FX");
+        tabs.setTabName (4, "MAGIC");
+        tabs.setTabName (5, "SEQ");
+        magicHold.setButtonText ("HOLD");
+        savePresetBtn.setButtonText ("SAVE");
+        loadPresetBtn.setButtonText ("LOAD");
+        initBtn.setButtonText ("INIT");
+        langToggle.setButtonText ("EN");
+        for (auto& kk : knobs)
+        {
+            if (kk == nullptr) continue;
+            if (auto it = enLabels.find (kk->paramId); it != enLabels.end())
+                kk->name.setText (it->second, juce::dontSendNotification);
+            kk->name.setFont (juce::FontOptions (10.5f, juce::Font::bold));
+        }
+    }
     magicLoopBtn.setButtonText ("LOOP");
     magicGlitchBtn.setButtonText ("GLITCH");
     magicFlangeBtn.setButtonText ("FLANGE");
     magicPsychBtn.setButtonText ("PSY");
-    magicHold.setButtonText ("HOLD");
     for (int i = 0; i < 8; ++i)
-        fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("⏻"));
+        fxBypass[i].setButtonText (juce::CharPointer_UTF8 ("\xe2\x8f\x8b"));
     repaint();
 }
+

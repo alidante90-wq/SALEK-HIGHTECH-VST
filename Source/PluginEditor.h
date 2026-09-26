@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include <map>
 #include "PluginProcessor.h"
 #include "UI/ModMatrixPanel.h"
 #include "UI/OpenGLGridBackdrop.h"

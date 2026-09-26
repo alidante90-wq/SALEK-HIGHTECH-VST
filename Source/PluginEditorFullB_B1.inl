@@ -420,7 +420,7 @@ void SalekHightechAudioProcessorEditor::resized()
             if (k == nullptr) return;
             k->s.setTextBoxStyle (juce::Slider::TextBoxBelow, false, juce::jmax (36, cell.getWidth() - 6), 11);
             k->s.setNumDecimalPlacesToDisplay (2);
-            const int nameH = 12;
+            const int nameH = 14;
             auto knobArea = cell.withTrimmedBottom (nameH);
             k->s.setBounds (knobArea);
             k->s.setVisible (true);
