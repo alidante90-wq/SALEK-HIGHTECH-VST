@@ -130,7 +130,7 @@ inline juce::Image loadLogoGiti()
     img = fromBinaryName ("logo_giti_png");
     if (img.isValid()) return img;
 #endif
-    img = fromDisk ({ "logo_giti.png", "LOGO.png" });
+    img = fromDisk ({ "logo_giti_final.png", "logo_giti_new.png", "logo_giti.png", "LOGO.png" });
     return img.isValid() ? img : makeFallbackLogo();
 }
 
