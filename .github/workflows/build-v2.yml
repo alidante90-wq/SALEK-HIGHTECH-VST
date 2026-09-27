@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: JUCE
-          key: juce-8.0.4-v2
+          key: juce-8.0.4-v3
 
       - name: Clone JUCE
         if: steps.cache-juce.outputs.cache-hit != 'true'
@@ -32,8 +32,11 @@ jobs:
         with:
           arch: x64
 
-      - name: Install Ninja
-        run: choco install ninja -y
+      - name: Install Ninja + NSIS
+        shell: pwsh
+        run: |
+          choco install ninja -y --no-progress
+          choco install nsis -y --no-progress
 
       - name: Configure (Ninja + MSVC)
         shell: pwsh
@@ -47,34 +50,86 @@ jobs:
         shell: pwsh
         run: |
           $test = Get-ChildItem -Path build-v2 -Recurse -Filter "GITI_SHAE_SELFTEST.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $test) { Write-Error "SHAE self-test executable not found"; exit 1 }
+          if (-not $test) { throw "SHAE self-test executable not found" }
           & $test.FullName
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed with exit code $LASTEXITCODE" }
 
-      - name: Package
+      - name: Stage package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Remove-Item package,installer-output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path package,installer-output | Out-Null
+
           $vst3 = Get-ChildItem -Path build-v2 -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
           $exe  = Get-ChildItem -Path build-v2 -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
-                  Where-Object { $_.FullName -notmatch "SHAE" -and $_.FullName -match "Standalone" } | Select-Object -First 1
+                  Where-Object { $_.FullName -notmatch "SHAE|juce_vst3_helper" -and $_.FullName -match "Standalone" } |
+                  Select-Object -First 1
+
+          if (-not $vst3) { throw "VST3 artifact not found" }
+          if (-not $exe)  { throw "Standalone artifact not found" }
+
           Write-Host "VST3: $($vst3.FullName)"
           Write-Host "EXE:  $($exe.FullName)"
-          if ($vst3) { Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3" }
-          if ($exe)  { Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe" }
-          if (Test-Path "Source/Assets") {
-            Copy-Item -Recurse "Source/Assets" "package/Assets"
-          }
-          if (-not (Get-ChildItem package -ErrorAction SilentlyContinue)) {
-            Write-Error "No artifacts found"
-            Get-ChildItem -Path build-v2 -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
-            exit 1
-          }
-          Compress-Archive -Path "package\*" -DestinationPath "GITI_BY_SALEK_HIGHTECH_VST3.zip" -Force
 
-      - name: Upload VST3 package
+          Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3"
+          Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe"
+
+          if (Test-Path "Source\Assets") {
+            Copy-Item -Recurse "Source\Assets" "package\Assets"
+          }
+
+          if (-not (Test-Path "Installer\GITI_BY_SALEK_HIGHTECH.nsi")) {
+            throw "Installer script not found"
+          }
+          if (-not (Test-Path "Installer\GITI_LICENSE.txt")) {
+            throw "Installer license file not found"
+          }
+
+          Get-ChildItem package -Recurse | Select-Object FullName,Length
+
+      - name: Build Genesis 01 installer
+        shell: pwsh
+        run: |
+          $makensis = (Get-Command makensis.exe -ErrorAction SilentlyContinue).Source
+          if (-not $makensis) { $makensis = "C:\Program Files (x86)\NSIS\makensis.exe" }
+          if (-not (Test-Path $makensis)) { throw "NSIS compiler not found" }
+
+          & $makensis "/V4" "/DVERSION=1.0.0" "Installer\GITI_BY_SALEK_HIGHTECH.nsi"
+          if ($LASTEXITCODE -ne 0) { throw "NSIS installer build failed" }
+
+          $installer = "installer-output\GITI BY SALEK Setup.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Installer was not generated at: $installer"
+          }
+
+          Write-Host "GENESIS 01 INSTALLER: $((Get-Item $installer).FullName)"
+          Write-Host "INSTALLER SIZE: $((Get-Item $installer).Length) bytes"
+
+      - name: Create complete package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "package\GITI BY SALEK HIGHTECH.vst3" "release\GITI BY SALEK HIGHTECH.vst3" -Recurse
+          Copy-Item "package\GITI BY SALEK HIGHTECH.exe" "release\GITI BY SALEK HIGHTECH.exe"
+          if (Test-Path "package\Assets") { Copy-Item "package\Assets" "release\Assets" -Recurse }
+          Copy-Item "installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
+
+          Compress-Archive -Path "release\*" -DestinationPath "GITI_BY_SALEK_HIGHTECH_GENESIS_01.zip" -Force
+
+          if (-not (Test-Path "GITI_BY_SALEK_HIGHTECH_GENESIS_01.zip")) {
+            throw "Complete Genesis 01 ZIP was not created"
+          }
+
+      - name: Upload Genesis 01 installer
         uses: actions/upload-artifact@v4
         with:
-          name: GITI_BY_SALEK_HIGHTECH_VST3
-          path: GITI_BY_SALEK_HIGHTECH_VST3.zip
+          name: GITI_BY_SALEK_HIGHTECH_GENESIS_01_INSTALLER
+          path: installer-output/GITI BY SALEK Setup.exe
+          if-no-files-found: error
+
+      - name: Upload complete Genesis 01 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: GITI_BY_SALEK_HIGHTECH_GENESIS_01
+          path: GITI_BY_SALEK_HIGHTECH_GENESIS_01.zip
           if-no-files-found: error
