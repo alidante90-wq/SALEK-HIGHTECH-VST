@@ -71,7 +71,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     logoOverlay.toFront (false);
 
     // Bottom model strip title
-    modelStripTitle.setText ("SALEK HIGHTECH", juce::dontSendNotification);
+    modelStripTitle.setText ("GITI  •  " + processor.getEditionId() + "  •  " + processor.getEdition().name, juce::dontSendNotification);
     modelStripTitle.setJustificationType (juce::Justification::centred);
     modelStripTitle.setFont (juce::FontOptions (13.0f, juce::Font::bold));
     modelStripTitle.setColour (juce::Label::textColourId, juce::Colour (0xff00e8ff));
