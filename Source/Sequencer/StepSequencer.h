@@ -65,7 +65,8 @@ public:
     }
 
     int getCurrentStep() const noexcept { return currentStep; }
-    float getCurrentMod() const noexcept { return currentMod; }\n    float getCurrentVelocity() const noexcept { return currentVelocity; }
+    float getCurrentMod() const noexcept { return currentMod; }
+    float getCurrentVelocity() const noexcept { return currentVelocity; }
 
     void process (int numSamples, juce::MidiBuffer& outMidi)
     {
@@ -107,7 +108,8 @@ public:
                 samplesUntilNext += samplesPerStep * (oddStep ? (1.0 - swing) : (1.0 + swing));
 
                 auto& st = steps[static_cast<size_t> (currentStep)];
-                currentMod = st.modValue;\n                currentVelocity = st.velocity;
+                currentMod = st.modValue;
+                currentVelocity = st.velocity;
 
                 if (st.active && juce::Random::getSystemRandom().nextFloat() <= st.probability)
                 {
@@ -169,7 +171,8 @@ private:
     int rootNote = 60;
     bool hasRoot = false;
     bool enabled = false;
-    float currentMod = 0.0f;\n    float currentVelocity = 0.0f;
+    float currentMod = 0.0f;
+    float currentVelocity = 0.0f;
 };
 
 } // namespace salek
