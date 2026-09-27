@@ -19,8 +19,9 @@ void SalekHightechAudioProcessorEditor::resized()
     // Top header strip (title is painted, so just controls)
     auto header = full.removeFromTop (40);
     // Header identity + utility controls. Keep these visible at every size.
-    aboutButton.setBounds (header.removeFromRight (92).reduced (3));
-    inspireBtn.setBounds (header.removeFromRight (92).reduced (3));
+    aboutButton.setBounds (header.removeFromRight (84).reduced (3));
+    licenseButton.setBounds (header.removeFromRight (92).reduced (3));
+    inspireBtn.setBounds (header.removeFromRight (84).reduced (3));
     langToggle.setBounds (header.removeFromRight (48).reduced (3));
     themeBox.setBounds (header.removeFromRight (140).reduced (3));
     scope.setBounds (header.removeFromRight (120).reduced (3));
