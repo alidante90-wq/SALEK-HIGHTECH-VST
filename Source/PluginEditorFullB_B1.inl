@@ -642,33 +642,7 @@ void SalekHightechAudioProcessorEditor::resized()
             placeSeqKnob ({ arpRow.getX() + i * aw, arpRow.getY(), aw, arpRow.getHeight() }, arpIds[i]);
         for (int i = 0; i < 4; ++i)
             placeSeqKnob ({ seqRow.getX() + i * sw, seqRow.getY(), sw, seqRow.getHeight() }, seqIds[i]);
-        // 2 rows of Magic trigger buttons under seq strip
-        {
-            auto magicStrip = bounds.removeFromBottom (64).reduced (2, 1);
-            seqMagicOff.setBounds (magicStrip.removeFromRight (72).reduced (2));
-            seqMagicOff.setVisible (true);
-            auto row1 = magicStrip.removeFromTop (30);
-            auto row2 = magicStrip;
-            const int n = seqMagicBtns.size();
-            const int half = n / 2;
-            if (half > 0)
-            {
-                const int cw1 = juce::jmax (28, row1.getWidth() / half);
-                const int cw2 = juce::jmax (28, row2.getWidth() / juce::jmax (1, n - half));
-                for (int i = 0; i < half; ++i)
-                    if (auto* b = seqMagicBtns[i])
-                    {
-                        b->setBounds (row1.getX() + i * cw1, row1.getY(), cw1 - 2, row1.getHeight());
-                        b->setVisible (true);
-                    }
-                for (int i = half; i < n; ++i)
-                    if (auto* b = seqMagicBtns[i])
-                    {
-                        b->setBounds (row2.getX() + (i - half) * cw2, row2.getY(), cw2 - 2, row2.getHeight());
-                        b->setVisible (true);
-                    }
-            }
-        }
+        // Compact SEQ Magic axis control — velocity drives X, Y or X+Y.\n        seqMagicAxisBox.setBounds (bounds.removeFromBottom (34).removeFromLeft (150).reduced (3));\n        seqMagicAxisBox.setVisible (true);
         bounds.removeFromTop (4);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
