@@ -267,7 +267,14 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
 
     setSize (1280, 820);
     setResizable (true, true);
-    setResizeLimits (1020, 700, 1700, 1100);
+    setResizeLimits (1020, 700, 1800, 1200);
+    if (processor.getTrial().isExpired())
+        juce::AlertWindow::showAsync (juce::MessageBoxOptions()
+            .withIconType (juce::MessageBoxIconType::WarningIcon)
+            .withTitle ("GITI • TRIAL EXPIRED")
+            .withMessage ("Your 3-day GITI evaluation has expired.\n\nPlease obtain a license to continue making sound with GITI BY SALEK HIGHTECH.")
+            .withButton ("OK")
+            .withAssociatedComponent (this), nullptr);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
     addAndMakeVisible (title);
     tagline.setText ("ALIEN", juce::dontSendNotification);
