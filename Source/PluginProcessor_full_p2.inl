@@ -187,6 +187,15 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int blockSamples)
 void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Offline 72-hour evaluation lock. Trial state is initialised outside the audio callback.
+    if (trial.isExpired())
+    {
+        buffer.clear();
+        midi.clear();
+        outputPeak.store (0.f);
+        return;
+    }
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
