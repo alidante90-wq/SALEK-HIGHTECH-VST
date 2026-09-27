@@ -92,7 +92,7 @@ inline void applyToPreset(const Edition& e, const juce::String& presetName,
     scale(v, "filter_cutoff", spectral, 80.0f, 18000.0f);
     shift(v, "filter_reso", (p.instability - 0.5f) * 0.18f, 0.0f, 1.0f);
     shift(v, "filter_drive", (p.aggression - 0.5f) * 0.14f, 0.0f, 1.0f);
-    shift(v, "filter_env", (p.modulation - 0.5f) * 0.16f, -1.0f, 1.0f);
+    shift(v, "filter_env", (p.modulation - 0.5f) * 0.16f, 0.0f, 1.0f);
 
     for (const char* id : { "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1" })
         scale(v, id, mod, 0.0f, 1.0f);
@@ -104,7 +104,7 @@ inline void applyToPreset(const Edition& e, const juce::String& presetName,
     for (const char* id : { "lfo_amount","lfo2_amount","lfo3_amount" })
         scale(v, id, mod, 0.0f, 1.0f);
     for (const char* id : { "lfo_rate","lfo2_rate","lfo3_rate" })
-        scale(v, id, 0.65f + 1.8f * p.modulation, 0.01f, 40.0f);
+        scale(v, id, 0.65f + 1.8f * p.modulation, 0.01f, 30.0f);
 
     scale(v, "sub_level", 0.72f + 0.62f * p.lowWeight, 0.0f, 1.0f);
     scale(v, "noise_level", 0.60f + 0.85f * p.instability, 0.0f, 1.0f);
