@@ -51,7 +51,10 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         auto* alert = new juce::AlertWindow (
             processor.isNemoGiti() ? "NEMOGITI • ACTIVATE" : "GITI • LICENSE",
-            "Enter your issued activation code.\n\n72-hour code = evaluation access.\nPermanent code = full license.",
+            "Enter your issued activation code.
+
+72-hour code = evaluation access.
+Permanent code = full license.",
             juce::MessageBoxIconType::InfoIcon);
 
         alert->addTextEditor ("code", "", "ACTIVATION CODE:", true);
@@ -74,12 +77,16 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
                         if (activation == giti::ThreeDayTrial::ActivationResult::permanent)
                         {
                             title = "GITI • LICENSE ACTIVE";
-                            message = "Permanent license activated.\n\n" + processorPtr->getTrialStatus();
+                            message = "Permanent license activated.
+
+" + processorPtr->getTrialStatus();
                         }
                         else if (activation == giti::ThreeDayTrial::ActivationResult::threeDay)
                         {
                             title = "GITI • 72-HOUR ACCESS";
-                            message = "Three-day activation accepted.\n\n" + processorPtr->getTrialStatus();
+                            message = "Three-day activation accepted.
+
+" + processorPtr->getTrialStatus();
                         }
                         else
                         {
@@ -334,7 +341,9 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
         juce::AlertWindow::showAsync (juce::MessageBoxOptions()
             .withIconType (juce::MessageBoxIconType::WarningIcon)
             .withTitle ("GITI • TRIAL EXPIRED")
-            .withMessage ("Your 3-day GITI evaluation has expired.\n\nPlease obtain a license to continue making sound with GITI BY SALEK HIGHTECH.")
+            .withMessage ("Your 3-day GITI evaluation has expired.
+
+Please obtain a license to continue making sound with GITI BY SALEK HIGHTECH.")
             .withButton ("OK")
             .withAssociatedComponent (this), nullptr);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
@@ -534,7 +543,21 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         #include "PluginEditorMagic.inl"
 
-    // SEQ → Magic control: the sequencer only selects which XY axis is driven.\n    // Magic presets stay on the MAGIC page; the SEQ page never duplicates them.\n    {\n        juce::ComboBox seqMagicAxisBox;\n        seqMagicAxisBox.setName ("SEQ_MAGIC_AXIS");\n        seqMagicAxisBox.addItemList ({ "OFF", "X", "Y", "X+Y" }, 1);\n        seqMagicAxisBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a2e));\n        seqMagicAxisBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffffd700));\n        seqTab.addAndMakeVisible (seqMagicAxisBox);\n        comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (\n            processor.getAPVTS(), "seq_magic_axis", seqMagicAxisBox));\n        seqMagicAxisBox.setTooltip ("SEQ velocity drives Magic X, Y or both. Magic presets remain on MAGIC.");\n    }\n\n    // Explicit X/Y knobs (also LFO-modulatable)
+    // SEQ → Magic control: the sequencer only selects which XY axis is driven.
+    // Magic presets stay on the MAGIC page; the SEQ page never duplicates them.
+    {
+        juce::ComboBox seqMagicAxisBox;
+        seqMagicAxisBox.setName ("SEQ_MAGIC_AXIS");
+        seqMagicAxisBox.addItemList ({ "OFF", "X", "Y", "X+Y" }, 1);
+        seqMagicAxisBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff1a0a2e));
+        seqMagicAxisBox.setColour (juce::ComboBox::textColourId, juce::Colour (0xffffd700));
+        seqTab.addAndMakeVisible (seqMagicAxisBox);
+        comboAtts.push_back (std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+            processor.getAPVTS(), "seq_magic_axis", seqMagicAxisBox));
+        seqMagicAxisBox.setTooltip ("SEQ velocity drives Magic X, Y or both. Magic presets remain on MAGIC.");
+    }
+
+    // Explicit X/Y knobs (also LFO-modulatable)
     {
         const auto C = juce::Colour (0xff00e8ff);
         const auto M = juce::Colour (0xffff2d9b);
