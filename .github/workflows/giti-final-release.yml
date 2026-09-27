@@ -80,8 +80,8 @@ jobs:
       - name: Build GITI BY SALEK installer
         shell: pwsh
         run: |
-          $makensis = "$env:ProgramFiles(x86)\\NSIS\\makensis.exe"
-          if (-not (Test-Path $makensis)) { $makensis = "$env:ProgramFiles\\NSIS\\makensis.exe" }
+          $makensis = (Get-Command makensis.exe -ErrorAction SilentlyContinue).Source
+          if (-not $makensis) { $makensis = "C:\\Program Files (x86)\\NSIS\\makensis.exe" }
           if (-not (Test-Path $makensis)) { throw "NSIS compiler not found" }
           New-Item -ItemType Directory -Force -Path installer-output | Out-Null
           & $makensis "/V4" "/Oinstaller-nsis.log" "/DVERSION=1.0.0" "Installer\\GITI_BY_SALEK_HIGHTECH.nsi"
