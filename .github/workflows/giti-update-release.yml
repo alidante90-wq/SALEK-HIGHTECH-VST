@@ -31,11 +31,11 @@ jobs:
         id: identity
         shell: pwsh
         run: |
-          if ("${{ github.event_name  }}}" -eq "workflow_dispatch") {
-            $v = "${{ inputs.version  }}}"
-            $edition = "${{ inputs.edition  }}}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $v = "${{ inputs.version }}"
+            $edition = "${{ inputs.edition }}"
           } else {
-            $v = "${github.ref_name}" -replace '^v',''
+            $v = "${{ github.ref_name }}" -replace '^v',''
             $edition = "1"
           }
           if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid version: $v" }
