@@ -32,9 +32,6 @@
         const char* wid[] = { "osc1_warp",  "osc2_warp",  "osc3_warp" };
         const char* fid[] = { "osc1_fold",  "osc2_fold",  "osc3_fold" };
         idx = juce::jlimit (0, 31, idx);
-        const char* tid[] = { "osc1_table", "osc2_table", "osc3_table" };
-        const char* wid[] = { "osc1_warp",  "osc2_warp",  "osc3_warp" };
-        const char* fid[] = { "osc1_fold",  "osc2_fold",  "osc3_fold" };
         auto setP = [&] (const char* id, float v)
         {
             if (auto* p = processor.getAPVTS().getParameter (id))
