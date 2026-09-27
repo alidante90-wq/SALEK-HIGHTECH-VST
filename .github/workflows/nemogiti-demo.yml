@@ -1,0 +1,60 @@
+name: NEMOGITI — 3 DAY DEMO
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "NEMOGITI demo version"
+        required: true
+        default: "1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure NEMOGITI
+        shell: pwsh
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=1 -DGITI_NEMO_MODE=ON
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --target GITI_BY_SALEK_HIGHTECH GITI_SHAE_SELFTEST -j 2
+      - name: SHAE self-test
+        shell: pwsh
+        run: |
+          $test = Get-ChildItem build -Recurse -Filter "GITI_SHAE_SELFTEST.exe" | Select-Object -First 1
+          if (-not $test) { throw "SHAE self-test not found" }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed" }
+      - name: Package NEMOGITI
+        shell: pwsh
+        run: |
+          Remove-Item package -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path package, package\Assets | Out-Null
+          $vst3 = Get-ChildItem build -Recurse -Directory -Filter "*.vst3" | Where-Object { $_.FullName -notmatch "CMakeFiles|_deps" } | Select-Object -First 1
+          $exe = Get-ChildItem build -Recurse -File -Filter "*.exe" | Where-Object { $_.FullName -match "Standalone" -and $_.Name -notmatch "SHAE" } | Select-Object -First 1
+          if (-not $vst3 -or -not $exe) { throw "NEMOGITI binaries not found" }
+          Copy-Item $vst3.FullName "package\NEMOGITI BY SALEK HIGHTECH.vst3" -Recurse -Force
+          Copy-Item $exe.FullName "package\NEMOGITI BY SALEK HIGHTECH.exe" -Force
+          $assets = Join-Path $exe.Directory.FullName "Assets"
+          if (Test-Path $assets) { Copy-Item "$assets\*" "package\Assets" -Recurse -Force }
+          Remove-Item installer-output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path installer-output | Out-Null
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version }}" "/DMyAppEdition=DEMO" "/DMyAppEditionName=NEMOGITI" "/DMyAppId=8E0D9E7A-5C9A-4E1E-9A3A-4D1D9E7A0001" "/DMyPluginFile=NEMOGITI BY SALEK HIGHTECH.vst3" "/DMyStandaloneFile=NEMOGITI BY SALEK HIGHTECH.exe" "/DMyInstallDir=NEMOGITI BY SALEK HIGHTECH" "/DMyOutputBaseFilename=NEMOGITI BY SALEK HIGHTECH - 3 DAY DEMO Setup" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+      - name: Upload NEMOGITI
+        uses: actions/upload-artifact@v4
+        with:
+          name: nemogiti-${{ inputs.version }}
+          path: |
+            installer-output/*.exe
+            package/*
+          if-no-files-found: error
+          retention-days: 30
