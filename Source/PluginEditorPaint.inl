@@ -114,8 +114,7 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
             g.fillEllipse (x, 128.f, 4.f, 4.f);
         }
 
-        auto work = juce::Rectangle<float> (full.getX() + 2.f, full.getY() + 2.f,
-                                            full.getWidth() - 4.f, full.getHeight() - 4.f);
+        auto work = juce::Rectangle<float> (0.f, 0.f, W, H).reduced (2.f);
         g.setColour (juce::Colours::white.withAlpha (0.045f));
         g.drawRoundedRectangle (work, 14.f, 1.f);
         g.setColour (juce::Colours::black.withAlpha (0.28f));
