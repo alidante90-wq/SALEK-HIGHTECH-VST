@@ -115,7 +115,7 @@ jobs:
           $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found" }
-          & $iscc "/Qp" "/DMyAppVersion=${{ steps.identity.outputs.version }}" "/DMyAppEdition=${{ steps.identity.outputs.editionPadded }}" "/DMyAppEditionName=${{ steps.identity.outputs.editionName }}" $iss
+          & $iscc "/Qp" "/DMyAppVersion=${{ steps.identity.outputs.version }}" "/DMyAppEdition=${{ steps.identity.outputs.editionPadded }}" "/DMyAppEditionName=${{ steps.identity.outputs.editionName }}" "/DMyPluginFile=GITI BY SALEK HIGHTECH.vst3" "/DMyStandaloneFile=GITI BY SALEK HIGHTECH.exe" "/DMyInstallDir=GITI BY SALEK HIGHTECH" "/DMyOutputBaseFilename=GITI BY SALEK Setup" $iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
       - name: Create packages and manifest
