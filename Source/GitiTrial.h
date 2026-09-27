@@ -2,6 +2,9 @@
 #include <JuceHeader.h>
 #include <atomic>
 
+// SALEK UNIVERSE / GITI E01 identity seed. This is a public product fingerprint,
+// not a secret key. License codes are still validated by their salted SHA-256 hash.
+
 namespace giti
 {
 namespace license
@@ -13,7 +16,10 @@ inline juce::String normalise (juce::String code)
 inline juce::String fingerprint (const juce::String& code)
 {
     const auto n = normalise (code);
-    return juce::SHA256 (n.toRawUTF8(), (size_t) n.getNumBytesAsUTF8()).toHexString().toUpperCase();
+    const juce::String payload =
+        "376692CA7C88CEA09A76B1CB9C404D906F6EB48362AB74510EE38D24C7D56BAE|" + n;
+    return juce::SHA256 (payload.toRawUTF8(), (size_t) payload.getNumBytesAsUTF8())
+        .toHexString().toUpperCase();
 }
 
 // Production fingerprints are intentionally empty until SALEK supplies the issued codes.
