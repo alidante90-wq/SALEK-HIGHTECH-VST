@@ -139,7 +139,7 @@ target_compile_definitions(GITI_BY_SALEK_HIGHTECH PUBLIC
 )
 
 target_link_libraries(GITI_BY_SALEK_HIGHTECH
-    PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_opengl SalekBinaryAssets
+    PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_opengl juce::juce_cryptography SalekBinaryAssets
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags
 )
 
