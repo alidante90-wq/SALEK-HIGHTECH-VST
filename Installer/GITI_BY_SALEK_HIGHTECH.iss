@@ -1,4 +1,5 @@
-; GITI BY SALEK HIGHTECH — professional Windows installer
+; GITI BY SALEK HIGHTECH — Genesis Edition installer
+; Every installer is bound to a real compiled GITI edition.
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0"
 #endif
@@ -8,6 +9,21 @@
 #ifndef MyAppEditionName
   #define MyAppEditionName "ORIGIN"
 #endif
+#ifndef MyAppId
+  #define MyAppId "00000000-0000-0000-0000-000000000001"
+#endif
+#ifndef MyPluginFile
+  #define MyPluginFile "GITI BY SALEK HIGHTECH GENESIS 001.vst3"
+#endif
+#ifndef MyStandaloneFile
+  #define MyStandaloneFile "GITI BY SALEK HIGHTECH GENESIS 001.exe"
+#endif
+#ifndef MyInstallDir
+  #define MyInstallDir "GITI BY SALEK HIGHTECH Genesis 001"
+#endif
+#ifndef MyOutputBaseFilename
+  #define MyOutputBaseFilename "GITI BY SALEK HIGHTECH - GENESIS 001 - ORIGIN Setup"
+#endif
 
 #define MyAppName "GITI BY SALEK HIGHTECH"
 #define MyPublisher "ALI AGHAKOOCHAK AKA SALEK"
@@ -16,19 +32,19 @@
 #define MyDisplayEdition "GENESIS #" + MyAppEdition + " • " + MyAppEditionName
 
 [Setup]
-AppId={{7C1F6E2D-7B2A-4E4B-A5F4-5B9A4C7D1F10}
+AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyDisplayVersion}
+AppVerName={#MyAppName} {#MyDisplayVersion} • {#MyAppEditionName}
 AppPublisher={#MyPublisher}
 AppPublisherURL={#MyURL}
 AppSupportURL={#MyURL}
 AppUpdatesURL={#MyURL}
-DefaultDirName={autopf}\GITI BY SALEK HIGHTECH
-DefaultGroupName={#MyAppName}
+DefaultDirName={autopf}\{#MyInstallDir}
+DefaultGroupName={#MyAppName}\Genesis #{#MyAppEdition}
 DisableProgramGroupPage=no
 OutputDir=..\installer-output
-OutputBaseFilename=GITI BY SALEK Setup
+OutputBaseFilename={#MyOutputBaseFilename}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -37,7 +53,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 UninstallDisplayName={#MyAppName} • {#MyDisplayEdition}
 VersionInfoDescription={#MyAppName} Installer • {#MyDisplayEdition}
-VersionInfoProductName={#MyAppName}
+VersionInfoProductName={#MyAppName} • Genesis #{#MyAppEdition}
 VersionInfoCompany={#MyPublisher}
 VersionInfoCopyright=© 2026 Ali Aghakoochak / SALEK
 SetupLogging=yes
@@ -47,19 +63,19 @@ Uninstallable=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Create a desktop shortcut for GITI BY SALEK HIGHTECH"; Flags: unchecked
+Name: "desktopicon"; Description: "Create a desktop shortcut for this GITI Genesis edition"; Flags: unchecked
 
 [Files]
-Source: "package\GITI BY SALEK HIGHTECH.vst3"; DestDir: "{commoncf64}\VST3"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "package\GITI BY SALEK HIGHTECH.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "package\{#MyPluginFile}"; DestDir: "{commoncf64}\VST3"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "package\{#MyStandaloneFile}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "package\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}\GITI BY SALEK HIGHTECH • {#MyDisplayEdition}"; Filename: "{app}\GITI BY SALEK HIGHTECH.exe"; WorkingDir: "{app}"
-Name: "{autodesktop}\GITI BY SALEK HIGHTECH • {#MyDisplayEdition}"; Filename: "{app}\GITI BY SALEK HIGHTECH.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}\Genesis #{#MyAppEdition} • {#MyAppEditionName}"; Filename: "{app}\{#MyStandaloneFile}"; WorkingDir: "{app}"
+Name: "{autodesktop}\GITI • #{#MyAppEdition} • {#MyAppEditionName}"; Filename: "{app}\{#MyStandaloneFile}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\GITI BY SALEK HIGHTECH.exe"; Description: "Launch GITI BY SALEK HIGHTECH • {#MyDisplayEdition}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyStandaloneFile}"; Description: "Launch GITI • {#MyDisplayEdition}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 procedure SetStatus(const S: String);
@@ -77,7 +93,7 @@ begin
       'Genesis Edition #{#MyAppEdition} • {#MyAppEditionName}' + #13#10#13#10 +
       'Software Version {#MyAppVersion}' + #13#10 +
       'ALI AGHAKOOCHAK AKA SALEK' + #13#10#13#10 +
-      'High-Tech Psytrance • Sound Design • Digital Instrument Universe';
+      'FIRST GENERATION • SALEK DIGITAL INSTRUMENT UNIVERSE';
     SetStatus('GITI ONLINE • {#MyDisplayEdition} • Version {#MyAppVersion}');
   end;
 end;
@@ -86,7 +102,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   case CurStep of
     ssInstall:
-      SetStatus('GITI CORE DEPLOYMENT • Installing VST3 + Standalone + Assets...');
+      SetStatus('GITI CORE DEPLOYMENT • Installing Genesis VST3 + Standalone + Assets...');
     ssPostInstall:
       SetStatus('GITI READY • {#MyDisplayEdition} • 3-DAY TRIAL ENABLED');
   end;
