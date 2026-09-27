@@ -17,6 +17,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Clone JUCE 8.0.4
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+      - name: Install Ninja + Inno Setup
+        shell: pwsh
+        run: choco install ninja innosetup -y --no-progress
       - name: Configure NEMOGITI
         shell: pwsh
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=1 -DGITI_NEMO_MODE=ON
