@@ -341,9 +341,7 @@ Permanent code = full license.",
         juce::AlertWindow::showAsync (juce::MessageBoxOptions()
             .withIconType (juce::MessageBoxIconType::WarningIcon)
             .withTitle ("GITI • TRIAL EXPIRED")
-            .withMessage ("Your 3-day GITI evaluation has expired.
-
-Please obtain a license to continue making sound with GITI BY SALEK HIGHTECH.")
+            .withMessage ("Your 3-day GITI evaluation has expired.\n\nPlease obtain a license to continue making sound with GITI BY SALEK HIGHTECH.")
             .withButton ("OK")
             .withAssociatedComponent (this), nullptr);
     title.setText ("SALEK HIGHTECH", juce::dontSendNotification);
