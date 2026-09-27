@@ -66,9 +66,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut for this GITI Genesis edition"; Flags: unchecked
 
 [Files]
-Source: "package\{#MyPluginFile}"; DestDir: "{commoncf64}\VST3"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "package\{#MyStandaloneFile}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "package\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\package\{#MyPluginFile}"; DestDir: "{commoncf64}\VST3"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\package\{#MyStandaloneFile}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\package\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}\Genesis #{#MyAppEdition} • {#MyAppEditionName}"; Filename: "{app}\{#MyStandaloneFile}"; WorkingDir: "{app}"
