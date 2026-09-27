@@ -54,7 +54,7 @@ public:
     }
     void stopNote(float, bool allowTailOff) override {
         if (allowTailOff) adsr.noteOff();
-        else { clearCurrentNote(); adsr.reset(); isNoteOn = false; }
+        else { if (monoMode && glideAmt > 0.0001f) glideHistory = true; clearCurrentNote(); adsr.reset(); isNoteOn = false; }
     }
     void pitchWheelMoved(int) override {}
     void controllerMoved(int, int) override {}
