@@ -10,6 +10,7 @@
 
 #include "PluginEditorLookAndFeel.inl"
 #include "PluginEditorFxLfo.inl"
+#include "GitiAbout.h"
 
 class WavetableDisplay : public juce::Component, private juce::Timer {
 public:
@@ -361,6 +362,7 @@ private:
         }
     };
     LogoOverlayComp logoOverlay;
+    juce::TextButton aboutButton { "ABOUT" };
     void refreshCharCache();
     int heroIndex = 0;
     bool presetCollapsed = false;
