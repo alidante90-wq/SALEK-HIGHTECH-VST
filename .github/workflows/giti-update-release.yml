@@ -32,11 +32,219 @@ jobs:
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $v = "${{ inputs.version }}"
+            $edition = "${{ inputs.edition }}"
           } else {
             $v = "${{ github.ref_name }}" -replace '^v',''
+            $edition = "1"
           }
-          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid version: $v" }
+          if ($v -notmatch '^\d+\.\d+\.\d+
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.4-giti-update-v1
+
+      - name: Clone JUCE 8.0.4
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja + Inno Setup
+        shell: pwsh
+        run: |
+          choco install ninja innosetup -y --no-progress
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=${{ steps.identity.outputs.edition }}
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build-release --config Release --parallel
+
+      - name: Run SHAE self-test
+        shell: pwsh
+        run: |
+          $test = Get-ChildItem build-release -Recurse -Filter "GITI_SHAE_SELFTEST.exe" | Select-Object -First 1
+          if (-not $test) { throw "GITI_SHAE_SELFTEST.exe not found" }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed" }
+
+      - name: Stage package
+        shell: pwsh
+        run: |
+          Remove-Item package,release,update -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force package,release,update | Out-Null
+          $vst3 = Get-ChildItem build-release -Recurse -Directory -Filter "GITI BY SALEK HIGHTECH.vst3" | Select-Object -First 1
+          if (-not $vst3) { throw "VST3 artifact not found" }
+          $exe = Get-ChildItem build-release -Recurse -Filter "GITI BY SALEK HIGHTECH.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Standalone artifact not found" }
+          Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3"
+          Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe"
+          if (Test-Path "Source\Assets") { Copy-Item -Recurse "Source\Assets" "package\Assets" }
+          Copy-Item -Recurse $vst3.FullName "update\GITI BY SALEK HIGHTECH.vst3"
+          Copy-Item $exe.FullName "update\GITI BY SALEK HIGHTECH.exe"
+          if (Test-Path "Source\Assets") { Copy-Item -Recurse "Source\Assets" "update\Assets" }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iss = "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          $text = Get-Content $iss -Raw
+          $text = $text -replace '#define MyAppVersion "[^"]+"', '#define MyAppVersion "${{ steps.identity.outputs.version }}"'
+          Set-Content -Path $iss -Value $text -Encoding UTF8
+          $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found" }
+          & $iscc "/Qp" $iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+
+      - name: Create full and update packages
+        shell: pwsh
+        run: |
+          Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
+          Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK UPDATE.exe"
+          Compress-Archive -Path "package\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip" -Force
+          Compress-Archive -Path "update\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip" -Force
+          $manifest = @{
+            product = "GITI BY SALEK"
+            displayName = "GITI BY SALEK HIGHTECH"
+            version = "${{ steps.identity.outputs.version }}"
+            channel = "stable"
+            edition = [int]"${{ steps.identity.outputs.edition }}"
+            editionId = "GENESIS #" + ("${{ steps.identity.outputs.edition }}".PadLeft(3, '0'))
+            fullInstaller = "GITI BY SALEK Setup.exe"
+            updateInstaller = "GITI BY SALEK UPDATE.exe"
+            fullPackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip"
+            updatePackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip"
+          } | ConvertTo-Json -Depth 4
+          Set-Content -Path "release\update.json" -Value $manifest -Encoding UTF8
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.identity.outputs.version }}
+          name: GITI BY SALEK v${{ steps.identity.outputs.version }}
+          generate_release_notes: true
+          files: |
+            release/GITI BY SALEK Setup.exe
+            release/GITI BY SALEK UPDATE.exe
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip
+            release/update.json
+) { throw "Invalid version: $v" }
+          if ($edition -notmatch '^\d+
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.4-giti-update-v1
+
+      - name: Clone JUCE 8.0.4
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja + Inno Setup
+        shell: pwsh
+        run: |
+          choco install ninja innosetup -y --no-progress
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=${{ steps.identity.outputs.edition }}
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build-release --config Release --parallel
+
+      - name: Run SHAE self-test
+        shell: pwsh
+        run: |
+          $test = Get-ChildItem build-release -Recurse -Filter "GITI_SHAE_SELFTEST.exe" | Select-Object -First 1
+          if (-not $test) { throw "GITI_SHAE_SELFTEST.exe not found" }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed" }
+
+      - name: Stage package
+        shell: pwsh
+        run: |
+          Remove-Item package,release,update -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force package,release,update | Out-Null
+          $vst3 = Get-ChildItem build-release -Recurse -Directory -Filter "GITI BY SALEK HIGHTECH.vst3" | Select-Object -First 1
+          if (-not $vst3) { throw "VST3 artifact not found" }
+          $exe = Get-ChildItem build-release -Recurse -Filter "GITI BY SALEK HIGHTECH.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Standalone artifact not found" }
+          Copy-Item -Recurse $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3"
+          Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe"
+          if (Test-Path "Source\Assets") { Copy-Item -Recurse "Source\Assets" "package\Assets" }
+          Copy-Item -Recurse $vst3.FullName "update\GITI BY SALEK HIGHTECH.vst3"
+          Copy-Item $exe.FullName "update\GITI BY SALEK HIGHTECH.exe"
+          if (Test-Path "Source\Assets") { Copy-Item -Recurse "Source\Assets" "update\Assets" }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iss = "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          $text = Get-Content $iss -Raw
+          $text = $text -replace '#define MyAppVersion "[^"]+"', '#define MyAppVersion "${{ steps.identity.outputs.version }}"'
+          Set-Content -Path $iss -Value $text -Encoding UTF8
+          $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found" }
+          & $iscc "/Qp" $iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+
+      - name: Create full and update packages
+        shell: pwsh
+        run: |
+          Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
+          Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK UPDATE.exe"
+          Compress-Archive -Path "package\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip" -Force
+          Compress-Archive -Path "update\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip" -Force
+          $manifest = @{
+            product = "GITI BY SALEK"
+            displayName = "GITI BY SALEK HIGHTECH"
+            version = "${{ steps.identity.outputs.version }}"
+            channel = "stable"
+            edition = [int]"${{ steps.identity.outputs.edition }}"
+            editionId = "GENESIS #" + ("${{ steps.identity.outputs.edition }}".PadLeft(3, '0'))
+            fullInstaller = "GITI BY SALEK Setup.exe"
+            updateInstaller = "GITI BY SALEK UPDATE.exe"
+            fullPackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip"
+            updatePackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip"
+          } | ConvertTo-Json -Depth 4
+          Set-Content -Path "release\update.json" -Value $manifest -Encoding UTF8
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.identity.outputs.version }}
+          name: GITI BY SALEK v${{ steps.identity.outputs.version }}
+          generate_release_notes: true
+          files: |
+            release/GITI BY SALEK Setup.exe
+            release/GITI BY SALEK UPDATE.exe
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip
+            release/update.json
+ -or [int]$edition -lt 1 -or [int]$edition -gt 50) { throw "GITI edition must be 1..50" }
           "version=$v" >> $env:GITHUB_OUTPUT
+          "edition=$edition" >> $env:GITHUB_OUTPUT
 
       - name: Cache JUCE
         id: cache-juce
