@@ -96,6 +96,15 @@ SALEK_CACHED_FLOAT (setNoiseLevel, 41, setNoiseLevel)
 SALEK_CACHED_FLOAT (setSubLevel, 42, setSubLevel)
 SALEK_CACHED_INT (setFilterRoute, 10, setFilterRoute)
 SALEK_CACHED_FLOAT (setGlide, 43, setGlide)
+
+void SynthEngine::setVoiceMode (int mode)
+{
+    const auto m = juce::jlimit (0, 2, mode);
+    if (! updateIfChanged (lastIntParameters, 19, m)) return;
+    synth.setVoiceMode (static_cast<SalekSynthesiser::VoiceMode> (m));
+    const bool mono = m != 0;
+    forEachVoice ([&] (SynthVoice& voice) { voice.setMonoMode (mono); });
+}
 SALEK_CACHED_FLOAT (setAmpAttack, 44, setAmpAttack)
 SALEK_CACHED_FLOAT (setAmpDecay, 45, setAmpDecay)
 SALEK_CACHED_FLOAT (setAmpSustain, 46, setAmpSustain)
