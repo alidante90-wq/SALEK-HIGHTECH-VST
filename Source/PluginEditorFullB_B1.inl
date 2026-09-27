@@ -146,11 +146,12 @@ void SalekHightechAudioProcessorEditor::resized()
     modSrcLfo2.setButtonText ("LFO2");
     modSrcLfo3.setButtonText ("LFO3");
     inspireBtn.setBounds (header.removeFromRight (56).reduced (2, 10));
-    // Big logo dead-center of header strip (above tabs / osc monitors)
+    aboutButton.setBounds (header.removeFromRight (62).reduced (2, 10));
+    // FINAL HERO LOGO: maximum readable central footprint, with a dedicated glass header band.
     {
-        const int lw = juce::jmin (1100, juce::jmax (640, header.getWidth() * 88 / 100));
-        const int lh = header.getHeight() + 28;
-        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 14, lw, lh);
+        const int lw = juce::jmin (1240, juce::jmax (760, header.getWidth() * 96 / 100));
+        const int lh = juce::jmax (112, header.getHeight() + 22);
+        logoOverlay.setBounds (header.getCentreX() - lw / 2, header.getY() - 9, lw, lh);
         logoOverlay.toFront (false);
         logoOverlay.setVisible (true);
     }
