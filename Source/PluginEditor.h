@@ -237,7 +237,16 @@ public:
             g.setColour (cols[L]); g.strokePath (curve, juce::PathStrokeType (1.6f));
         }
     }
-    void timerCallback() override\n    {\n        if (! isShowing()) return;\n        bool active = false;\n        const char* ids[] = { "lfo_amount", "lfo2_amount", "lfo3_amount" };\n        for (auto* id : ids)\n            if (auto* p = apvts.getRawParameterValue (id)) active = active || p->load() > 1.0e-4f;\n        if (active) phase += 0.06f;\n        repaint();\n    }
+    void timerCallback() override
+    {
+        if (! isShowing()) return;
+        bool active = false;
+        const char* ids[] = { "lfo_amount", "lfo2_amount", "lfo3_amount" };
+        for (auto* id : ids)
+            if (auto* p = apvts.getRawParameterValue (id)) active = active || p->load() > 1.0e-4f;
+        if (active) phase += 0.06f;
+        repaint();
+    }
 private:
     juce::AudioProcessorValueTreeState& apvts; float phase = 0.f;
 };
