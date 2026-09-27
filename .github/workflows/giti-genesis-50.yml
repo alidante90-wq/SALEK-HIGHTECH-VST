@@ -105,6 +105,30 @@ jobs:
           Remove-Item installer-output -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path installer-output | Out-Null
 
+      - name: Build cyber edition face
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $p = "${{ steps.identity.outputs.padded }}"
+          $edition = [int]"${{ matrix.edition }}"
+          $sources = @("Source\Assets\char_toronowla.png","Source\Assets\char_neon_street.png","Source\Assets\char_pink_dead.png","Source\Assets\char_apron.png","Source\Assets\char_catgirl.png","Source\Assets\char_cyber_white.png","Source\Assets\char_foxgirl.png","Source\Assets\char_gun.png","Source\Assets\char_purple_latex.png","Source\Assets\char_white_suit.png")
+          $src = Resolve-Path $sources[($edition - 1) % $sources.Count]
+          $large = New-Object System.Drawing.Bitmap 164,314
+          $g = [System.Drawing.Graphics]::FromImage($large); $g.Clear([System.Drawing.Color]::FromArgb(5,4,16))
+          $img = [System.Drawing.Image]::FromFile($src)
+          $scale = [Math]::Min(150.0 / $img.Width, 275.0 / $img.Height); $w=[int]($img.Width*$scale); $h=[int]($img.Height*$scale); $x=[int]((164-$w)/2); $y=[int]((314-$h)/2)
+          $cm=New-Object System.Drawing.Imaging.ColorMatrix; $phase=(($edition*37)%360)/360.0
+          $cm.Matrix00=0.82+0.12*[Math]::Sin($phase*6.283); $cm.Matrix11=0.82+0.12*[Math]::Sin(($phase+0.33)*6.283); $cm.Matrix22=0.90+0.08*[Math]::Sin(($phase+0.66)*6.283)
+          $attrs=New-Object System.Drawing.Imaging.ImageAttributes; $attrs.SetColorMatrix($cm)
+          $g.DrawImage($img,[System.Drawing.Rectangle]::new($x,$y,$w,$h),0,0,$img.Width,$img.Height,[System.Drawing.GraphicsUnit]::Pixel,$attrs)
+          $accent=[System.Drawing.Color]::FromArgb(210,0,232,255); if(($edition%5)-eq 2){$accent=[System.Drawing.Color]::FromArgb(210,255,45,155)}; if(($edition%5)-eq 3){$accent=[System.Drawing.Color]::FromArgb(210,57,255,20)}; if(($edition%5)-eq 4){$accent=[System.Drawing.Color]::FromArgb(210,255,215,0)}
+          $pen=New-Object System.Drawing.Pen($accent,2); $g.DrawRectangle($pen,4,4,155,305); $g.DrawLine($pen,8,24,156,24); $g.DrawLine($pen,8,290,156,290)
+          $font=New-Object System.Drawing.Font("Segoe UI",8,[System.Drawing.FontStyle]::Bold); $g.DrawString("GITI-$p",$font,[System.Drawing.Brushes]::White,9,7); $g.DrawString("SALEK UNIVERSE",$font,$pen.Brush,9,294)
+          $large.Save((Join-Path $PWD "installer-output\giti-face-large.bmp"),[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $small=New-Object System.Drawing.Bitmap 55,55; $sg=[System.Drawing.Graphics]::FromImage($small); $sg.Clear([System.Drawing.Color]::FromArgb(5,4,16)); $sg.DrawImage($large,0,0,55,55); $small.Save((Join-Path $PWD "installer-output\giti-face-small.bmp"),[System.Drawing.Imaging.ImageFormat]::Bmp)
+          $sg.Dispose();$small.Dispose();$g.Dispose();$large.Dispose();$img.Dispose()
+          if(!(Test-Path "installer-output\giti-face-large.bmp")){throw "Cyber installer face was not generated"}
+
       - name: Build installer
         shell: pwsh
         run: |
@@ -114,7 +138,7 @@ jobs:
           $standaloneFile = "GITI BY SALEK HIGHTECH GENESIS $p.exe"
           $installDir = "GITI BY SALEK HIGHTECH Genesis $p"
           $output = "GITI BY SALEK HIGHTECH - GENESIS $p - $name Setup"
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version }}" "/DMyAppEdition=$p" "/DMyAppEditionName=$name" "/DMyAppId=${{ steps.identity.outputs.appId }}" "/DMyPluginFile=$pluginFile" "/DMyStandaloneFile=$standaloneFile" "/DMyInstallDir=$installDir" "/DMyOutputBaseFilename=$output" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version }}" "/DMyAppEdition=$p" "/DMyAppEditionName=$name" "/DMyAppId=${{ steps.identity.outputs.appId }}" "/DMyPluginFile=$pluginFile" "/DMyStandaloneFile=$standaloneFile" "/DMyInstallDir=$installDir" "/DMyOutputBaseFilename=$output" "/DMyFaceFile=$PWD\installer-output\giti-face-large.bmp" "/DMyFaceSmallFile=$PWD\installer-output\giti-face-small.bmp" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
       - name: Collect installer
