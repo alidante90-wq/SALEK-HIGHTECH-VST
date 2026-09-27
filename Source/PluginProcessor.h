@@ -17,6 +17,7 @@
 #include "Modulation/LFO.h"
 #include "UI/VisualFifo.h"
 #include "SHAE/SHAECore.h"
+#include "GitiTrial.h"
 #include <map>
 #include <vector>
 #include <atomic>
@@ -67,6 +68,9 @@ public:
     salek::SimpleReverb& getReverb() { return reverb; }
     salek::GranularOscillator& getGranular() { return granular; }
 
+    const giti::ThreeDayTrial& getTrial() const noexcept { return trial; }
+    juce::String getTrialStatus() const { return trial.statusText(); }
+
     juce::StringArray getPresetNames() const;
     int saveCurrentAsUserPreset (const juce::String& name);
     void loadUserPresetsFromDisk();
@@ -106,6 +110,7 @@ private:
     VisualFifo visualFifo;
     std::atomic<float> outputPeak { 0.f };
     shae::SafetyStage shaeSafety;
+    giti::ThreeDayTrial trial;
 
     struct FactoryPreset { juce::String name; std::map<juce::String, float> values; juce::String extraXml; };
     std::vector<FactoryPreset> factoryPresets;
