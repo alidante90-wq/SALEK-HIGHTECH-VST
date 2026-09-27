@@ -1,50 +1,73 @@
-name: Build SALEK HIGHTECH VST3
+name: GITI BY SALEK HIGHTECH — FINAL E01
 
 on:
   push:
-    branches: [ main ]
+    branches: [ giti-by-salek-hightech ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build-windows:
+  build-final-e01:
     runs-on: windows-2022
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Clone JUCE
-        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
-
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-
-      - name: Configure CMake
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build --config Release --parallel
-
-      - name: Package VST3 + Standalone
+      - name: Clone JUCE 8.0.4
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+      - name: Install Ninja + Inno Setup
+        shell: pwsh
+        run: choco install ninja innosetup -y --no-progress
+      - name: Configure E01
+        shell: pwsh
+        run: cmake -S . -B build-final -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=1 -DGITI_NEMO_MODE=OFF
+      - name: Build E01 + self-test
+        shell: pwsh
+        run: cmake --build build-final --config Release --parallel
+      - name: Run SHAE self-test
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path artifact | Out-Null
-          $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
-          $exe  = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
-                  Where-Object { $_.Name -notmatch "cmake|ninja|juce|CMake" } | Select-Object -First 1
-          if ($vst3) { Copy-Item -Recurse $vst3.FullName "artifact/SALEK HIGHTECH.vst3" }
-          if ($exe)  { Copy-Item $exe.FullName "artifact/SALEK HIGHTECH.exe" }
-          if (-not (Get-ChildItem artifact -ErrorAction SilentlyContinue)) {
-            Write-Error "No VST3 or Standalone produced"
-            Get-ChildItem -Path build -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
-            exit 1
-          }
-          Compress-Archive -Path artifact/* -DestinationPath SALEK-HIGHTECH-Build.zip -Force
-
-      - name: Upload plugin artifacts
+          $test = Get-ChildItem build-final -Recurse -Filter "GITI_SHAE_SELFTEST.exe" | Select-Object -First 1
+          if (-not $test) { throw "GITI_SHAE_SELFTEST.exe not found" }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed" }
+      - name: Package commercial E01
+        shell: pwsh
+        run: |
+          Remove-Item package, installer-output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path package, package\Assets, installer-output | Out-Null
+          $vst3 = Get-ChildItem build-final -Recurse -Directory -Filter "*.vst3" | Where-Object { $_.FullName -notmatch "CMakeFiles|_deps" } | Select-Object -First 1
+          $exe = Get-ChildItem build-final -Recurse -File -Filter "*.exe" | Where-Object { $_.Name -match "GITI" -and $_.Name -notmatch "SHAE|ninja|cmake" } | Select-Object -First 1
+          if (-not $vst3) { throw "VST3 artifact not found" }
+          if (-not $exe) { throw "GITI standalone artifact not found" }
+          Copy-Item $vst3.FullName "package\GITI BY SALEK HIGHTECH.vst3" -Recurse -Force
+          Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe" -Force
+          $assets = Join-Path $exe.Directory.FullName "Assets"
+          if (Test-Path $assets) { Copy-Item "$assets\*" "package\Assets" -Recurse -Force }
+          Get-ChildItem package -Recurse -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$_.Hash  $_.Path" } | Out-File package\SHA256SUMS.txt -Encoding ascii
+      - name: Build commercial installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=1.0.0" "/DMyAppEdition=001" "/DMyAppEditionName=ORIGIN" "/DMyAppId=8E0D9E7A-5C9A-4E1E-9A3A-4D1D9E7A0001" "/DMyPluginFile=GITI BY SALEK HIGHTECH.vst3" "/DMyStandaloneFile=GITI BY SALEK HIGHTECH.exe" "/DMyInstallDir=GITI BY SALEK HIGHTECH" "/DMyOutputBaseFilename=GITI BY SALEK HIGHTECH - GENESIS 001 Setup" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+      - name: Package release archive
+        shell: pwsh
+        run: |
+          Copy-Item installer-output\*.exe package\ -Force
+          Compress-Archive -Path package\* -DestinationPath "GITI-BY-SALEK-HIGHTECH-GENESIS-001-FINAL.zip" -Force
+      - name: Upload final E01
         uses: actions/upload-artifact@v4
         with:
-          name: SALEK-HIGHTECH-Build
-          path: SALEK-HIGHTECH-Build.zip
+          name: GITI-BY-SALEK-HIGHTECH-GENESIS-001-FINAL
+          path: |
+            GITI-BY-SALEK-HIGHTECH-GENESIS-001-FINAL.zip
+            installer-output/*.exe
+            package/*
           if-no-files-found: error
+          retention-days: 30
