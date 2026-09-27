@@ -39,7 +39,7 @@ public:
 
         g.setColour (accent);
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        auto titleBar = r.removeFromTop (17).reduced (5, 0);\n        g.drawText (title, titleBar, juce::Justification::centredLeft);\n        const int frame = juce::jlimit (0, 127, (int) std::lround (table * 127.f));\n        g.setFont (juce::FontOptions (8.5f, juce::Font::bold));\n        g.drawText (juce::String::formatted ("FRAME %03d / 128", frame + 1), titleBar, juce::Justification::centredRight);
+        auto titleBar = r.removeFromTop (17).reduced (5, 0);\n        g.drawText (title, titleBar, juce::Justification::centredLeft);
 
         auto plot = r.reduced (7.f, 5.f).withTrimmedBottom (12.f);
 
