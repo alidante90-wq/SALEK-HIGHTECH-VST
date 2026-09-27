@@ -1,6 +1,9 @@
 name: GITI BY SALEK — GENESIS 50
 
 on:
+  push:
+    branches:
+      - giti-by-salek-hightech
   workflow_dispatch:
     inputs:
       version:
@@ -93,7 +96,7 @@ jobs:
             editionName = $name
             pluginCode = "G$p"
             bundleId = "com.salek.giti.genesis.${{ steps.identity.outputs.edition }}"
-            softwareVersion = "${{ inputs.version }}"
+            softwareVersion = "${{ inputs.version || '1.0.0' }}"
             product = "GITI BY SALEK HIGHTECH"
             productBinary = $pluginFile
             standaloneBinary = $standaloneFile
@@ -138,7 +141,7 @@ jobs:
           $standaloneFile = "GITI BY SALEK HIGHTECH GENESIS $p.exe"
           $installDir = "GITI BY SALEK HIGHTECH Genesis $p"
           $output = "GITI BY SALEK HIGHTECH - GENESIS $p - $name Setup"
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version }}" "/DMyAppEdition=$p" "/DMyAppEditionName=$name" "/DMyAppId=${{ steps.identity.outputs.appId }}" "/DMyPluginFile=$pluginFile" "/DMyStandaloneFile=$standaloneFile" "/DMyInstallDir=$installDir" "/DMyOutputBaseFilename=$output" "/DMyFaceFile=$PWD\installer-output\giti-face-large.bmp" "/DMyFaceSmallFile=$PWD\installer-output\giti-face-small.bmp" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version || '1.0.0' }}" "/DMyAppEdition=$p" "/DMyAppEditionName=$name" "/DMyAppId=${{ steps.identity.outputs.appId }}" "/DMyPluginFile=$pluginFile" "/DMyStandaloneFile=$standaloneFile" "/DMyInstallDir=$installDir" "/DMyOutputBaseFilename=$output" "/DMyFaceFile=$PWD\installer-output\giti-face-large.bmp" "/DMyFaceSmallFile=$PWD\installer-output\giti-face-small.bmp" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
       - name: Collect installer
@@ -183,7 +186,7 @@ jobs:
             generation = "GITI"
             generationNumber = 1
             totalLimitedEditions = 50
-            releaseVersion = "${{ inputs.version }}"
+            releaseVersion = "${{ inputs.version || '1.0.0' }}"
             doctrine = "GITI is the First Generation. KAYHAN, MANZOOMEH, SIAREH and GHAMAR follow as later layers of the Universe."
             editions = $json
           }
@@ -195,7 +198,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "giti-genesis-v${{ inputs.version }}-50"
-          $title = "GITI BY SALEK HIGHTECH • GENESIS 50 • v${{ inputs.version }}"
+          $tag = "giti-genesis-v${{ inputs.version || '1.0.0' }}-50"
+          $title = "GITI BY SALEK HIGHTECH • GENESIS 50 • v${{ inputs.version || '1.0.0' }}"
           gh release create $tag --title $title --notes "SALEK UNIVERSE / GITI — FIRST GENERATION. 50 independently compiled, numbered and edition-identified sonic machines. Each edition has its own VST3 identity, bundle identity and deterministic sonic DNA." --latest=false
           Get-ChildItem release -File | ForEach-Object { gh release upload $tag $_.FullName --clobber }
