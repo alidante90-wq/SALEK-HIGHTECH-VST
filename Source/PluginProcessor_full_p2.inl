@@ -385,7 +385,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     float gain = apvts.getRawParameterValue("master_gain")->load();
     const float drive = apvts.getRawParameterValue("master_drive")->load();
-    const float gMul = gain * (0.85f + drive * 0.1f);
+    const float gMul = gain * (0.98f + drive * 0.12f);
     // Soft-clip master (clean loudness, no digital harshness)
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
@@ -394,7 +394,7 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         {
             float x = d[i] * gMul;
             // Modern soft clip — smooth, less digital edge
-            x = std::tanh (x * (0.88f + drive * 0.5f));
+            x = std::tanh (x * (0.92f + drive * 0.5f));
             // gentle ceiling
             const float ax = std::abs (x);
             if (ax > 0.85f)
