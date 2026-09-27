@@ -275,8 +275,6 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             if (magicAxis > 0 && apvts.getRawParameterValue ("magic_on")->load() > 0.5f)
             {
                 const float v = juce::jlimit (0.0f, 1.0f, stepSequencer.getCurrentVelocity());
-                float mx = processorDummy = 0.0f;
-                juce::ignoreUnused (mx);
                 const float baseX = apvts.getRawParameterValue ("magic_x")->load();
                 const float baseY = apvts.getRawParameterValue ("magic_y")->load();
                 if (magicAxis == 1) magic.setXY (v, baseY);
