@@ -642,7 +642,9 @@ void SalekHightechAudioProcessorEditor::resized()
             placeSeqKnob ({ arpRow.getX() + i * aw, arpRow.getY(), aw, arpRow.getHeight() }, arpIds[i]);
         for (int i = 0; i < 4; ++i)
             placeSeqKnob ({ seqRow.getX() + i * sw, seqRow.getY(), sw, seqRow.getHeight() }, seqIds[i]);
-        // Compact SEQ Magic axis control — velocity drives X, Y or X+Y.\n        seqMagicAxisBox.setBounds (bounds.removeFromBottom (34).removeFromLeft (150).reduced (3));\n        seqMagicAxisBox.setVisible (true);
+        // Compact SEQ Magic axis control — velocity drives X, Y or X+Y.
+        seqMagicAxisBox.setBounds (bounds.removeFromBottom (34).removeFromLeft (150).reduced (3));
+        seqMagicAxisBox.setVisible (true);
         bounds.removeFromTop (4);
         if (stepGrid != nullptr)
             stepGrid->setBounds (bounds);
