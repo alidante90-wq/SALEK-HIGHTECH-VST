@@ -83,7 +83,7 @@ jobs:
           $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found" }
-          & $iscc "/Qp" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          & $iscc "/Qp" "/DMyAppVersion=1.0.0" "/DMyAppEdition=001" "/DMyAppEditionName=ORIGIN" "/DMyPluginFile=GITI BY SALEK HIGHTECH.vst3" "/DMyStandaloneFile=GITI BY SALEK HIGHTECH.exe" "/DMyInstallDir=GITI BY SALEK HIGHTECH" "/DMyOutputBaseFilename=GITI BY SALEK Setup" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
       - name: Create GITI BY SALEK release ZIP
