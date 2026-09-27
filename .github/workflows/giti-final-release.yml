@@ -73,18 +73,19 @@ jobs:
 
           Get-ChildItem package -Recurse | Select-Object FullName,Length
 
-      - name: Install Inno Setup
+      - name: Install NSIS
         shell: pwsh
-        run: choco install innosetup -y --no-progress
+        run: choco install nsis -y --no-progress
 
       - name: Build GITI BY SALEK installer
         shell: pwsh
         run: |
-          $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found" }
-          & $iscc "/Qp" "/DMyAppVersion=1.0.0" "/DMyAppEdition=001" "/DMyAppEditionName=ORIGIN" "/DMyPluginFile=GITI BY SALEK HIGHTECH.vst3" "/DMyStandaloneFile=GITI BY SALEK HIGHTECH.exe" "/DMyInstallDir=GITI BY SALEK HIGHTECH" "/DMyOutputBaseFilename=GITI BY SALEK Setup" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
-          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+          $makensis = "$env:ProgramFiles(x86)\\NSIS\\makensis.exe"
+          if (-not (Test-Path $makensis)) { $makensis = "$env:ProgramFiles\\NSIS\\makensis.exe" }
+          if (-not (Test-Path $makensis)) { throw "NSIS compiler not found" }
+          New-Item -ItemType Directory -Force -Path installer-output | Out-Null
+          & $makensis "/V3" "/DVERSION=1.0.0" "Installer\\GITI_BY_SALEK_HIGHTECH.nsi"
+          if ($LASTEXITCODE -ne 0) { throw "NSIS installer build failed" }
 
       - name: Create GITI BY SALEK release ZIP
         shell: pwsh
