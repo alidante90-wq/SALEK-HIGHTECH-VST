@@ -28,6 +28,12 @@ option(GITI_NEMO_MODE "Build NEMOGITI locked demo edition" OFF)
 set(GITI_PRODUCT_NAME "GITI BY SALEK HIGHTECH GENESIS ${GITI_EDITION_PADDED}")
 set(GITI_BUNDLE_ID "com.salek.giti.genesis.${GITI_EDITION_ID}")
 
+if (GITI_NEMO_MODE)
+    set(GITI_PLUGIN_CODE "NEMO")
+    set(GITI_PRODUCT_NAME "NEMOGITI BY SALEK HIGHTECH")
+    set(GITI_BUNDLE_ID "com.salek.nemogiti")
+endif()
+
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
     add_subdirectory(JUCE)
 else()
