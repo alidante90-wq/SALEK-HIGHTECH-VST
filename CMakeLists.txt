@@ -4,8 +4,8 @@ project(GITI_BY_SALEK_HIGHTECH VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# GITI Universe: one codebase, 50 stable Genesis editions.
-# Override with -DGITI_EDITION_ID=1..50 for a specific edition build.
+# SALEK UNIVERSE / GITI GENESIS
+# Every build is a real, independently identified Genesis instrument.
 set(GITI_EDITION_ID "1" CACHE STRING "GITI Genesis edition number (1..50)")
 if (NOT GITI_EDITION_ID MATCHES "^[0-9]+$")
     set(GITI_EDITION_ID "1")
@@ -13,6 +13,11 @@ endif()
 if (GITI_EDITION_ID LESS 1 OR GITI_EDITION_ID GREATER 50)
     message(FATAL_ERROR "GITI_EDITION_ID must be between 1 and 50")
 endif()
+
+string(FORMAT "%03d" GITI_EDITION_PADDED ${GITI_EDITION_ID})
+set(GITI_PLUGIN_CODE "G${GITI_EDITION_PADDED}")
+set(GITI_PRODUCT_NAME "GITI BY SALEK HIGHTECH GENESIS ${GITI_EDITION_PADDED}")
+set(GITI_BUNDLE_ID "com.salek.giti.genesis.${GITI_EDITION_ID}")
 
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
     add_subdirectory(JUCE)
@@ -28,10 +33,13 @@ endif()
 
 juce_add_plugin(GITI_BY_SALEK_HIGHTECH
     COMPANY_NAME "Salek"
+    BUNDLE_ID "${GITI_BUNDLE_ID}"
     PLUGIN_MANUFACTURER_CODE Salk
-    PLUGIN_CODE Sht8
+    PLUGIN_CODE "${GITI_PLUGIN_CODE}"
+    PLUGIN_NAME "${GITI_PRODUCT_NAME}"
+    PRODUCT_NAME "${GITI_PRODUCT_NAME}"
+    DESCRIPTION "GITI Genesis sonic machine • SALEK Universe"
     FORMATS VST3 Standalone
-    PRODUCT_NAME "GITI BY SALEK HIGHTECH"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -72,6 +80,8 @@ target_sources(GITI_BY_SALEK_HIGHTECH PRIVATE
     Source/PluginEditor.h
     Source/AssetsData.h
     Source/GitiEdition.h
+    Source/GitiSonicDNA.h
+    Source/GitiLore.h
     Source/Synth/SynthEngine.cpp
     Source/Synth/SynthEngine.h
     Source/Synth/SynthVoice.cpp
@@ -89,6 +99,12 @@ target_sources(GITI_BY_SALEK_HIGHTECH PRIVATE
     Source/FX/SimpleDelay.h
     Source/FX/SimpleChorus.h
     Source/FX/SimpleReverb.h
+    Source/FX/SimpleCompressor.h
+    Source/FX/SimpleEQ.h
+    Source/FX/SimpleSpatial.h
+    Source/FX/SimplePhaser.h
+    Source/FX/SimpleDistortion.h
+    Source/FX/MagicEngine.h
     Source/Sequencer/Arpeggiator.h
     Source/Sequencer/StepSequencer.h
     Source/DSP/SmoothedValue.h
@@ -119,7 +135,7 @@ add_custom_command(TARGET GITI_BY_SALEK_HIGHTECH POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/Source/Assets"
         "$<TARGET_FILE_DIR:GITI_BY_SALEK_HIGHTECH>/Assets"
-    COMMENT "Copy Assets beside plugin binary"
+    COMMENT "Copy GITI Universe assets beside edition binary"
 )
 
 juce_add_console_app(GITI_SHAE_SELFTEST PRODUCT_NAME "GITI SHAE Self Test")
