@@ -268,6 +268,20 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                 if (metadata.getMessage().isNoteOn())
                     stepSequencer.setRootNote (metadata.getMessage().getNoteNumber());
             stepSequencer.process (buffer.getNumSamples(), routed);
+            // Sequence velocity becomes a clean bipolar-free XY control source.
+            // OFF leaves Magic exactly as selected on the MAGIC page.
+            const int magicAxis = (int) apvts.getRawParameterValue ("seq_magic_axis")->load();
+            if (magicAxis > 0 && apvts.getRawParameterValue ("magic_on")->load() > 0.5f)
+            {
+                const float v = juce::jlimit (0.0f, 1.0f, stepSequencer.getCurrentVelocity());
+                float mx = processorDummy = 0.0f;
+                juce::ignoreUnused (mx);
+                const float baseX = apvts.getRawParameterValue ("magic_x")->load();
+                const float baseY = apvts.getRawParameterValue ("magic_y")->load();
+                if (magicAxis == 1) magic.setXY (v, baseY);
+                else if (magicAxis == 2) magic.setXY (baseX, v);
+                else magic.setXY (v, v);
+            }
         }
         if (arpOn)
         {
