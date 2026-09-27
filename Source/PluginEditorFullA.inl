@@ -43,6 +43,68 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     aboutButton.onClick = [this] { giti::showAbout (this, processor.getTrialStatus()); };
     addAndMakeVisible (aboutButton);
 
+    licenseButton.setButtonText (processor.isNemoGiti() ? "ACTIVATE" : "LICENSE");
+    licenseButton.setTooltip ("Enter a GITI 72-hour demo code or permanent license code");
+    licenseButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a0530));
+    licenseButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffd700));
+    licenseButton.onClick = [this]
+    {
+        auto* alert = new juce::AlertWindow (
+            processor.isNemoGiti() ? "NEMOGITI • ACTIVATE" : "GITI • LICENSE",
+            "Enter your issued activation code.\n\n72-hour code = evaluation access.\nPermanent code = full license.",
+            juce::MessageBoxIconType::InfoIcon);
+
+        alert->addTextEditor ("code", "", "ACTIVATION CODE:", true);
+        alert->addButton ("ACTIVATE", 1, juce::KeyPress (juce::KeyPress::returnKey, 0, 0));
+        alert->addButton ("CANCEL", 0, juce::KeyPress (juce::KeyPress::escapeKey, 0, 0));
+        alert->setAlwaysOnTop (true);
+
+        juce::Component::SafePointer<SalekHightechAudioProcessorEditor> safeThis (this);
+        alert->enterModalState (true, juce::ModalCallbackFunction::create (
+            [safeThis, alert, processorPtr = &processor] (int result)
+            {
+                if (result == 1)
+                {
+                    const auto code = alert->getTextEditorContents ("code");
+                    const auto activation = processorPtr->activateLicenseCode (code);
+
+                    if (safeThis != nullptr)
+                    {
+                        juce::String title, message;
+                        if (activation == giti::ThreeDayTrial::ActivationResult::permanent)
+                        {
+                            title = "GITI • LICENSE ACTIVE";
+                            message = "Permanent license activated.\n\n" + processorPtr->getTrialStatus();
+                        }
+                        else if (activation == giti::ThreeDayTrial::ActivationResult::threeDay)
+                        {
+                            title = "GITI • 72-HOUR ACCESS";
+                            message = "Three-day activation accepted.\n\n" + processorPtr->getTrialStatus();
+                        }
+                        else
+                        {
+                            title = "GITI • INVALID CODE";
+                            message = "This activation code is not valid for this build/edition.";
+                        }
+
+                        juce::AlertWindow::showAsync (
+                            juce::MessageBoxOptions()
+                                .withIconType (activation == giti::ThreeDayTrial::ActivationResult::invalid
+                                                  ? juce::MessageBoxIconType::WarningIcon
+                                                  : juce::MessageBoxIconType::InfoIcon)
+                                .withTitle (title)
+                                .withMessage (message)
+                                .withButton ("OK")
+                                .withAssociatedComponent (safeThis.getComponent()),
+                            nullptr);
+                        safeThis->repaint();
+                    }
+                }
+                delete alert;
+            }), true);
+    };
+    addAndMakeVisible (licenseButton);
+
     inspireBtn.onClick = [this]
     {
         // Style-aware randomize from current program category
