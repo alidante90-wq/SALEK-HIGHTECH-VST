@@ -62,7 +62,7 @@ jobs:
 
           $vst3 = Get-ChildItem build-final -Recurse -Directory -Filter "GITI BY SALEK HIGHTECH.vst3" | Select-Object -First 1
           if (-not $vst3) { $vst3 = Get-ChildItem build-final -Recurse -Directory -Filter "*.vst3" | Select-Object -First 1 }
-          $exe = Get-ChildItem build-final -Recurse -Filter "GITI BY SALEK HIGHTECH.exe" | Select-Object -First 1
+          $exe = Get-ChildItem build-final -Recurse -Filter "*.exe" | Where-Object { $_.FullName -notmatch "SHAE" -and $_.FullName -match "Standalone" } | Select-Object -First 1
 
           if (-not $vst3) { throw "VST3 artifact not found" }
           if (-not $exe) { throw "Standalone artifact not found" }
