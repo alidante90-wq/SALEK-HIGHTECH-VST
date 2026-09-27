@@ -91,7 +91,38 @@ void SalekHightechAudioProcessorEditor::paint (juce::Graphics& g)
     }
 
 
-// BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
+    // FINAL 3D GLASS CHROME — restrained depth pass, cheap enough for realtime repaint.
+    {
+        const auto headerGlass = juce::Rectangle<float> (8.f, 8.f, W - 16.f, 132.f);
+        juce::ColourGradient glass (juce::Colours::white.withAlpha (0.075f), headerGlass.getX(), headerGlass.getY(),
+                                    juce::Colours::transparentWhite, headerGlass.getCentreX(), headerGlass.getBottom(), false);
+        g.setGradientFill (glass);
+        g.fillRoundedRectangle (headerGlass, 18.f);
+        g.setColour (cyan.withAlpha (0.42f));
+        g.drawRoundedRectangle (headerGlass, 18.f, 1.6f);
+        g.setColour (magenta.withAlpha (0.20f));
+        g.drawRoundedRectangle (headerGlass.reduced (3.f), 15.f, 1.f);
+
+        const float scanX = 20.f + std::fmod (t * 90.f, juce::jmax (1.f, W - 40.f));
+        g.setColour (cyan.withAlpha (0.22f));
+        g.fillRoundedRectangle (scanX, 12.f, 2.5f, 124.f, 1.2f);
+        for (int i = 0; i < 12; ++i)
+        {
+            const float x = 20.f + i * juce::jmax (1.f, (W - 40.f) / 11.f);
+            const float a = 0.18f + 0.20f * (0.5f + 0.5f * std::sin (t * 1.8f + i * 0.8f));
+            g.setColour ((i % 3 == 0 ? cyan : (i % 3 == 1 ? magenta : gold)).withAlpha (a));
+            g.fillEllipse (x, 128.f, 4.f, 4.f);
+        }
+
+        auto work = juce::Rectangle<float> (full.getX() + 2.f, full.getY() + 2.f,
+                                            full.getWidth() - 4.f, full.getHeight() - 4.f);
+        g.setColour (juce::Colours::white.withAlpha (0.045f));
+        g.drawRoundedRectangle (work, 14.f, 1.f);
+        g.setColour (juce::Colours::black.withAlpha (0.28f));
+        g.drawRoundedRectangle (work.reduced (2.f), 12.f, 1.f);
+    }
+
+    // BG thumbnail panel REMOVED (user red-X). Use top-right BG button only.
         
     
     // Bottom model strip backdrop (above keyboard)
