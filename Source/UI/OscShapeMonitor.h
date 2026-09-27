@@ -67,6 +67,10 @@ public:
             fold  = gval (fid[osc], 0.f);
         }
 
+        const int frame = juce::jlimit (0, 127, (int) std::lround (table * 127.f));
+        g.setFont (juce::FontOptions (8.5f, juce::Font::bold));
+        g.drawText (juce::String::formatted ("FRAME %03d / 128", frame + 1), titleBar, juce::Justification::centredRight);
+
         // Adaptive resolution: denser when panel is wide (crisp), lighter when small
         const int N = juce::jlimit (48, 160, (int) plot.getWidth());
         juce::Path wave, fill;
