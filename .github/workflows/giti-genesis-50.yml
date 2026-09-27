@@ -1,0 +1,176 @@
+name: GITI BY SALEK — GENESIS 50
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 1.0.0"
+        required: true
+        default: "1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: "GITI Genesis #${{ matrix.edition }}"
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        edition: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Resolve Genesis identity
+        id: identity
+        shell: pwsh
+        run: |
+          $edition = [int]"${{ matrix.edition }}"
+          $names = @("ORIGIN","NOVA","CYAN","VOID","PULSE","ACID","PHOTON","ECLIPSE","NEON","QUANTUM","RIFT","SPECTRA","AURORA","MIRAGE","TEMPEST","SOLAR","LUNAR","COMET","PLASMA","OBSIDIAN","PRISM","VECTOR","ECHO","FLUX","ION","CHROME","MYSTIC","PORTAL","SHARD","STORM","ORBIT","SIGNAL","HYPERION","ZENITH","KARBALA","PERSIA","TEHRAN","ISATIS","ALIEN","UFO","DIMENSION","GENESIS","SYNTHESIS","MATRIX","PHOENIX","DRAGON","CELESTIAL","INFINITY","SABER","SINGULARITY")
+          $name = $names[$edition - 1]
+          $padded = $edition.ToString("000")
+          $hash = [Security.Cryptography.MD5]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes("GITI-GENESIS-$padded"))
+          $appId = ([Guid]::new($hash)).ToString().ToUpperInvariant()
+          "edition=$edition" >> $env:GITHUB_OUTPUT
+          "padded=$padded" >> $env:GITHUB_OUTPUT
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "appId=$appId" >> $env:GITHUB_OUTPUT
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=${{ steps.identity.outputs.edition }}
+
+      - name: Build edition
+        shell: pwsh
+        run: |
+          cmake --build build --target GITI_BY_SALEK_HIGHTECH GITI_SHAE_SELFTEST -j 2
+
+      - name: Run SHAE self-test
+        shell: pwsh
+        run: |
+          $test = Get-ChildItem build -Recurse -Filter "GITI_SHAE_SELFTEST.exe" | Select-Object -First 1
+          if (-not $test) { throw "GITI_SHAE_SELFTEST.exe not found" }
+          & $test.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SHAE self-test failed" }
+
+      - name: Package real edition
+        shell: pwsh
+        run: |
+          $p = "${{ steps.identity.outputs.padded }}"
+          $name = "${{ steps.identity.outputs.name }}"
+          $pluginFile = "GITI BY SALEK HIGHTECH GENESIS $p.vst3"
+          $standaloneFile = "GITI BY SALEK HIGHTECH GENESIS $p.exe"
+          $package = Join-Path $PWD "package"
+          Remove-Item $package -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $package, (Join-Path $package "Assets") | Out-Null
+
+          $vst3 = Get-ChildItem build -Recurse -Directory -Filter "*.vst3" | Where-Object { $_.FullName -notmatch "CMakeFiles|_deps" } | Select-Object -First 1
+          $exe = Get-ChildItem build -Recurse -File -Filter "*.exe" | Where-Object { $_.FullName -match "Standalone" -and $_.Name -notmatch "SHAE" } | Select-Object -First 1
+          if (-not $vst3) { throw "VST3 artifact not found" }
+          if (-not $exe) { throw "Standalone artifact not found" }
+
+          Copy-Item $vst3.FullName (Join-Path $package $pluginFile) -Recurse -Force
+          Copy-Item $exe.FullName (Join-Path $package $standaloneFile) -Force
+          $assets = Join-Path $exe.Directory.FullName "Assets"
+          if (Test-Path $assets) { Copy-Item "$assets\*" (Join-Path $package "Assets") -Recurse -Force }
+
+          $manifest = [ordered]@{
+            universe = "SALEK UNIVERSE"
+            generation = "GITI"
+            generationNumber = 1
+            limitedEditionCount = 50
+            edition = [int]"${{ steps.identity.outputs.edition }}"
+            editionCode = "GITI-$p"
+            editionName = $name
+            pluginCode = "G$p"
+            bundleId = "com.salek.giti.genesis.${{ steps.identity.outputs.edition }}"
+            softwareVersion = "${{ inputs.version }}"
+            product = "GITI BY SALEK HIGHTECH"
+            productBinary = $pluginFile
+            standaloneBinary = $standaloneFile
+            mission = "Create controlled sonic change, build the next generation, establish peace without a bullet."
+            directive = @("OBEY THE COMMANDER","ESTABLISH PEACE","NO BULLET","NO FEAR","NO ANXIETY","ONE SIGNAL","ONE SYNTH")
+          }
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $package "GITI_GENESIS_$p.json") -Encoding UTF8
+
+          Remove-Item installer-output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path installer-output | Out-Null
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $p = "${{ steps.identity.outputs.padded }}"
+          $name = "${{ steps.identity.outputs.name }}"
+          $pluginFile = "GITI BY SALEK HIGHTECH GENESIS $p.vst3"
+          $standaloneFile = "GITI BY SALEK HIGHTECH GENESIS $p.exe"
+          $installDir = "GITI BY SALEK HIGHTECH Genesis $p"
+          $output = "GITI BY SALEK HIGHTECH - GENESIS $p - $name Setup"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ inputs.version }}" "/DMyAppEdition=$p" "/DMyAppEditionName=$name" "/DMyAppId=${{ steps.identity.outputs.appId }}" "/DMyPluginFile=$pluginFile" "/DMyStandaloneFile=$standaloneFile" "/DMyInstallDir=$installDir" "/DMyOutputBaseFilename=$output" "Installer\GITI_BY_SALEK_HIGHTECH.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+
+      - name: Collect installer
+        shell: pwsh
+        run: |
+          $p = "${{ steps.identity.outputs.padded }}"
+          $installer = Get-ChildItem installer-output -File -Filter "*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "Installer EXE not produced" }
+          $out = "artifact-$p"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item $installer.FullName $out -Force
+          Copy-Item "package\GITI_GENESIS_$p.json" $out -Force
+          Compress-Archive -Path "package\*" -DestinationPath (Join-Path $out "GITI_GENESIS_$p_FULL.zip") -Force
+
+      - name: Upload edition artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "giti-genesis-${{ steps.identity.outputs.padded }}"
+          path: "artifact-${{ steps.identity.outputs.padded }}/*"
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: "Publish GITI Genesis 50"
+    needs: build
+    runs-on: windows-2022
+
+    steps:
+      - name: Download all 50 edition artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: giti-genesis-*
+          path: release
+          merge-multiple: true
+
+      - name: Build master manifest and master installer pack
+        shell: pwsh
+        run: |
+          $json = Get-ChildItem release -Filter "GITI_GENESIS_*.json" | ForEach-Object { Get-Content $_.FullName -Raw | ConvertFrom-Json }
+          $master = [ordered]@{
+            universe = "SALEK UNIVERSE"
+            generation = "GITI"
+            generationNumber = 1
+            totalLimitedEditions = 50
+            releaseVersion = "${{ inputs.version }}"
+            doctrine = "GITI is the First Generation. KAYHAN, MANZOOMEH, SIAREH and GHAMAR follow as later layers of the Universe."
+            editions = $json
+          }
+          $master | ConvertTo-Json -Depth 10 | Set-Content "release\GITI_GENESIS_50_MANIFEST.json" -Encoding UTF8
+          Compress-Archive -Path "release\*.exe" -DestinationPath "release\GITI_GENESIS_50_ALL_INSTALLERS.zip" -Force
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "giti-genesis-v${{ inputs.version }}-50"
+          $title = "GITI BY SALEK HIGHTECH • GENESIS 50 • v${{ inputs.version }}"
+          gh release create $tag --title $title --notes "SALEK UNIVERSE / GITI — FIRST GENERATION. 50 independently compiled, numbered and edition-identified sonic machines. Each edition has its own VST3 identity, bundle identity and deterministic sonic DNA." --latest=false
+          Get-ChildItem release -File | ForEach-Object { gh release upload $tag $_.FullName --clobber }
