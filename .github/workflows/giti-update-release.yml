@@ -7,6 +7,10 @@ on:
         description: "Release version, e.g. 1.0.1"
         required: true
         default: "1.0.1"
+      edition:
+        description: "GITI Genesis edition (1-50)"
+        required: true
+        default: "1"
   push:
     tags:
       - "v*.*.*"
@@ -22,8 +26,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve version
-        id: version
+      - name: Resolve release identity
+        id: identity
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
@@ -58,7 +62,7 @@ jobs:
 
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DGITI_EDITION_ID=${{ steps.identity.outputs.edition }}
 
       - name: Build
         shell: pwsh
@@ -93,7 +97,7 @@ jobs:
         run: |
           $iss = "Installer\GITI_BY_SALEK_HIGHTECH.iss"
           $text = Get-Content $iss -Raw
-          $text = $text -replace '#define MyAppVersion "[^"]+"', '#define MyAppVersion "${{ steps.version.outputs.version }}"'
+          $text = $text -replace '#define MyAppVersion "[^"]+"', '#define MyAppVersion "${{ steps.identity.outputs.version }}"'
           Set-Content -Path $iss -Value $text -Encoding UTF8
           $iscc = "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 7\ISCC.exe" }
@@ -106,29 +110,31 @@ jobs:
         run: |
           Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
           Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK UPDATE.exe"
-          Compress-Archive -Path "package\*" -DestinationPath "release\GITI BY SALEK ${{ steps.version.outputs.version }} FULL.zip" -Force
-          Compress-Archive -Path "update\*" -DestinationPath "release\GITI BY SALEK ${{ steps.version.outputs.version }} UPDATE.zip" -Force
+          Compress-Archive -Path "package\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip" -Force
+          Compress-Archive -Path "update\*" -DestinationPath "release\GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip" -Force
           $manifest = @{
             product = "GITI BY SALEK"
             displayName = "GITI BY SALEK HIGHTECH"
-            version = "${{ steps.version.outputs.version }}"
+            version = "${{ steps.identity.outputs.version }}"
             channel = "stable"
+            edition = [int]"${{ steps.identity.outputs.edition }}"
+            editionId = "GENESIS #" + ("${{ steps.identity.outputs.edition }}".PadLeft(3, '0'))
             fullInstaller = "GITI BY SALEK Setup.exe"
             updateInstaller = "GITI BY SALEK UPDATE.exe"
-            fullPackage = "GITI BY SALEK ${{ steps.version.outputs.version }} FULL.zip"
-            updatePackage = "GITI BY SALEK ${{ steps.version.outputs.version }} UPDATE.zip"
+            fullPackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip"
+            updatePackage = "GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip"
           } | ConvertTo-Json -Depth 4
           Set-Content -Path "release\update.json" -Value $manifest -Encoding UTF8
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: GITI BY SALEK v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.identity.outputs.version }}
+          name: GITI BY SALEK v${{ steps.identity.outputs.version }}
           generate_release_notes: true
           files: |
             release/GITI BY SALEK Setup.exe
             release/GITI BY SALEK UPDATE.exe
-            release/GITI BY SALEK ${{ steps.version.outputs.version }} FULL.zip
-            release/GITI BY SALEK ${{ steps.version.outputs.version }} UPDATE.zip
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} FULL.zip
+            release/GITI BY SALEK ${{ steps.identity.outputs.version }} UPDATE.zip
             release/update.json
