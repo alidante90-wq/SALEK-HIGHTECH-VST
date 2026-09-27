@@ -71,6 +71,9 @@ public:
 
     const giti::ThreeDayTrial& getTrial() const noexcept { return trial; }
     juce::String getTrialStatus() const { return trial.statusText(); }
+    giti::ThreeDayTrial::ActivationResult activateLicenseCode (const juce::String& code) { return trial.activateCode (code); }
+    bool isLicensedPermanently() const noexcept { return trial.isPermanent(); }
+    bool isNemoGiti() const noexcept { return trial.isNemoMode(); }
 
     // Stable identity for the Digital Instrument Universe.
     const giti::Edition& getEdition() const noexcept { return giti::currentEdition(); }
