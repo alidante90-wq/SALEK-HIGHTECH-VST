@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "GitiEdition.h"
 
 namespace giti
 {
@@ -17,6 +18,8 @@ inline void showAbout (juce::Component* parent, const juce::String& trialStatus)
         "High-Tech Psytrance Producer • Sound Designer • Songwriter\n\n"
         "PRODUCT\n"
         "GITI BY SALEK HIGHTECH\n"
+        "Edition " + giti::editionId() + " • " + giti::editionName() + "\n"
+        "Signature: " + giti::editionSignature() + "\n"
         "Version 1.0.0 • Windows VST3 / Standalone\n\n"
         "© 2026 Ali Aghakoochak / SALEK. All rights reserved.\n"
         "GITI and GITI BY SALEK HIGHTECH are product names of the creator.\n\n"
