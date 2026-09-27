@@ -297,8 +297,7 @@ private:
     juce::OwnedArray<juce::Label> fxSectionLabels;
     juce::OwnedArray<juce::ImageComponent> fxSectionIcons;
     juce::OwnedArray<juce::ImageComponent> tabSectionIcons; // MAIN/LFO/MOD badges
-    juce::OwnedArray<juce::TextButton> seqMagicBtns;
-    juce::TextButton seqMagicOff;
+    juce::ComboBox seqMagicAxisBox;
     juce::OwnedArray<FxMonitor> fxMonitors;
     juce::ToggleButton fxBypass[8];
     juce::TextButton presetToggle { "<<" }; // collapses preset list only
