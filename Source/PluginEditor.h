@@ -363,6 +363,7 @@ private:
     };
     LogoOverlayComp logoOverlay;
     juce::TextButton aboutButton { "ABOUT" };
+    juce::TextButton licenseButton { "LICENSE" };
     void refreshCharCache();
     int heroIndex = 0;
     bool presetCollapsed = false;
