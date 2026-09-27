@@ -34,6 +34,15 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     inspireBtn.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffff2d9b));
     inspireBtn.setTooltip ("Randomize in current style (genre-aware)");
     addAndMakeVisible (inspireBtn);
+    aboutButton.setButtonText ("ABOUT");
+    aboutButton.setTooltip ("About GITI BY SALEK HIGHTECH");
+    aboutButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff120824));
+    aboutButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff00e8ff).withAlpha (0.35f));
+    aboutButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff00e8ff));
+    aboutButton.setColour (juce::TextButton::textColourOnId, juce::Colours::white);
+    aboutButton.onClick = [this] { giti::showAbout (this, processor.getTrialStatus()); };
+    addAndMakeVisible (aboutButton);
+
     inspireBtn.onClick = [this]
     {
         // Style-aware randomize from current program category
