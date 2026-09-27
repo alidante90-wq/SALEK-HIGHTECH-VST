@@ -33,8 +33,9 @@ jobs:
         shell: pwsh
         run: |
           $edition = [int]"${{ matrix.edition }}"
-          $names = @("ORIGIN","NOVA","CYAN","VOID","PULSE","ACID","PHOTON","ECLIPSE","NEON","QUANTUM","RIFT","SPECTRA","AURORA","MIRAGE","TEMPEST","SOLAR","LUNAR","COMET","PLASMA","OBSIDIAN","PRISM","VECTOR","ECHO","FLUX","ION","CHROME","MYSTIC","PORTAL","SHARD","STORM","ORBIT","SIGNAL","HYPERION","ZENITH","KARBALA","PERSIA","TEHRAN","ISATIS","ALIEN","UFO","DIMENSION","GENESIS","SYNTHESIS","MATRIX","PHOENIX","DRAGON","CELESTIAL","INFINITY","SABER","SINGULARITY")
-          $name = $names[$edition - 1]
+          $catalog = Get-Content "Config\GITI_GENESIS_50.json" -Raw | ConvertFrom-Json
+          $entry = $catalog.editions[$edition - 1]
+          $name = $entry.name
           $padded = $edition.ToString("000")
           $hash = [Security.Cryptography.MD5]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes("GITI-GENESIS-$padded"))
           $appId = ([Guid]::new($hash)).ToString().ToUpperInvariant()
