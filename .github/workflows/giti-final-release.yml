@@ -84,8 +84,18 @@ jobs:
           if (-not (Test-Path $makensis)) { $makensis = "$env:ProgramFiles\\NSIS\\makensis.exe" }
           if (-not (Test-Path $makensis)) { throw "NSIS compiler not found" }
           New-Item -ItemType Directory -Force -Path installer-output | Out-Null
-          & $makensis "/V3" "/DVERSION=1.0.0" "Installer\\GITI_BY_SALEK_HIGHTECH.nsi"
-          if ($LASTEXITCODE -ne 0) { throw "NSIS installer build failed" }
+          & $makensis "/V4" "/Oinstaller-nsis.log" "/DVERSION=1.0.0" "Installer\\GITI_BY_SALEK_HIGHTECH.nsi"
+          $code = $LASTEXITCODE
+          if (Test-Path "installer-nsis.log") { Get-Content "installer-nsis.log" | Select-Object -Last 120 }
+          if ($code -ne 0) { throw "NSIS installer build failed" }
+
+      - name: Upload installer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: giti-installer-diagnostics
+          path: installer-nsis.log
+          if-no-files-found: ignore
 
       - name: Create GITI BY SALEK release ZIP
         shell: pwsh
