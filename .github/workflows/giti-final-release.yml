@@ -93,7 +93,7 @@ jobs:
           Copy-Item "package\GITI BY SALEK HIGHTECH.vst3" "release\GITI BY SALEK HIGHTECH.vst3" -Recurse
           Copy-Item "package\GITI BY SALEK HIGHTECH.exe" "release\GITI BY SALEK HIGHTECH.exe"
           if (Test-Path "package\Assets") { Copy-Item "package\Assets" "release\Assets" -Recurse }
-          Copy-Item "installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
+          Copy-Item "Installer\installer-output\GITI BY SALEK Setup.exe" "release\GITI BY SALEK Setup.exe"
           Compress-Archive -Path "release\*" -DestinationPath "GITI BY SALEK.zip" -Force
 
       - name: Upload GITI BY SALEK release
