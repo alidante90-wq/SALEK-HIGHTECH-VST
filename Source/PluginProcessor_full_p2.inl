@@ -138,7 +138,7 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int blockSamples)
     synthEngine.setFilterRoute((int)g("filter_route"));
     synthEngine.setNoiseLevel(g("noise_level"));
     synthEngine.setSubLevel(g("sub_level"));
-    synthEngine.setGlide(g("glide"));
+    synthEngine.setGlide(g("glide"));\n    synthEngine.setVoiceMode((int) g("voice_mode"));
     synthEngine.setAmpAttack(g("amp_attack")); synthEngine.setAmpDecay(g("amp_decay"));
     synthEngine.setAmpSustain(g("amp_sustain")); synthEngine.setAmpRelease(g("amp_release"));
     synthEngine.setLfoRate(g("lfo_rate")); synthEngine.setLfoAmount(g("lfo_amount")); synthEngine.setLfoWave((int)g("lfo_wave"));
