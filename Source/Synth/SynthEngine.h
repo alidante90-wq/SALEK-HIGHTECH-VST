@@ -57,7 +57,7 @@ public:
 
 private:
     static constexpr int maxVoices = 16;
-    juce::Synthesiser synth;
+    SalekSynthesiser synth;
     // Most synth controls stay fixed for many audio blocks. Avoid pushing the
     // same values through every voice at every block boundary.
     std::array<float, 64> lastFloatParameters;
