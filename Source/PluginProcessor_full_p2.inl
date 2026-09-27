@@ -43,9 +43,11 @@ void SalekHightechAudioProcessor::applyParamsToEngine (int blockSamples)
     setLfo (lfo3, g("lfo3_rate"), (int) g("lfo3_wave"), d3);
 
     const int nAdv = juce::jmax (1, blockSamples);
-    float v1 = lfo1.process (nAdv) * g("lfo_amount");
-    float v2 = lfo2.process (nAdv) * g("lfo2_amount");
-    float v3 = lfo3.process (nAdv) * g("lfo3_amount");
+    const float a1 = g("lfo_amount"), a2 = g("lfo2_amount"), a3 = g("lfo3_amount");
+    // Keep truly unused LFO sources idle: no hidden modulation when depth is zero.
+    float v1 = a1 > 1.0e-4f ? lfo1.process (nAdv) * a1 : 0.0f;
+    float v2 = a2 > 1.0e-4f ? lfo2.process (nAdv) * a2 : 0.0f;
+    float v3 = a3 > 1.0e-4f ? lfo3.process (nAdv) * a3 : 0.0f;
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO1, v1);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO2, v2);
     modMatrix.setSourceValue (salek::ModMatrix::Source::LFO3, v3);
