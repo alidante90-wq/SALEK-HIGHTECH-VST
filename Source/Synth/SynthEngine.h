@@ -34,7 +34,7 @@ public:
     void setFilterCutoff (float v); void setFilterResonance (float v);
     void setFilterDrive (float v); void setFilterMode (int v); void setFilterEnvAmt (float v);
     void setNoiseLevel (float v); void setSubLevel (float v); void setFilterRoute (int v); void setGlide (float v);
-    void setVoiceMode (int mode);
+
     void setOsc1Unison (int v, float d, float s);
     void setOsc2Unison (int v, float d, float s);
     void setOsc3Unison (int v, float d, float s);
@@ -58,7 +58,7 @@ public:
 
 private:
     static constexpr int maxVoices = 16;
-    SalekSynthesiser synth;
+    juce::Synthesiser synth;
     // Most synth controls stay fixed for many audio blocks. Avoid pushing the
     // same values through every voice at every block boundary.
     std::array<float, 64> lastFloatParameters;
