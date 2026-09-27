@@ -39,7 +39,8 @@ public:
 
         g.setColour (accent);
         g.setFont (juce::FontOptions (10.f, juce::Font::bold));
-        auto titleBar = r.removeFromTop (17).reduced (5, 0);\n        g.drawText (title, titleBar, juce::Justification::centredLeft);
+        auto titleBar = r.removeFromTop (17).reduced (5, 0);
+        g.drawText (title, titleBar, juce::Justification::centredLeft);
 
         auto plot = r.reduced (7.f, 5.f).withTrimmedBottom (12.f);
 
