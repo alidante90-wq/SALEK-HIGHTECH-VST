@@ -18,6 +18,7 @@
 #include "UI/VisualFifo.h"
 #include "SHAE/SHAECore.h"
 #include "GitiTrial.h"
+#include "GitiEdition.h"
 #include <map>
 #include <vector>
 #include <atomic>
@@ -70,6 +71,12 @@ public:
 
     const giti::ThreeDayTrial& getTrial() const noexcept { return trial; }
     juce::String getTrialStatus() const { return trial.statusText(); }
+
+    // Stable identity for the Digital Instrument Universe.
+    const giti::Edition& getEdition() const noexcept { return giti::currentEdition(); }
+    juce::String getEditionId() const { return giti::editionId(); }
+    juce::String getEditionCode() const { return giti::editionCode(); }
+    juce::String getEditionSignature() const { return giti::editionSignature(); }
 
     juce::StringArray getPresetNames() const;
     int saveCurrentAsUserPreset (const juce::String& name);
