@@ -4,6 +4,16 @@ project(GITI_BY_SALEK_HIGHTECH VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# GITI Universe: one codebase, 50 stable Genesis editions.
+# Override with -DGITI_EDITION_ID=1..50 for a specific edition build.
+set(GITI_EDITION_ID "1" CACHE STRING "GITI Genesis edition number (1..50)")
+if (NOT GITI_EDITION_ID MATCHES "^[0-9]+$")
+    set(GITI_EDITION_ID "1")
+endif()
+if (GITI_EDITION_ID LESS 1 OR GITI_EDITION_ID GREATER 50)
+    message(FATAL_ERROR "GITI_EDITION_ID must be between 1 and 50")
+endif()
+
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/JUCE/CMakeLists.txt")
     add_subdirectory(JUCE)
 else()
@@ -61,6 +71,7 @@ target_sources(GITI_BY_SALEK_HIGHTECH PRIVATE
     Source/PluginEditor.cpp
     Source/PluginEditor.h
     Source/AssetsData.h
+    Source/GitiEdition.h
     Source/Synth/SynthEngine.cpp
     Source/Synth/SynthEngine.h
     Source/Synth/SynthVoice.cpp
@@ -92,6 +103,7 @@ target_compile_definitions(GITI_BY_SALEK_HIGHTECH PUBLIC
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
+    GITI_EDITION_ID=${GITI_EDITION_ID}
 )
 
 target_link_libraries(GITI_BY_SALEK_HIGHTECH
@@ -103,7 +115,6 @@ if (MSVC)
     target_compile_options(GITI_BY_SALEK_HIGHTECH PRIVATE /W3 /MP /bigobj /utf-8)
 endif()
 
-# Copy Assets next to plugin so character PNGs load at runtime
 add_custom_command(TARGET GITI_BY_SALEK_HIGHTECH POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/Source/Assets"
@@ -111,9 +122,6 @@ add_custom_command(TARGET GITI_BY_SALEK_HIGHTECH POST_BUILD
     COMMENT "Copy Assets beside plugin binary"
 )
 
-
-# Lightweight SHAE verification target. It exercises only the realtime-safe core;
-# it does not alter the plugin/standalone product target.
 juce_add_console_app(GITI_SHAE_SELFTEST PRODUCT_NAME "GITI SHAE Self Test")
 target_sources(GITI_SHAE_SELFTEST PRIVATE Source/Tests/SHAESelfTest.cpp)
 target_link_libraries(GITI_SHAE_SELFTEST PRIVATE
