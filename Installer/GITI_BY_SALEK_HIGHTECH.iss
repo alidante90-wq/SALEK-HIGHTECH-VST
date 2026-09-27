@@ -23,6 +23,12 @@
 #ifndef MyOutputBaseFilename
 #define MyOutputBaseFilename "GITI BY SALEK Setup"
 #endif
+#ifndef MyFaceFile
+#define MyFaceFile "..\installer-output\giti-face-large.bmp"
+#endif
+#ifndef MyFaceSmallFile
+#define MyFaceSmallFile "..\installer-output\giti-face-small.bmp"
+#endif
 
 #define MyAppName "GITI BY SALEK HIGHTECH"
 #define MyPublisher "ALI AGHAKOOCHAK AKA SALEK"
@@ -46,6 +52,12 @@ OutputBaseFilename={#MyOutputBaseFilename}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+WizardImageFile={#MyFaceFile}
+WizardSmallImageFile={#MyFaceSmallFile}
+WizardImageStretch=no
+WizardImageAlphaBlend=yes
+WizardResizable=no
+DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 Uninstallable=yes
 UninstallDisplayName={#MyAppName}
@@ -56,6 +68,8 @@ VersionInfoCopyright=Copyright 2026 Ali Aghakoochak / SALEK
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 SetupLogging=yes
+WizardSizePercent=115
+UninstallDisplayIcon={app}\{#MyStandaloneFile}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -83,11 +97,11 @@ begin
   begin
     WizardForm.WelcomeLabel1.Caption := 'GITI BY SALEK HIGHTECH';
     WizardForm.WelcomeLabel2.Caption :=
-      'SALEK UNIVERSE - FIRST GENERATION' + #13#10#13#10 +
-      'GENESIS # {#MyAppEdition} - {#MyAppEditionName}' + #13#10 +
-      'Software Version {#MyAppVersion}' + #13#10#13#10 +
-      'ALI AGHAKOOCHAK AKA SALEK' + #13#10#13#10 +
-      'A professional sonic instrument from the SALEK Universe.';
+      'SALEK UNIVERSE  //  FIRST GENERATION' + #13#10#13#10 +
+      'GITI GENESIS #{#MyAppEdition}  //  {#MyAppEditionName}' + #13#10 +
+      'VERSION {#MyAppVersion}' + #13#10#13#10 +
+      'ALI AGHAKOOCHAK AKA SALEK' + #13#10 +
+      'A singular sonic machine from the GITI Genesis.';
   end;
 end;
 
