@@ -24,6 +24,7 @@ endif()
 
 # VST3 plugin codes must be exactly four characters: G001 ... G050.
 set(GITI_PLUGIN_CODE "G${GITI_EDITION_PADDED}")
+option(GITI_NEMO_MODE "Build NEMOGITI locked demo edition" OFF)
 set(GITI_PRODUCT_NAME "GITI BY SALEK HIGHTECH GENESIS ${GITI_EDITION_PADDED}")
 set(GITI_BUNDLE_ID "com.salek.giti.genesis.${GITI_EDITION_ID}")
 
@@ -128,6 +129,7 @@ target_compile_definitions(GITI_BY_SALEK_HIGHTECH PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
     GITI_EDITION_ID=${GITI_EDITION_ID}
+    GITI_NEMO_MODE=$<BOOL:${GITI_NEMO_MODE}>
 )
 
 target_link_libraries(GITI_BY_SALEK_HIGHTECH
