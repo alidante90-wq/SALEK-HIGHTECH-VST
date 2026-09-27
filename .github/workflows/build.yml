@@ -50,7 +50,7 @@ jobs:
           Copy-Item $exe.FullName "package\GITI BY SALEK HIGHTECH.exe" -Force
           $assets = Join-Path $exe.Directory.FullName "Assets"
           if (Test-Path $assets) { Copy-Item "$assets\*" "package\Assets" -Recurse -Force }
-          Get-ChildItem package -Recurse -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$_.Hash  $_.Path" } | Out-File package\SHA256SUMS.txt -Encoding ascii
+          Get-ChildItem package -Recurse -File | Where-Object { $_.Name -ne "SHA256SUMS.txt" } | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$_.Hash  $_.Path" } | Out-File package\SHA256SUMS.txt -Encoding ascii
       - name: Build commercial installer
         shell: pwsh
         run: |
