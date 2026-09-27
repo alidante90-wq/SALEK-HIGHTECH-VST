@@ -32,8 +32,10 @@
 AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion} - GENESIS #{#MyAppEdition} - {#MyAppEditionName}
 AppPublisher={#MyPublisher}
+AppComments=GITI Genesis sonic instrument from the SALEK Universe
 AppPublisherURL={#MyURL}
 AppSupportURL={#MyURL}
 AppUpdatesURL={#MyURL}
@@ -74,6 +76,36 @@ Name: "{autodesktop}\GITI Genesis #{#MyAppEdition}"; Filename: "{app}\{#MyStanda
 Filename: "{app}\{#MyStandaloneFile}"; Description: "Launch GITI BY SALEK HIGHTECH"; Flags: nowait postinstall skipifsilent
 
 [Code]
+
+var
+  AboutButton: TNewButton;
+
+procedure ShowGitiAbout;
+begin
+  MsgBox(
+    'GITI BY SALEK HIGHTECH' + #13#10 +
+    'GENESIS #{#MyAppEdition} — {#MyAppEditionName}' + #13#10#13#10 +
+    'Created by ALI AGHAKOOCHAK AKA SALEK' + #13#10 +
+    'High-Tech / Hitech Producer • Sound Designer • Songwriter' + #13#10#13#10 +
+    'GITI is the first generation of sonic machines in the SALEK UNIVERSE.' + #13#10 +
+    'It is designed as a precision sound instrument: small changes in the right' + #13#10 +
+    'frequencies can create large musical consequences — a sonic butterfly effect.' + #13#10#13#10 +
+    'Copyright 2026 Ali Aghakoochak / SALEK' + #13#10 +
+    'GITI BY SALEK HIGHTECH',
+    mbInformation, MB_OK);
+end;
+
+procedure InitializeWizard;
+begin
+  AboutButton := WizardForm.CreateButton(WizardForm.NextButton.Parent);
+  AboutButton.Caption := 'ABOUT GITI';
+  AboutButton.Left := WizardForm.BackButton.Left;
+  AboutButton.Top := WizardForm.BackButton.Top - ScaleY(34);
+  AboutButton.Width := ScaleX(110);
+  AboutButton.Height := ScaleY(25);
+  AboutButton.OnClick := @ShowGitiAbout;
+end;
+
 procedure CurPageChanged(CurPageID: Integer);
 begin
   if CurPageID = wpWelcome then
