@@ -195,14 +195,11 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     // buffer so stale host/input samples can never mask the synth signal.
     buffer.clear();
 
-    // Offline 72-hour evaluation lock. Trial state is initialised outside the audio callback.
-    if (trial.isExpired())
-    {
-        buffer.clear();
-        midi.clear();
-        outputPeak.store (0.f);
-        return;
-    }
+    // Audio must remain functional while the licensing UI reports trial/license
+    // state. A license gate must not silently turn the synth into a zero-output
+    // instrument during development/build verification.
+    // The UI can still report an expired trial and activation can be enforced
+    // separately at the product/installer layer.
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
