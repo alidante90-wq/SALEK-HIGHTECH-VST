@@ -191,6 +191,10 @@ void SalekHightechAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
 
+    // GITI is a MIDI instrument. Start each callback from a clean output
+    // buffer so stale host/input samples can never mask the synth signal.
+    buffer.clear();
+
     // Offline 72-hour evaluation lock. Trial state is initialised outside the audio callback.
     if (trial.isExpired())
     {
