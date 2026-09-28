@@ -34,6 +34,7 @@ public:
     void setFilterCutoff (float v); void setFilterResonance (float v);
     void setFilterDrive (float v); void setFilterMode (int v); void setFilterEnvAmt (float v);
     void setNoiseLevel (float v); void setSubLevel (float v); void setFilterRoute (int v); void setGlide (float v);
+    void setVoiceMode (int mode);
 
     void setOsc1Unison (int v, float d, float s);
     void setOsc2Unison (int v, float d, float s);
