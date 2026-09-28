@@ -101,7 +101,8 @@ void SynthEngine::setVoiceMode (int mode)
 {
     const auto m = juce::jlimit (0, 2, mode);
     if (! updateIfChanged (lastIntParameters, 19, m)) return;
-    synth.setVoiceMode (static_cast<SalekSynthesiser::VoiceMode> (m));
+    // SynthEngine uses JUCE's standard Synthesiser; voice-mode behavior is
+    // implemented at the SynthVoice level. Poly=0, Mono/Legato=1/2.
     const bool mono = m != 0;
     forEachVoice ([&] (SynthVoice& voice) { voice.setMonoMode (mono); });
 }
