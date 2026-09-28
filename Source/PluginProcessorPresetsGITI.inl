@@ -1,3 +1,2 @@
-// GITI 001-050 factory presets
-#include "PluginProcessorPresetsGITI_part1.inl"
-#include "PluginProcessorPresetsGITI_part2.inl"
+// GITI presets are inlined in PluginProcessorPresetsEngineered_p*.inl
+// This stub exists so any leftover #include "PluginProcessorPresetsGITI.inl" is safe.
