@@ -51,10 +51,7 @@ SalekHightechAudioProcessorEditor::SalekHightechAudioProcessorEditor (SalekHight
     {
         auto* alert = new juce::AlertWindow (
             processor.isNemoGiti() ? "NEMOGITI • ACTIVATE" : "GITI • LICENSE",
-            "Enter your issued activation code.
-
-72-hour code = evaluation access.
-Permanent code = full license.",
+            "Enter your issued activation code.\n\n72-hour code = evaluation access.\nPermanent code = full license.",
             juce::MessageBoxIconType::InfoIcon);
 
         alert->addTextEditor ("code", "", "ACTIVATION CODE:", true);
@@ -77,16 +74,12 @@ Permanent code = full license.",
                         if (activation == giti::ThreeDayTrial::ActivationResult::permanent)
                         {
                             title = "GITI • LICENSE ACTIVE";
-                            message = "Permanent license activated.
-
-" + processorPtr->getTrialStatus();
+                            message = "Permanent license activated.\n\n" + processorPtr->getTrialStatus();
                         }
                         else if (activation == giti::ThreeDayTrial::ActivationResult::threeDay)
                         {
                             title = "GITI • 72-HOUR ACCESS";
-                            message = "Three-day activation accepted.
-
-" + processorPtr->getTrialStatus();
+                            message = "Three-day activation accepted.\n\n" + processorPtr->getTrialStatus();
                         }
                         else
                         {
