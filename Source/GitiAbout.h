@@ -45,13 +45,24 @@ inline void showAbout (juce::Component* parent, const juce::String& trialStatus)
         "© 2026 Ali Aghakoochak / SALEK\n"
         "GITI BY SALEK HIGHTECH • All rights reserved.";
 
-    juce::AlertWindow::showAsync (
-        juce::MessageBoxOptions()
-            .withIconType (juce::MessageBoxIconType::InfoIcon)
-            .withTitle ("GITI • ABOUT • " + giti::editionId() + " • " + juce::String (edition.name))
-            .withMessage (message)
-            .withButton ("CLOSE")
-            .withAssociatedComponent (parent),
-        nullptr);
+    auto* alert = new juce::AlertWindow (
+        "GITI • ABOUT • " + giti::editionId() + " • " + juce::String (edition.name),
+        "",
+        juce::MessageBoxIconType::InfoIcon);
+    alert->addTextEditor ("aboutText", message, "", false);
+    if (auto* editor = alert->getTextEditor ("aboutText"))
+    {
+        editor->setMultiLine (true, true);
+        editor->setReadOnly (true);
+        editor->setScrollbarsShown (true);
+        editor->setCaretVisible (false);
+        editor->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0xff090611));
+        editor->setColour (juce::TextEditor::textColourId, juce::Colour (0xffd9d2ee));
+    }
+    alert->addButton ("CLOSE", 0, juce::KeyPress (juce::KeyPress::escapeKey, 0, 0));
+    alert->setSize (760, 560);
+    alert->setAlwaysOnTop (true);
+    alert->enterModalState (true, juce::ModalCallbackFunction::create (
+        [alert] (int) { delete alert; }), true);
 }
 } // namespace giti
