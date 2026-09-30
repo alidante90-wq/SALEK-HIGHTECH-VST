@@ -1,154 +1,265 @@
 #pragma once
-#include <JuceHeader.h>
-#include "GitiEdition.h"
-#include <map>
-#include <cmath>
+/**
+ * GitiSonicDNA.h — Identity → SHAE parameter seed mapping
+ * SALEK HIGHTECH / GITI
+ *
+ * Rules:
+ * - Does NOT invent or rename identities (source of truth: GitiIdentities.h)
+ * - Provides deterministic DSP starting points per GITI based on branch/voice/mood
+ * - Used by factory presets and identity selection to bias oscillators, filter,
+ *   noise, envelopes and character without erasing the identity layer
+ */
 
-namespace giti::dna
+#include "GitiIdentities.h"
+#include <cmath>
+#include <cstring>
+#include <map>
+
+namespace giti {
+
+/** Branch-derived synthesis bias (design rules, not samples) */
+enum class BranchBias : int
 {
-struct Profile
-{
-    float spectralFocus = 0.5f;
-    float harmonicity = 0.5f;
-    float modulation = 0.5f;
-    float transient = 0.5f;
-    float spatial = 0.5f;
-    float aggression = 0.5f;
-    float lowWeight = 0.5f;
-    float highWeight = 0.5f;
-    float instability = 0.5f;
+    Breath = 0,   // noise/air, soft attack, formant/band, pitch drift
+    Strings,      // pluck/excite, harmonic richness, decay, subtle pitch
+    Voice,        // formant, harmonic clusters, vowel-like movement
+    Pulse,        // transient, sub, sync, rhythmic envelopes
+    EarthWater    // organic noise, comb/resonator, slow mod, drone
 };
 
-inline float hash01 (int id, int salt)
+inline BranchBias branchFromString (const char* b) noexcept
 {
-    const auto x = std::sin (float (id * 97 + salt * 53)) * 43758.5453f;
-    return x - std::floor (x);
+    if (b == nullptr) return BranchBias::Breath;
+    if (std::strstr (b, "Breath"))        return BranchBias::Breath;
+    if (std::strstr (b, "Strings"))       return BranchBias::Strings;
+    if (std::strstr (b, "Voice"))         return BranchBias::Voice;
+    if (std::strstr (b, "Pulse"))         return BranchBias::Pulse;
+    if (std::strstr (b, "Earth"))         return BranchBias::EarthWater;
+    return BranchBias::Breath;
 }
 
-inline Profile profileFor (const Edition& e)
+/** Compact seed that can be applied to SHAE / factory preset maps */
+struct SonicSeed
 {
-    Profile p;
-    p.spectralFocus = 0.22f + 0.70f * hash01(e.id, 11);
-    p.harmonicity = 0.18f + 0.72f * hash01(e.id, 29);
-    p.modulation = 0.18f + 0.78f * hash01(e.id, 47);
-    p.transient = 0.20f + 0.72f * hash01(e.id, 71);
-    p.spatial = 0.18f + 0.78f * hash01(e.id, 89);
-    p.aggression = 0.15f + 0.82f * hash01(e.id, 107);
-    p.lowWeight = 0.15f + 0.82f * hash01(e.id, 127);
-    p.highWeight = 0.15f + 0.82f * hash01(e.id, 149);
-    p.instability = 0.10f + 0.85f * hash01(e.id, 173);
+    float osc1Level   = 0.85f;
+    float osc2Level   = 0.25f;
+    float osc3Level   = 0.0f;
+    float subLevel    = 0.15f;
+    float noiseLevel  = 0.05f;
 
-    const auto archetype = juce::String(e.archetype);
-    if (archetype == "BASS")    p.lowWeight = 0.78f;
-    if (archetype == "FM")      p.modulation = 0.88f;
-    if (archetype == "LEAD")    p.highWeight = 0.82f;
-    if (archetype == "SCREECH") p.instability = 0.90f;
-    if (archetype == "ACID")    p.aggression = 0.82f;
-    if (archetype == "ATMOS")   p.spatial = 0.90f;
-    if (archetype == "DRONE")   p.harmonicity = 0.30f;
-    if (archetype == "RITUAL")  p.modulation = 0.70f;
-    if (archetype == "ALIEN")   p.instability = 0.82f;
-    if (archetype == "MACHINE") p.transient = 0.88f;
-    return p;
-}
+    float osc1Table   = 0.25f;   // 0..1 wavetable / wave position
+    float osc1Warp    = 0.15f;
+    float osc1Fold    = 0.08f;
+    float osc1Drive   = 0.12f;
+    float osc1Unison  = 1.f;
+    float osc1Detune  = 8.f;
+    float osc1Spread  = 0.4f;
 
-inline void scale(std::map<juce::String,float>& v, const juce::String& id, float factor, float lo, float hi)
+    float filterCutoff = 4500.f;
+    float filterReso   = 0.25f;
+    float filterEnv    = 0.45f;
+    float filterDrive  = 0.15f;
+    int   filterMode   = 0;      // 0 LP, 1 HP, 2 BP, 3 Notch, ...
+
+    float ampAttack   = 0.02f;
+    float ampDecay    = 0.25f;
+    float ampSustain  = 0.6f;
+    float ampRelease  = 0.35f;
+
+    float reverbMix   = 0.25f;
+    float delayMix    = 0.1f;
+    float chorusMix   = 0.12f;
+    float masterDrive = 0.2f;
+    float masterGain  = 0.75f;
+
+    float formantAmt  = 0.0f;
+    float formantMorph= 0.3f;
+    float resonatorMix= 0.0f;
+};
+
+/** Build a deterministic seed from a GITI identity index (0..49) */
+inline SonicSeed seedForIdentity (int index0based) noexcept
 {
-    if (auto it = v.find(id); it != v.end())
-        it->second = juce::jlimit(lo, hi, it->second * factor);
-}
+    SonicSeed s;
+    if (index0based < 0 || index0based >= 50)
+        return s;
 
-inline void shift(std::map<juce::String,float>& v, const juce::String& id, float amount, float lo, float hi)
-{
-    if (auto it = v.find(id); it != v.end())
-        it->second = juce::jlimit(lo, hi, it->second + amount);
-}
+    const auto& id = kIdentities[index0based];
+    const BranchBias bias = branchFromString (id.branch);
 
-// Bounded deterministic morphing. It never touches INIT, discrete mode IDs,
-// or values outside the known parameter domains.
-inline void applyToPreset(const Edition& e, const juce::String& presetName,
-                           std::map<juce::String,float>& v)
-{
-    if (presetName.startsWithIgnoreCase("Init/"))
-        return;
+    // Stable pseudo-variation from id number (no random at runtime)
+    const float t = (float) (index0based + 1) / 50.f;
+    const float wobble = 0.04f * std::sin (t * 12.566f);
 
-    const auto p = profileFor(e);
-    const float idPhase = hash01(e.id, 211);
-    const float spectral = 0.72f + 0.56f * p.spectralFocus;
-    const float harmonic = 0.76f + 0.48f * p.harmonicity;
-    const float mod = 0.70f + 0.60f * p.modulation;
-    const float transient = 0.72f + 0.56f * p.transient;
-    const float space = 0.70f + 0.62f * p.spatial;
-
-    for (int o = 1; o <= 3; ++o)
+    switch (bias)
     {
-        const auto prefix = "osc" + juce::String(o);
-        scale(v, prefix + "_table", harmonic, 0.0f, 1.0f);
-        shift(v, prefix + "_warp", (idPhase - 0.5f) * 0.08f, 0.0f, 1.0f);
-        shift(v, prefix + "_fold", (p.instability - 0.5f) * 0.12f, 0.0f, 1.0f);
-        shift(v, prefix + "_drive", (p.aggression - 0.5f) * 0.10f, 0.0f, 1.0f);
+        case BranchBias::Breath:
+            s.noiseLevel   = 0.12f + 0.08f * t;
+            s.osc1Level    = 0.72f;
+            s.osc2Level    = 0.28f;
+            s.subLevel     = 0.08f;
+            s.ampAttack    = 0.04f + 0.06f * t;
+            s.ampRelease   = 0.35f + 0.25f * t;
+            s.filterCutoff = 3800.f + 2200.f * t;
+            s.filterReso   = 0.18f;
+            s.filterMode   = 2; // BP-ish for air
+            s.formantAmt   = 0.25f + 0.2f * t;
+            s.osc1Warp     = 0.12f + wobble;
+            s.reverbMix    = 0.28f + 0.15f * t;
+            break;
+
+        case BranchBias::Strings:
+            s.noiseLevel   = 0.03f;
+            s.osc1Level    = 0.82f;
+            s.osc2Level    = 0.38f;
+            s.osc1Unison   = 2.f + (float)(index0based % 3);
+            s.osc1Detune   = 10.f + 12.f * t;
+            s.osc1Spread   = 0.55f + 0.3f * t;
+            s.ampAttack    = 0.008f + 0.02f * t;
+            s.ampDecay     = 0.35f + 0.3f * t;
+            s.ampSustain   = 0.35f;
+            s.ampRelease   = 0.4f + 0.3f * t;
+            s.filterCutoff = 3200.f + 2800.f * t;
+            s.filterReso   = 0.28f + 0.1f * t;
+            s.osc1Fold     = 0.1f + 0.15f * t;
+            s.osc1Warp     = 0.2f + 0.15f * t;
+            s.reverbMix    = 0.3f + 0.15f * t;
+            s.chorusMix    = 0.18f;
+            break;
+
+        case BranchBias::Voice:
+            s.noiseLevel   = 0.06f;
+            s.osc1Level    = 0.8f;
+            s.osc2Level    = 0.35f;
+            s.formantAmt   = 0.45f + 0.25f * t;
+            s.formantMorph = 0.2f + 0.6f * t;
+            s.ampAttack    = 0.05f + 0.08f * t;
+            s.ampSustain   = 0.7f;
+            s.ampRelease   = 0.45f + 0.25f * t;
+            s.filterCutoff = 2800.f + 2000.f * t;
+            s.filterReso   = 0.32f;
+            s.filterMode   = 0;
+            s.osc1Warp     = 0.25f + 0.2f * t;
+            s.reverbMix    = 0.35f + 0.15f * t;
+            break;
+
+        case BranchBias::Pulse:
+            s.noiseLevel   = 0.04f;
+            s.osc1Level    = 0.9f;
+            s.subLevel     = 0.28f + 0.15f * t;
+            s.osc2Level    = 0.15f;
+            s.ampAttack    = 0.002f + 0.008f * t;
+            s.ampDecay     = 0.15f + 0.2f * t;
+            s.ampSustain   = 0.08f + 0.15f * t;
+            s.ampRelease   = 0.12f + 0.15f * t;
+            s.filterCutoff = 800.f + 1800.f * t;
+            s.filterReso   = 0.4f + 0.2f * t;
+            s.filterEnv    = 0.7f + 0.2f * t;
+            s.osc1Drive    = 0.35f + 0.25f * t;
+            s.osc1Fold     = 0.25f + 0.25f * t;
+            s.masterDrive  = 0.35f + 0.2f * t;
+            s.reverbMix    = 0.12f;
+            break;
+
+        case BranchBias::EarthWater:
+            s.noiseLevel   = 0.1f + 0.08f * t;
+            s.osc1Level    = 0.75f;
+            s.osc2Level    = 0.4f;
+            s.subLevel     = 0.2f;
+            s.ampAttack    = 0.03f + 0.1f * t;
+            s.ampDecay     = 0.5f + 0.4f * t;
+            s.ampSustain   = 0.45f + 0.2f * t;
+            s.ampRelease   = 0.7f + 0.5f * t;
+            s.filterCutoff = 2500.f + 2500.f * t;
+            s.filterReso   = 0.35f + 0.15f * t;
+            s.resonatorMix = 0.15f + 0.25f * t;
+            s.osc1Warp     = 0.15f;
+            s.reverbMix    = 0.4f + 0.2f * t;
+            s.chorusMix    = 0.15f;
+            break;
     }
 
-    scale(v, "filter_cutoff", spectral, 80.0f, 18000.0f);
-    shift(v, "filter_reso", (p.instability - 0.5f) * 0.18f, 0.0f, 1.0f);
-    shift(v, "filter_drive", (p.aggression - 0.5f) * 0.14f, 0.0f, 1.0f);
-    shift(v, "filter_env", (p.modulation - 0.5f) * 0.16f, 0.0f, 1.0f);
-
-    for (const char* id : { "fm_2to1","fm_3to1","fm_3to2","pm_2to1","rm_2to1","am_2to1" })
-        scale(v, id, mod, 0.0f, 1.0f);
-
-    scale(v, "amp_attack", 1.0f / transient, 0.0001f, 4.0f);
-    scale(v, "amp_decay", 1.0f / transient, 0.005f, 5.0f);
-    scale(v, "amp_release", 0.78f + 0.55f * p.spatial, 0.005f, 6.0f);
-
-    for (const char* id : { "lfo_amount","lfo2_amount","lfo3_amount" })
-        scale(v, id, mod, 0.0f, 1.0f);
-    for (const char* id : { "lfo_rate","lfo2_rate","lfo3_rate" })
-        scale(v, id, 0.65f + 1.8f * p.modulation, 0.01f, 30.0f);
-
-    scale(v, "sub_level", 0.72f + 0.62f * p.lowWeight, 0.0f, 1.0f);
-    scale(v, "noise_level", 0.60f + 0.85f * p.instability, 0.0f, 1.0f);
-    scale(v, "delay_mix", space, 0.0f, 1.0f);
-    scale(v, "reverb_mix", space, 0.0f, 1.0f);
-    scale(v, "chorus_mix", 0.70f + 0.55f * p.spatial, 0.0f, 1.0f);
-    scale(v, "phaser_mix", 0.70f + 0.60f * p.modulation, 0.0f, 1.0f);
-    scale(v, "dist_mix", 0.72f + 0.62f * p.aggression, 0.0f, 1.0f);
-    scale(v, "master_drive", 0.78f + 0.45f * p.aggression, 0.0f, 1.0f);
-    scale(v, "comp_mix", 0.78f + 0.40f * p.transient, 0.0f, 1.0f);
-
-    const auto archetype = juce::String(e.archetype);
-    if (archetype == "BASS") {
-        scale(v, "filter_cutoff", 0.78f + 0.24f * p.lowWeight, 80.0f, 12000.0f);
-        scale(v, "sub_level", 1.15f, 0.0f, 1.0f);
-    } else if (archetype == "FM") {
-        scale(v, "fm_2to1", 1.12f, 0.0f, 1.0f);
-        scale(v, "fm_3to1", 1.08f, 0.0f, 1.0f);
-    } else if (archetype == "LEAD") {
-        scale(v, "filter_cutoff", 1.15f, 80.0f, 18000.0f);
-        scale(v, "delay_mix", 1.08f, 0.0f, 1.0f);
-    } else if (archetype == "SCREECH") {
-        scale(v, "filter_reso", 1.18f, 0.0f, 1.0f);
-        scale(v, "osc1_fold", 1.16f, 0.0f, 1.0f);
-        scale(v, "dist_mix", 1.12f, 0.0f, 1.0f);
-    } else if (archetype == "ACID") {
-        scale(v, "filter_reso", 1.12f, 0.0f, 1.0f);
-        scale(v, "filter_drive", 1.15f, 0.0f, 1.0f);
-    } else if (archetype == "ATMOS") {
-        scale(v, "reverb_mix", 1.18f, 0.0f, 1.0f);
-        scale(v, "reverb_size", 1.08f, 0.0f, 1.0f);
-    } else if (archetype == "DRONE") {
-        scale(v, "amp_release", 1.35f, 0.005f, 8.0f);
-        scale(v, "reverb_mix", 1.12f, 0.0f, 1.0f);
-    } else if (archetype == "RITUAL") {
-        scale(v, "lfo_amount", 1.14f, 0.0f, 1.0f);
-        scale(v, "reverb_mix", 1.08f, 0.0f, 1.0f);
-    } else if (archetype == "ALIEN") {
-        scale(v, "fm_2to1", 1.15f, 0.0f, 1.0f);
-        scale(v, "phaser_mix", 1.15f, 0.0f, 1.0f);
-        scale(v, "noise_level", 1.15f, 0.0f, 1.0f);
-    } else if (archetype == "MACHINE") {
-        scale(v, "comp_mix", 1.12f, 0.0f, 1.0f);
-        scale(v, "master_drive", 1.10f, 0.0f, 1.0f);
+    // Special case: GITI 050 — collective / succession (heavier unison + wider)
+    if (index0based == 49)
+    {
+        s.osc1Unison  = 4.f;
+        s.osc1Detune  = 18.f;
+        s.osc1Spread  = 0.9f;
+        s.osc2Level   = 0.55f;
+        s.reverbMix   = 0.4f;
+        s.ampSustain  = 0.6f;
+        s.filterCutoff= 4200.f;
     }
+
+    // Tiny deterministic variation so neighbouring IDs are not identical
+    s.osc1Table   = juce::jlimit (0.f, 1.f, s.osc1Table   + wobble * 0.5f);
+    s.filterCutoff= juce::jlimit (80.f, 16000.f, s.filterCutoff * (1.f + wobble * 0.3f));
+    s.masterGain  = juce::jlimit (0.5f, 0.9f, s.masterGain);
+
+    return s;
 }
+
+/** Convert a SonicSeed into the string→float map used by factory preset loader */
+inline std::map<juce::String, float> seedToPresetMap (const SonicSeed& s)
+{
+    return {
+        { "osc1_level",   s.osc1Level },
+        { "osc2_level",   s.osc2Level },
+        { "osc3_level",   s.osc3Level },
+        { "sub_level",    s.subLevel },
+        { "noise_level",  s.noiseLevel },
+        { "osc1_table",   s.osc1Table },
+        { "osc1_warp",    s.osc1Warp },
+        { "osc1_fold",    s.osc1Fold },
+        { "osc1_drive",   s.osc1Drive },
+        { "osc1_unison",  s.osc1Unison },
+        { "osc1_udet",    s.osc1Detune },
+        { "osc1_uspread", s.osc1Spread },
+        { "filter_cutoff",s.filterCutoff },
+        { "filter_reso",  s.filterReso },
+        { "filter_env",   s.filterEnv },
+        { "filter_drive", s.filterDrive },
+        { "filter_mode",  (float) s.filterMode },
+        { "amp_attack",   s.ampAttack },
+        { "amp_decay",    s.ampDecay },
+        { "amp_sustain",  s.ampSustain },
+        { "amp_release",  s.ampRelease },
+        { "reverb_mix",   s.reverbMix },
+        { "delay_mix",    s.delayMix },
+        { "chorus_mix",   s.chorusMix },
+        { "master_drive", s.masterDrive },
+        { "master_gain",  s.masterGain },
+        { "formant_amt",  s.formantAmt },
+        { "formant_morph",s.formantMorph },
+        { "resonator_mix",s.resonatorMix }
+    };
 }
+
+/** Convenience: full preset map for GITI id 1..50 */
+inline std::map<juce::String, float> presetMapForGiti (int gitiId1to50)
+{
+    return seedToPresetMap (seedForIdentity (gitiId1to50 - 1));
+}
+
+struct GitiSonicDNA
+{
+    static constexpr int kCount = 50;
+
+    static const Identity& identity (int id1to50) noexcept
+    {
+        const int i = juce::jlimit (1, 50, id1to50) - 1;
+        return kIdentities[i];
+    }
+
+    static SonicSeed seed (int id1to50) noexcept
+    {
+        return seedForIdentity (juce::jlimit (1, 50, id1to50) - 1);
+    }
+
+    static BranchBias branch (int id1to50) noexcept
+    {
+        return branchFromString (identity (id1to50).branch);
+    }
+};
+
+} // namespace giti
