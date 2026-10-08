@@ -103,8 +103,13 @@ void GitiFxAudioProcessor::processBlock(juce::AudioBuffer<float>& b,juce::MidiBu
     }
     auto coeff=juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate,p("cutoff",12000),juce::jlimit(.1f,20.f,p("resonance",.2f)));
     filterL.coefficients=coeff; filterR.coefficients=coeff;
-    juce::dsp::AudioBlock<float> block(b); juce::dsp::ProcessContextReplacing<float> ctx(block);
-    filterL.process(ctx); // process both channels below via copied block is intentionally light-weight
+    juce::dsp::AudioBlock<float> block(b);
+    juce::dsp::AudioBlock<float> left(block.getSingleChannelBlock(0));
+    juce::dsp::AudioBlock<float> right(block.getSingleChannelBlock(1));
+    juce::dsp::ProcessContextReplacing<float> leftCtx(left);
+    juce::dsp::ProcessContextReplacing<float> rightCtx(right);
+    filterL.process(leftCtx);
+    filterR.process(rightCtx);
     reverb.wetLevel=p("reverb_mix",.14f); reverb.dryLevel=1.f-p("reverb_mix",.14f);
     reverb.processStereo(b.getWritePointer(0),b.getWritePointer(1),n);
     b.applyGain(p("output",.85f));
