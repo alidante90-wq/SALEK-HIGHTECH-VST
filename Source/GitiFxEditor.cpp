@@ -8,7 +8,10 @@ GitiFxEditor::GitiFxEditor(GitiFxAudioProcessor& p):AudioProcessorEditor(p),proc
     addKnob("delay_mix","DELAY",475,470); addKnob("delay_time","TIME",585,470); addKnob("feedback","FEEDBACK",695,470); addKnob("reverb_mix","REVERB",805,470);
     modeBox.addItemList({"LIVE","LOOP","FREEZE","MUTATE"},1); addAndMakeVisible(modeBox);
     modeAtt=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.getAPVTS(),"mode",modeBox);
-    addAndMakeVisible(freezeBtn); freezeBtn.onClick=[this]{processor.getAPVTS().getParameterAsValue("freeze").setValueNotifyingHost(freezeBtn.getToggleState()?1.f:0.f);}; freezeBtn.setClickingTogglesState(true);
+    addAndMakeVisible(freezeBtn); freezeBtn.onClick=[this]{
+        if (auto* parameter = processor.getAPVTS().getParameter("freeze"))
+            parameter->setValueNotifyingHost(freezeBtn.getToggleState() ? 1.0f : 0.0f);
+    }; freezeBtn.setClickingTogglesState(true);
     startTimerHz(30);
 }
 void GitiFxEditor::addKnob(const char* id,const char* text,int x,int y,int w)
@@ -27,7 +30,9 @@ void GitiFxEditor::paint(juce::Graphics& g)
     g.setColour(juce::Colours::white); g.setFont(juce::FontOptions(13.f)); g.drawText("BY SALEK HIGHTECH",36,99,350,24,juce::Justification::left);
     auto center=juce::Rectangle<float>(800,125,430,245); g.setColour(juce::Colour(0xff080b19)); g.fillRoundedRectangle(center,16);
     g.setColour(cyan.withAlpha(.65f)); g.drawRoundedRectangle(center,16,2);
-    g.setColour(pink.withAlpha(.18f)); for(int i=0;i<9;i++) g.drawEllipse(center.getX()+20+i*42,center.getY()+50+std::sin(i*1.8f)*28,100,100);
+    g.setColour(pink.withAlpha(.18f)); for(int i=0;i<9;i++) g.drawEllipse(juce::Rectangle<float>(center.getX()+20+i*42.0f,
+                                          center.getY()+50.0f+std::sin(i*1.8f)*28.0f,
+                                          100.0f, 100.0f), 1.0f);
     g.setColour(cyan); g.setFont(juce::FontOptions(13.f,juce::Font::bold)); g.drawText("GRANULAR CORE",center.getX()+18,center.getY()+18,180,22,juce::Justification::left);
     g.setColour(juce::Colours::white.withAlpha(.65f)); g.drawText("SIZE   DENSITY   POSITION   SPRAY   PITCH   STRETCH",center.getX()+18,center.getBottom()-38,390,22,juce::Justification::left);
     auto section=[&](int x,int y,int w,int h,const char* title,juce::Colour c){g.setColour(juce::Colour(0xff0a0715));g.fillRoundedRectangle((float)x,(float)y,(float)w,(float)h,10);g.setColour(c.withAlpha(.65f));g.drawRoundedRectangle((float)x,(float)y,(float)w,(float)h,10,1.5f);g.setColour(c);g.setFont(juce::FontOptions(14.f,juce::Font::bold));g.drawText(title,x+12,y+10,w-24,20,juce::Justification::left);};
