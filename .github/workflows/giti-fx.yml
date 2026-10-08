@@ -1,0 +1,46 @@
+name: GITI FX VST3 — SALEK HIGHTECH
+on:
+  push:
+    branches: [ giti-fx ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-giti-fx:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Clone JUCE 8.0.4
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y --no-progress
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build-giti-fx -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build GITI FX
+        shell: pwsh
+        run: cmake --build build-giti-fx --config Release --parallel
+      - name: Locate VST3
+        shell: pwsh
+        run: |
+          $vst = Get-ChildItem build-giti-fx -Recurse -Directory -Filter "GITI FX BY SALEK HIGHTECH.vst3" | Select-Object -First 1
+          if (-not $vst) { throw "GITI FX VST3 artifact not found" }
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item $vst.FullName "release\GITI FX BY SALEK HIGHTECH.vst3" -Recurse -Force
+          Get-ChildItem "release\GITI FX BY SALEK HIGHTECH.vst3" -Recurse | Select-Object FullName,Length
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path "release\GITI FX BY SALEK HIGHTECH.vst3" -DestinationPath "GITI_FX_BY_SALEK_HIGHTECH_VST3.zip" -Force
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: GITI-FX-BY-SALEK-HIGHTECH-VST3
+          path: GITI_FX_BY_SALEK_HIGHTECH_VST3.zip
+          if-no-files-found: error
