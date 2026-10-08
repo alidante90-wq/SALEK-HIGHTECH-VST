@@ -161,3 +161,47 @@ target_link_libraries(GITI_SHAE_SELFTEST PRIVATE
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags
 )
+
+
+# GITI FX — granular multi-effect processor
+juce_add_plugin(GITI_FX
+    COMPANY_NAME "Salek"
+    BUNDLE_ID "com.salek.gitifx"
+    PLUGIN_MANUFACTURER_CODE Salk
+    PLUGIN_CODE GFX1
+    PLUGIN_NAME "GITI FX BY SALEK HIGHTECH"
+    PRODUCT_NAME "GITI FX BY SALEK HIGHTECH"
+    DESCRIPTION "SALEK HighTech granular multi-effect audio processor"
+    FORMATS VST3
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS TRUE
+    COPY_PLUGIN_AFTER_BUILD FALSE
+    VST3_CATEGORIES "Fx"
+)
+
+target_sources(GITI_FX PRIVATE
+    Source/GitiFxProcessor.cpp
+    Source/GitiFxProcessor.h
+    Source/GitiFxEditor.cpp
+    Source/GitiFxEditor.h
+    Source/GitiFxPlugin.cpp
+)
+
+target_compile_definitions(GITI_FX PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+)
+
+target_link_libraries(GITI_FX
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags
+)
+
+if (MSVC)
+    target_compile_options(GITI_FX PRIVATE /W3 /MP /bigobj /utf-8)
+endif()
