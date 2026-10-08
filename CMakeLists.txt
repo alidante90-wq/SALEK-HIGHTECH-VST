@@ -164,6 +164,8 @@ target_link_libraries(GITI_SHAE_SELFTEST PRIVATE
 
 
 # GITI FX — granular multi-effect processor
+juce_generate_juce_header(GITI_FX)
+
 juce_add_plugin(GITI_FX
     COMPANY_NAME "Salek"
     BUNDLE_ID "com.salek.gitifx"
