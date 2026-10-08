@@ -45,7 +45,7 @@ void GitiFxAudioProcessor::prepareToPlay(double sr,int block)
     sampleRate=sr; writePos=0; delayPos=0;
     grainBuffer.setSize(2,(int)(sr*8.0)+4); grainBuffer.clear();
     for(auto& g:grains) g.active=false;
-    juce::dsp::ProcessSpec spec{sr,(juce::uint32)block,1};
+    juce::dsp::ProcessSpec spec{sr,(juce::uint32)block,2};
     filterL.reset(); filterR.reset(); filterL.prepare(spec); filterR.prepare(spec);
     reverb.reset(); reverb.prepare(spec);
 }
@@ -110,8 +110,17 @@ void GitiFxAudioProcessor::processBlock(juce::AudioBuffer<float>& b,juce::MidiBu
     juce::dsp::ProcessContextReplacing<float> rightCtx(right);
     filterL.process(leftCtx);
     filterR.process(rightCtx);
-    reverb.wetLevel=p("reverb_mix",.14f); reverb.dryLevel=1.f-p("reverb_mix",.14f);
-    reverb.processStereo(b.getWritePointer(0),b.getWritePointer(1),n);
+    {
+        auto rp = reverb.getParameters();
+        const float wet = p("reverb_mix", 0.14f);
+        rp.wetLevel = wet;
+        rp.dryLevel = 1.0f - wet;
+        reverb.setParameters(rp);
+
+        juce::dsp::AudioBlock<float> reverbBlock(b);
+        juce::dsp::ProcessContextReplacing<float> reverbContext(reverbBlock);
+        reverb.process(reverbContext);
+    }
     b.applyGain(p("output",.85f));
 }
 const juce::String GitiFxAudioProcessor::getProgramName(int i)
