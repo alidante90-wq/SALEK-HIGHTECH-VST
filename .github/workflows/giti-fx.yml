@@ -15,18 +15,15 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-      - name: Clone JUCE 8.0.4
-        shell: pwsh
-        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
       - name: Install Ninja
         shell: pwsh
         run: choco install ninja -y --no-progress
       - name: Configure
         shell: pwsh
         run: cmake -S . -B build-giti-fx -G Ninja -DCMAKE_BUILD_TYPE=Release
-      - name: Build GITI FX
+      - name: Build GITI FX only
         shell: pwsh
-        run: cmake --build build-giti-fx --config Release --parallel
+        run: cmake --build build-giti-fx --config Release --target GITI_FX --parallel
       - name: Locate VST3
         shell: pwsh
         run: |
