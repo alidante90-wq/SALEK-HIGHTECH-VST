@@ -147,5 +147,29 @@
     themeBox.setSelectedId (1);
     addAndMakeVisible (themeBox);
 
+    // Artist identity selector drives the animated name loop and SonicCore accents.
+    addAndMakeVisible (artistVisual);
+    artistVisual.onProfileChanged = [this] (const ArtistVisualProfile::Profile& profile)
+    {
+        themeAccent = profile.a;
+        themeAccent2 = profile.b;
+        if (sonicCore != nullptr)
+        {
+            sonicCore->setAccent (profile.a);
+            sonicCore->setAccent2 (profile.b);
+        }
+        repaint();
+    };
+    {
+        const auto& profile = artistVisual.current();
+        themeAccent = profile.a;
+        themeAccent2 = profile.b;
+        if (sonicCore != nullptr)
+        {
+            sonicCore->setAccent (profile.a);
+            sonicCore->setAccent2 (profile.b);
+        }
+    }
+
     if (sonicCore != nullptr)
         sonicCore->toBack();
