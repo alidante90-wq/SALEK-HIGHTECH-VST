@@ -49,7 +49,7 @@ try {
             if ($iscc) {
                 $setupDir = Join-Path $out "setups"
                 New-Item -ItemType Directory -Force -Path $setupDir | Out-Null
-                & $iscc.Source "/DArtistName=$($artist.Name)" "/DStageDir=$stage" "/DOutputDir=$setupDir" (Join-Path $repo "tools\ArtistInstaller.iss")
+                & $iscc.Source "/DArtistName=$($artist.Name)" "/DStageDir=$stage" "/DOutputDir=$setupDir" "/DOutputBaseName=$slug-GITI-Setup" (Join-Path $repo "tools\ArtistInstaller.iss")
                 if ($LASTEXITCODE -ne 0) { throw "Installer build failed for $($artist.Name)" }
                 $installer = Join-Path $setupDir ($slug + "-GITI-Setup.exe")
             } else { Write-Warning "Inno Setup not installed; ZIP is ready, setup EXE skipped." }
