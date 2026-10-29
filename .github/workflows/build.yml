@@ -1,4 +1,4 @@
-name: Build SALEK HIGHTECH VST3
+name: Build All GITI Artist Versions
 
 on:
   push:
@@ -6,47 +6,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  build-all-artists:
     runs-on: windows-2022
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Clone JUCE
-        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
-
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-
-      - name: Configure CMake
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build --config Release --parallel
-
-      - name: Package VST3 + Standalone
+      - name: Clone JUCE
+        run: git clone --depth 1 --branch 8.0.4 https://github.com/juce-framework/JUCE.git JUCE
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build all artist variants and installers
         shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path artifact | Out-Null
-          $vst3 = Get-ChildItem -Path build -Recurse -Directory -Filter "*.vst3" -ErrorAction SilentlyContinue | Select-Object -First 1
-          $exe  = Get-ChildItem -Path build -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue |
-                  Where-Object { $_.Name -notmatch "cmake|ninja|juce|CMake" } | Select-Object -First 1
-          if ($vst3) { Copy-Item -Recurse $vst3.FullName "artifact/SALEK HIGHTECH.vst3" }
-          if ($exe)  { Copy-Item $exe.FullName "artifact/SALEK HIGHTECH.exe" }
-          if (-not (Get-ChildItem artifact -ErrorAction SilentlyContinue)) {
-            Write-Error "No VST3 or Standalone produced"
-            Get-ChildItem -Path build -Recurse -Include *.exe,*.vst3,*.dll | Select-Object FullName
-            exit 1
-          }
-          Compress-Archive -Path artifact/* -DestinationPath SALEK-HIGHTECH-Build.zip -Force
-
-      - name: Upload plugin artifacts
+        run: .\tools\Build-All-Artists.ps1 -Configuration Release
+      - name: Upload all artist packages
         uses: actions/upload-artifact@v4
         with:
-          name: SALEK-HIGHTECH-Build
-          path: SALEK-HIGHTECH-Build.zip
-          retention-days: 7
-          compression-level: 6
+          name: GITI-All-Artist-Builds
+          path: dist/**
+          retention-days: 14
           if-no-files-found: error

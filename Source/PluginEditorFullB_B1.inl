@@ -1,6 +1,7 @@
 void SalekHightechAudioProcessorEditor::resized()
 {
     auto full = getLocalBounds();
+    artistVisual.setBounds (8, 48, 214, 150);
 
     auto place = [this] (juce::Rectangle<int> area, auto& arr, int start, int count, int cols, int maxCell = 0)
     {

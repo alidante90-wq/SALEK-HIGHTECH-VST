@@ -2,6 +2,7 @@
 void SalekHightechAudioProcessorEditor::resized()
 {
     auto full = getLocalBounds();
+    artistVisual.setBounds (8, 48, 214, 150);
 
     // Keyboard at very bottom
     {

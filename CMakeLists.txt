@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 project(SALEK_HIGHTECH VERSION 0.8.0)
 
+set(SALEK_ARTIST_NAME "SALEK HIGHTECH" CACHE STRING "Artist-specific product name")
+set(SALEK_PLUGIN_CODE "Sht8" CACHE STRING "Unique four-character plugin code for this artist build")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -19,9 +22,9 @@ endif()
 juce_add_plugin(SALEK_HIGHTECH
     COMPANY_NAME "Salek"
     PLUGIN_MANUFACTURER_CODE Salk
-    PLUGIN_CODE Sht8
+    PLUGIN_CODE "${SALEK_PLUGIN_CODE}"
     FORMATS VST3 Standalone
-    PRODUCT_NAME "SALEK HIGHTECH"
+    PRODUCT_NAME "${SALEK_ARTIST_NAME}"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
