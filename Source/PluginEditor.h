@@ -6,6 +6,7 @@
 #include "UI/SonicCoreGL.h"
 #include "UI/MagicPad.h"
 #include "UI/OscShapeMonitor.h"
+#include "UI/ArtistVisualProfile.h"
 
 #include "PluginEditorLookAndFeel.inl"
 #include "AssetsData.h"
@@ -260,6 +261,7 @@ private:
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtts;
     juce::Component mainTab, oscTab, filterTab, envTab, modTab, lfoTab, fxTab, magicTab, seqTab, presetTab, modularTab;
     juce::ComboBox themeBox;
+    ArtistVisualProfile artistVisual;
     juce::ComboBox presetFilterBox;
     juce::ComboBox filterMode, lfoWave;
     juce::ComboBox filterRouteBox, voiceModeBox;
